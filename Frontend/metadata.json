@@ -1,0 +1,6 @@
+{
+  "name": "SIGI - ERP Sabor Imbatível",
+  "description": "Sistema Integrado de Gestão Interna. ERP completo para a empresa Sabor Imbatível.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
