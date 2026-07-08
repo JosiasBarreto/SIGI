@@ -102,7 +102,7 @@ export function DataTable<TData>({
 }: DataTableProps<TData>) {
   const sortingKey = storageKey ? `dataTable_sorting_${storageKey}` : "dataTable_sorting";
   const paginationKey = storageKey ? `dataTable_pagination_${storageKey}` : "dataTable_pagination";
-
+  const safeData = data ?? [];
   const [sorting, setSorting] = useState<SortingState>(() => {
     const saved = localStorage.getItem(sortingKey);
     if (saved) {
@@ -139,19 +139,19 @@ export function DataTable<TData>({
 
   const hasStatusField = React.useMemo(() => {
     if (showStatusFilter !== undefined) return showStatusFilter;
-    if (!data || data.length === 0) return false;
-    return data.slice(0, 10).some((item: any) => 
+    if (!safeData || safeData.length === 0) return false;
+    return safeData.slice(0, 10).some((item: any) => 
       item && (
         item.ativo !== undefined || 
         item.is_active !== undefined || 
         item.status !== undefined
       )
     );
-  }, [data, showStatusFilter]);
+  }, [safeData, showStatusFilter]);
 
   const filteredData = React.useMemo(() => {
-    if (activeStatusFilter === 'all') return data;
-    return data.filter((item: any) => {
+    if (activeStatusFilter === 'all') return safeData;
+    return safeData.filter((item: any) => {
       const isActive = item.ativo !== undefined 
         ? item.ativo 
         : (item.is_active !== undefined 

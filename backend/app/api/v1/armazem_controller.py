@@ -551,6 +551,15 @@ def delete_produto(id):
     
     return jsonify({"msg": "Produto removido com sucesso"}), 200
 
+#pegar o produto pelo id
+@armazem_bp.route('/produtos/<int:id>', methods=['GET'])
+@jwt_required()
+def get_produto(id):
+    produto = armazem_service.produto_repo.get_by_id(id)
+    if not produto:
+        return jsonify({"msg": "Produto não encontrado"}), 404
+    return jsonify(ProdutoSchema().dump(produto)), 200
+
 # --- MATERIAIS ---
 @armazem_bp.route('/materiais', methods=['GET'])
 @jwt_required()

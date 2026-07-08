@@ -7404,6 +7404,15 @@
         "documentation": {}
     },
     {
+        "label": "get_produto",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.armazem_controller",
+        "description": "backend.app.api.v1.armazem_controller",
+        "peekOfCode": "def get_produto(id):\n    produto = armazem_service.produto_repo.get_by_id(id)\n    if not produto:\n        return jsonify({\"msg\": \"Produto não encontrado\"}), 404\n    return jsonify(ProdutoSchema().dump(produto)), 200\n# --- MATERIAIS ---\n@armazem_bp.route('/materiais', methods=['GET'])\n@jwt_required()\ndef get_materiais():\n    return build_pagination(armazem_service.material_repo, MaterialSchema, request)",
+        "detail": "backend.app.api.v1.armazem_controller",
+        "documentation": {}
+    },
+    {
         "label": "get_materiais",
         "kind": 2,
         "importPath": "backend.app.api.v1.armazem_controller",
