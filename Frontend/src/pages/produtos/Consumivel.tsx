@@ -26,6 +26,7 @@ export default function Consumivel() {
   const [stockOpType, setStockOpType] = useState<"Entrada" | "Saída">(
     "Entrada"
   );
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('active');
   const [currentRecord, setCurrentRecord] = useState<any>(null);
   const [selectedTipo, setSelectedTipo] = useState<string>("");
   const activeTab = "Consumivel";
@@ -463,10 +464,17 @@ export default function Consumivel() {
           setPage(1);
         }}
         onClearFilters={() => {
-          setSearchTerm("");
-          setPage(1);
+            setSearchTerm('');
+            setStatusFilter('all');
+            setPage(1);
         }}
         addFunction={handleNew}
+        
+        statusFilter={statusFilter}
+          onStatusFilterChange={(status) => {
+            setStatusFilter(status);
+            setPage(1);
+          }}
       />
 
       <Modal

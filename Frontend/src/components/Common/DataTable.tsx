@@ -31,6 +31,10 @@ interface DataTableProps<TData> {
   emptyMessage?: string;
   onClearFilters?: () => void;
   renderFilters?: () => React.ReactNode;
+  // Status Filter Props
+  statusFilter?: 'all' | 'active' | 'inactive';
+  onStatusFilterChange?: (status: 'all' | 'active' | 'inactive') => void;
+  showStatusFilter?: boolean;
   // Manual Pagination & Search Props
   manualPagination?: boolean;
   pageCount?: number;
@@ -84,6 +88,9 @@ export function DataTable<TData>({
   emptyMessage = "Nenhum registo encontrado.",
   onClearFilters,
   renderFilters,
+  statusFilter,
+  onStatusFilterChange,
+  showStatusFilter,
   manualPagination,
   pageCount,
   paginationState,
@@ -125,6 +132,44 @@ export function DataTable<TData>({
     return { pageIndex: 0, pageSize: 10 };
   });
 
+  // Status Filter State Integration
+  const [internalStatusFilter, setInternalStatusFilter] = useState<'all' | 'active' | 'inactive'>('active');
+  const activeStatusFilter = statusFilter !== undefined ? statusFilter : internalStatusFilter;
+  const handleStatusFilterChange = onStatusFilterChange !== undefined ? onStatusFilterChange : setInternalStatusFilter;
+
+  const hasStatusField = React.useMemo(() => {
+    if (showStatusFilter !== undefined) return showStatusFilter;
+    if (!data || data.length === 0) return false;
+    return data.slice(0, 10).some((item: any) => 
+      item && (
+        item.ativo !== undefined || 
+        item.is_active !== undefined || 
+        item.status !== undefined
+      )
+    );
+  }, [data, showStatusFilter]);
+
+  const filteredData = React.useMemo(() => {
+    if (activeStatusFilter === 'all') return data;
+    return data.filter((item: any) => {
+      const isActive = item.ativo !== undefined 
+        ? item.ativo 
+        : (item.is_active !== undefined 
+            ? item.is_active 
+            : (item.status !== undefined ? (item.status === 'Ativo' || item.status === 'Active' || item.status === 'true' || item.status === true) : true));
+      
+      const isActiveBool = isActive === true || isActive === 'true' || isActive === 1 || isActive === 'Ativo' || isActive === 'Active';
+      
+      if (activeStatusFilter === 'active') {
+        return isActiveBool;
+      }
+      if (activeStatusFilter === 'inactive') {
+        return !isActiveBool;
+      }
+      return true;
+    });
+  }, [data, activeStatusFilter]);
+
   const isControlledSearch = onSearchChange !== undefined;
   const globalFilter = isControlledSearch ? searchValue : internalGlobalFilter;
   const handleGlobalFilterChange = isControlledSearch ? onSearchChange : setInternalGlobalFilter;
@@ -147,7 +192,7 @@ export function DataTable<TData>({
   }, [internalPagination.pageSize, isControlledPagination, paginationKey]);
 
   const table = useReactTable({
-    data,
+    data: filteredData,
     columns,
     pageCount: manualPagination ? pageCount : undefined,
     state: {
@@ -208,11 +253,51 @@ export function DataTable<TData>({
               {'Novo Registo'}
             </button>
           )}
+
+          {hasStatusField && (
+            <div className="flex border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-800 p-0.5 shadow-sm">
+              <button
+                type="button"
+                onClick={() => handleStatusFilterChange('all')}
+                className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
+                  activeStatusFilter === 'all'
+                    ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                    : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                }`}
+              >
+                Todos
+              </button>
+              <button
+                type="button"
+                onClick={() => handleStatusFilterChange('active')}
+                className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
+                  activeStatusFilter === 'active'
+                    ? 'bg-emerald-500 text-white shadow-xs'
+                    : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                }`}
+              >
+                Ativos
+              </button>
+              <button
+                type="button"
+                onClick={() => handleStatusFilterChange('inactive')}
+                className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
+                  activeStatusFilter === 'inactive'
+                    ? 'bg-rose-500 text-white shadow-xs'
+                    : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                }`}
+              >
+                Inativos
+              </button>
+            </div>
+          )}
+
           {renderFilters && renderFilters()}
           {onClearFilters && (
             <button
               onClick={() => {
                 handleGlobalFilterChange("");
+                handleStatusFilterChange("all");
                 onClearFilters();
               }}
               className="px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg transition-colors"
@@ -295,6 +380,7 @@ export function DataTable<TData>({
                       <button
                         onClick={() => {
                           handleGlobalFilterChange("");
+                          handleStatusFilterChange("all");
                           onClearFilters();
                         }}
                         className="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition"

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as allServices from '../services';
-import { Plus, Edit2, Trash2, Eye } from 'lucide-react';
+import { Plus, Edit2, Trash2, Eye, Power } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { toast } from 'react-toastify';
 import { schemas } from '../data/schemas';
@@ -14,6 +14,7 @@ export default function Clientes() {
   const moduleName = "clients";
   
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('active');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [currentRecord, setCurrentRecord] = useState<any>(null);
@@ -27,8 +28,17 @@ export default function Clientes() {
   const schema = schemas[moduleName];
 
   const { data: paginatedResponse, isLoading } = useQuery({
-    queryKey: [moduleName, page, perPage, searchTerm],
-    queryFn: () => apiAccessor.getAll({ page, per_page: perPage, search: searchTerm })
+    queryKey: [moduleName, page, perPage, searchTerm, statusFilter],
+    queryFn: () => apiAccessor.getAll({ 
+      page, 
+      per_page: perPage, 
+      search: searchTerm,
+      all: statusFilter === 'all',
+      incluir_inativos: statusFilter === 'all' || statusFilter === 'inactive',
+      show_inactive: statusFilter === 'all' || statusFilter === 'inactive',
+      status: statusFilter === 'all' ? 'all' : (statusFilter === 'active' ? 'active' : 'inactive'),
+      todos: statusFilter === 'all'
+    })
   });
 
   const createMutation = useMutation({
@@ -52,13 +62,33 @@ export default function Clientes() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => apiAccessor.delete(id),
+    mutationFn: (id: string | number) => apiAccessor.delete(String(id)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [moduleName] });
-      toast.success('O registo foi eliminado.');
+      toast.success("Registo eliminado com sucesso!");
     },
-    onError: () => toast.error('Erro ao eliminar registo.')
+    onError: () => {
+      toast.error("Erro ao eliminar registo.");
+    }
   });
+
+  const toggleMutation = useMutation({
+    mutationFn: (id: string | number) => apiAccessor.toggleStatus(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [moduleName] });
+      toast.success("Estado do cliente alterado com sucesso!");
+    },
+    onError: () => {
+      toast.error("Erro ao alterar o estado do cliente.");
+    }
+  });
+
+  const handleToggle = (id: string | number) => {
+    if (window.confirm("Tem a certeza que deseja alterar o estado deste registo?")) {
+      toggleMutation.mutate(id);
+    }
+  };
+
 
   const handleOpenForm = (record: any = null) => {
     setCurrentRecord(record);
@@ -137,6 +167,13 @@ export default function Clientes() {
             <button onClick={() => handleOpenForm(item)} className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/10 rounded transition-colors" title="Editar">
               <Edit2 size={16} />
             </button>
+            <button 
+              onClick={() => handleToggle(item.id)} 
+              className={`p-1.5 rounded transition-colors ${item.ativo ? 'text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20' : 'text-gray-400 hover:text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20'}`} 
+              title={item.ativo ? "Desativar" : "Ativar"}
+            >
+              <Power size={16} />
+            </button>
             <button onClick={() => handleDelete(item.id)} className="p-1.5 text-gray-400 hover:text-error hover:bg-error/10 rounded transition-colors" title="Eliminar">
               <Trash2 size={16} />
             </button>
@@ -182,6 +219,12 @@ export default function Clientes() {
         }}
         onClearFilters={() => {
           setSearchTerm('');
+          setStatusFilter('all');
+          setPage(1);
+        }}
+        statusFilter={statusFilter}
+        onStatusFilterChange={(status) => {
+          setStatusFilter(status);
           setPage(1);
         }}
       />

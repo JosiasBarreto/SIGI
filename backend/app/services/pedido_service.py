@@ -24,6 +24,61 @@ class PedidoService:
         AuditService.log_action(user_id, "CREATE", "clientes", cliente.id, new_values=data)
         return cliente, None
 
+
+    def update_cliente(self, cliente_id, data, user_id):
+        cliente = self.cliente_repo.get_by_id(cliente_id)
+        if not cliente:
+            return None, "Cliente não encontrado."
+            
+        if data.get('nif') and data['nif'] != cliente.nif:
+            existing = self.cliente_repo.model_class.query.filter_by(nif=data['nif'], is_active=True).first()
+            if existing and existing.id != cliente_id:
+                return None, "NIF já cadastrado por outro cliente."
+                
+        old_values = {
+            "nome": cliente.nome,
+            "nif": cliente.nif,
+            "telefone": cliente.telefone,
+            "whatsapp": cliente.whatsapp,
+            "email": cliente.email,
+            "morada": cliente.morada,
+            "empresa": cliente.empresa,
+            "observacoes": cliente.observacoes
+        }
+        
+        if 'nome' in data: cliente.nome = data['nome']
+        if 'nif' in data: cliente.nif = data['nif']
+        if 'telefone' in data: cliente.telefone = data['telefone']
+        if 'whatsapp' in data: cliente.whatsapp = data['whatsapp']
+        if 'email' in data: cliente.email = data['email']
+        if 'morada' in data: cliente.morada = data['morada']
+        if 'empresa' in data: cliente.empresa = data['empresa']
+        if 'observacoes' in data: cliente.observacoes = data['observacoes']
+        
+        from app.core.database import db
+        db.session.commit()
+        
+        from app.services.audit_service import AuditService
+        AuditService.log_action(user_id, "UPDATE", "clientes", cliente.id, old_values=old_values, new_values=data)
+        
+        return cliente, None
+#ativar e desativar cliente
+    def toggle_cliente_status_services(self, cliente_id, user_id):
+        cliente = self.cliente_repo.get_by_id(cliente_id)
+        if not cliente:
+            return None, "Cliente não encontrado."
+            
+        old_status = cliente.is_active
+        cliente.is_active = not old_status
+        
+        db.session.commit()
+        
+        AuditService.log_action(user_id, "TOGGLE_STATUS", "clientes", cliente.id, 
+                                old_values={"is_active": old_status}, 
+                                new_values={"is_active": cliente.is_active})
+                                
+        return cliente, None
+
     def create_pedido(self, data, user_id):
         itens_data = data.pop('itens', [])
         

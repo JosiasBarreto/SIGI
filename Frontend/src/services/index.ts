@@ -233,7 +233,12 @@ export const productService = {
 export const ingredientService = createService<IngredienteDTO>('/v1/armazem/ingredientes', 'inventory');
 export const materialService = createService<MaterialDTO>('/v1/armazem/materiais', 'materials');
 export const supplierService = createService<FornecedorDTO>('/v1/armazem/fornecedores', 'clients'); 
-export const clientService = createService<ClienteDTO>('/v1/pedidos/clientes', 'clients');
+export const clientService = {
+  ...createService<ClienteDTO>('/v1/pedidos/clientes', 'clients'),
+  async toggleStatus(id: string | number): Promise<ClienteDTO> {
+    return apiClient.put<any, ClienteDTO>(`/v1/pedidos/clientes/${id}/toggle`);
+  }
+};
 
 export const orderService = {
   ...createService<PedidoDTO>('/v1/pedidos', 'orders'),

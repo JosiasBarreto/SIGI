@@ -12,6 +12,7 @@ class ClienteSchema(Schema):
     email = fields.Email(required=False)
     morada = fields.Str(required=False)
     observacoes = fields.Str(required=False)
+    is_active = fields.Bool(dump_only=True)
 
 class ItemPedidoSchema(Schema):
     id = fields.Int(dump_only=True)
@@ -34,6 +35,7 @@ class PedidoSchema(Schema):
     hora_entrega = fields.Time(required=False, allow_none=True)
     estado = fields.Enum(EstadoPedido, by_value=True, required=False)
     observacoes = fields.Str(required=False)
+    is_active = fields.Bool(dump_only=True)
     justificativa_cancelamento = fields.Str(required=False)
     
     cliente = fields.Nested(ClienteSchema, dump_only=True)

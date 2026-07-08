@@ -31,11 +31,25 @@ def build_pagination(repo, schema, request):
     }), 200
 
 # --- CLIENTES ---
+#
 @pedido_bp.route('/clientes', methods=['GET'])
 @jwt_required()
 def get_clientes():
-    return build_pagination(pedido_service.cliente_repo, ClienteSchema, request)
-
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 10, type=int)
+    search = request.args.get('search', '')
+    filters = {}
+    for key, value in request.args.items():
+        if key not in ['page', 'per_page', 'search'] and hasattr(pedido_service.cliente_repo.model_class, key):
+            filters[key] = value
+    search_fields = ['nome', 'nif', 'telefone']
+    pagination = pedido_service.cliente_repo.get_paginated(page=page, per_page=per_page, filters=filters, search=search, search_fields=search_fields, include_inactive=True)
+    return jsonify({
+        'items': ClienteSchema(many=True).dump(pagination.items),
+        'total': pagination.total,
+        'pages': pagination.pages,
+        'page': page
+    }), 200
 @pedido_bp.route('/clientes', methods=['POST'])
 @jwt_required()
 @requires_roles('Administrador', 'Atendimento')
@@ -65,6 +79,19 @@ def update_cliente(id):
     if error:
         return jsonify({"msg": error}), 400
     return jsonify(ClienteSchema().dump(result)), 200
+#ativar e desativar cliente
+@pedido_bp.route('/clientes/<int:id>/toggle', methods=['PUT'])
+@jwt_required()
+@requires_roles('Administrador', 'Atendimento')
+def toggle_cliente_status(id):
+    try:
+        user_id = get_jwt_identity()
+        result, error = pedido_service.toggle_cliente_status_services(id,  user_id)
+        if error:
+            return jsonify({"msg": error}), 400
+        return jsonify(ClienteSchema().dump(result)), 200
+    except Exception as e:
+        return jsonify({"msg": str(e)}), 500
 
 # --- PEDIDOS ---
 @pedido_bp.route('', methods=['GET'])

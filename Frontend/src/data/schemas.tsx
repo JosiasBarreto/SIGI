@@ -188,6 +188,7 @@ export const schemas: Record<string, ModuleSchema> = {
       { key: "nif", label: "NIF" },
       { key: "telefone", label: "Telefone" },
       { key: "email", label: "Email" },
+      
     ],
     fields: [
       { name: "nome", label: "Nome Completo", type: "text", required: true },

@@ -21,6 +21,7 @@ export default function Revenda() {
   const [stockOpType, setStockOpType] = useState<"Entrada" | "Saída">(
     "Entrada"
   );
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('active');
   const config = JSON.parse(localStorage.getItem("sigi_config") || "{}");
   const [currentRecord, setCurrentRecord] = useState<any>(null);
   const [selectedTipo, setSelectedTipo] = useState<string>("");
@@ -492,10 +493,17 @@ export default function Revenda() {
           setPage(1);
         }}
         onClearFilters={() => {
-          setSearchTerm("");
-          setPage(1);
+            setSearchTerm('');
+            setStatusFilter('all');
+            setPage(1);
         }}
         addFunction={handleNew}
+        
+        statusFilter={statusFilter}
+          onStatusFilterChange={(status) => {
+            setStatusFilter(status);
+            setPage(1);
+          }}
       />
 
       <Modal

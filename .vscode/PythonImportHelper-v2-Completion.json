@@ -8173,7 +8173,7 @@
         "kind": 2,
         "importPath": "backend.app.api.v1.pedido_controller",
         "description": "backend.app.api.v1.pedido_controller",
-        "peekOfCode": "def get_clientes():\n    return build_pagination(pedido_service.cliente_repo, ClienteSchema, request)\n@pedido_bp.route('/clientes', methods=['POST'])\n@jwt_required()\n@requires_roles('Administrador', 'Atendimento')\ndef create_cliente():\n    try:\n        data = ClienteSchema().load(request.get_json())\n    except ValidationError as err:\n        return jsonify({\"msg\": \"Validation error\", \"errors\": err.messages}), 400",
+        "peekOfCode": "def get_clientes():\n    page = request.args.get('page', 1, type=int)\n    per_page = request.args.get('per_page', 10, type=int)\n    search = request.args.get('search', '')\n    filters = {}\n    for key, value in request.args.items():\n        if key not in ['page', 'per_page', 'search'] and hasattr(pedido_service.cliente_repo.model_class, key):\n            filters[key] = value\n    search_fields = ['nome', 'nif', 'telefone']\n    pagination = pedido_service.cliente_repo.get_paginated(page=page, per_page=per_page, filters=filters, search=search, search_fields=search_fields, include_inactive=True)",
         "detail": "backend.app.api.v1.pedido_controller",
         "documentation": {}
     },
@@ -8192,6 +8192,15 @@
         "importPath": "backend.app.api.v1.pedido_controller",
         "description": "backend.app.api.v1.pedido_controller",
         "peekOfCode": "def update_cliente(id):\n    try:\n        data = ClienteSchema().load(request.get_json())\n    except ValidationError as err:\n        return jsonify({\"msg\": \"Validation error\", \"errors\": err.messages}), 400\n    user_id = get_jwt_identity()\n    result, error = pedido_service.update_cliente(id, data, user_id)\n    if error:\n        return jsonify({\"msg\": error}), 400\n    return jsonify(ClienteSchema().dump(result)), 200",
+        "detail": "backend.app.api.v1.pedido_controller",
+        "documentation": {}
+    },
+    {
+        "label": "toggle_cliente_status",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.pedido_controller",
+        "description": "backend.app.api.v1.pedido_controller",
+        "peekOfCode": "def toggle_cliente_status(id):\n    try:\n        user_id = get_jwt_identity()\n        result, error = pedido_service.toggle_cliente_status_services(id,  user_id)\n        if error:\n            return jsonify({\"msg\": error}), 400\n        return jsonify(ClienteSchema().dump(result)), 200\n    except Exception as e:\n        return jsonify({\"msg\": str(e)}), 500\n# --- PEDIDOS ---",
         "detail": "backend.app.api.v1.pedido_controller",
         "documentation": {}
     },

@@ -26,6 +26,7 @@ export default function Acabado() {
   const [stockOpType, setStockOpType] = useState<"Entrada" | "Saída">(
     "Entrada"
   );
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('active');
   const [currentRecord, setCurrentRecord] = useState<any>(null);
   const [selectedTipo, setSelectedTipo] = useState<string>("");
   const activeTab = "Acabado";
@@ -477,10 +478,17 @@ export default function Acabado() {
           setPage(1);
         }}
         onClearFilters={() => {
-          setSearchTerm("");
-          setPage(1);
+            setSearchTerm('');
+            setStatusFilter('all');
+            setPage(1);
         }}
         addFunction={handleNew}
+        
+        statusFilter={statusFilter}
+          onStatusFilterChange={(status) => {
+            setStatusFilter(status);
+            setPage(1);
+          }}
       />
 
       <Modal
