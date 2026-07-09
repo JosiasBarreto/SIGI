@@ -44,6 +44,9 @@ export default function Vendas() {
   const [sendMethod, setSendMethod] = useState<'email' | 'whatsapp'>('email');
   const [sendContact, setSendContact] = useState('');
 
+  // Item details Modal State
+  const [viewItemDetails, setViewItemDetails] = useState<any>(null);
+
   // Fetch Sales
   const { data: vendasResponse, isLoading, refetch } = useQuery({
     queryKey: ['vendas', paginationState.pageIndex + 1, paginationState.pageSize, search, estado, tipoDocumento, clienteId, dataInicio, dataFim],
@@ -488,6 +491,49 @@ export default function Vendas() {
     []
   );
 
+  const itemColumns = React.useMemo<ColumnDef<any>[]>(() => [
+    {
+      accessorKey: "produto_nome",
+      header: "Descrição",
+      cell: ({ row }) => <span className="font-semibold">{row.original.produto_nome}</span>
+    },
+    {
+      accessorKey: "quantidade",
+      header: () => <div className="text-right">Quantidade</div>,
+      cell: ({ row }) => <div className="text-right font-mono">{row.original.quantidade}</div>
+    },
+    {
+      accessorKey: "preco_unitario",
+      header: () => <div className="text-right">Preço Unitário</div>,
+      cell: ({ row }) => <div className="text-right font-mono">{formatCurrency(row.original.preco_unitario)}</div>
+    },
+    {
+      accessorKey: "iva_taxa",
+      header: () => <div className="text-right">IVA (%)</div>,
+      cell: ({ row }) => <div className="text-right font-mono text-gray-500">{row.original.iva_taxa || 14}%</div>
+    },
+    {
+      accessorKey: "total",
+      header: () => <div className="text-right">Total Líquido</div>,
+      cell: ({ row }) => <div className="text-right font-mono font-bold text-primary">{formatCurrency(row.original.total)}</div>
+    },
+    {
+      id: "acoes",
+      header: () => <div className="text-right">Ações</div>,
+      cell: ({ row }) => (
+        <div className="flex justify-end">
+          <button
+            onClick={() => setViewItemDetails(row.original)}
+            className="text-primary hover:text-primary-hover bg-primary/10 hover:bg-primary/20 px-3 py-1.5 rounded-lg transition-all flex items-center justify-center gap-1 font-bold text-xs"
+            title="Ver mais detalhes"
+          >
+            <Eye size={14} /> Ver mais
+          </button>
+        </div>
+      )
+    }
+  ], []);
+
   return (
     <div className="space-y-6 animate-fade-in pb-12">
       
@@ -668,28 +714,13 @@ export default function Vendas() {
               <div className="bg-gray-50 dark:bg-gray-800 px-4 py-2 font-bold text-xs text-gray-500 uppercase tracking-wider">
                 Linhas do Documento / Itens da Fatura
               </div>
-              <table className="w-full text-xs font-medium text-left">
-                <thead>
-                  <tr className="bg-gray-50/50 text-gray-400 border-b">
-                    <th className="px-4 py-2.5">Descrição</th>
-                    <th className="px-4 py-2.5 text-right w-20">Quantidade</th>
-                    <th className="px-4 py-2.5 text-right w-28">Preço Unitário</th>
-                    <th className="px-4 py-2.5 text-right w-20">IVA (%)</th>
-                    <th className="px-4 py-2.5 text-right w-28">Total Líquido</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {selectedVenda.itens?.map((it: any, index: number) => (
-                    <tr key={it.id || index} className="dark:text-gray-300">
-                      <td className="px-4 py-3 font-semibold">{it.produto_nome}</td>
-                      <td className="px-4 py-3 text-right font-mono">{it.quantidade}</td>
-                      <td className="px-4 py-3 text-right font-mono">{formatCurrency(it.preco_unitario)}</td>
-                      <td className="px-4 py-3 text-right font-mono text-gray-500">{it.iva_taxa || 14}%</td>
-                      <td className="px-4 py-3 text-right font-mono font-bold text-primary">{formatCurrency(it.total)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <div className="overflow-x-auto">
+                <DataTable
+                  data={selectedVenda.itens || []}
+                  columns={itemColumns}
+                  searchPlaceholder="Pesquisar itens..."
+                />
+              </div>
             </div>
 
             {/* IVA and Financial Panel Breakdown */}

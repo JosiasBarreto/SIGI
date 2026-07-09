@@ -77,39 +77,52 @@ class RequisicaoService:
                 # Baixar Stock do Armazem
                 if item.tipo_item == TipoItemRequisicao.INGREDIENTE.value:
                     ing = db.session.query(Ingrediente).filter_by(id=item.item_id).first()
-                    ing.stock_atual = float(ing.stock_atual) - float(item.quantidade_entregue)
-                    mov = MovimentoStock(
-                        tipo=TipoMovimento.SAIDA, origem=OrigemMovimento.REQUISICAO,
-                        entidade_tipo=EntidadeMovimento.INGREDIENTE, referencia_id=ing.id,
-                        quantidade=item.quantidade_entregue, created_by=user_id,
-                        justificacao=f"Entrega Requisição {req.numero}"
-                    )
-                    db.session.add(mov)
+                    if ing:
+                        ing.stock_atual = float(ing.stock_atual or 0) - float(item.quantidade_entregue)
+                        mov = MovimentoStock(
+                            tipo=TipoMovimento.SAIDA, origem=OrigemMovimento.REQUISICAO,
+                            entidade_tipo=EntidadeMovimento.INGREDIENTE, referencia_id=ing.id,
+                            quantidade=item.quantidade_entregue, created_by=user_id,
+                            justificacao=f"Entrega Requisição {req.numero}"
+                        )
+                        db.session.add(mov)
+                    else:
+                        db.session.rollback()
+                        return None, f"Ingrediente com ID {item.item_id} não encontrado no sistema"
                 elif item.tipo_item == TipoItemRequisicao.CONSUMIVEL.value:
                     from app.models.produto import Produto
                     from app.models.stock_movement import StockMovement, TipoMovimentoStock
                     prod = db.session.query(Produto).filter_by(id=item.item_id).first()
-                    stock_ant = float(prod.stock_atual)
-                    prod.stock_atual = stock_ant - float(item.quantidade_entregue)
-                    mov = StockMovement(
-                        produto_id=prod.id, tipo_movimento=TipoMovimentoStock.REQUISICAO,
-                        quantidade=-float(item.quantidade_entregue),
-                        stock_anterior=stock_ant, stock_posterior=prod.stock_atual,
-                        referencia=f"Requisição #{req.numero}",
-                        utilizador_id=user_id, observacao=f"Entrega Requisição {req.numero}"
-                    )
-                    db.session.add(mov)
+                    if prod:
+                        stock_ant = float(prod.stock_atual or 0)
+                        prod.stock_atual = stock_ant - float(item.quantidade_entregue)
+                        mov = StockMovement(
+                            produto_id=prod.id, tipo_movimento=TipoMovimentoStock.REQUISICAO,
+                            quantidade=-float(item.quantidade_entregue),
+                            stock_anterior=stock_ant, 
+                            stock_atual=prod.stock_atual,
+                            referencia=f"Requisição #{req.numero}",
+                            utilizador_id=user_id, observacao=f"Entrega Requisição {req.numero}"
+                        )
+                        db.session.add(mov)
+                    else:
+                        db.session.rollback()
+                        return None, f"Produto Consumível com ID {item.item_id} não encontrado no sistema"
                 else:
                     mat = db.session.query(Material).filter_by(id=item.item_id).first()
-                    mat.quantidade_disponivel = float(mat.quantidade_disponivel) - float(item.quantidade_entregue)
-                    mat.estado = 'Em Uso'
-                    mov = MovimentoStock(
-                        tipo=TipoMovimento.SAIDA, origem=OrigemMovimento.REQUISICAO,
-                        entidade_tipo=EntidadeMovimento.MATERIAL, referencia_id=mat.id,
-                        quantidade=item.quantidade_entregue, created_by=user_id,
-                        justificacao=f"Entrega Requisição {req.numero}"
-                    )
-                    db.session.add(mov)
+                    if mat:
+                        mat.quantidade_disponivel = float(mat.quantidade_disponivel or 0) - float(item.quantidade_entregue)
+                        mat.estado = 'Em Uso'
+                        mov = MovimentoStock(
+                            tipo=TipoMovimento.SAIDA, origem=OrigemMovimento.REQUISICAO,
+                            entidade_tipo=EntidadeMovimento.MATERIAL, referencia_id=mat.id,
+                            quantidade=item.quantidade_entregue, created_by=user_id,
+                            justificacao=f"Entrega Requisição {req.numero}"
+                        )
+                        db.session.add(mov)
+                    else:
+                        db.session.rollback()
+                        return None, f"Material com ID {item.item_id} não encontrado no sistema"
                     
         req.estado = EstadoRequisicao.EM_USO.value
         db.session.commit()

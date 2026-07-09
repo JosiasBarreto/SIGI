@@ -212,17 +212,37 @@ export function DataTable<TData>({
   });
 
   const exportCSV = () => {
-    const headers = table.getAllLeafColumns().map((col) => col.id).join(",");
-    const rows = table.getRowModel().rows.map((row) =>
-      row.getVisibleCells()
-        .map((cell) => `"${String(cell.getValue()) || ""}"`)
-        .join(",")
-    ).join("\n");
-
-    const csvContent = "data:text/csv;charset=utf-8," + headers + "\n" + rows;
-    const encodedUri = encodeURI(csvContent);
+    // Captura os cabeçalhos visíveis
+    const headers = table
+      .getAllLeafColumns()
+      .map((col) => col.columnDef.header || col.id) // usa header se existir
+      .join(",");
+  
+    // Captura as linhas visíveis
+    const rows = table.getRowModel().rows
+      .map((row) =>
+        row
+          .getVisibleCells()
+          .map((cell) => {
+            const value = cell.getValue();
+            // Escapa aspas duplas e vírgulas
+            const safeValue = value !== undefined && value !== null
+              ? String(value).replace(/"/g, '""')
+              : "";
+            return `"${safeValue}"`;
+          })
+          .join(",")
+      )
+      .join("\n");
+  
+    // Adiciona BOM para compatibilidade com Excel
+    const csvContent = "\uFEFF" + headers + "\n" + rows;
+  
+    // Cria o arquivo para download
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
     link.setAttribute("download", "export.csv");
     document.body.appendChild(link);
     link.click();
@@ -316,8 +336,8 @@ export function DataTable<TData>({
       </div>
 
       <div className="overflow-x-auto max-h-[600px] relative">
-        <table className="w-full text-left text-sm whitespace-nowrap">
-          <thead className="bg-gray-50 dark:bg-gray-800/80 text-gray-500 dark:text-gray-400 font-medium sticky top-0 z-10 shadow-sm backdrop-blur-sm">
+        <table className="w-full text-left text-sm whitespace-nowrap table-hover">
+          <thead className="bg-gray-50 dark:bg-gray-800/80 text-gray-500 dark:text-gray-400 font-medium sticky top-0 z-10 shadow-sm backdrop-blur-sm ">
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {

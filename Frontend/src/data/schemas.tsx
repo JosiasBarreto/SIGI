@@ -21,6 +21,8 @@ const movimentoClasses: Record<string, string> = {
     "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
   "TipoMovimentoStock.PERDA":
     "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400",
+    "TipoMovimentoStock.REQUISICAO":
+    "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
 };
 const stockStatus: Record<string, string> = {
   true: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
@@ -220,13 +222,13 @@ export const schemas: Record<string, ModuleSchema> = {
         key: "quantidade_total",
         label: "Qtd Total",
         render: (val: any, item: any) =>
-          `${val || 0} ${item.unidade_medida_sigla || ""}`.trim(),
+          `${Number(val) || 0} ${item.unidade_medida_sigla || ""}`.trim(),
       },
       {
         key: "quantidade_disponivel",
         label: "Qtd Disponível",
         render: (val: any, item: any) =>
-          `${val || 0} ${item.unidade_medida_sigla || ""}`.trim(),
+          `${Number(val) || 0} ${item.unidade_medida_sigla || ""}`.trim(),
       },
       {
         key: "estado",

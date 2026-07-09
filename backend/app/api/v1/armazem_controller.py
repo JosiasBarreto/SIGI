@@ -385,6 +385,13 @@ def get_produtos():
         is_ativo = ativo.lower() == 'true' or ativo == '1'
         query = query.filter_by(ativo=is_ativo)
         
+    have_stock = request.args.get('have_stock', '')
+    if have_stock:
+        if have_stock.lower() == 'true' or have_stock == '1':
+            query = query.filter(Produto.stock_atual > 0)
+        else:
+            query = query.filter(Produto.stock_atual == 0)
+        
     if search:
         from sqlalchemy import or_
         query = query.filter(or_(
@@ -551,20 +558,53 @@ def delete_produto(id):
     
     return jsonify({"msg": "Produto removido com sucesso"}), 200
 
-#pegar o produto pelo id
-@armazem_bp.route('/produtos/<int:id>', methods=['GET'])
-@jwt_required()
-def get_produto(id):
-    produto = armazem_service.produto_repo.get_by_id(id)
-    if not produto:
-        return jsonify({"msg": "Produto não encontrado"}), 404
-    return jsonify(ProdutoSchema().dump(produto)), 200
-
 # --- MATERIAIS ---
 @armazem_bp.route('/materiais', methods=['GET'])
 @jwt_required()
 def get_materiais():
-    return build_pagination(armazem_service.material_repo, MaterialSchema, request)
+    from app.models.material import Material
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 10, type=int)
+    search = request.args.get('search', '')
+    
+    query = Material.query.filter_by(is_active=True)
+    
+    tipo = request.args.get('tipo', '')
+    if tipo:
+        query = query.filter_by(tipo=tipo)
+        
+    have_stock = request.args.get('have_stock', '')
+    if have_stock:
+        if have_stock.lower() == 'true' or have_stock == '1':
+            query = query.filter(Material.quantidade_disponivel > 0)
+        else:
+            query = query.filter(Material.quantidade_disponivel == 0)
+        
+    if search:
+        from sqlalchemy import or_
+        query = query.filter(or_(
+            Material.nome.ilike(f"%{search}%"),
+            Material.codigo.ilike(f"%{search}%")
+        ))
+        
+    order_by = request.args.get('order_by', 'created_at')
+    order_dir = request.args.get('order_dir', 'desc')
+    
+    if hasattr(Material, order_by):
+        col = getattr(Material, order_by)
+        if order_dir == 'desc':
+            query = query.order_by(col.desc())
+        else:
+            query = query.order_by(col.asc())
+            
+    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+    
+    return jsonify({
+        "items": MaterialSchema(many=True).dump(pagination.items),
+        "total": pagination.total,
+        "pages": pagination.pages,
+        "page": page
+    }), 200
 
 @armazem_bp.route('/materiais', methods=['POST'])
 @jwt_required()

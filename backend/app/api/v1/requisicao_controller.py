@@ -125,3 +125,4 @@ def obter_sugestao():
 @jwt_required()
 def get_ocorrencias():
     return build_pagination(req_service.ocorrencia_repo, OcorrenciaMaterialSchema, request)
+#listar o historico de todas as requisicoes de um determinado material, com filtros por data, tipo de movimento e utilizador

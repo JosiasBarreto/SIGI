@@ -406,11 +406,7 @@ export default function Materiais() {
       >
         {schema && currentRecord && (
           <div className="space-y-8">
-            <div>
-               <p className="text-sm text-gray-500 dark:text-gray-400">
-                  ID Externo: <span className="font-mono text-gray-400">{currentRecord.id}</span>
-                </p>
-            </div>
+            
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {schema.fields.map(field => (
                 <div key={field.name} className={`${field.type === 'textarea' ? 'md:col-span-2 lg:col-span-3' : ''}`}>
@@ -429,23 +425,7 @@ export default function Materiais() {
               ))}
             </div>
 
-            <div className="mt-10 pt-6 border-t border-gray-200 dark:border-gray-800">
-              <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider mb-4">Metadados e Auditoria</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-gray-50 dark:bg-gray-800/30 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
-                  <p className="text-xs text-gray-500 mb-1">Criado (Sistema)</p>
-                  <p className="font-medium text-sm dark:text-gray-300">Hoje, por API</p>
-                </div>
-                <div className="bg-gray-50 dark:bg-gray-800/30 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
-                  <p className="text-xs text-gray-500 mb-1">Sistema Integrado</p>
-                  <p className="font-medium text-sm dark:text-gray-300">SIGI ERP Core Sync</p>
-                </div>
-                <div className="bg-gray-50 dark:bg-gray-800/30 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
-                  <p className="text-xs text-gray-500 mb-1">Estado de Auditoria</p>
-                  <p className="font-medium text-sm dark:text-gray-300 text-success">Verificado</p>
-                </div>
-              </div>
-            </div>
+            
           </div>
         )}
       </Modal>

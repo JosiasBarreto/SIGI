@@ -5,6 +5,8 @@ import { Search, DollarSign, Calendar, Eye, CalendarClock, CreditCard, Filter, S
 import { formatCurrency, cn } from '../lib/utils';
 import { toast } from 'react-toastify';
 import Modal from '../components/Common/Modal';
+import { DataTable } from '../components/Common/DataTable';
+import { ColumnDef } from '@tanstack/react-table';
 
 export default function ContasReceber() {
   const queryClient = useQueryClient();
@@ -12,6 +14,9 @@ export default function ContasReceber() {
   // Search & Filter state
   const [search, setSearch] = useState('');
   const [estado, setEstado] = useState('Pendente'); // Default to showing actionable pendings
+
+  // View Details Modal State
+  const [viewDetails, setViewDetails] = useState<any>(null);
 
   // Payment Modal State
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
@@ -83,6 +88,89 @@ export default function ContasReceber() {
       }
     });
   };
+
+  const columns = React.useMemo<ColumnDef<any>[]>(() => [
+    {
+      accessorKey: "venda_numero",
+      header: "Fatura Ref.",
+      cell: ({ row }) => <span className="font-bold text-gray-900 dark:text-white">{row.original.venda_numero}</span>
+    },
+    {
+      accessorKey: "cliente_nome",
+      header: "Cliente",
+      cell: ({ row }) => <span>{row.original.cliente_nome || 'Cliente Geral'}</span>
+    },
+    {
+      accessorKey: "valor_original",
+      header: () => <div className="text-right">Valor Original</div>,
+      cell: ({ row }) => <div className="text-right font-mono text-xs">{formatCurrency(row.original.valor_original)}</div>
+    },
+    {
+      accessorKey: "valor_pago",
+      header: () => <div className="text-right">Total Amortizado</div>,
+      cell: ({ row }) => <div className="text-right font-mono text-xs text-green-500">{formatCurrency(row.original.valor_pago || 0)}</div>
+    },
+    {
+      accessorKey: "saldo",
+      header: () => <div className="text-right text-red-500">Saldo em Dívida</div>,
+      cell: ({ row }) => <div className="text-right font-mono text-xs font-bold text-red-500">{formatCurrency(row.original.saldo)}</div>
+    },
+    {
+      accessorKey: "vencimento",
+      header: "Vencimento",
+      cell: ({ row }) => {
+        const isOverdue = new Date(row.original.vencimento) < new Date() && row.original.estado !== 'Pago' && row.original.estado !== 'Cancelado';
+        return (
+          <div className={cn("text-xs font-mono", isOverdue ? "text-red-500 font-bold flex items-center gap-1.5" : "text-gray-500")}>
+            {isOverdue && <CalendarClock size={14} className="shrink-0" />}
+            {new Date(row.original.vencimento).toLocaleDateString('pt-PT')}
+          </div>
+        );
+      }
+    },
+    {
+      accessorKey: "estado",
+      header: () => <div className="text-center">Estado</div>,
+      cell: ({ row }) => {
+        const st = row.original.estado;
+        return (
+          <div className="flex justify-center">
+            <span className={cn(
+              "px-2.5 py-1 text-[10px] font-black uppercase tracking-wider rounded-md text-center",
+              st === 'Pendente' ? "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400" :
+              st === 'Parcial' ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400" :
+              st === 'Pago' ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400" :
+              "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400"
+            )}>
+              {st}
+            </span>
+          </div>
+        );
+      }
+    },
+    {
+      id: "actions",
+      header: () => <div className="text-right">Ação</div>,
+      cell: ({ row }) => (
+        <div className="flex justify-end gap-2">
+          {row.original.saldo > 0 && row.original.estado !== 'Cancelado' && (
+            <button
+              onClick={() => handleOpenPayment(row.original)}
+              className="text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg flex items-center gap-1 transition-all"
+            >
+              <DollarSign size={14} /> Receber
+            </button>
+          )}
+          <button
+            onClick={() => setViewDetails(row.original)}
+            className="text-xs font-bold bg-primary/10 hover:bg-primary/20 text-primary px-3 py-1.5 rounded-lg flex items-center gap-1 transition-all"
+          >
+            <Eye size={14} /> Ver mais
+          </button>
+        </div>
+      )
+    }
+  ], []);
 
   return (
     <div className="space-y-6 animate-fade-in pb-12">
