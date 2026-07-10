@@ -165,7 +165,7 @@ export function DetailedRequisitionView({
         header: "Qtd Apro.",
         cell: ({ row }) => {
           const item = row.original;
-          if (req.estado === "Pendente" && isArmazemOrAdmin) {
+          if (req.estado === "Pendente" || (req.estado === "Aprovada" && isArmazemOrAdmin)) {
             return (
               <input
                 type="number"
@@ -192,7 +192,7 @@ export function DetailedRequisitionView({
         header: "Qtd Dev.",
         cell: ({ row }) => {
           const item = row.original;
-          if (req.estado === "Encerrada" && item.tipo_item === "Material") {
+          if ((req.estado === "Devolvida" || req.estado === "Encerrada") && item.tipo_item === "Material") {
             return <span className="font-bold text-gray-800 dark:text-gray-200">{Number(item.quantidade_devolvida) || 0} un</span>;
           }
           return <span className="text-gray-300">-</span>;
@@ -203,7 +203,7 @@ export function DetailedRequisitionView({
         header: "Qtd Dan/Per",
         cell: ({ row }) => {
           const item = row.original;
-          if (req.estado === "Encerrada" && item.tipo_item === "Material") {
+          if ((req.estado === "Devolvida" || req.estado === "Encerrada" || req.estado === "Devolucao Parcial") && item.tipo_item === "Material") {
             return <span className="font-bold text-rose-500">{(Number(item.quantidade_danificada) || 0) + (Number(item.quantidade_perdida) || 0)} un</span>;
           }
           return <span className="text-gray-300">-</span>;
@@ -211,11 +211,7 @@ export function DetailedRequisitionView({
       });
     }
 
-    cols.push({
-      accessorKey: "observacao",
-      header: "Anotação",
-      cell: ({ row }) => <span className="text-xs text-gray-500 italic">{row.original.observacao || "-"}</span>
-    });
+    
 
     cols.push({
       id: "acoes",
@@ -589,9 +585,27 @@ export function DetailedRequisitionView({
                 </p>
               </div>
               <div className="bg-gray-50 dark:bg-gray-800/40 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Quantidade Entregue</p>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Quantidade Aprovada</p>
                 <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400 font-mono">
-                  {Number(viewItemDetails.quantidade_entregue) || 0} {viewItemDetails.unidade_medida || "un"}
+                  {Number(viewItemDetails.quantidade_aprovada) || 0} {viewItemDetails.unidade_medida || "un"}
+                </p>
+              </div>
+              <div className="bg-gray-50 dark:bg-gray-800/40 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Quantidade Devolvida</p>
+                <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400 font-mono">
+                  {Number(viewItemDetails.quantidade_devolvida) || 0} {viewItemDetails.unidade_medida || "un"}
+                </p>
+              </div>
+              <div className="bg-gray-50 dark:bg-gray-800/40 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Quantidade Danificada</p>
+                <p className="text-sm font-bold text-gray-900 dark:text-white font-mono">
+                  {Number(viewItemDetails.quantidade_danificada) || 0} {viewItemDetails.unidade_medida || "un"}
+                </p>
+              </div>
+              <div className="bg-gray-50 dark:bg-gray-800/40 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Quantidade Perdida</p>
+                <p className="text-sm font-bold text-gray-900 dark:text-white font-mono">
+                  {Number(viewItemDetails.quantidade_perdida) || 0} {viewItemDetails.unidade_medida || "un"}
                 </p>
               </div>
             </div>

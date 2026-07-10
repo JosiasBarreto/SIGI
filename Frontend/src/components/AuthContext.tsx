@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { User } from "../types";
 import apiClient from "../api/client";
+import { configService } from "../services";
 
 interface AuthContextType {
   user: User | null;
@@ -57,6 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
            };
            setUser(mappedUser);
            localStorage.setItem("user", JSON.stringify(mappedUser));
+           configService.get();
          }
          apiClient.defaults.headers.common["Authorization"] = `Bearer ${response.access_token}`;
          return true; // Success
