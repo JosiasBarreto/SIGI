@@ -19,13 +19,17 @@ class ReservaEspacoSchema(Schema):
     espaco_id = fields.Int(required=True)
     data_inicio = fields.DateTime(required=True)
     data_fim = fields.DateTime(required=True)
+    valor = fields.Decimal(required=False, allow_none=True)
     estado = fields.Str(dump_only=True)
 
 class ReservaMaterialSchema(Schema):
+    id = fields.Int(dump_only=True)
     material_id = fields.Int(required=True)
     quantidade = fields.Decimal(required=True)
     data_inicio = fields.DateTime(required=True)
     data_fim = fields.DateTime(required=True)
+    valor_unitario = fields.Decimal(required=False, allow_none=True)
+    subtotal = fields.Decimal(dump_only=True)
     estado = fields.Str(dump_only=True)
 
 class EventoEquipaSchema(Schema):
@@ -37,6 +41,7 @@ class EventoSchema(Schema):
     id = fields.Int(dump_only=True)
     numero = fields.Str(dump_only=True)
     cliente_id = fields.Int(required=True)
+    pedido_id = fields.Int(required=False, allow_none=True)
     tipo_evento = fields.Enum(TipoEvento, by_value=True, required=True)
     titulo = fields.Str(required=True)
     descricao = fields.Str(required=False, allow_none=True)
@@ -47,6 +52,10 @@ class EventoSchema(Schema):
     hora_fim = fields.Time(required=True)
     numero_convidados = fields.Int(required=True)
     estado = fields.Enum(EstadoEvento, by_value=True, dump_only=True)
+    responsavel_id = fields.Int(required=False, allow_none=True)
+    cronograma = fields.Raw(required=False, allow_none=True)
+    checklist = fields.Raw(required=False, allow_none=True)
+    equipamentos = fields.Raw(required=False, allow_none=True)
     observacoes = fields.Str(required=False, allow_none=True)
     
     valor_total = fields.Decimal(dump_only=True)

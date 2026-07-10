@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { productService, clientService, orderService, financialService } from '../services';
+import { productService, clientService, orderService, financialService, documentService } from '../services';
 import { useComercial } from '../hooks';
 import { TipoProduto } from '../enums';
 import { Calculator, ShoppingCart, Search, Plus, Minus, Trash2, CreditCard, Banknote, FileText, CheckCircle, Store, Lock } from 'lucide-react';
@@ -22,19 +22,6 @@ export default function CaixaPOS() {
     queryFn: () => clientService.getAll({ per_page: 1000 }) 
   });
 
-  const products = productsResponse?.items || [];
-  const clients = clientsResponse?.items || [];
-
-  const { data: caixasResponse } = useQuery({
-    queryKey: ["caixas"],
-    queryFn: () => financialService.getAll()
-  });
-
-  const caixas = caixasResponse?.items || caixasResponse || [];
-  const openCaixa = Array.isArray(caixas) ? caixas.find((c: any) => c.estado === 'Aberto') : null;
-  const isCaixaAberta = !!openCaixa;
-  const caixaId = openCaixa?.id || null;
-
   const [cart, setCart] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedClient, setSelectedClient] = useState('');
@@ -55,6 +42,21 @@ export default function CaixaPOS() {
   const [sendContact, setSendContact] = useState('');
   const [invoiceSent, setInvoiceSent] = useState(false);
 
+  const products = productsResponse?.items || [];
+  const clients = clientsResponse?.items || [];
+  const selectedClientObj = clients.find((c: any) => String(c.id) === String(selectedClient));
+  const descontoClientePercent = Number(selectedClientObj?.percentagem_desconto_padrao || 0);
+
+  const { data: caixasResponse } = useQuery({
+    queryKey: ["caixas"],
+    queryFn: () => financialService.getAll()
+  });
+
+  const caixas = caixasResponse?.items || caixasResponse || [];
+  const openCaixa = Array.isArray(caixas) ? caixas.find((c: any) => c.estado === 'Aberto') : null;
+  const isCaixaAberta = !!openCaixa;
+  const caixaId = openCaixa?.id || null;
+
   const posProducts = products;
   const [activeCategory, setActiveCategory] = useState<string>('Tudo');
   
@@ -73,7 +75,8 @@ export default function CaixaPOS() {
   });
 
   const subtotal = cart.reduce((sum, item) => sum + ((item.salePrice || item.preco_venda || 0) * item.qty), 0);
-  const total = subtotal;
+  const descontoAutomatico = subtotal * (descontoClientePercent / 100);
+  const total = Math.max(0, subtotal - descontoAutomatico);
 
   const handleAddToCart = (product: any) => {
     const exists = cart.find(i => i.id === product.id);
@@ -144,6 +147,42 @@ export default function CaixaPOS() {
       const saldoRestante = Math.max(0, total - valorPagoNum);
       const paymentMethodId = paymentMethod === 'Transferência' ? 2 : (paymentMethod === 'TPA / POS' ? 3 : 1);
 
+      const mapCartToVendaItens = (quantidadesDisponiveis?: Record<number, number>) => cart.map(i => {
+        let tipoItem = "Produto";
+        const cat = String(i.category || i.categoria || "").toLowerCase();
+        if (cat.includes("servi") || cat.includes("servic")) {
+          tipoItem = "Servico";
+        }
+        const preco = Number(i.salePrice || i.preco_venda || 0);
+        const itemId = Number(i.id);
+        const quantidade = quantidadesDisponiveis?.[itemId] ?? Number(i.qty);
+        const descontoItem = descontoClientePercent > 0 ? (preco * quantidade * descontoClientePercent / 100) : 0;
+        return {
+          item_id: itemId,
+          item_tipo: tipoItem,
+          descricao: i.name || i.nome || "Item de Venda",
+          preco_unitario: preco,
+          quantidade,
+          desconto: descontoItem
+        };
+      });
+
+      const buildVendaPayload = (converterStockInsuficiente = false, valorPagamento = valorPagoNum) => ({
+        tipo_documento: 'FR',
+        cliente_id: selectedClient ? Number(selectedClient) : undefined,
+        observacoes: 'Venda direta via POS',
+        converter_stock_insuficiente: converterStockInsuficiente,
+        itens: mapCartToVendaItens(),
+        pagamentos: valorPagamento > 0 ? [
+          {
+            forma_pagamento_id: paymentMethodId,
+            valor: valorPagamento,
+            codigo_transferencia: paymentMethod !== 'Dinheiro' ? codigoTransferencia : undefined,
+            emissor: paymentMethod !== 'Dinheiro' ? emissor : undefined
+          }
+        ] : []
+      });
+
       if (isAgendado) {
         const d = new Date();
         const current_date = d.toISOString().split('T')[0];
@@ -152,23 +191,23 @@ export default function CaixaPOS() {
         // Build a strictly valid order creation payload
         const orderPayload = {
           cliente_id: selectedClient ? Number(selectedClient) : null,
-          tipo: "BALCAO",
-          origem: "LOCAL",
+          tipo: "Simples",
+          origem: "Balcao",
           data_entrega: isAgendado ? dataEntrega.split('T')[0] : current_date,
           hora_entrega: isAgendado ? `${dataEntrega.split('T')[1] || '12:00'}:00`.substring(0, 8) : current_time,
-          estado: 'PENDENTE', // Initially PENDENTE, checkout will update state automatically
+          estado: 'Pendente',
           observacoes: `Pedido Agendado. Caixa: #${caixaId}`,
           itens: cart.map(i => {
             let tipoItem = "PRODUTO";
             const cat = String(i.category || i.categoria || "").toLowerCase();
             if (cat.includes("servi") || cat.includes("servic")) {
-              tipoItem = "SERVICO";
+              tipoItem = "Servico";
             }
 
             const produtoId = isNaN(Number(i.id)) ? null : Number(i.id);
 
             return {
-              tipo_item: tipoItem,
+              tipo_item: tipoItem === "PRODUTO" ? "Produto" : tipoItem,
               produto_id: produtoId,
               descricao: i.name || i.nome || "Item de Venda",
               quantidade: Number(i.qty),
@@ -186,36 +225,61 @@ export default function CaixaPOS() {
           pagamento: {
             forma_pagamento_id: paymentMethodId,
             valor: valorPagoNum,
+            codigo_transferencia: paymentMethod !== 'Dinheiro' ? codigoTransferencia : null,
+            emissor: paymentMethod !== 'Dinheiro' ? emissor : null,
             observacoes: `Checkout via Caixa/POS. Pedido ${isAgendado ? 'Agendado' : 'Imediato'}.`
           }
         });
         setCreatedVenda(vendaRes);
       } else {
-        // Venda Direta (Imediato & Simples)
-        const vendaRes = await createVenda.mutateAsync({
-          tipo_documento: 'FR',
-          cliente_id: selectedClient ? Number(selectedClient) : undefined,
-          observacoes: 'Venda direta via POS',
-          itens: cart.map(i => {
-            let tipoItem = "Produto";
-            const cat = String(i.category || i.categoria || "").toLowerCase();
-            if (cat.includes("servi") || cat.includes("servic")) {
-              tipoItem = "Servico";
-            }
-            return {
-              item_id: Number(i.id),
-              item_tipo: tipoItem,
-              descricao: i.name || i.nome || "Item de Venda",
-              preco_unitario: Number(i.salePrice || i.preco_venda || 0),
-              quantidade: Number(i.qty),
-              desconto: 0
-            };
-          }),
-          pagamentos: [
-            { forma_pagamento_id: paymentMethodId, valor: valorPagoNum }
-          ]
-        });
+        let vendaRes: any;
+        try {
+          vendaRes = await createVenda.mutateAsync(buildVendaPayload(false));
+        } catch (err: any) {
+          if (err?.code !== 'STOCK_INSUFICIENTE' && err?.error_code !== 'CONFLICT_409') {
+            throw err;
+          }
+
+          const itens = err?.itens || [];
+          const quantidadesDisponiveis = itens.reduce((acc: Record<number, number>, item: any) => {
+            acc[Number(item.produto_id)] = Number(item.disponivel || 0);
+            return acc;
+          }, {});
+          const totalVendaImediata = mapCartToVendaItens(quantidadesDisponiveis).reduce((sum, item) => {
+            return sum + Math.max(0, (Number(item.preco_unitario) * Number(item.quantidade)) - Number(item.desconto || 0));
+          }, 0);
+          const pagamentoVendaImediata = Math.min(valorPagoNum, totalVendaImediata);
+          const linhas = itens.map((i: any) => `
+            <tr>
+              <td class="text-left py-1">${i.descricao}</td>
+              <td class="text-right py-1">${i.disponivel}</td>
+              <td class="text-right py-1">${i.em_falta}</td>
+            </tr>
+          `).join('');
+
+          const result = await Swal.fire({
+            title: 'Stock insuficiente',
+            html: `
+              <p class="text-sm text-gray-600 mb-3">Deseja vender a quantidade disponível e converter a diferença num Pedido?</p>
+              <p class="text-xs text-gray-500 mb-3">O pagamento imediato será limitado a ${formatCurrency(pagamentoVendaImediata)}.</p>
+              <table class="w-full text-xs">
+                <thead><tr><th class="text-left">Produto</th><th class="text-right">Disponível</th><th class="text-right">Pedido</th></tr></thead>
+                <tbody>${linhas}</tbody>
+              </table>
+            `,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Converter',
+            cancelButtonText: 'Cancelar'
+          });
+
+          if (!result.isConfirmed) return;
+          vendaRes = await createVenda.mutateAsync(buildVendaPayload(true, pagamentoVendaImediata));
+        }
         setCreatedVenda(vendaRes);
+        if (vendaRes?.pedido_convertido_id) {
+          toast.info(`Pedido #${vendaRes.pedido_convertido_id} criado para a quantidade em falta.`);
+        }
       }
 
       // Pre-fill contact details if client is selected
@@ -249,6 +313,58 @@ export default function CaixaPOS() {
     setSendContact('');
     setInvoiceSent(false);
     setStep(1);
+  };
+
+  const printThermalReceipt = (venda: any) => {
+    const printWindow = window.open('', '_blank', 'width=360,height=640');
+    if (!printWindow) {
+      toast.error('Ative pop-ups para imprimir o recibo.');
+      return;
+    }
+    const empresa = JSON.parse(localStorage.getItem('sigi_config') || '{}');
+    const linhas = cart.map(item => `
+      <tr>
+        <td>${Number(item.qty)}x ${item.name || item.nome}</td>
+        <td style="text-align:right">${formatCurrency((Number(item.salePrice || item.preco_venda || 0) * Number(item.qty)))}</td>
+      </tr>
+    `).join('');
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Recibo ${venda.numero_documento || venda.numero || venda.id}</title>
+          <style>
+            body { width: 280px; font-family: monospace; font-size: 12px; color: #111; margin: 0; padding: 10px; }
+            h1 { font-size: 16px; text-align: center; margin: 0 0 4px; }
+            .center { text-align: center; }
+            .line { border-top: 1px dashed #111; margin: 8px 0; }
+            table { width: 100%; border-collapse: collapse; }
+            td { padding: 2px 0; vertical-align: top; }
+            .total { font-size: 15px; font-weight: 700; }
+          </style>
+        </head>
+        <body>
+          <h1>${empresa.empresa || empresa.nome || 'Sabor Imbatível'}</h1>
+          <div class="center">NIF: ${empresa.nif || 'N/D'}</div>
+          <div class="center">${empresa.telefone || ''}</div>
+          <div class="line"></div>
+          <div>Doc: ${venda.numero_documento || venda.numero || venda.id}</div>
+          <div>Data: ${new Date().toLocaleString('pt-PT')}</div>
+          <div>Cliente: ${selectedClientObj?.nome || 'Consumidor Final'}</div>
+          <div class="line"></div>
+          <table>${linhas}</table>
+          <div class="line"></div>
+          <table>
+            <tr><td>Subtotal</td><td style="text-align:right">${formatCurrency(subtotal)}</td></tr>
+            <tr><td>Desconto</td><td style="text-align:right">-${formatCurrency(descontoAutomatico)}</td></tr>
+            <tr class="total"><td>Total</td><td style="text-align:right">${formatCurrency(total)}</td></tr>
+          </table>
+          <div class="line"></div>
+          <div class="center">Obrigado pela preferência!</div>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
   };
 
   const abrirMutation = useMutation({
@@ -525,6 +641,18 @@ export default function CaixaPOS() {
             </div>
 
             <div className="p-4 border-t border-gray-200 dark:border-border-dark shrink-0 bg-gray-50 dark:bg-gray-800/30">
+              <div className="space-y-1 mb-3 text-sm">
+                <div className="flex justify-between text-gray-500">
+                  <span>Subtotal</span>
+                  <span>{formatCurrency(subtotal)}</span>
+                </div>
+                {descontoAutomatico > 0 && (
+                  <div className="flex justify-between text-error">
+                    <span>Desconto cliente ({descontoClientePercent}%)</span>
+                    <span>- {formatCurrency(descontoAutomatico)}</span>
+                  </div>
+                )}
+              </div>
               <div className="flex justify-between items-center mb-4">
                 <span className="text-gray-600 dark:text-gray-400 font-medium tracking-wide">TOTAL A PAGAR</span>
                 <span className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">{formatCurrency(total)}</span>
@@ -700,6 +828,22 @@ export default function CaixaPOS() {
 
             {createdVenda && (
               <div className="w-full p-4 mb-6 border border-gray-150 dark:border-border-dark bg-gray-50 dark:bg-gray-900/40 rounded-xl text-left">
+                <div className="grid grid-cols-2 gap-2 mb-4">
+                  <button
+                    type="button"
+                    onClick={() => documentService.vendaPdf(createdVenda.id).catch((err) => toast.error(err.message || 'Erro ao abrir PDF.'))}
+                    className="px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors"
+                  >
+                    PDF oficial
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => printThermalReceipt(createdVenda)}
+                    className="px-3 py-2 rounded-lg bg-gray-900 hover:bg-gray-800 text-white text-xs font-bold transition-colors"
+                  >
+                    Recibo térmico
+                  </button>
+                </div>
                 <h3 className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-3">Enviar Fatura ao Cliente</h3>
                 
                 {invoiceSent ? (

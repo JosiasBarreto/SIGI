@@ -12,5 +12,6 @@ class Cliente(BaseModel):
     email = db.Column(db.String(100), nullable=True)
     morada = db.Column(db.Text, nullable=True)
     observacoes = db.Column(db.Text, nullable=True)
+    percentagem_desconto_padrao = db.Column(db.Numeric(5, 2), default=0)
     
     pedidos = db.relationship('Pedido', backref='cliente', lazy=True)

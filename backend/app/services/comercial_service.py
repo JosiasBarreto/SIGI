@@ -5,6 +5,12 @@ from app.repositories.comercial_repos import VendaRepository, TaxaIVARepository,
 from app.services.audit_service import AuditService
 from app.models.produto import Produto, TipoProduto
 from app.services.stock_service import StockService
+from app.models.cliente import Cliente
+
+class StockInsuficienteError(ValueError):
+    def __init__(self, itens):
+        self.itens = itens
+        super().__init__("Stock insuficiente para concluir a venda.")
 
 class ComercialService:
     def __init__(self):
@@ -29,12 +35,101 @@ class ComercialService:
         # Formatar
         return f"{tipo_documento} {ano_atual}/{numero:06d}"
 
+    def _enum_value(self, value):
+        return value.value if hasattr(value, 'value') else value
+
+    def _cliente_desconto_padrao(self, cliente_id):
+        if not cliente_id:
+            return 0.0
+        cliente = Cliente.query.get(cliente_id)
+        return float(cliente.percentagem_desconto_padrao or 0) if cliente else 0.0
+
+    def _preparar_venda_com_stock(self, data):
+        itens_venda = []
+        itens_pedido = []
+        insuficientes = []
+
+        for item in data.get('itens', []):
+            item_tipo = item.get('item_tipo', 'Produto')
+            if item_tipo != 'Produto' or not item.get('item_id'):
+                itens_venda.append(item)
+                continue
+
+            produto = Produto.query.get(item['item_id'])
+            if not produto:
+                itens_venda.append(item)
+                continue
+
+            produto_tipo = self._enum_value(produto.tipo)
+            if produto_tipo == TipoProduto.CONSUMIVEL.value:
+                raise ValueError(f"O produto '{produto.nome}' é consumível e não pode ser vendido.")
+
+            quantidade = float(item.get('quantidade') or 0)
+            stock_atual = max(0.0, float(produto.stock_atual or 0))
+            if quantidade <= stock_atual:
+                itens_venda.append(item)
+                continue
+
+            em_falta = quantidade - stock_atual
+            preco_unitario = float(item.get('preco_unitario') or produto.preco_venda or 0)
+            insuficientes.append({
+                'produto_id': produto.id,
+                'descricao': produto.nome,
+                'solicitado': quantidade,
+                'disponivel': stock_atual,
+                'em_falta': em_falta,
+                'preco_unitario': preco_unitario,
+                'taxa_iva_id': item.get('taxa_iva_id')
+            })
+
+            if stock_atual > 0:
+                item_venda = dict(item)
+                item_venda['quantidade'] = stock_atual
+                itens_venda.append(item_venda)
+
+            itens_pedido.append({
+                'tipo_item': 'Produto Acabado' if produto_tipo == TipoProduto.ACABADO.value else 'Produto Revenda',
+                'produto_id': produto.id,
+                'descricao': produto.nome,
+                'quantidade': em_falta,
+                'preco_unitario': preco_unitario
+            })
+
+        return itens_venda, itens_pedido, insuficientes
+
+    def _criar_pedido_stock_insuficiente(self, venda_data, itens_pedido, user_id):
+        if not itens_pedido:
+            return None
+        from app.services.pedido_service import PedidoService
+        from app.models.pedido import TipoPedido, OrigemPedido, EstadoPedido
+
+        pedido_data = {
+            'cliente_id': venda_data.get('cliente_id'),
+            'tipo': TipoPedido.SIMPLES,
+            'origem': OrigemPedido.BALCAO,
+            'estado': EstadoPedido.PENDENTE,
+            'observacoes': f"Gerado automaticamente pelo POS por stock insuficiente. {venda_data.get('observacoes') or ''}".strip(),
+            'itens': itens_pedido
+        }
+        pedido, error = PedidoService().create_pedido(pedido_data, user_id, auto_commit=False)
+        if error:
+            raise ValueError(error)
+        return pedido
+
     def create_venda(self, data: dict, user_id: int):
         # Transaction is expected to be managed by the controller, but we can assume db.session scope
         tipo_doc_str = data.get('tipo_documento')
         tipo_documento = TipoDocumento(tipo_doc_str)
         
         numero_documento = self.generate_numero_documento(tipo_documento.value)
+
+        itens_venda, itens_pedido, insuficientes = self._preparar_venda_com_stock(data)
+        if insuficientes and not data.get('converter_stock_insuficiente'):
+            raise StockInsuficienteError(insuficientes)
+        if not itens_venda and itens_pedido:
+            raise ValueError("Não existe stock disponível para venda imediata. Crie um pedido para a quantidade em falta.")
+
+        pedido_convertido = self._criar_pedido_stock_insuficiente(data, itens_pedido, user_id) if data.get('converter_stock_insuficiente') else None
         
         venda = Venda(
             numero_documento=numero_documento,
@@ -56,18 +151,14 @@ class ComercialService:
         base_tributavel = 0.0
         total_iva = 0.0
 
-        for item_data in data.get('itens', []):
-            if item_data.get('item_tipo', 'Produto') == 'Produto' and item_data.get('item_id'):
-                produto = Produto.query.get(item_data['item_id'])
-                if produto and produto.tipo == TipoProduto.CONSUMIVEL.value:
-                    db.session.rollback()
-                    raise ValueError(f"O produto '{produto.nome}' é consumível e não pode ser vendido.")
-
+        desconto_cliente_percentual = self._cliente_desconto_padrao(data.get('cliente_id'))
+        for item_data in itens_venda:
             preco_unit = float(item_data['preco_unitario'])
             qtd = float(item_data['quantidade'])
-            desc = float(item_data.get('desconto', 0))
-            
             sub = preco_unit * qtd
+            desc = float(item_data.get('desconto', 0))
+            if desc <= 0 and desconto_cliente_percentual > 0:
+                desc = sub * (desconto_cliente_percentual / 100.0)
             total_item = sub - desc
             
             taxa_iva = None
@@ -121,10 +212,16 @@ class ComercialService:
             self.audit_service.log_action(
                 user_id=user_id,
                 action='CREATE_VENDA',
-                module='COMERCIAL',
-                ip_address='',
-                details={'venda_id': venda.id, 'numero': venda.numero_documento}
+                entidade='vendas',
+                record_id=venda.id,
+                new_values={
+                    'numero': venda.numero_documento,
+                    'pedido_convertido_id': pedido_convertido.id if pedido_convertido else None
+                },
+                modulo='COMERCIAL'
             )
+            venda.pedido_convertido = pedido_convertido
+            venda.stock_insuficiente_convertido = insuficientes
             return venda
         except Exception as e:
             db.session.rollback()
@@ -170,8 +267,8 @@ class ComercialService:
             numero_documento=numero_doc,
             tipo_documento='FR',
             cliente_id=evento.cliente_id,
-            # We don't have evento_id in Venda model natively, we use observacoes to link it or if it exists, use it.
-            # Assuming there's no evento_id, we will put it in observacoes.
+            pedido_id=evento.pedido_id,
+            evento_id=evento.id,
             subtotal=evento.valor_total,
             desconto_total=0,
             base_tributavel=evento.valor_total,
@@ -185,9 +282,74 @@ class ComercialService:
         )
         db.session.add(venda)
         db.session.flush()
+
+        subtotal_evento = 0.0
+        for servico in evento.servicos:
+            valor = float(servico.subtotal or 0)
+            db.session.add(VendaItem(
+                venda_id=venda.id,
+                item_tipo='Servico',
+                item_id=servico.id,
+                descricao=f"Serviço de Evento: {servico.descricao or self._enum_value(servico.tipo)}",
+                quantidade=servico.quantidade,
+                preco_unitario=servico.valor_unitario,
+                subtotal=valor,
+                total=valor
+            ))
+            subtotal_evento += valor
+
+        for reserva_espaco in evento.reservas_espaco:
+            valor = float(reserva_espaco.valor or 0)
+            if valor > 0:
+                db.session.add(VendaItem(
+                    venda_id=venda.id,
+                    item_tipo='Espaco',
+                    item_id=reserva_espaco.espaco_id,
+                    descricao=f"Reserva de Espaço #{reserva_espaco.espaco_id}",
+                    quantidade=1,
+                    preco_unitario=valor,
+                    subtotal=valor,
+                    total=valor
+                ))
+                subtotal_evento += valor
+
+        for res in evento.reservas_material:
+            valor = float(res.subtotal or 0)
+            db.session.add(VendaItem(
+                venda_id=venda.id,
+                item_tipo='Material',
+                item_id=res.material_id,
+                descricao=f"Reserva de Material: {res.material.nome if res.material else 'Material'}",
+                quantidade=res.quantidade,
+                preco_unitario=res.valor_unitario or 0,
+                subtotal=valor,
+                total=valor
+            ))
+            subtotal_evento += valor
+
+        if evento.pedido:
+            for item in evento.pedido.itens:
+                valor = float(item.subtotal or 0)
+                db.session.add(VendaItem(
+                    venda_id=venda.id,
+                    item_tipo=item.tipo_item.value if hasattr(item.tipo_item, 'value') else item.tipo_item,
+                    item_id=item.produto_id,
+                    descricao=item.descricao or (item.produto.nome if item.produto else "Produto do pedido"),
+                    quantidade=item.quantidade,
+                    preco_unitario=item.preco_unitario,
+                    subtotal=valor,
+                    total=valor
+                ))
+                subtotal_evento += valor
+
+        venda.subtotal = subtotal_evento
+        venda.base_tributavel = subtotal_evento
+        venda.total = subtotal_evento
+        venda.saldo = subtotal_evento - valor_pagar
+        venda.estado = 'Pago' if venda.saldo <= 0 else 'Parcialmente Pago'
         
         # Add itens based on event services
-        for servico in evento.servicos:
+        for servico in []:
             v_item = VendaItem(
                 venda_id=venda.id,
                 item_tipo='Servico',
@@ -201,7 +363,7 @@ class ComercialService:
             db.session.add(v_item)
             
         # Add items based on equipment/material
-        for res in evento.reservas_material:
+        for res in []:
             v_item = VendaItem(
                 venda_id=venda.id,
                 item_tipo='Material',
@@ -312,16 +474,18 @@ class ComercialService:
         if not caixa:
             raise ValueError("Não existe nenhum caixa aberto no momento.")
 
-        pagamento = Pagamento(
-            venda_id=venda.id,
-            valor=valor_entregue,
-            troco=troco if hasattr(Pagamento, 'troco') else 0, # Se a model Pagamento não tiver troco, evitamos crash
-            forma_pagamento_id=data.get('forma_pagamento_id'),
-            referencia=data.get('referencia'),
-            observacoes=f"Pagamento. Troco: {troco}. " + data.get('observacoes', ''),
-            estado=EstadoPagamento.PAGO,
-            data_pagamento=datetime.utcnow()
-        )
+        pagamento_data = {
+            'venda_id': venda.id,
+            'valor': valor_entregue,
+            'forma_pagamento_id': data.get('forma_pagamento_id'),
+            'referencia': data.get('referencia'),
+            'observacoes': f"Pagamento. Troco: {troco}. " + data.get('observacoes', ''),
+            'estado': EstadoPagamento.PAGO,
+            'data_pagamento': datetime.utcnow()
+        }
+        if hasattr(Pagamento, 'troco'):
+            pagamento_data['troco'] = troco
+        pagamento = Pagamento(**pagamento_data)
         
         venda.valor_pago = float(venda.valor_pago) + valor_pagar_real
         venda.saldo = float(venda.total) - float(venda.valor_pago)
@@ -351,9 +515,7 @@ class ComercialService:
             except Exception as e:
                 db.session.rollback()
                 raise e
-        else:
-            self.audit_service.log_action(user_id, 'ADD_PAGAMENTO', 'vendas', venda.id, new_values={'valor': valor_pagar_real, 'troco': troco})
-            return pagamento
+        return pagamento
 
     def get_todas_taxas_iva(self):
         return self.iva_repo.get_all()

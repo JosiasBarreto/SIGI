@@ -262,10 +262,46 @@ export const orderService = {
   }
 };
 
+export const documentService = {
+  async openAuthenticated(path: string, filename: string): Promise<void> {
+    const baseUrl = String(apiClient.defaults.baseURL || '').replace(/\/$/, '');
+    const token = localStorage.getItem('access_token');
+    const response = await fetch(`${baseUrl}${path}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
+    });
+    if (!response.ok) {
+      throw new Error(`Erro ao gerar documento (${response.status})`);
+    }
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.target = '_blank';
+    link.rel = 'noopener';
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 30000);
+  },
+  vendaPdf(id: string | number) {
+    return this.openAuthenticated(`/v1/vendas/${id}/pdf`, `venda_${id}.pdf`);
+  },
+  pedidoPdf(id: string | number) {
+    return this.openAuthenticated(`/v1/pedidos/${id}/pdf`, `pedido_${id}.pdf`);
+  },
+  pedidoRecibo(id: string | number) {
+    return this.openAuthenticated(`/v1/pedidos/${id}/recibo`, `recibo_pedido_${id}.pdf`);
+  },
+  eventoDocumento(id: string | number, tipo: 'proforma' | 'pdf' | 'word' = 'proforma') {
+    return this.openAuthenticated(`/v1/eventos/${id}/documento/${tipo}`, `evento_${id}_${tipo}.${tipo === 'word' ? 'docx' : 'pdf'}`);
+  }
+};
+
 export const eventService = {
   ...createService<EventoDTO>('/v1/eventos', 'events'),
-  faturar: async (id: string | number): Promise<any> => {
-    return apiClient.post<any, any>(`/v1/eventos/${id}/faturar`, {});
+  faturar: async (id: string | number, pagamento?: { valor: number; forma_pagamento_id: number; codigo_transferencia?: string | null; emissor?: string | null; observacoes?: string }): Promise<any> => {
+    return apiClient.post<any, any>(`/v1/eventos/${id}/faturar`, { pagamento: pagamento || {} });
   }
 };
 
@@ -544,7 +580,7 @@ export const vendaService = {
       return apiClient.post<any, any>('/v1/comercial/vendas', venda);
     }
   },
-  registrarPagamento: async (vendaId: string | number, param: { valor: number; metodo_pagamento: string; observacao?: string }): Promise<any> => {
+  registrarPagamento: async (vendaId: string | number, param: { valor: number; metodo_pagamento: string; observacao?: string; codigo_transferencia?: string | null; emissor?: string | null; referencia?: string | null }): Promise<any> => {
     let forma_pagamento_id = 1; // Dinheiro
     if (param.metodo_pagamento === 'Transferência') forma_pagamento_id = 2;
     if (param.metodo_pagamento === 'TPA / POS' || param.metodo_pagamento === 'Multicaixa') forma_pagamento_id = 3;
@@ -553,13 +589,19 @@ export const vendaService = {
       return await apiClient.post<any, any>(`/v1/vendas/${vendaId}/pagamentos`, {
         valor: Number(param.valor),
         forma_pagamento_id,
-        observacoes: param.observacao
+        observacoes: param.observacao,
+        codigo_transferencia: param.codigo_transferencia,
+        emissor: param.emissor,
+        referencia: param.referencia
       });
     } catch (err) {
       return apiClient.post<any, any>(`/v1/comercial/vendas/${vendaId}/pagamentos`, {
         valor: Number(param.valor),
         forma_pagamento_id,
-        observacoes: param.observacao
+        observacoes: param.observacao,
+        codigo_transferencia: param.codigo_transferencia,
+        emissor: param.emissor,
+        referencia: param.referencia
       });
     }
   },

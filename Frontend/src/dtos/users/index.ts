@@ -25,4 +25,5 @@ export interface ClienteDTO {
   email?: string;
   morada?: string;
   observacoes?: string;
+  percentagem_desconto_padrao?: string | number;
 }

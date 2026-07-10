@@ -13,9 +13,10 @@ export interface VendaRequest {
   cliente_id?: number;
   observacoes?: string;
   itens: VendaItemRequest[];
-  pagamentos?: { forma_pagamento_id: number; valor: number }[];
+  pagamentos?: import('../finance').PagamentoRequest[];
   valor_pago?: number;
   forma_pagamento_id?: number; 
+  converter_stock_insuficiente?: boolean;
 }
 export interface VendaItemResponse {
   id: number;
@@ -28,6 +29,9 @@ export interface VendaItemResponse {
 }
 export interface VendaResponse {
   id: number;
+  numero_documento?: string;
+  pedido_convertido_id?: number | null;
+  stock_insuficiente_convertido?: any[];
   numero_fatura: string;
   tipo_documento: string;
   estado: string;

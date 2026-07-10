@@ -3,6 +3,24 @@ from app.core.database import db
 from flask_migrate import Migrate
 from app.websocket.socket_manager import socketio
 from sqlalchemy import text
+from sqlalchemy.exc import OperationalError
+import time
+
+
+def is_concurrent_ddl_error(exc):
+    return "being modified by concurrent DDL statement" in str(exc) or "(1684" in str(exc)
+
+
+def run_with_ddl_retry(action, label, attempts=12, delay=2):
+    for attempt in range(1, attempts + 1):
+        try:
+            return action()
+        except OperationalError as exc:
+            db.session.rollback()
+            if not is_concurrent_ddl_error(exc) or attempt == attempts:
+                raise
+            print(f"[WARN] {label} aguardando DDL concorrente no MySQL ({attempt}/{attempts})...")
+            time.sleep(delay)
 
 app = create_app()
 migrate = Migrate(app, db)
@@ -19,7 +37,7 @@ with app.app_context():
     from app.models.comercial import TaxaIVA, SerieDocumento, Venda, VendaItem, FechoDiario
     from app.models.pedido import Pedido
     from app.models.item_pedido import ItemPedido
-    from app.models.evento import Espaco, Evento, EventoServico, ReservaEspaco, ReservaMaterial, EventoEquipa
+    from app.models.evento import Espaco, Evento, EventoServico, ReservaEspaco, ReservaMaterial, EventoEquipa, HistoricoReservaMaterial
     from app.models.ficha_tecnica import FichaTecnica, FichaTecnicaItem
     from app.models.financeiro import FormaPagamento, Pagamento, ContaReceber, ContaPagar, Receita, CentroCusto, Despesa
     from app.models.logistica import Motorista, Viatura, Entrega, ReservaViatura, OcorrenciaLogistica, ChecklistEntrega
@@ -40,7 +58,7 @@ with app.app_context():
     from app.models.empresa import Empresa
 
     # Recreate any missing tables (like movimentos_stock or movimentacoes_armazem)
-    db.create_all()
+    run_with_ddl_retry(db.create_all, "db.create_all")
 
     # Seed default shifts
     try:
@@ -51,10 +69,10 @@ with app.app_context():
             shift_noite = Turno(nome="Noite", hora_inicio=time(22, 0), hora_fim=time(6, 0))
             db.session.add_all([shift_manha, shift_tarde, shift_noite])
             db.session.commit()
-            print("✓ Seeded default shifts (Manhã, Tarde, Noite).")
+            print("[OK] Seeded default shifts (Manha, Tarde, Noite).")
     except Exception as e:
         db.session.rollback()
-        print("⚠ Could not seed default shifts:", e)
+        print("[WARN] Could not seed default shifts:", e)
 
     # Seed default payment methods
     try:
@@ -62,46 +80,46 @@ with app.app_context():
             for m in ['Dinheiro', 'Transferência', 'POS', 'Mixto']:
                 db.session.add(FormaPagamento(nome=m, ativo=True))
             db.session.commit()
-            print("✓ Seeded default payment methods.")
+            print("[OK] Seeded default payment methods.")
     except Exception as e:
         db.session.rollback()
-        print("⚠ Could not seed default payment methods:", e)
+        print("[WARN] Could not seed default payment methods:", e)
 
     # Safely alter the ENUM column for 'tipo' on 'produtos' table to ensure 'Consumivel' is supported
     try:
         db.session.execute(text("ALTER TABLE produtos MODIFY COLUMN tipo ENUM('ACABADO', 'REVENDA', 'CONSUMIVEL') NOT NULL;"))
         db.session.commit()
-        print("✓ Updated enum column 'tipo' on table 'produtos' successfully.")
+        print("[OK] Updated enum column 'tipo' on table 'produtos' successfully.")
     except Exception as e:
         db.session.rollback()
-        print("⚠ Could not update enum column 'tipo' on table 'produtos' (might not be MySQL or column already updated):", e)
+        print("[WARN] Could not update enum column 'tipo' on table 'produtos' (might not be MySQL or column already updated):", e)
 
     # Ensure columns taxa_iva_id and unidade_medida_id exist in 'produtos' table
     try:
         db.session.execute(text("ALTER TABLE produtos ADD COLUMN taxa_iva_id INT NULL;"))
         db.session.commit()
-        print("✓ Column 'taxa_iva_id' verified/added on table 'produtos'.")
+        print("[OK] Column 'taxa_iva_id' verified/added on table 'produtos'.")
     except Exception as e:
         db.session.rollback()
     
     try:
         db.session.execute(text("ALTER TABLE produtos ADD COLUMN unidade_medida_id INT NULL;"))
         db.session.commit()
-        print("✓ Column 'unidade_medida_id' verified/added on table 'produtos'.")
+        print("[OK] Column 'unidade_medida_id' verified/added on table 'produtos'.")
     except Exception as e:
         db.session.rollback()
 
     try:
         db.session.execute(text("ALTER TABLE produtos ADD COLUMN data_validade DATE NULL;"))
         db.session.commit()
-        print("✓ Column 'data_validade' verified/added on table 'produtos'.")
+        print("[OK] Column 'data_validade' verified/added on table 'produtos'.")
     except Exception as e:
         db.session.rollback()
 
     try:
         db.session.execute(text("ALTER TABLE materiais ADD COLUMN unidade_medida_id INT NULL;"))
         db.session.commit()
-        print("✓ Column 'unidade_medida_id' verified/added on table 'materiais'.")
+        print("[OK] Column 'unidade_medida_id' verified/added on table 'materiais'.")
     except Exception as e:
         db.session.rollback()
 
@@ -109,26 +127,37 @@ with app.app_context():
     try:
         db.session.execute(text("ALTER TABLE produtos ADD CONSTRAINT fk_produto_iva FOREIGN KEY (taxa_iva_id) REFERENCES taxas_iva(id);"))
         db.session.commit()
-        print("✓ Foreign key 'fk_produto_iva' verified/added on table 'produtos'.")
+        print("[OK] Foreign key 'fk_produto_iva' verified/added on table 'produtos'.")
     except Exception as e:
         db.session.rollback()
 
     try:
         db.session.execute(text("ALTER TABLE produtos ADD CONSTRAINT fk_produto_unidade FOREIGN KEY (unidade_medida_id) REFERENCES unidades_medida(id);"))
         db.session.commit()
-        print("✓ Foreign key 'fk_produto_unidade' verified/added on table 'produtos'.")
+        print("[OK] Foreign key 'fk_produto_unidade' verified/added on table 'produtos'.")
     except Exception as e:
         db.session.rollback()
 
     try:
         db.session.execute(text("ALTER TABLE materiais ADD CONSTRAINT fk_material_unidade FOREIGN KEY (unidade_medida_id) REFERENCES unidades_medida(id);"))
         db.session.commit()
-        print("✓ Foreign key 'fk_material_unidade' verified/added on table 'materiais'.")
+        print("[OK] Foreign key 'fk_material_unidade' verified/added on table 'materiais'.")
     except Exception as e:
         db.session.rollback()
 
     # Safely alter pagamentos and movimentos_caixa and caixas for new columns
     for table, col, col_type in [
+        ('clientes', 'percentagem_desconto_padrao', 'DECIMAL(5,2) DEFAULT 0'),
+        ('pedidos', 'evento_id', 'INT NULL'),
+        ('eventos', 'pedido_id', 'INT NULL'),
+        ('eventos', 'responsavel_id', 'INT NULL'),
+        ('eventos', 'cronograma', 'JSON NULL'),
+        ('eventos', 'checklist', 'JSON NULL'),
+        ('eventos', 'equipamentos', 'JSON NULL'),
+        ('vendas', 'evento_id', 'INT NULL'),
+        ('reservas_espacos', 'valor', 'DECIMAL(12,2) DEFAULT 0'),
+        ('reservas_materiais', 'valor_unitario', 'DECIMAL(12,2) DEFAULT 0'),
+        ('reservas_materiais', 'subtotal', 'DECIMAL(12,2) DEFAULT 0'),
         ('pagamentos', 'codigo_transferencia', 'VARCHAR(100)'),
         ('pagamentos', 'emissor', 'VARCHAR(100)'),
         ('movimentos_caixa', 'codigo_transferencia', 'VARCHAR(100)'),
@@ -148,7 +177,7 @@ with app.app_context():
         try:
             db.session.execute(text(f"ALTER TABLE {table} ADD COLUMN {col} {col_type} NULL;"))
             db.session.commit()
-            print(f"✓ Column '{col}' added to table '{table}'.")
+            print(f"[OK] Column '{col}' added to table '{table}'.")
         except Exception as e:
             db.session.rollback()
 
@@ -158,10 +187,33 @@ with app.app_context():
         db.session.execute(text("ALTER TABLE movimentacoes_armazem MODIFY COLUMN tipo VARCHAR(50);"))
         db.session.execute(text("ALTER TABLE movimentacoes_armazem MODIFY COLUMN entidade_tipo VARCHAR(50);"))
         db.session.commit()
-        print("✓ Updated columns in movimentacoes_armazem to VARCHAR(50).")
+        print("[OK] Updated columns in movimentacoes_armazem to VARCHAR(50).")
     except Exception as e:
         db.session.rollback()
 
+    for sql in [
+        "ALTER TABLE pedidos ADD CONSTRAINT fk_pedido_evento FOREIGN KEY (evento_id) REFERENCES eventos(id);",
+        "ALTER TABLE eventos ADD CONSTRAINT fk_evento_pedido FOREIGN KEY (pedido_id) REFERENCES pedidos(id);",
+        "ALTER TABLE vendas ADD CONSTRAINT fk_venda_evento FOREIGN KEY (evento_id) REFERENCES eventos(id);",
+    ]:
+        try:
+            db.session.execute(text(sql))
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+
+    for sql in [
+        "ALTER TABLE pedidos MODIFY COLUMN estado ENUM('Pendente','Agendado','Confirmado','Em Producao','Pronto','Entregue','Concluido','Cancelado') DEFAULT 'Pendente';",
+        "ALTER TABLE itens_pedido MODIFY COLUMN tipo_item ENUM('Produto','Produto Acabado','Produto Revenda','Servico','Aluguer','Material') NOT NULL;",
+        "ALTER TABLE eventos MODIFY COLUMN estado ENUM('Agendado','Confirmado','Em Preparacao','Em Execucao','Finalizado','Concluido','Cancelado') DEFAULT 'Agendado';",
+        "ALTER TABLE materiais MODIFY COLUMN estado ENUM('Disponivel','Reservado','Em Uso','Devolvido','Danificado','Manutencao','Cancelado') DEFAULT 'Disponivel';",
+    ]:
+        try:
+            db.session.execute(text(sql))
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+
 if __name__ == '__main__':
     # Em ambiente de desenvolvimento
-    socketio.run(app, host='0.0.0.0', port=8000, debug=True)
+    socketio.run(app, host='0.0.0.0', port=8000, debug=True, allow_unsafe_werkzeug=True)

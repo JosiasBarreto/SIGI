@@ -14,6 +14,7 @@ class OrigemPedido(str, Enum):
     EMAIL = 'Email'
 
 class EstadoPedido(str, Enum):
+    PENDENTE = 'Pendente'
     AGENDADO = 'Agendado'
     CONFIRMADO = 'Confirmado'
     EM_PRODUCAO = 'Em Producao'
@@ -38,6 +39,7 @@ class Pedido(BaseModel):
 
     numero = db.Column(db.String(50), unique=True, nullable=False)
     cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id'), nullable=True)
+    evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=True)
     tipo = db.Column(db.Enum(TipoPedido), nullable=False)
     origem = db.Column(db.Enum(OrigemPedido), nullable=False)
     
@@ -45,7 +47,7 @@ class Pedido(BaseModel):
     data_entrega = db.Column(db.Date, nullable=True)
     hora_entrega = db.Column(db.Time, nullable=True)
     
-    estado = db.Column(db.Enum(EstadoPedido), default=EstadoPedido.AGENDADO)
+    estado = db.Column(db.Enum(EstadoPedido), default=EstadoPedido.PENDENTE)
     observacoes = db.Column(db.Text, nullable=True)
     justificativa_cancelamento = db.Column(db.Text, nullable=True)
     
@@ -57,3 +59,4 @@ class Pedido(BaseModel):
     estado_pagamento = db.Column(db.Enum(EstadoPagamento), default=EstadoPagamento.PENDENTE)
     
     itens = db.relationship('ItemPedido', backref='pedido', lazy='selectin', cascade="all, delete-orphan")
+    evento = db.relationship('Evento', foreign_keys=[evento_id], post_update=True, lazy='selectin')

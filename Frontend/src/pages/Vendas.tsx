@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { vendaService, clientService } from '../services';
+import { vendaService, clientService, documentService } from '../services';
 import { useComercial } from '../hooks';
 import { Filter, Eye, Printer, FileText, Ban, DollarSign, RefreshCw, Save, Send } from 'lucide-react';
 import { formatCurrency, cn } from '../lib/utils';
@@ -36,6 +36,8 @@ export default function Vendas() {
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [payValue, setPayValue] = useState<number>(0);
   const [payMethod, setPayMethod] = useState('Multicaixa');
+  const [payCode, setPayCode] = useState('');
+  const [payEmitter, setPayEmitter] = useState('');
   const [payNotes, setPayNotes] = useState('');
 
   // Send Invoice Modal State
@@ -69,8 +71,16 @@ export default function Vendas() {
   });
 
   const clients = clientsResponse?.items || [];
-  const vendas = (vendasResponse as any)?.items || [];
-  const paginationInfo = (vendasResponse as any)?.pagination || { page: 1, per_page: 10, total: 0, pages: 0 };
+  const vendasRaw = (vendasResponse as any)?.items || [];
+  const normalizeVenda = (venda: any) => ({
+    ...venda,
+    numero: venda.numero || venda.numero_documento,
+    iva_valor: venda.iva_valor ?? venda.total_iva ?? 0,
+    data_venda: venda.data_venda || venda.created_at,
+    estado: venda.estado === 'Parcialmente Pago' ? 'Parcial' : venda.estado
+  });
+  const vendas = vendasRaw.map(normalizeVenda);
+  const paginationInfo = (vendasResponse as any)?.pagination || vendasResponse || { page: 1, per_page: 10, total: 0, pages: 0 };
 
   // Mutations
   const refundMutation = useMutation({
@@ -81,21 +91,6 @@ export default function Vendas() {
       setIsDetailOpen(false);
     },
     onError: () => toast.error('Erro ao cancelar a venda.')
-  });
-
-  const paymentMutation = useMutation({
-    mutationFn: ({ id, params }: { id: string | number, params: any }) => vendaService.registrarPagamento(id, params),
-    onSuccess: (data: any) => {
-      queryClient.invalidateQueries({ queryKey: ['vendas'] });
-      toast.success('Pagamento registado e saldo atualizado em tempo real!');
-      setIsPaymentOpen(false);
-      
-      // Update selected detail modal in real-time
-      if (selectedVenda && String(selectedVenda.id) === String(data.id)) {
-        setSelectedVenda(data);
-      }
-    },
-    onError: () => toast.error('Erro ao registar pagamento.')
   });
 
   const handleOpenDetail = async (venda: any) => {
@@ -130,6 +125,8 @@ export default function Vendas() {
     setSelectedVenda(venda);
     setPayValue(venda.saldo);
     setPayMethod('Multicaixa');
+    setPayCode('');
+    setPayEmitter('');
     setPayNotes('');
     setIsPaymentOpen(true);
   };
@@ -176,9 +173,19 @@ export default function Vendas() {
       toast.error(`O valor inserido excede o saldo devedor (${formatCurrency(selectedVenda.saldo)}).`);
       return;
     }
+    if ((payMethod === 'Multicaixa' || payMethod === 'TPA / POS' || payMethod === 'Transferência') && (!payCode.trim() || !payEmitter.trim())) {
+      toast.error('Código de transação e emissor são obrigatórios para POS/Transferência.');
+      return;
+    }
+
+    if (payMethod.startsWith('Dep') && (!payCode.trim() || !payEmitter.trim())) {
+      toast.error('Código de transação e emissor são obrigatórios para depósito.');
+      return;
+    }
 
     let forma_pagamento_id = 1; // Dinheiro
     if (payMethod === 'Multicaixa' || payMethod === 'TPA / POS') forma_pagamento_id = 3;
+    if (payMethod.startsWith('Dep')) forma_pagamento_id = 2;
     if (payMethod === 'Transferência') forma_pagamento_id = 2;
 
     try {
@@ -187,7 +194,9 @@ export default function Vendas() {
         data: {
           forma_pagamento_id,
           valor: payValue,
-          observacoes: payNotes
+          codigo_transferencia: payMethod !== 'Dinheiro' ? payCode : null,
+          emissor: payMethod !== 'Dinheiro' ? payEmitter : null,
+          observacoes: payNotes || `Recebimento via ${payMethod}`
         }
       });
       setIsPaymentOpen(false);
@@ -339,6 +348,68 @@ export default function Vendas() {
     });
   };
 
+  const handleOfficialPdf = (venda: any) => {
+    documentService.vendaPdf(venda.id).catch((err) => {
+      toast.error(err?.message || 'Erro ao abrir o PDF oficial.');
+    });
+  };
+
+  const handlePrintThermal = (venda: any) => {
+    const printWindow = window.open('', '_blank', 'width=420,height=720');
+    if (!printWindow) {
+      toast.error('Por favor, desative o bloqueador de janelas pop-up.');
+      return;
+    }
+
+    const empresa = JSON.parse(localStorage.getItem('sigi_config') || '{}');
+    const linhas = venda.itens || [];
+    const html = `
+      <html>
+        <head>
+          <title>Recibo ${venda.numero || venda.numero_documento || venda.id}</title>
+          <style>
+            @page { size: 80mm auto; margin: 4mm; }
+            body { width: 72mm; font-family: Consolas, monospace; font-size: 11px; color: #111; margin: 0; }
+            .center { text-align: center; }
+            .bold { font-weight: 700; }
+            .line { border-top: 1px dashed #111; margin: 8px 0; }
+            .row { display: flex; justify-content: space-between; gap: 8px; }
+            .item { margin: 6px 0; }
+            .small { font-size: 10px; }
+          </style>
+        </head>
+        <body>
+          <div class="center bold">${empresa.nome_empresa || 'Sabor Imbatível, S.A.'}</div>
+          <div class="center small">NIF: ${empresa.nif || '500123456'}</div>
+          <div class="center small">${empresa.endereco || 'Luanda, Angola'}</div>
+          <div class="line"></div>
+          <div class="center bold">${venda.tipo_documento || 'FR'} ${venda.numero || venda.numero_documento || ''}</div>
+          <div>Data: ${new Date(venda.data_venda || venda.created_at || Date.now()).toLocaleString('pt-PT')}</div>
+          <div>Cliente: ${venda.cliente_nome || 'Consumidor Final'}</div>
+          <div class="line"></div>
+          ${linhas.map((it: any) => `
+            <div class="item">
+              <div>${it.produto_nome || it.descricao || 'Item'}</div>
+              <div class="row"><span>${it.quantidade} x ${formatCurrency(it.preco_unitario)}</span><span>${formatCurrency(it.total || it.subtotal || 0)}</span></div>
+            </div>
+          `).join('')}
+          <div class="line"></div>
+          <div class="row"><span>Subtotal</span><span>${formatCurrency(venda.subtotal || 0)}</span></div>
+          <div class="row"><span>IVA</span><span>${formatCurrency(venda.iva_valor || venda.total_iva || 0)}</span></div>
+          <div class="row bold"><span>Total</span><span>${formatCurrency(venda.total || 0)}</span></div>
+          <div class="row"><span>Pago</span><span>${formatCurrency(venda.valor_pago || 0)}</span></div>
+          <div class="row"><span>Saldo</span><span>${formatCurrency(venda.saldo || 0)}</span></div>
+          <div class="line"></div>
+          <div class="center small">Obrigado pela preferência.</div>
+        </body>
+      </html>
+    `;
+    printWindow.document.write(html);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+  };
+
   const clearFilters = () => {
     setEstado('');
     setTipoDocumento('');
@@ -450,7 +521,7 @@ export default function Vendas() {
                 <Printer size={15} />
               </button>
               <button 
-                onClick={() => handleViewPDF(venda)} 
+                onClick={() => handleOfficialPdf(venda)} 
                 className="p-1.5 text-gray-500 hover:text-blue-500 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
                 title="Ficha Oficial PDF"
               >
@@ -635,10 +706,16 @@ export default function Vendas() {
             </div>
             <div className="flex gap-2">
               <button 
-                onClick={() => handlePrint(selectedVenda)} 
+                onClick={() => handlePrintThermal(selectedVenda)} 
                 className="bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 px-4 py-2 rounded-lg font-bold text-xs flex items-center gap-1"
               >
-                <Printer size={14} /> Imprimir Doc
+                <Printer size={14} /> Recibo Térmico
+              </button>
+              <button
+                onClick={() => handleOfficialPdf(selectedVenda)}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-bold text-xs flex items-center gap-1"
+              >
+                <FileText size={14} /> PDF Oficial
               </button>
               {selectedVenda && selectedVenda.estado !== 'Cancelado' && (
                 <button 
@@ -855,6 +932,31 @@ export default function Vendas() {
                 <option value="Depósito">Depósito Direto</option>
               </select>
             </div>
+
+            {payMethod !== 'Dinheiro' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Código / Comprovativo <span className="text-error">*</span></label>
+                  <input
+                    type="text"
+                    value={payCode}
+                    onChange={(e) => setPayCode(e.target.value)}
+                    placeholder="Ex: TRX123456"
+                    className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Emissor / Titular <span className="text-error">*</span></label>
+                  <input
+                    type="text"
+                    value={payEmitter}
+                    onChange={(e) => setPayEmitter(e.target.value)}
+                    placeholder="Ex: Cliente ou banco emissor"
+                    className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  />
+                </div>
+              </div>
+            )}
 
             <div className="space-y-1">
               <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Observações do Recibo (Opcional)</label>

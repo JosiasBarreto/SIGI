@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as allServices from '../services';
-import { Plus, Edit2, Trash2, Eye, Receipt } from 'lucide-react';
+import { Plus, Edit2, Trash2, Eye, Receipt, FileText } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { toast } from 'react-toastify';
 import { schemas } from '../data/schemas';
@@ -61,7 +61,7 @@ export default function Eventos() {
   });
 
   const faturarMutation = useMutation({
-    mutationFn: (id: string | number) => allServices.eventService.faturar(id),
+    mutationFn: ({ id, pagamento }: { id: string | number; pagamento: any }) => allServices.eventService.faturar(id, pagamento),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [moduleName] });
       setIsViewOpen(false);
@@ -99,6 +99,58 @@ export default function Eventos() {
     });
   };
 
+  const handleFaturarEvento = async () => {
+    if (!currentRecord?.id) return;
+    const saldo = Math.max(0, Number(currentRecord.saldo ?? currentRecord.valor_total ?? 0) - Number(currentRecord.valor_pago ?? 0));
+    const valorPadrao = saldo || Number(currentRecord.valor_total || 0);
+    const result = await Swal.fire({
+      title: 'Faturar Evento',
+      html: `
+        <div class="space-y-3 text-left">
+          <label class="block text-xs font-bold uppercase text-gray-500">Valor a receber</label>
+          <input id="evento-valor" type="number" min="0.01" step="0.01" class="swal2-input w-full m-0" value="${valorPadrao}">
+          <label class="block text-xs font-bold uppercase text-gray-500">Forma de pagamento</label>
+          <select id="evento-forma" class="swal2-select w-full m-0">
+            <option value="1">Dinheiro</option>
+            <option value="3">TPA / POS</option>
+            <option value="2">Transferência</option>
+          </select>
+          <input id="evento-codigo" class="swal2-input w-full m-0" placeholder="Comprovativo / Código TRX">
+          <input id="evento-emissor" class="swal2-input w-full m-0" placeholder="Emissor / Titular">
+        </div>
+      `,
+      focusConfirm: false,
+      showCancelButton: true,
+      confirmButtonText: 'Faturar',
+      cancelButtonText: 'Cancelar',
+      preConfirm: () => {
+        const valor = Number((document.getElementById('evento-valor') as HTMLInputElement).value);
+        const forma = Number((document.getElementById('evento-forma') as HTMLSelectElement).value);
+        const codigo = (document.getElementById('evento-codigo') as HTMLInputElement).value.trim();
+        const emissor = (document.getElementById('evento-emissor') as HTMLInputElement).value.trim();
+        if (!valor || valor <= 0) {
+          Swal.showValidationMessage('Informe um valor válido.');
+          return false;
+        }
+        if ((forma === 2 || forma === 3) && (!codigo || !emissor)) {
+          Swal.showValidationMessage('Código e emissor são obrigatórios para Transferência/POS.');
+          return false;
+        }
+        return {
+          valor,
+          forma_pagamento_id: forma,
+          codigo_transferencia: forma === 2 || forma === 3 ? codigo : null,
+          emissor: forma === 2 || forma === 3 ? emissor : null,
+          observacoes: `Faturação do evento ${currentRecord.numero || currentRecord.titulo}`
+        };
+      }
+    });
+
+    if (result.isConfirmed && result.value) {
+      faturarMutation.mutate({ id: currentRecord.id, pagamento: result.value });
+    }
+  };
+
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const formData = new FormData(e.target as HTMLFormElement);
@@ -112,6 +164,23 @@ export default function Eventos() {
         if (val !== null) dataObj[field.name] = val;
       }
     });
+
+    if (!dataObj.hora_fim) {
+      toast.error('Informe a hora de término do evento.');
+      return;
+    }
+
+    const valorEvento = Number(dataObj.valor_evento || 0);
+    if (valorEvento > 0) {
+      dataObj.servicos = [{
+        tipo: 'Cozinha',
+        descricao: dataObj.servico_descricao || dataObj.descricao || dataObj.titulo || 'Servico de evento',
+        quantidade: 1,
+        valor_unitario: valorEvento
+      }];
+    }
+    delete dataObj.valor_evento;
+    delete dataObj.servico_descricao;
     
     if (currentRecord?.id) {
       updateMutation.mutate({ id: currentRecord.id, updates: dataObj });
@@ -250,7 +319,7 @@ export default function Eventos() {
                   <input 
                     type={field.type} 
                     name={field.name} 
-                    defaultValue={currentRecord?.[field.name] || (field.type === 'date' && !currentRecord ? new Date().toISOString().split('T')[0] : '')}
+                    defaultValue={field.name === 'valor_evento' ? (currentRecord?.valor_total || '') : (currentRecord?.[field.name] || (field.type === 'date' && !currentRecord ? new Date().toISOString().split('T')[0] : ''))}
                     required={field.required}
                     className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/50"
                   />
@@ -271,24 +340,15 @@ export default function Eventos() {
             <button onClick={() => setIsViewOpen(false)} className="px-6 py-2 rounded-lg font-medium bg-gray-200 text-gray-800 dark:bg-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors">
               Fechar
             </button>
+            <button
+              onClick={() => allServices.documentService.eventoDocumento(currentRecord.id, 'proforma').catch((err: any) => toast.error(err?.message || 'Erro ao gerar proforma.'))}
+              className="px-6 py-2 rounded-lg font-medium bg-blue-600 hover:bg-blue-700 text-white transition-colors flex items-center gap-2"
+            >
+              <FileText size={16} /> Proforma PDF
+            </button>
             <button 
               disabled={faturarMutation.isPending}
-              onClick={() => {
-                Swal.fire({
-                  title: 'Faturar Evento?',
-                  text: 'Isto irá gerar automaticamente a fatura e converter este evento em venda.',
-                  icon: 'question',
-                  showCancelButton: true,
-                  confirmButtonColor: '#10B981',
-                  cancelButtonColor: '#6B7280',
-                  confirmButtonText: 'Sim, faturar',
-                  cancelButtonText: 'Cancelar'
-                }).then((result) => {
-                  if (result.isConfirmed) {
-                    faturarMutation.mutate(currentRecord.id);
-                  }
-                });
-              }}
+              onClick={handleFaturarEvento}
               className="px-6 py-2 rounded-lg font-medium bg-emerald-600 hover:bg-emerald-700 text-white transition-colors flex items-center gap-2 disabled:opacity-50"
             >
               <Receipt size={16} /> {faturarMutation.isPending ? 'A faturar...' : 'Faturar Evento'}

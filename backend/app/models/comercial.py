@@ -34,6 +34,7 @@ class Venda(BaseModel):
     tipo_documento = db.Column(db.Enum(TipoDocumento), nullable=False)
     cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id'), nullable=True)
     pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=True)
+    evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=True)
     
     subtotal = db.Column(db.Numeric(12, 2), default=0)
     desconto_total = db.Column(db.Numeric(12, 2), default=0)

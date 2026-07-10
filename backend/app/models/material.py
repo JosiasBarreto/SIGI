@@ -10,8 +10,10 @@ class EstadoMaterial(str, Enum):
     DISPONIVEL = 'Disponivel'
     RESERVADO = 'Reservado'
     EM_USO = 'Em Uso'
+    DEVOLVIDO = 'Devolvido'
     DANIFICADO = 'Danificado'
     MANUTENCAO = 'Manutencao'
+    CANCELADO = 'Cancelado'
 
 class Material(BaseModel):
     __tablename__ = 'materiais'
@@ -37,4 +39,3 @@ class Material(BaseModel):
         cascade='all, delete-orphan',
         lazy=True
     )
-

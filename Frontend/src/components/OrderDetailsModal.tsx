@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { X, CheckCircle, Clock, Play, FileText, Gift, CreditCard, ChevronRight, User, Truck, History } from 'lucide-react';
 import { formatCurrency, cn } from '../lib/utils';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { orderService, clientService, productService } from '../services';
+import { orderService, clientService, productService, documentService } from '../services';
 import { toast } from 'react-toastify';
 import Swal from 'sweetalert2';
 
@@ -51,7 +51,15 @@ export default function OrderDetailsModal({ order, isOpen, onClose, onUpdateStat
 
   if (!isOpen || !order) return null;
 
-  const client = clients?.find((c: any) => c.id === order.clientId);
+  const orderId = order.id;
+  const orderNumber = order.numero || order.id;
+  const orderStatus = order.estado || order.status;
+  const orderType = order.tipo || order.type;
+  const orderTotal = Number(order.total || order.valor_total || 0);
+  const orderPaid = Number(order.valor_pago || 0);
+  const orderBalance = Math.max(0, Number(order.saldo ?? (orderTotal - orderPaid)));
+  const orderItems = order.itens || order.items || [];
+  const client = clients?.find((c: any) => String(c.id) === String(order.clientId || order.cliente_id));
   
   const orderSteps = [
     { status: 'Agendado', icon: FileText },
@@ -63,13 +71,13 @@ export default function OrderDetailsModal({ order, isOpen, onClose, onUpdateStat
   ];
 
   // If status is Cancelado, handle it separately.
-  const isCanceled = order.status === 'Cancelado';
-  let currentIndex = isCanceled ? -1 : orderSteps.findIndex(s => s.status === order.status);
+  const isCanceled = orderStatus === 'Cancelado';
+  let currentIndex = isCanceled ? -1 : orderSteps.findIndex(s => s.status === orderStatus);
   
   // Map older statuses to new ones if necessary
   if (!isCanceled && currentIndex === -1) {
-      if(order.status === 'Pendente') currentIndex = 0;
-      else if(order.status === 'Pago') currentIndex = 1;
+      if(orderStatus === 'Pendente') currentIndex = 0;
+      else if(orderStatus === 'Pago') currentIndex = 1;
       else currentIndex = orderSteps.length - 1; 
   }
 
@@ -81,7 +89,7 @@ export default function OrderDetailsModal({ order, isOpen, onClose, onUpdateStat
         <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 dark:border-gray-800 shrink-0">
           <div>
             <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-              Pedido #{order.id.toUpperCase()}
+              Pedido #{String(orderNumber).toUpperCase()}
               {isCanceled && (
                   <span className="bg-error/10 text-error text-xs px-2 py-1 rounded-full uppercase tracking-wider">Cancelado</span>
               )}
@@ -153,9 +161,9 @@ export default function OrderDetailsModal({ order, isOpen, onClose, onUpdateStat
             <div className="bg-white dark:bg-gray-800/20 p-5 rounded-xl border border-gray-200 dark:border-gray-800">
               <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2"><FileText size={16} className="text-primary"/> Dados do Pedido</h4>
               <div className="space-y-3 text-sm text-gray-600 dark:text-gray-400">
-                <p><span className="font-semibold text-gray-900 dark:text-gray-200">Tipo:</span> {order.type}</p>
-                <p><span className="font-semibold text-gray-900 dark:text-gray-200">Entrega Prevista:</span> {new Date(order.dueDate).toLocaleString('pt-ST')}</p>
-                <p><span className="font-semibold text-gray-900 dark:text-gray-200">Estado Local:</span> <span className="font-bold text-primary">{order.status}</span></p>
+                <p><span className="font-semibold text-gray-900 dark:text-gray-200">Tipo:</span> {orderType}</p>
+                <p><span className="font-semibold text-gray-900 dark:text-gray-200">Entrega Prevista:</span> {new Date(order.dueDate || order.data_entrega || order.data_pedido).toLocaleString('pt-ST')}</p>
+                <p><span className="font-semibold text-gray-900 dark:text-gray-200">Estado Local:</span> <span className="font-bold text-primary">{orderStatus}</span></p>
               </div>
             </div>
 
@@ -165,23 +173,23 @@ export default function OrderDetailsModal({ order, isOpen, onClose, onUpdateStat
               <div className="space-y-4">
                 <div className="flex justify-between items-center text-sm">
                   <span className="font-semibold text-gray-600 dark:text-gray-400">Valor Total:</span>
-                  <span className="font-bold text-gray-900 dark:text-white text-lg">{formatCurrency(order.total || order.valor_total || 0)}</span>
+                  <span className="font-bold text-gray-900 dark:text-white text-lg">{formatCurrency(orderTotal)}</span>
                 </div>
                 <div className="flex justify-between items-center text-sm">
                   <span className="font-semibold text-gray-600 dark:text-gray-400">Valor Pago:</span>
-                  <span className="font-bold text-success">{formatCurrency(order.valor_pago || 0)}</span>
+                  <span className="font-bold text-success">{formatCurrency(orderPaid)}</span>
                 </div>
                 <div className="pt-3 border-t border-gray-100 dark:border-gray-700 flex justify-between items-center text-sm text-gray-500">
                   <span>Saldo Pendente:</span>
-                  <span className={cn("font-bold", (Number(order.total || order.valor_total || 0) - Number(order.valor_pago || 0)) > 0 ? "text-error" : "text-gray-900 dark:text-white")}>
-                    {formatCurrency(Math.max(0, Number(order.total || order.valor_total || 0) - Number(order.valor_pago || 0)))}
+                  <span className={cn("font-bold", orderBalance > 0 ? "text-error" : "text-gray-900 dark:text-white")}>
+                    {formatCurrency(orderBalance)}
                   </span>
                 </div>
 
-                {Math.max(0, Number(order.total || order.valor_total || 0) - Number(order.valor_pago || 0)) > 0 && !showCheckoutForm && (
+                {orderBalance > 0 && !showCheckoutForm && (
                   <button
                     onClick={() => {
-                      setCheckoutValor(String(Math.max(0, Number(order.total || order.valor_total || 0) - Number(order.valor_pago || 0))));
+                      setCheckoutValor(String(orderBalance));
                       setShowCheckoutForm(true);
                     }}
                     className="w-full mt-4 bg-primary hover:bg-primary-hover text-white font-bold py-2 px-4 rounded-xl text-xs transition-colors flex justify-center items-center gap-2"
@@ -239,7 +247,7 @@ export default function OrderDetailsModal({ order, isOpen, onClose, onUpdateStat
                       <input
                         type="number"
                         step="0.01"
-                        max={Math.max(0, Number(order.total || order.valor_total || 0) - Number(order.valor_pago || 0))}
+                        max={orderBalance}
                         value={checkoutValor}
                         onChange={(e) => setCheckoutValor(e.target.value)}
                         className="w-full text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-2 font-bold text-gray-800 dark:text-gray-100"
@@ -296,7 +304,7 @@ export default function OrderDetailsModal({ order, isOpen, onClose, onUpdateStat
             </div>
             
             {/* Transporte (Conditional) */}
-            {order.type === 'Composto' && (
+            {orderType === 'Composto' && (
               <div className="bg-white dark:bg-gray-800/20 p-5 rounded-xl border border-gray-200 dark:border-gray-800">
                 <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2"><Truck size={16} className="text-primary"/> Transporte / Logística</h4>
                 <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
@@ -314,15 +322,16 @@ export default function OrderDetailsModal({ order, isOpen, onClose, onUpdateStat
                  <h4 className="text-sm font-bold text-gray-900 dark:text-white">Itens (Cozinha e Pastelaria)</h4>
                </div>
                <div className="p-4 sm:p-5 flex-1 overflow-y-auto max-h-[300px] space-y-3">
-                 {order.items?.map((item: any, idx: number) => {
-                   const prod = products?.find((p: any) => p.id === item.productId);
+                 {orderItems?.map((item: any, idx: number) => {
+                   const prod = products?.find((p: any) => String(p.id) === String(item.productId || item.produto_id));
+                   const quantidade = Number(item.quantity || item.quantidade || 0);
                    return (
                      <div key={idx} className="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-800 last:border-0">
                        <div className="flex flex-col">
-                         <span className="text-sm font-bold text-gray-900 dark:text-white">{item.quantity}x {prod ? prod.nome : `Produto (${item.productId})`}</span>
+                         <span className="text-sm font-bold text-gray-900 dark:text-white">{quantidade}x {item.descricao || (prod ? prod.nome : `Produto (${item.productId || item.produto_id})`)}</span>
                          {prod && <span className="text-xs text-gray-500">{prod.categoria}</span>}
                        </div>
-                       <span className="font-semibold text-sm text-primary">{prod ? formatCurrency(Number(prod.preco_venda) * item.quantity) : '--'}</span>
+                       <span className="font-semibold text-sm text-primary">{formatCurrency(Number(item.subtotal || item.preco_unitario || prod?.preco_venda || 0) * (item.subtotal ? 1 : quantidade))}</span>
                      </div>
                    );
                  })}
@@ -330,7 +339,7 @@ export default function OrderDetailsModal({ order, isOpen, onClose, onUpdateStat
              </div>
 
              {/* Alugueres */}
-             {order.type === 'Composto' && (
+             {orderType === 'Composto' && (
                 <div className="bg-white dark:bg-gray-800/20 rounded-xl border border-gray-200 dark:border-gray-800 flex flex-col">
                   <div className="p-4 sm:p-5 border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/30 rounded-t-xl">
                     <h4 className="text-sm font-bold text-gray-900 dark:text-white">Aluguer de Materiais</h4>
@@ -353,7 +362,7 @@ export default function OrderDetailsModal({ order, isOpen, onClose, onUpdateStat
           <div className="bg-white dark:bg-gray-800/20 p-5 rounded-xl border border-gray-200 dark:border-gray-800">
             <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2"><History size={16} className="text-primary"/> Observações do Pedido</h4>
              <p className="text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg">
-               {order.notes || 'Sem observações adicionais.'}
+               {order.observacoes || order.notes || 'Sem observações adicionais.'}
              </p>
           </div>
 
@@ -369,6 +378,20 @@ export default function OrderDetailsModal({ order, isOpen, onClose, onUpdateStat
           </button>
           
           <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto sm:ml-auto">
+             <button
+               type="button"
+               onClick={() => documentService.pedidoPdf(orderId).catch((err) => toast.error(err?.message || 'Erro ao gerar PDF do pedido.'))}
+               className="w-full sm:w-auto px-6 py-4 sm:py-3 text-sm font-bold text-primary bg-primary/10 hover:bg-primary/20 rounded-xl transition-colors flex justify-center items-center gap-2"
+             >
+               <FileText size={18} /> PDF Pedido
+             </button>
+             <button
+               type="button"
+               onClick={() => documentService.pedidoRecibo(orderId).catch((err) => toast.error(err?.message || 'Erro ao gerar recibo do pedido.'))}
+               className="w-full sm:w-auto px-6 py-4 sm:py-3 text-sm font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-300 dark:hover:bg-emerald-900/30 rounded-xl transition-colors flex justify-center items-center gap-2"
+             >
+               <CreditCard size={18} /> Recibo
+             </button>
              {!isCanceled && (
                  <button 
                  onClick={() => {

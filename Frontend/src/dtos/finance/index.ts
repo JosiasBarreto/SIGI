@@ -3,6 +3,9 @@ export interface PagamentoRequest {
   valor: number;
   forma_pagamento_id: number;
   observacoes?: string;
+  codigo_transferencia?: string | null;
+  emissor?: string | null;
+  referencia?: string | null;
 }
 export interface PagamentoResponse {
   id: number;

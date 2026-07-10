@@ -191,23 +191,23 @@ export default function Orders() {
       // Build a strictly valid order creation payload
       const orderPayload = {
         cliente_id: finalClientId ? Number(finalClientId) : null,
-        tipo: orderType === "Encomenda" ? "ENCOMENDA" : "BALCAO",
-        origem: "LOCAL", // Map to valid Enums
+        tipo: orderType === "Composto" ? "Composto" : "Simples",
+        origem: "Balcao",
         data_entrega: orderDueDate,
         hora_entrega: `${orderDueTime}:00`, // Ensure HH:MM:SS format
-        estado: "PENDENTE", // Initially PENDENTE, checkout will update state automatically
+        estado: "Pendente",
         observacoes: orderNotes,
         itens: cart.map(item => {
           let tipoItem = "PRODUTO";
           const cat = String(item.category || item.categoria || "").toLowerCase();
           if (cat.includes("servi") || cat.includes("servic")) {
-            tipoItem = "SERVICO";
+            tipoItem = "Servico";
           }
 
           const produtoId = isNaN(Number(item.id)) ? null : Number(item.id);
 
           return {
-            tipo_item: tipoItem,
+            tipo_item: tipoItem === "PRODUTO" ? "Produto" : tipoItem,
             produto_id: produtoId,
             descricao: item.name || item.nome || "Item de Pedido",
             quantidade: Number(item.qty),
@@ -274,28 +274,28 @@ export default function Orders() {
     );
   }
 
-  const getClientName = (clientId: string) => {
+  const getClientName = (clientId: string | number) => {
     return (
-      clients?.find((c: any) => String(c.id) === clientId)?.nome ||
-      "Cliente Desconhecido"
+      clients?.find((c: any) => String(c.id) === String(clientId))?.nome ||
+      "Cliente ao Balcão"
     );
   };
 
   const estadoMap: Record<string, string[]> = {
-    "Agendados": ["Agendado"],
+    "Agendados": ["Pendente", "Agendado"],
     "Confirmados": ["Confirmado"],
-    "Produção": ["Em Produção"],
+    "Produção": ["Em Producao", "Em Produção"],
     "Prontos": ["Pronto"],
-    "Concluídos": ["Em Entrega", "Entregue"],
+    "Concluídos": ["Em Entrega", "Entregue", "Concluido", "Concluído"],
     "Cancelados": ["Cancelado"],
   };
 
   const visibleOrders = orders?.filter((o: any) => {
     const matchesSearch = getClientName(o.clientId || o.cliente_id).toLowerCase().includes(searchTerm.toLowerCase()) ||
-        String(o.id).toLowerCase().includes(searchTerm.toLowerCase());
+        String(o.numero || o.id).toLowerCase().includes(searchTerm.toLowerCase());
     
     const mappedStatuses = estadoMap[activeTab] || [];
-    const matchesStatus = mappedStatuses.includes(o.estado);
+    const matchesStatus = mappedStatuses.includes(o.estado || o.status);
     
     return matchesSearch && matchesStatus;
   }) || [];
@@ -373,9 +373,9 @@ export default function Orders() {
             >
               <div>
                 <div className="flex justify-between items-start mb-3">
-                  <span className="font-bold text-lg text-gray-900 dark:text-white uppercase tracking-tight">#{order.id}</span>
-                  <span className={cn("text-xs font-bold px-2.5 py-1 rounded-full", order.type === 'Composto' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400')}>
-                    {order.type}
+                  <span className="font-bold text-lg text-gray-900 dark:text-white uppercase tracking-tight">#{order.numero || order.id}</span>
+                  <span className={cn("text-xs font-bold px-2.5 py-1 rounded-full", (order.tipo || order.type) === 'Composto' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400')}>
+                    {order.tipo || order.type}
                   </span>
                 </div>
                 <h3 className="font-bold text-gray-900 dark:text-white mb-1 line-clamp-1">

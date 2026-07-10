@@ -108,6 +108,30 @@ def create_evento():
     if error: return jsonify({"msg": error}), 400
     return jsonify(EventoSchema().dump(result)), 201
 
+@evento_bp.route('/<int:id>', methods=['PUT'])
+@jwt_required()
+@requires_roles('Administrador', 'Atendimento')
+def update_evento(id):
+    try:
+        data = EventoSchema(partial=True).load(request.get_json())
+    except ValidationError as err:
+        return jsonify({"msg": "Validation error", "errors": err.messages}), 400
+
+    user_id = get_jwt_identity()
+    result, error = evento_service.update_evento(id, data, user_id)
+    if error:
+        return jsonify({"msg": error}), 400
+    return jsonify(EventoSchema().dump(result)), 200
+
+@evento_bp.route('/<int:id>', methods=['DELETE'])
+@jwt_required()
+@requires_roles('Administrador', 'Atendimento')
+def delete_evento(id):
+    result, error = evento_service.delete_evento(id, get_jwt_identity())
+    if error:
+        return jsonify({"msg": error}), 400
+    return jsonify({"success": True}), 200
+
 @evento_bp.route('/<int:id>/estado', methods=['PUT'])
 @jwt_required()
 @requires_roles('Administrador', 'Atendimento')
@@ -121,6 +145,32 @@ def alterar_estado(id):
     result, error = evento_service.alterar_estado(id, data['estado'], user_id)
     if error: return jsonify({"msg": error}), 400
     return jsonify(EventoSchema().dump(result)), 200
+
+@evento_bp.route('/reservas-materiais/<int:id>/estado', methods=['PATCH'])
+@jwt_required()
+@requires_roles('Administrador', 'Atendimento', 'Logistica')
+def alterar_estado_reserva_material(id):
+    data = request.get_json() or {}
+    estado = data.get('estado')
+    if not estado:
+        return jsonify({"msg": "Estado é obrigatório."}), 400
+
+    user_id = get_jwt_identity()
+    result, error = evento_service.alterar_estado_reserva_material(
+        id,
+        estado,
+        user_id,
+        observacoes=data.get('observacoes'),
+        danificado=bool(data.get('danificado', False))
+    )
+    if error:
+        return jsonify({"msg": error}), 400
+    return jsonify({
+        "id": result.id,
+        "estado": result.estado,
+        "material_id": result.material_id,
+        "quantidade": str(result.quantidade)
+    }), 200
 
 # DOCUMENTOS
 @evento_bp.route('/<int:id>/documento/<path:doc_type>', methods=['GET'])

@@ -43,7 +43,8 @@ class PedidoService:
             "email": cliente.email,
             "morada": cliente.morada,
             "empresa": cliente.empresa,
-            "observacoes": cliente.observacoes
+            "observacoes": cliente.observacoes,
+            "percentagem_desconto_padrao": str(cliente.percentagem_desconto_padrao or 0)
         }
         
         if 'nome' in data: cliente.nome = data['nome']
@@ -54,6 +55,8 @@ class PedidoService:
         if 'morada' in data: cliente.morada = data['morada']
         if 'empresa' in data: cliente.empresa = data['empresa']
         if 'observacoes' in data: cliente.observacoes = data['observacoes']
+        if 'percentagem_desconto_padrao' in data:
+            cliente.percentagem_desconto_padrao = data['percentagem_desconto_padrao'] or 0
         
         from app.core.database import db
         db.session.commit()
@@ -70,7 +73,6 @@ class PedidoService:
             
         old_status = cliente.is_active
         cliente.is_active = not old_status
-        
         db.session.commit()
         
         AuditService.log_action(user_id, "TOGGLE_STATUS", "clientes", cliente.id, 
@@ -79,8 +81,22 @@ class PedidoService:
                                 
         return cliente, None
 
-    def create_pedido(self, data, user_id):
+    def _sync_evento_link(self, pedido):
+        if not pedido.evento_id:
+            return
+        from app.models.evento import Evento
+        evento = db.session.query(Evento).with_for_update().get(pedido.evento_id)
+        if evento:
+            evento.pedido_id = pedido.id
+            if not evento.cliente_id and pedido.cliente_id:
+                evento.cliente_id = pedido.cliente_id
+
+    def _produto_tipo_value(self, produto):
+        return produto.tipo.value if hasattr(produto.tipo, 'value') else produto.tipo
+
+    def create_pedido(self, data, user_id, auto_commit=True):
         itens_data = data.pop('itens', [])
+        evento_data = data.pop('evento', None)
         
         # Validar itens para proibir ingredientes
         for item in itens_data:
@@ -88,7 +104,7 @@ class PedidoService:
                 produto = db.session.query(Produto).filter_by(id=item['produto_id']).first()
                 if not produto:
                     return None, f"Produto ID {item['produto_id']} não encontrado."
-                if produto.tipo not in [TipoProduto.ACABADO.value, TipoProduto.REVENDA.value]:
+                if self._produto_tipo_value(produto) not in [TipoProduto.ACABADO.value, TipoProduto.REVENDA.value]:
                     return None, f"Item inválido. Apenas produtos acabados ou de revenda são permitidos."
                     
         # Generate Pedido Number
@@ -132,6 +148,18 @@ class PedidoService:
             
         db.session.add(pedido)
         db.session.flush() # get ID
+
+        if evento_data:
+            from app.services.evento_service import EventoService
+            evento_data['cliente_id'] = evento_data.get('cliente_id') or pedido.cliente_id
+            evento_data['pedido_id'] = pedido.id
+            evento, error = EventoService().create_evento(evento_data, user_id, auto_commit=False)
+            if error:
+                db.session.rollback()
+                return None, error
+            pedido.evento_id = evento.id
+        else:
+            self._sync_evento_link(pedido)
         
         # Reservas de ingredientes para pedidos com data futura / agendados
         from datetime import date
@@ -154,6 +182,9 @@ class PedidoService:
                             )
                             db.session.add(reserva)
                             
+        if not auto_commit:
+            return pedido, None
+
         db.session.commit()
         
         # Generate production orders automatically for kitchen and pastry
