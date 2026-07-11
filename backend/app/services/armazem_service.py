@@ -610,4 +610,5 @@ class ArmazemService:
         db.session.commit()
         AuditService.log_action(user_id, "TRANSFER_STOCK", "armazens", origem_id, new_values=data)
         return {"msg": "Transferência realizada com sucesso!"}, None
+    
 

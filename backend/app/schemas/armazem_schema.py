@@ -149,3 +149,4 @@ class MaterialStockArmazemSchema(Schema):
     stock_atual = fields.Decimal(required=True)
     stock_minimo = fields.Decimal(required=True)
 
+

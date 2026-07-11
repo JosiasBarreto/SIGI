@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
+from sqlalchemy import literal
 from app.services.armazem_service import ArmazemService
 from app.schemas.armazem_schema import (
     FornecedorSchema, IngredienteSchema, ProdutoSchema,
@@ -402,6 +403,7 @@ def get_produtos():
     order_by = request.args.get('order_by', 'created_at')
     order_dir = request.args.get('order_dir', 'desc')
     
+       
     if hasattr(Produto, order_by):
         col = getattr(Produto, order_by)
         if order_dir == 'desc':
