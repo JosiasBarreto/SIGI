@@ -888,6 +888,14 @@
         "documentation": {}
     },
     {
+        "label": "get_preco_com_iva",
+        "importPath": "app.services.armazem_service",
+        "description": "app.services.armazem_service",
+        "isExtraImport": true,
+        "detail": "app.services.armazem_service",
+        "documentation": {}
+    },
+    {
         "label": "armazem_service",
         "importPath": "app.services.armazem_service",
         "description": "app.services.armazem_service",
@@ -10769,6 +10777,15 @@
         "importPath": "backend.app.services.armazem_service",
         "description": "backend.app.services.armazem_service",
         "peekOfCode": "class ArmazemService:\n    def __init__(self):\n        self.fornecedor_repo = FornecedorRepository()\n        self.ingrediente_repo = IngredienteRepository()\n        self.produto_repo = ProdutoRepository()\n        self.material_repo = MaterialRepository()\n        self.movimento_repo = MovimentoStockRepository()\n        self.categoria_produto_repo = CategoriaProdutoRepository()\n        self.unidade_medida_repo = UnidadeMedidaRepository()\n        self.armazem_repo = ArmazemRepository()",
+        "detail": "backend.app.services.armazem_service",
+        "documentation": {}
+    },
+    {
+        "label": "get_preco_com_iva",
+        "kind": 2,
+        "importPath": "backend.app.services.armazem_service",
+        "description": "backend.app.services.armazem_service",
+        "peekOfCode": "def get_preco_com_iva(preco, taxa_iva):\n    \"\"\"\n    Calculate the price including VAT.\n    :param preco: Base price (float)\n    :param taxa_iva: VAT rate in percentage (float)\n    :return: Price including VAT (float)\n    \"\"\"\n    if preco is None or taxa_iva is None:\n        return None\n    return round(float(preco) * (1 + float(taxa_iva) / 100), 2)",
         "detail": "backend.app.services.armazem_service",
         "documentation": {}
     },

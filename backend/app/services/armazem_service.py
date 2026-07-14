@@ -611,4 +611,13 @@ class ArmazemService:
         AuditService.log_action(user_id, "TRANSFER_STOCK", "armazens", origem_id, new_values=data)
         return {"msg": "Transferência realizada com sucesso!"}, None
     
-
+def get_preco_com_iva(preco, taxa_iva):
+    """
+    Calculate the price including VAT.
+    :param preco: Base price (float)
+    :param taxa_iva: VAT rate in percentage (float)
+    :return: Price including VAT (float)
+    """
+    if preco is None or taxa_iva is None:
+        return None
+    return round(float(preco) * (1 + float(taxa_iva) / 100), 2)

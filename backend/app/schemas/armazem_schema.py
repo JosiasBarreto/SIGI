@@ -2,6 +2,7 @@ from marshmallow import Schema, fields, validate
 from app.models.produto import TipoProduto
 from app.models.material import TipoMaterial, EstadoMaterial
 from app.models.movimento_stock import TipoMovimento, OrigemMovimento, EntidadeMovimento
+from app.services.armazem_service import get_preco_com_iva
 
 class CategoriaProdutoSchema(Schema):
     id = fields.Int(dump_only=True)
@@ -76,6 +77,7 @@ class ProdutoSchema(Schema):
     )
     armazem_nome = fields.Function(lambda obj: obj.stocks_armazem[0].armazem.nome if (hasattr(obj, 'stocks_armazem') and obj.stocks_armazem and obj.stocks_armazem[0].armazem) else None)
     ativo = fields.Bool(dump_only=True)
+    preco_iva = fields.Function(lambda obj: get_preco_com_iva(obj.preco_venda, obj.taxa_iva.percentagem) if obj.taxa_iva else None)
 
 class MaterialSchema(Schema):
     id = fields.Int(dump_only=True)

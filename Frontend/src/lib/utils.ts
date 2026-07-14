@@ -6,8 +6,10 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatCurrency(value: number) {
-  return new Intl.NumberFormat("pt-ST", {
+  const config = JSON.parse(localStorage.getItem("sigi_config") || "{}");
+  return new Intl.NumberFormat("pt-PT", {
     style: "currency",
-    currency: "STD",
+    currency: config.moeda || "STN",
+    useGrouping: true,
   }).format(value);
 }

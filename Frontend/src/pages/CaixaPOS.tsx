@@ -26,11 +26,13 @@ import {
 import { formatCurrency, cn } from "../lib/utils";
 import Swal from "sweetalert2";
 import { toast } from "react-toastify";
+import ProductGrid from "./CaixaPOS/ProductGrid";
+import CartList from "./CaixaPOS/CartList";
 
 export default function CaixaPOS() {
   const queryClient = useQueryClient();
   const { createVenda, checkoutPedido, enviarFatura } = useComercial();
-
+  const config = JSON.parse(localStorage.getItem("sigi_config") || "{}");
   const { data: productsResponse } = useQuery({
     queryKey: ["products"],
     queryFn: () => productService.getAll({ per_page: 5000, include_iva: true }),
@@ -47,6 +49,7 @@ export default function CaixaPOS() {
   const [paymentMethod, setPaymentMethod] = useState("Dinheiro");
   const [step, setStep] = useState(1);
   const [amountReceived, setAmountReceived] = useState<number>(0);
+  const [showPriceWithIva, setShowPriceWithIva] = useState(true);
 
   // Scheduled order options
   const [tipoPedido, setTipoPedido] = useState<"Imediato" | "Agendado">(
@@ -108,11 +111,35 @@ export default function CaixaPOS() {
   });
 
   const subtotal = cart.reduce(
-    (sum, item) => sum + (item.salePrice || item.preco_venda || 0) * item.qty,
+    (sum, item) => sum + (item.salePrice || item.preco_venda || item.preco_iva) * item.qty,
     0
   );
+  const totalComIva = cart.reduce(
+    (sum, item) => {
+      if (item.preco_iva>0 && item.taxa_iva>0) {
+        return sum + (Number(item.preco_iva) * item.qty);
+      } else {
+        return sum + (Number(item.preco_venda) * item.qty);
+      }
+    },
+    0
+  );
+  const Iva = cart.reduce(
+    (sum, item) => {
+  
+      const precoVenda = Number(item.preco_venda || 0);
+      const precoIva = Number(item.preco_iva || precoVenda);
+  
+      const valorIva = precoIva - precoVenda;
+  
+      return sum + (valorIva * item.qty);
+  
+    },
+    0
+  );
+  
   const descontoAutomatico = subtotal * (descontoClientePercent / 100);
-  const total = Math.max(0, subtotal - descontoAutomatico);
+  const total = Math.max(0, totalComIva - descontoAutomatico);
 
   const handleAddToCart = (product: any) => {
     const exists = cart.find((i) => i.id === product.id);
@@ -718,55 +745,17 @@ export default function CaixaPOS() {
           ))}
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 bg-gray-50 dark:bg-background-dark">
-  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-    {displayProducts.map((p: any) => {
-      const category = p.category || p.categoria;
-      const name = p.name || p.nome;
-      const price = p.salePrice || p.preco_venda;
-      const quantity = Number(p.quantity || p.stock_atual);
-      const unit = p.unit || p.unidade_medida_sigla;
-      const iva = Number(p.taxa_iva);
-      const priceWithIva = iva > 0 ? price * (1 + iva / 100) : null;
-
-      return (
-        <button
-          key={p.id}
-          onClick={() => handleAddToCart(p)}
-          className="bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-800 rounded-lg p-3 text-left hover:border-primary/50 hover:shadow transition-all flex flex-col gap-2"
-        >
-          {/* Nome e categoria */}
-          <div>
-            {category && (
-              <span className="text-[11px] font-medium px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-gray-600 dark:text-gray-300">
-                {category}
-              </span>
-            )}
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mt-1 line-clamp-2">
-              {name}
-            </h3>
-          </div>
-
-          {/* Preços e stock */}
-          <div className="space-y-0.5">
-            <p className="text-base font-bold text-primary">
-              {formatCurrency(price)}
-            </p>
-            {priceWithIva && (
-              <p className="text-xs text-gray-600 dark:text-gray-400">
-                c/ IVA: {formatCurrency(priceWithIva)}
-              </p>
-            )}
-            <p className="text-xs text-success">
-              {quantity} {unit}
-            </p>
-          </div>
-        </button>
-      );
-    })}
-  </div>
-</div>
-
+        <ProductGrid
+          displayProductslist={displayProducts}
+          showPriceWithIva={true}
+          handleAddToCart={handleAddToCart}
+          formatCurrency={(val) =>
+            new Intl.NumberFormat("pt-PT", {
+              style: "currency",
+              currency: config.moeda,
+            }).format(val)
+          }
+        />
       </div>
 
       <div className="w-96 bg-surface dark:bg-surface-dark border border-gray-200 dark:border-border-dark rounded-xl flex flex-col shrink-0 shadow-sm overflow-hidden">
@@ -797,83 +786,79 @@ export default function CaixaPOS() {
               </select>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
-              {cart.length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center text-gray-400">
-                  <ShoppingCart size={48} className="mb-4 opacity-20" />
-                  <p>Carrinho vazio</p>
-                </div>
-              ) : (
-                cart.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex flex-col gap-2 p-3 bg-gray-50 dark:bg-gray-800/20 rounded-lg border border-gray-100 dark:border-gray-800"
-                  >
-                    <div className="flex justify-between items-start">
-                      <span className="font-medium text-sm text-gray-900 dark:text-white line-clamp-2">
-                        {item.name || item.nome}
-                      </span>
-                      <button
-                        onClick={() => removeItem(item.id)}
-                        className="text-gray-400 hover:text-error transition-colors"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                    <div className="flex items-center justify-between mt-1">
-                      <div className="flex items-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md">
-                        <button
-                          onClick={() => updateQty(item.id, -1)}
-                          className="px-2 py-1 text-gray-500 hover:text-primary"
-                        >
-                          <Minus size={14} />
-                        </button>
-                        <span className="w-6 text-center text-sm font-semibold">
-                          {item.qty}
-                        </span>
-                        <button
-                          onClick={() => updateQty(item.id, 1)}
-                          className="px-2 py-1 text-gray-500 hover:text-primary"
-                        >
-                          <Plus size={14} />
-                        </button>
-                      </div>
-                      <span className="font-bold text-sm">
-                        {formatCurrency(
-                          (item.salePrice || item.preco_venda || 0) * item.qty
-                        )}
-                      </span>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
+            <CartList
+              cart={cart}
+              showPriceWithIva={true}
+              formatCurrency={(val) =>
+                new Intl.NumberFormat("pt-PT", {
+                  style: "currency",
+                  currency: config.moeda,
+                }).format(val)
+              }
+              removeItem={removeItem}
+              updateQty={updateQty}
+            />
 
             <div className="p-4 border-t border-gray-200 dark:border-border-dark shrink-0 bg-gray-50 dark:bg-gray-800/30">
-              <div className="space-y-1 mb-3 text-sm">
-                <div className="flex justify-between text-gray-500">
-                  <span>Subtotal</span>
+              {/* Resumo */}
+              <div className="space-y-2 mb-4 text-sm">
+                <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                  <span>
+                    {"Subtotal (s/ IVA)"}
+                  </span>
                   <span>{formatCurrency(subtotal)}</span>
                 </div>
+
                 {descontoAutomatico > 0 && (
-                  <div className="flex justify-between text-error">
-                    <span>Desconto cliente ({descontoClientePercent}%)</span>
+                  <div className="flex justify-between text-red-500">
+                    <span>Desconto ({descontoClientePercent}%)</span>
                     <span>- {formatCurrency(descontoAutomatico)}</span>
                   </div>
                 )}
+ {/* IVA */}
+                <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                  <span>{"IVA"}</span>
+                  <span>{formatCurrency(Iva)}</span>
+                </div>
+
+                {/* IVA */}
+                <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                  <span>{showPriceWithIva ? "IVA incluído" : "IVA"}</span>
+                  <span>{formatCurrency(totalComIva)}</span>
+                </div>
+
+                <div className="border-t border-dashed border-gray-300 dark:border-gray-700 pt-2 flex justify-between items-center">
+                  <span className="font-semibold tracking-wide text-gray-700 dark:text-gray-300">
+                    TOTAL A PAGAR
+                  </span>
+
+                  <span className="text-2xl font-bold text-primary">
+                    {formatCurrency(totalComIva)}
+                  </span>
+                </div>
               </div>
-              <div className="flex justify-between items-center mb-4">
-                <span className="text-gray-600 dark:text-gray-400 font-medium tracking-wide">
-                  TOTAL A PAGAR
-                </span>
-                <span className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
-                  {formatCurrency(total)}
-                </span>
-              </div>
+
               <button
                 onClick={handleCheckout}
                 disabled={cart.length === 0}
-                className="w-full bg-primary hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-primary/20 flex justify-center items-center gap-2"
+                className="
+    w-full
+    bg-primary
+    hover:bg-primary-hover
+    disabled:opacity-50
+    disabled:cursor-not-allowed
+    text-white
+    font-semibold
+    py-3.5
+    rounded-xl
+    transition-all
+    shadow-lg
+    shadow-primary/20
+    flex
+    justify-center
+    items-center
+    gap-2
+  "
               >
                 PROSSEGUIR PARA PAGAMENTO
               </button>
