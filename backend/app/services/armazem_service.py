@@ -509,17 +509,55 @@ class ArmazemService:
         return mov, None
 
     # --- Armazem Management ---
+    
+    
+    
+    
     def create_armazem(self, data, user_id):
-        codigo = data.get('codigo')
-        if db.session.query(Armazem).filter_by(codigo=codigo, is_active=True).first():
+        from sqlalchemy import text
+
+        # Gerar código automaticamente caso não seja informado
+        if not data.get("codigo"):
+            prefix = "ARM"
+
+            sql = text("""
+                SELECT MAX(CAST(SUBSTRING(codigo, 4) AS UNSIGNED))
+                FROM armazens
+                WHERE codigo LIKE :prefix
+            """)
+
+            result = db.session.execute(
+                sql,
+                {"prefix": f"{prefix}%"}
+            ).scalar()
+
+            next_num = 1 if result is None else int(result) + 1
+            data["codigo"] = f"{prefix}{next_num:06d}"
+
+        # Verificar se o código já existe
+        if db.session.query(Armazem).filter_by(
+            codigo=data["codigo"],
+            is_active=True
+        ).first():
             return None, "Código de armazém já existe."
 
-        if data.get('principal'):
-            db.session.query(Armazem).update({Armazem.principal: False})
+        # Garantir apenas um armazém principal
+        if data.get("principal"):
+            db.session.query(Armazem).update(
+                {Armazem.principal: False}
+            )
 
         armazem = Armazem(**data)
         self.armazem_repo.create(armazem)
-        AuditService.log_action(user_id, "CREATE", "armazens", armazem.id, new_values=data)
+
+        AuditService.log_action(
+            user_id,
+            "CREATE",
+            "armazens",
+            armazem.id,
+            new_values=data
+        )
+
         return armazem, None
 
     def update_armazem(self, armazem_id, data, user_id):

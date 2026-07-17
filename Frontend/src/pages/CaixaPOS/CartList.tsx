@@ -37,7 +37,7 @@ const CartList: React.FC<CartListProps> = ({
           const precoSemIva = Number(item.preco_venda || 0);
           const iva = Number(item.taxa_iva || 0);
           const preco_iva = Number(item.preco_iva || 0);
-          const unit =  item.unit || item.unidade_medida_sigla;
+         
 
           const precoComIva =
             iva > 0 ? preco_iva : precoSemIva;
@@ -79,8 +79,9 @@ const CartList: React.FC<CartListProps> = ({
                     <Minus size={14} />
                   </button>
                   <span className="w-8 text-center font-semibold">
-                    {item.qty} {item.unit}
+                    {item.qty} 
                   </span>
+                  
                   <button
                     onClick={() => updateQty(item.id, 1)}
                     className="px-2 py-1 hover:text-primary"
@@ -91,7 +92,7 @@ const CartList: React.FC<CartListProps> = ({
 
                 <div className="text-right">
                   <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {item.qty}{item.unit} × {formatCurrency(precoUnitario)}
+                    {item.qty} × {formatCurrency(precoUnitario)}
                   </p>
                   <p className="text-base font-bold text-primary">
                     {formatCurrency(total)}

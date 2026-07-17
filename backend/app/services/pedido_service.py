@@ -170,7 +170,7 @@ class PedidoService:
             for item in itens_data:
                 if item.get('produto_id'):
                     # Pega a ficha tecnica do produto
-                    ficha = db.session.query(FichaTecnica).filter_by(produto_id=item['produto_id']).first()
+                    ficha = db.session.query(FichaTecnica).filter_by(produto_acabado_id=item['produto_id']).first()
                     if ficha:
                         for f_item in ficha.itens:
                             qtd_reservar = float(f_item.quantidade) * float(item['quantidade'])

@@ -39,29 +39,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     try {
       // Real logic
-      const response = await apiClient.post<any, any>("/v1/auth/login", { email, password });
+      const response = await apiClient.post<any, any>("/v1/auth/login", {
+        email,
+        password,
+      });
       if (response.access_token) {
-         localStorage.setItem("access_token", response.access_token);
-         if (response.refresh_token) {
-           localStorage.setItem("refresh_token", response.refresh_token);
-         }
-         if (response.user) {
-           // Let's adapt the user format to UI User format which has id, name, email, role, etc.
-           const mappedUser: User = {
-             id: String(response.user.id),
-             name: response.user.name,
-             email: response.user.email,
-             contact: "",
-             role: response.user.role,
-             status: "Ativo",
-             lastAccess: new Date().toISOString()
-           };
-           setUser(mappedUser);
-           localStorage.setItem("user", JSON.stringify(mappedUser));
-           configService.get();
-         }
-         apiClient.defaults.headers.common["Authorization"] = `Bearer ${response.access_token}`;
-         return true; // Success
+        localStorage.setItem("access_token", response.access_token);
+        if (response.refresh_token) {
+          localStorage.setItem("refresh_token", response.refresh_token);
+        }
+        if (response.user) {
+          // Let's adapt the user format to UI User format which has id, name, email, role, etc.
+          const mappedUser: User = {
+            id: String(response.user.id),
+            name: response.user.name,
+            email: response.user.email,
+            contact: "",
+            role: response.user.role,
+            status: "Ativo",
+            lastAccess: new Date().toISOString(),
+          };
+
+          setUser(mappedUser);
+          localStorage.setItem("user", JSON.stringify(mappedUser));
+          const res = await apiClient.get<any, any>("/v1/setup/empresa");
+          const data = res.data || res || {};
+          localStorage.setItem("sigi_config", JSON.stringify(data));
+        }
+        apiClient.defaults.headers.common[
+          "Authorization"
+        ] = `Bearer ${response.access_token}`;
+        return true; // Success
       }
       return false;
     } catch (err) {
@@ -77,6 +85,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem("sigi_auth_user");
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
+    localStorage.removeItem("sigi_config");
     localStorage.removeItem("user");
     delete apiClient.defaults.headers.common["Authorization"];
   };
@@ -95,4 +104,3 @@ export function useAuth() {
   }
   return context;
 }
-

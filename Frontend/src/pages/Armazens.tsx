@@ -13,6 +13,7 @@ import { warehouseService } from "../services";
 import { useAuth } from "../components/AuthContext";
 import { toast } from "react-toastify";
 import Modal from "../components/Common/Modal";
+import TabsArmazem from "./Armazens/TabsArmazem";
 
 export default function Armazens() {
   const queryClient = useQueryClient();
@@ -50,7 +51,7 @@ export default function Armazens() {
   const armazens = armazensResponse?.items || [];
 
   const { data: stockData, isLoading: isLoadingStock } = useQuery({
-    queryKey: ["armazem-stock", selectedArmazem?.id],
+    queryKey: ["armazem-stockddddd", selectedArmazem?.id],
     queryFn: () => warehouseService.getStock(selectedArmazem?.id),
     enabled: !!selectedArmazem && isStockModalOpen
   });
@@ -150,47 +151,9 @@ export default function Armazens() {
           Nenhum armazém configurado.
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {armazens.map((armazem: any) => (
-            <div key={armazem.id} className="bg-white dark:bg-surface-dark rounded-2xl border border-gray-200 dark:border-gray-800 p-6 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
-              <div>
-                <div className="flex items-start justify-between mb-4">
-                  <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-                    <Box size={24} />
-                  </div>
-                  {armazem.principal && (
-                    <span className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 text-[9px] font-black px-2 py-1 rounded uppercase tracking-wider">
-                      Principal
-                    </span>
-                  )}
-                </div>
-                <h3 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight truncate">
-                  {armazem.nome}
-                </h3>
-                <p className="text-[10px] font-mono text-gray-400 uppercase tracking-wider mt-1">
-                  CÓDIGO: {armazem.codigo}
-                </p>
-                <div className="flex items-center gap-1.5 mt-3 text-gray-500 dark:text-gray-400 text-xs font-medium">
-                  <MapPin size={14} />
-                  <span className="truncate">{armazem.localizacao || "Localização não definida"}</span>
-                </div>
-                {armazem.descricao && (
-                  <p className="mt-3 text-xs text-gray-600 dark:text-gray-300 line-clamp-2">
-                    {armazem.descricao}
-                  </p>
-                )}
-              </div>
-              <div className="mt-6 pt-6 border-t border-gray-100 dark:border-gray-800">
-                <button
-                  onClick={() => openStock(armazem)}
-                  className="w-full bg-gray-50 hover:bg-gray-100 dark:bg-gray-800/50 dark:hover:bg-gray-800 text-gray-900 dark:text-white py-2.5 rounded-xl font-bold uppercase tracking-wider text-[10px] transition-colors"
-                >
-                  Consultar Stock
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
+        <TabsArmazem armazens={armazens} warehouseService={warehouseService} />
+
+        
       )}
 
       {/* Stock Modal */}
@@ -278,7 +241,7 @@ export default function Armazens() {
             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Código *</label>
             <input
               type="text"
-              required
+              
               value={novoArmazem.codigo}
               onChange={e => setNovoArmazem({...novoArmazem, codigo: e.target.value})}
               className="w-full bg-gray-50 dark:bg-gray-900 border-2 border-gray-100 dark:border-gray-800 focus:border-primary px-3 py-2 rounded-xl outline-none text-xs font-bold uppercase transition-all"

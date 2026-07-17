@@ -10380,7 +10380,7 @@
         "kind": 6,
         "importPath": "backend.app.schemas.armazem_schema",
         "description": "backend.app.schemas.armazem_schema",
-        "peekOfCode": "class ProdutoStockArmazemSchema(Schema):\n    id = fields.Int(dump_only=True)\n    produto_id = fields.Int(required=True)\n    produto_nome = fields.Function(lambda obj: obj.produto.nome if obj.produto else None)\n    produto_codigo = fields.Function(lambda obj: obj.produto.codigo if obj.produto else None)\n    armazem_id = fields.Int(required=True)\n    armazem_nome = fields.Function(lambda obj: obj.armazem.nome if obj.armazem else None)\n    stock_atual = fields.Decimal(required=True)\n    stock_minimo = fields.Decimal(required=True)\nclass IngredienteStockArmazemSchema(Schema):",
+        "peekOfCode": "class ProdutoStockArmazemSchema(Schema):\n    id = fields.Int(dump_only=True)\n    produto_id = fields.Int(required=True)\n    produto_nome = fields.Function(lambda obj: obj.produto.nome if obj.produto else None)\n    produto_codigo = fields.Function(lambda obj: obj.produto.codigo if obj.produto else None)\n    armazem_id = fields.Int(required=True)\n    armazem_nome = fields.Function(lambda obj: obj.armazem.nome if obj.armazem else None)\n    stock_atual = fields.Decimal(required=True)\n    stock_minimo = fields.Decimal(required=True)\n    preco_compra = fields.Function(lambda obj: obj.produto.preco_compra if obj.produto else None)",
         "detail": "backend.app.schemas.armazem_schema",
         "documentation": {}
     },
@@ -10398,7 +10398,7 @@
         "kind": 6,
         "importPath": "backend.app.schemas.armazem_schema",
         "description": "backend.app.schemas.armazem_schema",
-        "peekOfCode": "class MaterialStockArmazemSchema(Schema):\n    id = fields.Int(dump_only=True)\n    material_id = fields.Int(required=True)\n    material_nome = fields.Function(lambda obj: obj.material.nome if obj.material else None)\n    material_codigo = fields.Function(lambda obj: obj.material.codigo if obj.material else None)\n    armazem_id = fields.Int(required=True)\n    armazem_nome = fields.Function(lambda obj: obj.armazem.nome if obj.armazem else None)\n    stock_atual = fields.Decimal(required=True)\n    stock_minimo = fields.Decimal(required=True)",
+        "peekOfCode": "class MaterialStockArmazemSchema(Schema):\n    id = fields.Int(dump_only=True)\n    material_id = fields.Int(required=True)\n    material_nome = fields.Function(lambda obj: obj.material.nome if obj.material else None)\n    material_codigo = fields.Function(lambda obj: obj.material.codigo if obj.material else None)\n    armazem_id = fields.Int(required=True)\n    armazem_nome = fields.Function(lambda obj: obj.armazem.nome if obj.armazem else None)\n    stock_atual = fields.Decimal(required=True)\n    stock_minimo = fields.Decimal(required=True)\n    unidade_medida_sigla = fields.Function(",
         "detail": "backend.app.schemas.armazem_schema",
         "documentation": {}
     },

@@ -32,10 +32,24 @@ import CartList from "./CaixaPOS/CartList";
 export default function CaixaPOS() {
   const queryClient = useQueryClient();
   const { createVenda, checkoutPedido, enviarFatura } = useComercial();
+  const [activeCategory, setActiveCategory] = useState<string>("Revenda");
   const config = JSON.parse(localStorage.getItem("sigi_config") || "{}");
   const { data: productsResponse } = useQuery({
-    queryKey: ["products"],
-    queryFn: () => productService.getAll({ per_page: 5000, include_iva: true }),
+    queryKey: ["products", activeCategory],
+    queryFn: () => {
+      const params: any = {
+        per_page: 5000,
+        include_iva: true,
+        tipo :activeCategory,
+      };
+  
+      // Apenas produtos de revenda com stock
+      if (activeCategory === "Revenda") {
+        params.have_stock = true;
+      }
+  
+      return productService.getAll(params);
+    },
   });
 
   const { data: clientsResponse } = useQuery({
@@ -88,7 +102,6 @@ export default function CaixaPOS() {
   const caixaId = openCaixa?.id || null;
 
   const posProducts = products;
-  const [activeCategory, setActiveCategory] = useState<string>("Tudo");
 
   const displayProducts = posProducts.filter((p: any) => {
     const pName = p.name || p.nome || "";
@@ -96,7 +109,7 @@ export default function CaixaPOS() {
     const pTipo = p.tipo || "";
     const matchSearch = pName.toLowerCase().includes(searchTerm.toLowerCase());
     const matchCategory =
-      activeCategory === "Tudo" || pCategory === activeCategory;
+      activeCategory === activeCategory || pCategory === activeCategory;
 
     // Hide ingredients/consumables from POS
     if (activeCategory === "Tudo" && pCategory === "Ingredientes") return false;
@@ -111,33 +124,26 @@ export default function CaixaPOS() {
   });
 
   const subtotal = cart.reduce(
-    (sum, item) => sum + (item.salePrice || item.preco_venda || item.preco_iva) * item.qty,
+    (sum, item) =>
+      sum + (item.salePrice || item.preco_venda || item.preco_iva) * item.qty,
     0
   );
-  const totalComIva = cart.reduce(
-    (sum, item) => {
-      if (item.preco_iva>0 && item.taxa_iva>0) {
-        return sum + (Number(item.preco_iva) * item.qty);
-      } else {
-        return sum + (Number(item.preco_venda) * item.qty);
-      }
-    },
-    0
-  );
-  const Iva = cart.reduce(
-    (sum, item) => {
-  
-      const precoVenda = Number(item.preco_venda || 0);
-      const precoIva = Number(item.preco_iva || precoVenda);
-  
-      const valorIva = precoIva - precoVenda;
-  
-      return sum + (valorIva * item.qty);
-  
-    },
-    0
-  );
-  
+  const totalComIva = cart.reduce((sum, item) => {
+    if (item.preco_iva > 0 && item.taxa_iva > 0) {
+      return sum + Number(item.preco_iva) * item.qty;
+    } else {
+      return sum + Number(item.preco_venda) * item.qty;
+    }
+  }, 0);
+  const Iva = cart.reduce((sum, item) => {
+    const precoVenda = Number(item.preco_venda || 0);
+    const precoIva = Number(item.preco_iva || precoVenda);
+
+    const valorIva = precoIva - precoVenda;
+
+    return sum + valorIva * item.qty;
+  }, 0);
+
   const descontoAutomatico = subtotal * (descontoClientePercent / 100);
   const total = Math.max(0, totalComIva - descontoAutomatico);
 
@@ -157,6 +163,7 @@ export default function CaixaPOS() {
       cart.map((item) => {
         if (item.id === id) {
           const newQty = item.qty + delta;
+          
           return newQty > 0 ? { ...item, qty: newQty } : item;
         }
         return item;
@@ -724,7 +731,7 @@ export default function CaixaPOS() {
         <div className="bg-white dark:bg-surface-dark border-b border-gray-200 dark:border-border-dark px-4 py-2 shrink-0 flex gap-2 overflow-x-auto">
           {[
             "Tudo",
-            "Produtos Acabados",
+            "Acabado",
             "Revenda",
             "Material",
             "Menu Eventos",
@@ -803,9 +810,7 @@ export default function CaixaPOS() {
               {/* Resumo */}
               <div className="space-y-2 mb-4 text-sm">
                 <div className="flex justify-between text-gray-600 dark:text-gray-400">
-                  <span>
-                    {"Subtotal (s/ IVA)"}
-                  </span>
+                  <span>{"Subtotal (s/ IVA)"}</span>
                   <span>{formatCurrency(subtotal)}</span>
                 </div>
 
@@ -815,7 +820,7 @@ export default function CaixaPOS() {
                     <span>- {formatCurrency(descontoAutomatico)}</span>
                   </div>
                 )}
- {/* IVA */}
+                {/* IVA */}
                 <div className="flex justify-between text-gray-600 dark:text-gray-400">
                   <span>{"IVA"}</span>
                   <span>{formatCurrency(Iva)}</span>
@@ -933,7 +938,7 @@ export default function CaixaPOS() {
                   </div>
                   <div>
                     <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">
-                      Valor do Sinal / Depósito (STD)
+                      Valor do Sinal / Depósito ({config.moeda})
                     </label>
                     <input
                       type="number"
@@ -1040,7 +1045,7 @@ export default function CaixaPOS() {
               {paymentMethod === "Dinheiro" && (
                 <div>
                   <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
-                    Valor Recebido (STD)
+                    Valor Recebido ({config.moeda})
                   </label>
                   <input
                     type="number"

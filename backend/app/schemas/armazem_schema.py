@@ -130,6 +130,13 @@ class ProdutoStockArmazemSchema(Schema):
     armazem_nome = fields.Function(lambda obj: obj.armazem.nome if obj.armazem else None)
     stock_atual = fields.Decimal(required=True)
     stock_minimo = fields.Decimal(required=True)
+    preco_compra = fields.Function(lambda obj: obj.produto.preco_compra if obj.produto else None)
+    preco_venda = fields.Function(lambda obj: obj.produto.preco_venda if obj.produto else None)
+    unidade_medida_sigla = fields.Function(
+        lambda obj: obj.produto.unidade_medida.sigla 
+        if obj.produto and obj.produto.unidade_medida 
+        else None
+    )
 
 class IngredienteStockArmazemSchema(Schema):
     id = fields.Int(dump_only=True)
@@ -150,5 +157,10 @@ class MaterialStockArmazemSchema(Schema):
     armazem_nome = fields.Function(lambda obj: obj.armazem.nome if obj.armazem else None)
     stock_atual = fields.Decimal(required=True)
     stock_minimo = fields.Decimal(required=True)
+    unidade_medida_sigla = fields.Function(
+        lambda obj: obj.material.unidade_medida.sigla 
+        if obj.material and obj.material.unidade_medida 
+        else None
+    )
 
 
