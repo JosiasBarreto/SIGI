@@ -21,7 +21,7 @@ const movimentoClasses: Record<string, string> = {
     "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
   "TipoMovimentoStock.PERDA":
     "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400",
-    "TipoMovimentoStock.REQUISICAO":
+  "TipoMovimentoStock.REQUISICAO":
     "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
 };
 const stockStatus: Record<string, string> = {
@@ -190,7 +190,6 @@ export const schemas: Record<string, ModuleSchema> = {
       { key: "nif", label: "NIF" },
       { key: "telefone", label: "Telefone" },
       { key: "email", label: "Email" },
-      
     ],
     fields: [
       { name: "nome", label: "Nome Completo", type: "text", required: true },
@@ -334,7 +333,15 @@ export const schemas: Record<string, ModuleSchema> = {
         name: "tipo_evento",
         label: "Tipo de Evento",
         type: "select",
-        options: ["Casamento", "Aniversario", "Batizado", "Empresarial", "Catering", "Formatura", "Outro"],
+        options: [
+          "Casamento",
+          "Aniversario",
+          "Batizado",
+          "Empresarial",
+          "Catering",
+          "Formatura",
+          "Outro",
+        ],
         required: true,
       },
       {
@@ -362,7 +369,12 @@ export const schemas: Record<string, ModuleSchema> = {
         type: "number",
         required: true,
       },
-      { name: "valor_evento", label: "Valor do Evento", type: "number", required: true },
+      {
+        name: "valor_evento",
+        label: "Valor do Evento",
+        type: "number",
+        required: true,
+      },
       { name: "servico_descricao", label: "Servico Principal", type: "text" },
       { name: "valor_pago", label: "Valor Pago", type: "number" },
       { name: "descricao", label: "Descrição / Observações", type: "textarea" },
@@ -657,6 +669,17 @@ export const schemas: Record<string, ModuleSchema> = {
       },
       { name: "oldValue", label: "Valor Anterior", type: "textarea" },
       { name: "newValue", label: "Valor Novo", type: "textarea" },
+    ],
+  },
+  pedidos: {
+    title: "Fila de Pedidos",
+    columns: [
+      { key: "numero", label: "Número de Pedido" },
+      { key: "origem", label: "Origem" },
+      { key: "tipo", label: "Tipo de Pedido" },
+      { key: "valor_total", label: "Total" },
+      { key: "cliente.nome", label: "Cliente" },
+      { key: "data_entrega", label: "Data de Entrega" }
     ],
   },
 };

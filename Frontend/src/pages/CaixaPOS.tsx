@@ -28,6 +28,7 @@ import Swal from "sweetalert2";
 import { toast } from "react-toastify";
 import ProductGrid from "./CaixaPOS/ProductGrid";
 import CartList from "./CaixaPOS/CartList";
+import { SearchableSelect } from "../components/Common/SearchableSelect";
 
 export default function CaixaPOS() {
   const queryClient = useQueryClient();
@@ -69,6 +70,7 @@ export default function CaixaPOS() {
   const [tipoPedido, setTipoPedido] = useState<"Imediato" | "Agendado">(
     "Imediato"
   );
+  // pegar a data de hoje mais 3 horas acima
   const [dataEntrega, setDataEntrega] = useState("");
   const [valorPago, setValorPago] = useState(""); // deposit
   const [codigoTransferencia, setCodigoTransferencia] = useState("");
@@ -88,6 +90,8 @@ export default function CaixaPOS() {
   const descontoClientePercent = Number(
     selectedClientObj?.percentagem_desconto_padrao || 0
   );
+  
+ 
 
   const { data: caixasResponse } = useQuery({
     queryKey: ["caixas"],
@@ -157,6 +161,7 @@ export default function CaixaPOS() {
       setCart([...cart, { ...product, qty: 1 }]);
     }
   };
+  
 
   const updateQty = (id: string | number, delta: number) => {
     setCart(
@@ -779,6 +784,7 @@ export default function CaixaPOS() {
               <label className="block text-xs font-medium text-gray-500 mb-1">
                 Cliente (Opcional)
               </label>
+              
               <select
                 value={selectedClient}
                 onChange={(e) => setSelectedClient(e.target.value)}

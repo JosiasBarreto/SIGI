@@ -203,10 +203,10 @@ with app.app_context():
             db.session.rollback()
 
     for sql in [
-        "ALTER TABLE pedidos MODIFY COLUMN estado ENUM('Pendente','Agendado','Confirmado','Em Producao','Pronto','Entregue','Concluido','Cancelado') DEFAULT 'Pendente';",
-        "ALTER TABLE itens_pedido MODIFY COLUMN tipo_item ENUM('Produto','Produto Acabado','Produto Revenda','Servico','Aluguer','Material') NOT NULL;",
-        "ALTER TABLE eventos MODIFY COLUMN estado ENUM('Agendado','Confirmado','Em Preparacao','Em Execucao','Finalizado','Concluido','Cancelado') DEFAULT 'Agendado';",
-        "ALTER TABLE materiais MODIFY COLUMN estado ENUM('Disponivel','Reservado','Em Uso','Devolvido','Danificado','Manutencao','Cancelado') DEFAULT 'Disponivel';",
+        "ALTER TABLE pedidos MODIFY COLUMN estado ENUM('Pendente','AGENDADO','CONFIRMADO','EM PRODUCAO','PRONTO','ENTREGUE','CONCLUIDO','CANCELADO') DEFAULT 'PENDENTE';",
+        "ALTER TABLE itens_pedido MODIFY COLUMN tipo_item ENUM('PRODUTO','PRODUTO ACABADO','PRODUTO DE REVENDA','SERVICO','ALUGUER','MATERIAL') NOT NULL;",
+        "ALTER TABLE eventos MODIFY COLUMN estado ENUM('AGENDADO','CONFIRMADO','EM PREPARACAO','EM EXECUCAO','FINALIZADO','CONCLUIDO','CANCELADO') DEFAULT 'AGENDADO';",
+        "ALTER TABLE materiais MODIFY COLUMN estado ENUM('DISPONIVEL','RESERVA','EM USO','DEVOLVIDO','DANIFICADO','MANUTENCAO','CANCELADO') DEFAULT 'DISPONIVEL';",
     ]:
         try:
             db.session.execute(text(sql))

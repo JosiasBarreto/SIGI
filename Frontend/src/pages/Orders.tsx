@@ -3,13 +3,15 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { orderService, clientService, productService, materialService } from "../services";
 import { useComercial } from '../hooks';
 import { TipoProduto } from '../enums';
-import { Plus, Search, Calendar, ChevronRight, FileText, Clock, Trash2, X, AlertCircle, ShoppingCart, UserPlus, CreditCard, ChevronLeft } from "lucide-react";
+import { Plus, Search, Calendar, ChevronRight, FileText, Clock, Trash2, X, AlertCircle, ShoppingCart, UserPlus, CreditCard, ChevronLeft, Wrench, Eye } from "lucide-react";
 import { formatCurrency, cn } from "../lib/utils";
 import { OrderStatus } from "../types";
 import Swal from "sweetalert2";
 import { toast } from "react-toastify";
 import OrderDetailsModal from "../components/OrderDetailsModal";
 import { useAuth } from "../components/AuthContext";
+import { ColumnDef } from "@tanstack/react-table";
+import { DataTable } from "../components/Common/DataTable";
 
 export default function Orders() {
   const { user } = useAuth();
@@ -266,7 +268,79 @@ export default function Orders() {
 
   const updateCartItem = (uniqueId: string, fields: any) => {
     setCart(cart.map(item => item.uniqueId === uniqueId ? { ...item, ...fields } : item));
+
   };
+  const occurrenceColumns = React.useMemo<ColumnDef<any, any>[]>(() => [
+    {
+      accessorKey: "numero",
+      header: "Codigo",
+      cell: ({ row }) => <span className="font-mono font-bold text-primary">{row.original.numero || "N/A"}</span>
+    },
+    {
+      accessorKey: "tipo",
+      header: "Forma Pedido",
+      cell: ({ row }) => (
+        <span className="font-bold flex items-center gap-2">
+          <Wrench size={14} className="text-gray-400" />
+          {row.original.tipo ||  "Desconhecido"}
+        </span>
+      )
+    },
+    {
+      id: "quantidades",
+      header: "Quantidades",
+      cell: ({ row }) => {
+        const oc = row.original;
+        return (
+          <div className="space-x-2">
+            {oc.tipo === "Danificado" && (
+              <span className="bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 font-bold px-2 py-1 rounded">
+                {Number(oc.quantidade)} Danificado(s)
+              </span>
+            )}
+            {oc.tipo === "Perda" && (
+              <span className="bg-rose-100 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 font-bold px-2 py-1 rounded">
+                {Number(oc.quantidade)} Perdido(s)
+              </span>
+            )}
+          </div>
+        );
+      }
+    },
+    {
+      accessorKey: "valor_total",
+      header: "Valor",
+      cell: ({ row }) => <span className="italic text-gray-500 font-medium">{row.original.valor_total || "Em espera"}</span>
+    },
+    {
+      accessorKey: "data_ocorrencia",
+      header: "Data",
+      cell: ({ row }) => <span className="font-mono text-[10px] text-gray-400">{row.original.data_ocorrencia ? new Date(row.original.data_ocorrencia).toLocaleString() : "N/A"}</span>
+    },
+    {
+      accessorKey: "estado",
+      header: "Estado",
+      cell: ({ row }) => <span className="font-mono text-[10px] text-gray-400">{row.original.estado || "Em Falta de registo"}</span>
+    },
+    {
+      accessorKey: "responsavel_nome",
+      header: "Responsável",
+      cell: ({ row }) => <span className="font-mono text-[10px] text-gray-400">{row.original.responsavel_nome || "Em Falta de registo"}</span>
+    },
+    {
+      id: "acoes",
+      header: "Ações",
+      cell: ({ row }) => (
+        <button
+        onClick={() => setSelectedOrder(row.original)}
+          className="text-primary hover:text-primary-hover bg-primary/10 hover:bg-primary/20 p-2 rounded-xl transition-all flex items-center justify-center font-bold"
+          title="Ver mais detalhes"
+        >
+          <Eye size={16} /> Ver mais
+        </button>
+      )
+    }
+  ], []);
 
   if (isLoading) {
     return (
@@ -358,46 +432,20 @@ export default function Orders() {
       </div>
 
       {/* Grid List for Mobile First */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <div className="">
         {visibleOrders.length === 0 ? (
           <div className="col-span-full py-12 text-center text-gray-500 bg-white dark:bg-surface-dark rounded-xl border border-gray-200 dark:border-gray-800 border-dashed">
             <FileText size={48} className="mx-auto mb-4 opacity-20" />
             Nenhum pedido encontrado na aba {activeTab}.
           </div>
         ) : (
-          visibleOrders.map((order: any) => (
-            <button
-              key={order.id}
-              onClick={() => setSelectedOrder(order)}
-              className="bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-800 p-5 rounded-xl text-left hover:border-primary/50 hover:shadow-lg transition-all flex flex-col justify-between group"
-            >
-              <div>
-                <div className="flex justify-between items-start mb-3">
-                  <span className="font-bold text-lg text-gray-900 dark:text-white uppercase tracking-tight">#{order.numero || order.id}</span>
-                  <span className={cn("text-xs font-bold px-2.5 py-1 rounded-full", (order.tipo || order.type) === 'Composto' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400')}>
-                    {order.tipo || order.type}
-                  </span>
-                </div>
-                <h3 className="font-bold text-gray-900 dark:text-white mb-1 line-clamp-1">
-                  {getClientName(order.clientId || order.cliente_id)}
-                </h3>
-                <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 mt-2">
-                   <Clock size={14} />
-                   {new Date(order.dueDate || order.data_entrega || order.data_pedido).toLocaleDateString("pt-ST", { day: '2-digit', month: 'short', hour: '2-digit', minute:'2-digit' })}
-                </div>
-              </div>
-              <div className="mt-5 flex items-end justify-between border-t border-gray-100 dark:border-gray-800 pt-4">
-                <div>
-                  <p className="text-xs text-gray-500 mb-0.5">Valor Total</p>
-                  <p className="text-lg font-bold text-gray-900 dark:text-white">{formatCurrency(order.total || order.valor_total)}</p>
-                </div>
-                <div className="text-primary opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-2 bg-primary/10 rounded-full">
-                   <ChevronRight size={18} />
-                </div>
-              </div>
-            </button>
-          ))
-        )}
+          <DataTable columns={occurrenceColumns}
+          data={visibleOrders}
+
+          />
+          
+          )
+        }
       </div>
 
       <OrderDetailsModal 

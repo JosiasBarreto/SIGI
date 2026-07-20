@@ -59,7 +59,7 @@ class ComercialService:
             if not produto:
                 itens_venda.append(item)
                 continue
-
+            #bloqueiar venda de consumivel
             produto_tipo = self._enum_value(produto.tipo)
             if produto_tipo == TipoProduto.CONSUMIVEL.value:
                 raise ValueError(f"O produto '{produto.nome}' é consumível e não pode ser vendido.")

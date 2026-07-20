@@ -227,7 +227,7 @@ export function Sidebar({
           "text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 mt-4 transition-opacity duration-300",
           isOpen ? "px-3 opacity-100 block" : "opacity-0 md:hidden block px-3"
         )}>
-          Módulos ({user?.role})
+          Módulo ({user?.role})
         </div>
         {filteredItems.map((item) => {
           const isActive =
