@@ -6,6 +6,7 @@ interface CartItem {
   nome: string;
   salePrice?: number;
   preco_venda?: number;
+  preco_iva?: number;
   taxa_iva?: number;
   qty: number;
 }

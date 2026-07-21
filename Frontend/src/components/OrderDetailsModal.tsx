@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { X, CheckCircle, Clock, Play, FileText, Gift, CreditCard, ChevronRight, User, Truck, History } from 'lucide-react';
 import { formatCurrency, cn } from '../lib/utils';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { orderService, clientService, productService, documentService } from '../services';
+import { useQuery } from '@tanstack/react-query';
+import { clientService, productService, documentService } from '../services';
 import { toast } from 'react-toastify';
 import Swal from 'sweetalert2';
+import PedidoCheckoutForm from './PedidoCheckoutForm';
 
 interface OrderDetailsModalProps {
   order: any;
@@ -14,7 +15,6 @@ interface OrderDetailsModalProps {
 }
 
 export default function OrderDetailsModal({ order, isOpen, onClose, onUpdateStatus }: OrderDetailsModalProps) {
-  const queryClient = useQueryClient();
   const { data: clientsResponse } = useQuery({ 
     queryKey: ["clients"], 
     queryFn: () => clientService.getAll({ per_page: 5000 }) 
@@ -28,26 +28,6 @@ export default function OrderDetailsModal({ order, isOpen, onClose, onUpdateStat
   const products = productsResponse?.items || [];
 
   const [showCheckoutForm, setShowCheckoutForm] = useState(false);
-  const [checkoutMetodo, setCheckoutMetodo] = useState('Dinheiro');
-  const [checkoutValor, setCheckoutValor] = useState('');
-  const [checkoutCodigo, setCheckoutCodigo] = useState('');
-  const [checkoutEmissor, setCheckoutEmissor] = useState('');
-  const [checkoutObs, setCheckoutObs] = useState('Liquidação do valor restante no levantamento do bolo.');
-
-  const checkoutMutation = useMutation({
-    mutationFn: (payload: any) => orderService.checkoutPedido(order?.id || order?.numero, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["orders"] });
-      queryClient.invalidateQueries({ queryKey: ["orders-cal"] });
-      queryClient.invalidateQueries({ queryKey: ["caixas"] });
-      toast.success("Saldo liquidado com sucesso!");
-      setShowCheckoutForm(false);
-      onClose();
-    },
-    onError: () => {
-      toast.error("Erro ao liquidar o saldo.");
-    }
-  });
 
   if (!isOpen || !order) return null;
 
@@ -188,10 +168,7 @@ export default function OrderDetailsModal({ order, isOpen, onClose, onUpdateStat
 
                 {orderBalance > 0 && !showCheckoutForm && (
                   <button
-                    onClick={() => {
-                      setCheckoutValor(String(orderBalance));
-                      setShowCheckoutForm(true);
-                    }}
+                    onClick={() => setShowCheckoutForm(true)}
                     className="w-full mt-4 bg-primary hover:bg-primary-hover text-white font-bold py-2 px-4 rounded-xl text-xs transition-colors flex justify-center items-center gap-2"
                   >
                     Registar Liquidação de Saldo
@@ -199,105 +176,16 @@ export default function OrderDetailsModal({ order, isOpen, onClose, onUpdateStat
                 )}
 
                 {showCheckoutForm && (
-                  <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-850 rounded-xl border border-gray-200 dark:border-gray-700 space-y-3">
-                    <h5 className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider">Checkout de Saldo</h5>
-                    
-                    <div>
-                      <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Método de Pagamento</label>
-                      <select
-                        value={checkoutMetodo}
-                        onChange={(e) => setCheckoutMetodo(e.target.value)}
-                        className="w-full text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-2 text-gray-800 dark:text-gray-100"
-                      >
-                        <option value="Dinheiro">Dinheiro</option>
-                        <option value="TPA / POS">TPA / POS</option>
-                        <option value="Transferência">Transferência</option>
-                      </select>
-                    </div>
-
-                    {(checkoutMetodo === 'Transferência' || checkoutMetodo === 'TPA / POS') && (
-                      <>
-                        <div>
-                          <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Comprovativo / Código TRX *</label>
-                          <input
-                            type="text"
-                            value={checkoutCodigo}
-                            onChange={(e) => setCheckoutCodigo(e.target.value)}
-                            className="w-full text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-2 text-gray-800 dark:text-gray-100 font-medium"
-                            placeholder="Ex: TRX123456"
-                            required
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Emissor / Titular Banco *</label>
-                          <input
-                            type="text"
-                            value={checkoutEmissor}
-                            onChange={(e) => setCheckoutEmissor(e.target.value)}
-                            className="w-full text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-2 text-gray-800 dark:text-gray-100 font-medium"
-                            placeholder="Ex: Manuel Silva (Millennium)"
-                            required
-                          />
-                        </div>
-                      </>
-                    )}
-
-                    <div>
-                      <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Valor a Cobrar (STD) *</label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        max={orderBalance}
-                        value={checkoutValor}
-                        onChange={(e) => setCheckoutValor(e.target.value)}
-                        className="w-full text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-2 font-bold text-gray-800 dark:text-gray-100"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Observações / Notas</label>
-                      <textarea
-                        value={checkoutObs}
-                        onChange={(e) => setCheckoutObs(e.target.value)}
-                        className="w-full text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-2 h-16 text-gray-800 dark:text-gray-100"
-                      />
-                    </div>
-
-                    <div className="flex gap-2 justify-end pt-2">
-                      <button
-                        type="button"
-                        onClick={() => setShowCheckoutForm(false)}
-                        className="px-3 py-1.5 text-xs text-gray-500 hover:text-gray-700"
-                      >
-                        Cancelar
-                      </button>
-                      <button
-                        type="button"
-                        disabled={checkoutMutation.isPending}
-                        onClick={() => {
-                          if ((checkoutMetodo === 'Transferência' || checkoutMetodo === 'TPA / POS') && (!checkoutCodigo.trim() || !checkoutEmissor.trim())) {
-                            toast.error("Preencha todos os campos obrigatórios.");
-                            return;
-                          }
-                          const val = parseFloat(checkoutValor);
-                          if (isNaN(val) || val <= 0) {
-                            toast.error("Introduza um valor válido.");
-                            return;
-                          }
-                          checkoutMutation.mutate({
-                            forma_pagamento_id: checkoutMetodo === 'Transferência' ? 2 : (checkoutMetodo === 'TPA / POS' ? 3 : 1),
-                            valor: val,
-                            codigo_transferencia: (checkoutMetodo === 'Transferência' || checkoutMetodo === 'TPA / POS') ? checkoutCodigo : null,
-                            emissor: (checkoutMetodo === 'Transferência' || checkoutMetodo === 'TPA / POS') ? checkoutEmissor : null,
-                            observacoes: checkoutObs
-                          });
-                        }}
-                        className="px-3 py-1.5 text-xs font-bold text-white bg-success hover:bg-success/90 rounded-lg"
-                      >
-                        {checkoutMutation.isPending ? "A processar..." : "Confirmar"}
-                      </button>
-                    </div>
+                  <div className="mt-4">
+                    <PedidoCheckoutForm
+                      orderId={order?.id || order?.numero}
+                      defaultAmount={orderBalance}
+                      onCancel={() => setShowCheckoutForm(false)}
+                      onSuccess={() => {
+                        setShowCheckoutForm(false);
+                        onClose();
+                      }}
+                    />
                   </div>
                 )}
               </div>

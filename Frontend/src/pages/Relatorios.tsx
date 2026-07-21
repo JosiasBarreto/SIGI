@@ -70,11 +70,17 @@ export default function Relatorios() {
     queryFn: () => requestService.getAll({ per_page: 1000 })
   });
 
+  const { data: deliveriesRes } = useQuery({
+    queryKey: ["deliveries-rel"],
+    queryFn: () => deliveryService.getAll({ per_page: 1000 })
+  });
+
   const orders = ordersRes?.items || [];
   const products = productsRes?.items || [];
   const materials = materialsRes?.items || [];
   const prodOrders = prodOrdersRes?.items || [];
   const requisitions = reqsRes?.items || [];
+  const deliveries = deliveriesRes?.items || [];
 
   // Local storage for receivables
   const savedReceivables = localStorage.getItem("sigi_receivables");
@@ -89,20 +95,20 @@ export default function Relatorios() {
   // 1. Vendas Report Logic
   const getVendasReport = () => {
     let list = orders.map((o: any) => ({
-      id: o.id || o.numero || "PED-121",
+      id: o.numero || o.id || "PED-121",
       date: (o.data_pedido || o.dueDate || new Date().toISOString()).split("T")[0],
-      client: o.clientName || o.cliente?.nome || "Cliente Final",
-      type: o.type || o.tipo || "Simples",
-      amount: Number(o.total || o.valor_total || 250000),
-      payment: o.estado_pagamento || "Pago"
+      client: o.cliente?.nome || o.clientName || "Cliente Final",
+      type: o.tipo || o.type || "Simples",
+      amount: Number(o.valor_total || o.total || 0),
+      payment: o.estado_pagamento || "Pendente"
     }));
 
     // Filter by date range
-    list = list.filter(v => v.date >= startDate && v.date <= endDate);
+    list = list.filter((v: any) => v.date >= startDate && v.date <= endDate);
 
     // Search term filter
     if (searchTerm) {
-      list = list.filter(v => v.client.toLowerCase().includes(searchTerm.toLowerCase()) || String(v.id).toLowerCase().includes(searchTerm.toLowerCase()));
+      list = list.filter((v: any) => v.client.toLowerCase().includes(searchTerm.toLowerCase()) || String(v.id).toLowerCase().includes(searchTerm.toLowerCase()));
     }
 
     return list;
@@ -111,21 +117,21 @@ export default function Relatorios() {
   // 2. Pedidos Report Logic
   const getPedidosReport = () => {
     let list = orders.map((o: any) => ({
-      id: o.id || o.numero || "PED-121",
+      id: o.numero || o.id || "PED-121",
       date: (o.data_pedido || o.dueDate || new Date().toISOString()).split("T")[0],
-      client: o.clientName || o.cliente?.nome || "Cliente Final",
+      client: o.cliente?.nome || o.clientName || "Cliente Final",
       status: o.estado || "Confirmado",
-      amount: Number(o.total || o.valor_total || 150000)
+      amount: Number(o.valor_total || o.total || 0)
     }));
 
-    list = list.filter(p => p.date >= startDate && p.date <= endDate);
+    list = list.filter((p: any) => p.date >= startDate && p.date <= endDate);
 
     if (filterStatus !== "Todos") {
-      list = list.filter(p => p.status.toLowerCase() === filterStatus.toLowerCase());
+      list = list.filter((p: any) => p.status.toLowerCase() === filterStatus.toLowerCase());
     }
 
     if (searchTerm) {
-      list = list.filter(p => p.client.toLowerCase().includes(searchTerm.toLowerCase()) || String(p.id).toLowerCase().includes(searchTerm.toLowerCase()));
+      list = list.filter((p: any) => p.client.toLowerCase().includes(searchTerm.toLowerCase()) || String(p.id).toLowerCase().includes(searchTerm.toLowerCase()));
     }
 
     return list;
@@ -134,20 +140,20 @@ export default function Relatorios() {
   // 3. Producao Report Logic
   const getProducaoReport = () => {
     let list = prodOrders.map((p: any) => ({
-      id: p.id || "OP-10",
-      product: p.productName || p.produto?.nome || "Bolo de Cenoura",
-      qty: p.quantity || p.quantidade || 10,
-      sector: p.sector || p.setor || "Pastelaria",
-      status: p.status || p.estado || "Pendente",
-      date: (p.createdAt || new Date().toISOString()).split("T")[0]
+      id: p.numero || p.id || "OP-10",
+      product: p.produto?.nome || p.productName || "Produto",
+      qty: p.quantidade || p.quantity || 0,
+      sector: p.setor || p.sector || "Geral",
+      status: p.estado || p.status || "Pendente",
+      date: (p.data_prevista || p.createdAt || new Date().toISOString()).split("T")[0]
     }));
 
     if (filterStatus !== "Todos") {
-      list = list.filter(p => p.sector === filterStatus);
+      list = list.filter((p: any) => p.sector === filterStatus);
     }
 
     if (searchTerm) {
-      list = list.filter(p => p.product.toLowerCase().includes(searchTerm.toLowerCase()) || String(p.id).toLowerCase().includes(searchTerm.toLowerCase()));
+      list = list.filter((p: any) => p.product.toLowerCase().includes(searchTerm.toLowerCase()) || String(p.id).toLowerCase().includes(searchTerm.toLowerCase()));
     }
 
     return list;
@@ -156,25 +162,25 @@ export default function Relatorios() {
   // 4. Armazem Report Logic (inputs & outputs)
   const getArmazemReport = () => {
     let list = products.map((p: any) => ({
-      id: p.id || "PRD-01",
+      id: p.codigo || p.id || "PRD-01",
       name: p.nome || p.name || "",
-      category: p.category || p.categoria || "Ingredientes",
-      stock: p.quantity || p.quantidade || 0,
-      unit: p.unit || p.unidade || "kg",
-      minStock: p.min_stock || 10,
-      status: (p.quantity || 0) <= (p.min_stock || 10) ? "Crítico" : "Normal"
+      category: p.categoria_nome || p.category || "Ingredientes",
+      stock: Number(p.stock_atual || p.quantity || p.quantidade || 0),
+      unit: p.unidade_medida_sigla || p.unit || p.unidade || "un",
+      minStock: Number(p.stock_minimo || p.min_stock || 10),
+      status: Number(p.stock_atual || p.quantity || p.quantidade || 0) <= Number(p.stock_minimo || p.min_stock || 10) ? "Crítico" : "Normal"
     }));
 
     if (filterStatus !== "Todos") {
       if (filterStatus === "Crítico") {
-        list = list.filter(p => p.stock <= p.minStock);
+        list = list.filter((p: any) => p.stock <= p.minStock);
       } else {
-        list = list.filter(p => p.category === filterStatus);
+        list = list.filter((p: any) => p.category === filterStatus);
       }
     }
 
     if (searchTerm) {
-      list = list.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
+      list = list.filter((p: any) => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
     }
 
     return list;
@@ -184,16 +190,16 @@ export default function Relatorios() {
   const getMateriaisReport = () => {
     // Collect from material catalog mapping them to deliver stats
     let list = materials.map((m: any) => ({
-      id: m.id || "MAT-01",
+      id: m.codigo || m.id || "MAT-01",
       name: m.nome || m.name || "",
-      delivQty: m.quantidade_total || 20,
-      devQty: m.quantidade_disponivel || 18,
-      lost: m.perdidos || 1,
-      damaged: m.danificados || 1
+      delivQty: Number(m.quantidade_total || 0),
+      devQty: Number(m.quantidade_disponivel || 0),
+      lost: Number(m.quantidade_reservada || 0),
+      damaged: 0
     }));
 
     if (searchTerm) {
-      list = list.filter(m => m.name.toLowerCase().includes(searchTerm.toLowerCase()));
+      list = list.filter((m: any) => m.name.toLowerCase().includes(searchTerm.toLowerCase()));
     }
 
     return list;
@@ -224,14 +230,24 @@ export default function Relatorios() {
 
   // 7. Logistica Report Logic
   const getLogisticaReport = () => {
-    let list = DUMMY_DELIVERIES;
+    let list = deliveries.map((d: any) => ({
+      id: d.codigo || d.id || "DLV-01",
+      order: d.pedido?.numero || d.order || "PED-???",
+      client: d.cliente?.nome || d.client || "Cliente",
+      address: d.endereco_entrega || d.address || "Local",
+      date: (d.data_entrega || d.date || new Date().toISOString()).split("T")[0],
+      status: d.estado || d.status || "Pendente",
+      motorista: d.motorista?.nome || d.motorista || "Não Atribuído"
+    }));
+
+    if (list.length === 0) list = DUMMY_DELIVERIES;
 
     if (filterStatus !== "Todos") {
-      list = list.filter(d => d.status === filterStatus);
+      list = list.filter((d: any) => d.status === filterStatus);
     }
 
     if (searchTerm) {
-      list = list.filter(d => d.client.toLowerCase().includes(searchTerm.toLowerCase()) || d.motorista.toLowerCase().includes(searchTerm.toLowerCase()));
+      list = list.filter((d: any) => d.client.toLowerCase().includes(searchTerm.toLowerCase()) || d.motorista.toLowerCase().includes(searchTerm.toLowerCase()));
     }
 
     return list;
@@ -722,6 +738,14 @@ export default function Relatorios() {
         {/* 6. Financeiro */}
         {activeTab === "financeiro" && (
           <div className="space-y-4">
+            <div className="bg-blue-50/50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-100 dark:border-blue-800 text-sm text-blue-800 dark:text-blue-300 mb-6 flex gap-3 items-start">
+              <AlertTriangle className="shrink-0 mt-0.5 text-blue-500" size={18} />
+              <div>
+                <strong>Implementação Pendente:</strong> Os dados financeiros estão atualmente a utilizar valores locais. 
+                A integração do relatório com as Caixas e Movimentos Financeiros da nova API está pendente.
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 border-b pb-4">
               <div className="p-3 bg-green-50/20 text-green-800 border-l-4 border-green-500 rounded text-xs">
                 <span className="text-gray-400 block font-semibold">Volume de Receitas</span>

@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { orderService, clientService, productService, materialService } from "../services";
-import { useComercial } from '../hooks';
+import { orderService, clientService, productService, materialService, financialService } from "../services";
 import { TipoProduto } from '../enums';
 import { Plus, Search, Calendar, ChevronRight, FileText, Clock, Trash2, X, AlertCircle, ShoppingCart, UserPlus, CreditCard, ChevronLeft, Wrench, Eye } from "lucide-react";
 import { formatCurrency, cn } from "../lib/utils";
@@ -9,6 +8,7 @@ import { OrderStatus } from "../types";
 import Swal from "sweetalert2";
 import { toast } from "react-toastify";
 import OrderDetailsModal from "../components/OrderDetailsModal";
+import PedidoCheckoutForm from "../components/PedidoCheckoutForm";
 import { useAuth } from "../components/AuthContext";
 import { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "../components/Common/DataTable";
@@ -18,8 +18,8 @@ export default function Orders() {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState<string>("Agendados");
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [checkoutOrder, setCheckoutOrder] = useState<any>(null);
   const queryClient = useQueryClient();
-  const { checkoutPedido } = useComercial();
 
   // Dialog state for order creation assistant
   const [isWizardOpen, setIsWizardOpen] = useState(false);
@@ -46,11 +46,23 @@ export default function Orders() {
   const [codigoTransferencia, setCodigoTransferencia] = useState("");
   const [emissor, setEmissor] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [checkoutDefaults, setCheckoutDefaults] = useState({
+    amount: 0,
+    method: "Dinheiro",
+    codigo: "",
+    emissor: "",
+  });
 
   const { data: ordersResponse, isLoading } = useQuery({
     queryKey: ["orders", searchTerm],
     queryFn: () => orderService.getAll({ search: searchTerm }),
   });
+
+  const { data: caixasResponse } = useQuery({
+    queryKey: ["caixas"],
+    queryFn: () => financialService.getAll(),
+  });
+  const openCaixa = caixasResponse?.items?.find((c: any) => c.estado === "Aberto") || null;
 
   const { data: clientsResponse } = useQuery({
     queryKey: ["clients"],
@@ -97,19 +109,6 @@ export default function Orders() {
     mutationFn: (client: any) => clientService.create(client),
   });
 
-  const createMutation = useMutation({
-    mutationFn: (order: any) => orderService.create(order),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["orders"] });
-      toast.success("Pedido gerado com sucesso!");
-      setIsWizardOpen(false);
-      resetWizard();
-    },
-    onError: () => {
-      toast.error("Erro ao gerar pedido.");
-    }
-  });
-
   const resetWizard = () => {
     setWizardStep(1);
     setIsQuickClient(false);
@@ -130,6 +129,10 @@ export default function Orders() {
     const isAuthorized = user?.role === "Administrador" || user?.role === "Atendimento";
     if (!isAuthorized) {
       toast.error("Apenas utilizadores com perfil Administrador ou Atendimento podem criar pedidos.");
+      return;
+    }
+    if (!openCaixa) {
+      toast.error("Não existe nenhum caixa aberto no momento. Abra o caixa antes de criar pedidos.");
       return;
     }
     resetWizard();
@@ -220,21 +223,28 @@ export default function Orders() {
 
       // Create the order first
       const createdOrder: any = await orderService.create(orderPayload);
-      
-      // If payment is registered, checkout immediately
       if (paymentOption !== "Sem Pagamento" && vPaid > 0) {
-        const paymentMethodId = paymentMethod === 'Transferência' ? 2 : (paymentMethod === 'TPA / POS' ? 3 : 1);
-        await orderService.checkoutPedido(createdOrder.id, {
-          forma_pagamento_id: paymentMethodId,
-          valor: vPaid,
-          codigo_transferencia: paymentMethod !== 'Dinheiro' ? codigoTransferencia : null,
-          emissor: paymentMethod !== 'Dinheiro' ? emissor : null,
-          observacoes: `Pagamento inicial no registo do pedido (${paymentMethod})`
+        setCheckoutDefaults({
+          amount: vPaid,
+          method: paymentMethod,
+          codigo: codigoTransferencia,
+          emissor,
         });
+        setCheckoutOrder({
+          ...orderPayload,
+          ...createdOrder,
+          id: createdOrder.id,
+          total: totalFinal,
+          valor_total: totalFinal,
+          valor_pago: 0,
+          saldo: totalFinal,
+        });
+        toast.info("Pedido criado. Conclua o pagamento no caixa.");
+      } else {
+        toast.success("Pedido gerado com sucesso!");
       }
 
       queryClient.invalidateQueries({ queryKey: ["orders"] });
-      toast.success("Pedido gerado com sucesso!");
       setIsWizardOpen(false);
       resetWizard();
     } catch (err: any) {
@@ -270,77 +280,87 @@ export default function Orders() {
     setCart(cart.map(item => item.uniqueId === uniqueId ? { ...item, ...fields } : item));
 
   };
-  const occurrenceColumns = React.useMemo<ColumnDef<any, any>[]>(() => [
+  const getClientName = (clientId: string | number) => {
+    return (
+      clients?.find((c: any) => String(c.id) === String(clientId))?.nome ||
+      "Cliente ao Balcão"
+    );
+  };
+
+  const orderColumns = React.useMemo<ColumnDef<any, any>[]>(() => [
     {
       accessorKey: "numero",
-      header: "Codigo",
-      cell: ({ row }) => <span className="font-mono font-bold text-primary">{row.original.numero || "N/A"}</span>
+      header: "Nº Pedido",
+      cell: ({ row }) => <span className="font-mono font-bold text-primary">{row.original.numero || `PED-${row.original.id}`}</span>
     },
     {
-      accessorKey: "tipo",
-      header: "Forma Pedido",
+      id: "cliente",
+      header: "Cliente",
       cell: ({ row }) => (
-        <span className="font-bold flex items-center gap-2">
-          <Wrench size={14} className="text-gray-400" />
-          {row.original.tipo ||  "Desconhecido"}
-        </span>
+        <div className="font-medium text-gray-900 dark:text-gray-100">
+          {row.original.cliente?.nome || getClientName(row.original.cliente_id)}
+        </div>
       )
     },
     {
-      id: "quantidades",
-      header: "Quantidades",
+      accessorKey: "data_entrega",
+      header: "Data Entrega",
       cell: ({ row }) => {
-        const oc = row.original;
+        const date = row.original.data_entrega;
+        const time = row.original.hora_entrega;
         return (
-          <div className="space-x-2">
-            {oc.tipo === "Danificado" && (
-              <span className="bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 font-bold px-2 py-1 rounded">
-                {Number(oc.quantidade)} Danificado(s)
-              </span>
-            )}
-            {oc.tipo === "Perda" && (
-              <span className="bg-rose-100 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 font-bold px-2 py-1 rounded">
-                {Number(oc.quantidade)} Perdido(s)
-              </span>
-            )}
+          <div className="flex flex-col">
+            <span className="font-semibold text-gray-700 dark:text-gray-300">
+              {date ? new Date(date).toLocaleDateString() : "Não definida"}
+            </span>
+            {time && <span className="text-xs text-gray-500">{time}</span>}
           </div>
-        );
+        )
       }
-    },
-    {
-      accessorKey: "valor_total",
-      header: "Valor",
-      cell: ({ row }) => <span className="italic text-gray-500 font-medium">{row.original.valor_total || "Em espera"}</span>
-    },
-    {
-      accessorKey: "data_ocorrencia",
-      header: "Data",
-      cell: ({ row }) => <span className="font-mono text-[10px] text-gray-400">{row.original.data_ocorrencia ? new Date(row.original.data_ocorrencia).toLocaleString() : "N/A"}</span>
     },
     {
       accessorKey: "estado",
       header: "Estado",
-      cell: ({ row }) => <span className="font-mono text-[10px] text-gray-400">{row.original.estado || "Em Falta de registo"}</span>
+      cell: ({ row }) => {
+        const est = row.original.estado || "Pendente";
+        let colorClass = "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
+        if (est === "Confirmado") colorClass = "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400";
+        else if (est === "Concluido" || est === "Entregue" || est === "Concluído") colorClass = "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400";
+        else if (est === "Cancelado") colorClass = "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400";
+        else if (est === "Em Produção" || est === "Em Producao") colorClass = "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400";
+        return <span className={`px-2 py-1 rounded text-xs font-bold ${colorClass}`}>{est}</span>;
+      }
     },
     {
-      accessorKey: "responsavel_nome",
-      header: "Responsável",
-      cell: ({ row }) => <span className="font-mono text-[10px] text-gray-400">{row.original.responsavel_nome || "Em Falta de registo"}</span>
+      accessorKey: "estado_pagamento",
+      header: "Pagamento",
+      cell: ({ row }) => {
+        const pag = row.original.estado_pagamento || "Pendente";
+        let colorClass = "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
+        if (pag === "Pago") colorClass = "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400";
+        else if (pag === "Parcial") colorClass = "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400";
+        return <span className={`px-2 py-1 rounded text-xs font-bold ${colorClass}`}>{pag}</span>;
+      }
+    },
+    {
+      accessorKey: "valor_total",
+      header: "Valor Total",
+      cell: ({ row }) => <span className="font-bold text-gray-900 dark:text-white">{formatCurrency(row.original.valor_total || row.original.total || 0)}</span>
     },
     {
       id: "acoes",
       header: "Ações",
       cell: ({ row }) => (
         <button
-        onClick={() => setSelectedOrder(row.original)}
-          className="text-primary hover:text-primary-hover bg-primary/10 hover:bg-primary/20 p-2 rounded-xl transition-all flex items-center justify-center font-bold"
+          onClick={() => setSelectedOrder(row.original)}
+          className="text-primary hover:text-primary-hover bg-primary/10 hover:bg-primary/20 px-3 py-1.5 rounded-xl transition-all flex items-center justify-center font-bold"
           title="Ver mais detalhes"
         >
-          <Eye size={16} /> Ver mais
+          <Eye size={16} className="mr-1" /> Ver detalhes
         </button>
       )
     }
-  ], []);
+  ], [clients]);
 
   if (isLoading) {
     return (
@@ -348,12 +368,7 @@ export default function Orders() {
     );
   }
 
-  const getClientName = (clientId: string | number) => {
-    return (
-      clients?.find((c: any) => String(c.id) === String(clientId))?.nome ||
-      "Cliente ao Balcão"
-    );
-  };
+
 
   const estadoMap: Record<string, string[]> = {
     "Agendados": ["Pendente", "Agendado"],
@@ -439,7 +454,7 @@ export default function Orders() {
             Nenhum pedido encontrado na aba {activeTab}.
           </div>
         ) : (
-          <DataTable columns={occurrenceColumns}
+          <DataTable columns={orderColumns}
           data={visibleOrders}
 
           />
@@ -454,6 +469,31 @@ export default function Orders() {
         onClose={() => setSelectedOrder(null)}
         onUpdateStatus={handleUpdateStatus}
       />
+
+      {checkoutOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="bg-white dark:bg-surface-dark rounded-2xl border border-gray-200 dark:border-gray-800 shadow-2xl w-full max-w-md p-5 space-y-4">
+            <div>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+                Caixa do Pedido #{checkoutOrder.numero || checkoutOrder.id}
+              </h2>
+              <p className="text-xs text-gray-500 mt-1">
+                Registe o pagamento para finalizar a cobrança do pedido criado.
+              </p>
+            </div>
+            <PedidoCheckoutForm
+              orderId={checkoutOrder.id}
+              defaultAmount={checkoutDefaults.amount}
+              defaultMethod={checkoutDefaults.method}
+              defaultCodigo={checkoutDefaults.codigo}
+              defaultEmissor={checkoutDefaults.emissor}
+              defaultObs={`Pagamento inicial no registo do pedido (${checkoutDefaults.method})`}
+              onCancel={() => setCheckoutOrder(null)}
+              onSuccess={() => setCheckoutOrder(null)}
+            />
+          </div>
+        </div>
+      )}
 
       {/* ROL / WIZARD ASSISTANCE MODAL FOR ORDER CREATION */}
       {isWizardOpen && (

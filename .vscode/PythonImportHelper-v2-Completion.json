@@ -880,6 +880,14 @@
         "documentation": {}
     },
     {
+        "label": "text",
+        "importPath": "sqlalchemy",
+        "description": "sqlalchemy",
+        "isExtraImport": true,
+        "detail": "sqlalchemy",
+        "documentation": {}
+    },
+    {
         "label": "ArmazemService",
         "importPath": "app.services.armazem_service",
         "description": "app.services.armazem_service",
@@ -1960,6 +1968,14 @@
         "documentation": {}
     },
     {
+        "label": "db",
+        "importPath": "app.core.database",
+        "description": "app.core.database",
+        "isExtraImport": true,
+        "detail": "app.core.database",
+        "documentation": {}
+    },
+    {
         "label": "AuthService",
         "importPath": "app.services.auth_service",
         "description": "app.services.auth_service",
@@ -2425,6 +2441,14 @@
     },
     {
         "label": "EstadoPedido",
+        "importPath": "app.models.pedido",
+        "description": "app.models.pedido",
+        "isExtraImport": true,
+        "detail": "app.models.pedido",
+        "documentation": {}
+    },
+    {
+        "label": "Pedido",
         "importPath": "app.models.pedido",
         "description": "app.models.pedido",
         "isExtraImport": true,
@@ -6372,6 +6396,14 @@
         "documentation": {}
     },
     {
+        "label": "ItemPedido",
+        "importPath": "app.models.item_pedido",
+        "description": "app.models.item_pedido",
+        "isExtraImport": true,
+        "detail": "app.models.item_pedido",
+        "documentation": {}
+    },
+    {
         "label": "FichaTecnica",
         "importPath": "app.models.ficha_tecnica",
         "description": "app.models.ficha_tecnica",
@@ -6987,6 +7019,14 @@
         "description": "flask_socketio",
         "isExtraImport": true,
         "detail": "flask_socketio",
+        "documentation": {}
+    },
+    {
+        "label": "create_app",
+        "importPath": "app",
+        "description": "app",
+        "isExtraImport": true,
+        "detail": "app",
         "documentation": {}
     },
     {
@@ -11930,6 +11970,24 @@
         "description": "backend.test_venda",
         "peekOfCode": "app = create_app()\nwith app.app_context():\n    # create a mock caixa if not exists\n    if not Caixa.query.first():\n        db.session.add(Caixa(valor_inicial=100, estado='Aberto'))\n        db.session.commit()\n    elif Caixa.query.filter_by(estado='Aberto').count() == 0:\n        c = Caixa.query.first()\n        c.estado = 'Aberto'\n        db.session.commit()",
         "detail": "backend.test_venda",
+        "documentation": {}
+    },
+    {
+        "label": "run_migration",
+        "kind": 2,
+        "importPath": "backend.update_iva_pedidos",
+        "description": "backend.update_iva_pedidos",
+        "peekOfCode": "def run_migration():\n    with app.app_context():\n        queries = [\n            \"ALTER TABLE pedidos ADD COLUMN subtotal NUMERIC(10,2) DEFAULT 0;\",\n            \"ALTER TABLE pedidos ADD COLUMN desconto_total NUMERIC(10,2) DEFAULT 0;\",\n            \"ALTER TABLE pedidos ADD COLUMN base_tributavel NUMERIC(10,2) DEFAULT 0;\",\n            \"ALTER TABLE pedidos ADD COLUMN total_iva NUMERIC(10,2) DEFAULT 0;\",\n            \"ALTER TABLE itens_pedido ADD COLUMN desconto NUMERIC(10,2) DEFAULT 0;\",\n            \"ALTER TABLE itens_pedido ADD COLUMN taxa_iva_id INT;\",\n            \"ALTER TABLE itens_pedido ADD COLUMN taxa_iva NUMERIC(5,2) DEFAULT 0;\",",
+        "detail": "backend.update_iva_pedidos",
+        "documentation": {}
+    },
+    {
+        "label": "app",
+        "kind": 5,
+        "importPath": "backend.update_iva_pedidos",
+        "description": "backend.update_iva_pedidos",
+        "peekOfCode": "app = create_app()\ndef run_migration():\n    with app.app_context():\n        queries = [\n            \"ALTER TABLE pedidos ADD COLUMN subtotal NUMERIC(10,2) DEFAULT 0;\",\n            \"ALTER TABLE pedidos ADD COLUMN desconto_total NUMERIC(10,2) DEFAULT 0;\",\n            \"ALTER TABLE pedidos ADD COLUMN base_tributavel NUMERIC(10,2) DEFAULT 0;\",\n            \"ALTER TABLE pedidos ADD COLUMN total_iva NUMERIC(10,2) DEFAULT 0;\",\n            \"ALTER TABLE itens_pedido ADD COLUMN desconto NUMERIC(10,2) DEFAULT 0;\",\n            \"ALTER TABLE itens_pedido ADD COLUMN taxa_iva_id INT;\",",
+        "detail": "backend.update_iva_pedidos",
         "documentation": {}
     },
     {

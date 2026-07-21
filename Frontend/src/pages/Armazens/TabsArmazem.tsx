@@ -2,8 +2,7 @@ import React, { useState } from "react";
 import { Box, MapPin } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { formatCurrency } from "@/src/lib/utils";
-import { DataTable } from "@/src/components/Common/DataTable";
- // ajuste o path conforme seu projeto
+import { DataTable } from "@/src/components/Common/DataTable"; // ajuste o path conforme seu projeto
 
 interface Armazem {
   id: string | number;
@@ -46,9 +45,7 @@ const TabsArmazem: React.FC<TabsArmazemProps> = ({ armazens, warehouseService })
       preco_venda: p.preco_venda ?? null,
       taxa_iva: p.taxa_iva ?? null,
     }));
-  
-    
-  
+      
     const materiais = (data.materiais || []).map((m: any) => ({
       tipo: "Material",
       codigo: m.material_codigo,
@@ -61,13 +58,27 @@ const TabsArmazem: React.FC<TabsArmazemProps> = ({ armazens, warehouseService })
       taxa_iva: m.taxa_iva ?? null,
     }));
  
-  
     return [...produtos, ...materiais];
   };
-  const items = normalizeStock(stockData);
+
+  const [activeItemType, setActiveItemType] = useState<"Todos" | "Produto" | "Material">("Todos");
+  
+  const allItems = normalizeStock(stockData);
+  const items = activeItemType === "Todos" 
+    ? allItems 
+    : allItems.filter((i) => i.tipo === activeItemType);
 
   // Colunas no formato esperado pelo DataTable
   const tableColumns = [
+    {
+      accessorKey: "tipo",
+      header: "Tipo",
+      cell: ({ row }: any) => (
+        <span className={`px-2 py-1 rounded text-xs font-bold ${row.original.tipo === 'Produto' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400' : 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400'}`}>
+          {row.original.tipo}
+        </span>
+      ),
+    },
     {
       accessorKey: "codigo",
       header: "Código",
@@ -100,7 +111,7 @@ const TabsArmazem: React.FC<TabsArmazemProps> = ({ armazens, warehouseService })
           ? formatCurrency(Number(row.original.preco_venda))
           : "-",
     },
-    
+  
   ];
 
   return (
@@ -151,15 +162,28 @@ const TabsArmazem: React.FC<TabsArmazemProps> = ({ armazens, warehouseService })
             A carregar stock...
           </div>
         ) : (
-          <DataTable
-            key={activeTab}
-            storageKey={`stock_${activeTab}`}
-            data={items}
-            columns={tableColumns}
-            isLoading={isLoadingStock}
-            searchPlaceholder={`Pesquisar em ${armazens.find(a => a.id === activeTab)?.nome}...`}
-            manualPagination={false}
-          />
+          <>
+            <div className="mb-4 flex gap-2">
+              {["Todos", "Produto", "Material"].map((type) => (
+                <button
+                  key={type}
+                  onClick={() => setActiveItemType(type as "Todos" | "Produto" | "Material")}
+                  className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeItemType === type ? "bg-primary text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"}`}
+                >
+                  {type === "Todos" ? "Todos os Itens" : type === "Produto" ? "Produtos" : "Materiais"}
+                </button>
+              ))}
+            </div>
+            <DataTable
+              key={activeTab}
+              storageKey={`stock_${activeTab}`}
+              data={items}
+              columns={tableColumns}
+              isLoading={isLoadingStock}
+              searchPlaceholder={`Pesquisar em ${armazens.find(a => a.id === activeTab)?.nome}...`}
+              manualPagination={false}
+            />
+          </>
         )}
       </div>
     </div>

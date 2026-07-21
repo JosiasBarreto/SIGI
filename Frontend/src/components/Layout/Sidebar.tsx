@@ -172,17 +172,54 @@ export function Sidebar({
     (item) => !item.roles || item.roles.includes(user?.role || ""),
   );
 
-  const handleLogout = () => {
-    if (localStorage.getItem('isCaixaAberta') === 'true') {
-      import('sweetalert2').then(Swal => {
-        Swal.default.fire({
+  const handleLogout = async () => {
+    try {
+      const SwalModule = await import('sweetalert2');
+      const Swal = SwalModule.default;
+
+      // Mostrar um indicador de carregamento enquanto fazemos a chamada
+      Swal.fire({
+        title: 'A processar...',
+        text: 'A verificar estado do caixa...',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      const { financialService } = await import('../../services');
+      const caixasResponse = await financialService.getAll();
+      const caixas = caixasResponse?.items || caixasResponse || [];
+      const openCaixa = Array.isArray(caixas)
+        ? caixas.find((caixa: any) => caixa.estado === "Aberto")
+        : null;
+
+      Swal.close();
+
+      if (openCaixa) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Caixa em Execução',
+          text: 'Você tem um turno de caixa aberto. Complete o fecho diário ou feche a sua caixa antes de terminar sessão.',
+          confirmButtonText: 'Entendi',
+          confirmButtonColor: '#3085d6'
+        });
+        return;
+      }
+    } catch (err) {
+      console.error("Erro ao verificar caixa no logout:", err);
+      const isCaixaAbertaFallback = localStorage.getItem('isCaixaAberta') === 'true';
+      if (isCaixaAbertaFallback) {
+        const SwalModule = await import('sweetalert2');
+        const Swal = SwalModule.default;
+        Swal.fire({
           icon: 'warning',
           title: 'Caixa em Execução',
           text: 'Você tem um turno de caixa aberto. Complete o fecho diário ou feche a sua caixa antes de terminar sessão.',
           confirmButtonText: 'Entendi'
         });
-      });
-      return;
+        return;
+      }
     }
     logout();
   };

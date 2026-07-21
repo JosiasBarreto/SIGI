@@ -1071,7 +1071,7 @@ export default function Configuracoes() {
                 <button
                   key={theme.key}
                   type="button"
-                  onClick={() => setPalette(theme.key)}
+                  onClick={() => setPalette(theme.key as any)}
                   style={
                     selected
                       ? {

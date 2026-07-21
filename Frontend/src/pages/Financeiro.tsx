@@ -20,10 +20,15 @@ function TabReconciliacao() {
 
   const [abrirVal, setAbrirVal] = useState("");
   
+  const [modalType, setModalType] = useState<"sangria" | "reforco" | "fechar" | null>(null);
+
   const [fecharDinheiro, setFecharDinheiro] = useState("");
   const [fecharTransferencia, setFecharTransferencia] = useState("");
   const [fecharPos, setFecharPos] = useState("");
   const [fecharJustificativa, setFecharJustificativa] = useState("");
+
+  const [movimentoVal, setMovimentoVal] = useState("");
+  const [movimentoDesc, setMovimentoDesc] = useState("");
 
   const abrirMutation = useMutation({
     mutationFn: (val: number) => financialService.abrir(val),
@@ -38,10 +43,25 @@ function TabReconciliacao() {
     mutationFn: (data: any) => financialService.fechar(openCaixa?.id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["caixas"] });
+      setModalType(null);
       toast.success("Caixa fechado com sucesso!");
     },
     onError: (err: any) => {
       toast.error(err.response?.data?.message || "Erro ao fechar caixa");
+    }
+  });
+
+  const movimentoMutation = useMutation({
+    mutationFn: (data: any) => financialService.movimento(openCaixa?.id, data.tipo, data.valor, data.descricao),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["caixas"] });
+      setModalType(null);
+      setMovimentoVal("");
+      setMovimentoDesc("");
+      toast.success("Operação realizada com sucesso!");
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message || "Erro ao realizar operação");
     }
   });
 
@@ -81,7 +101,12 @@ function TabReconciliacao() {
     );
   }
 
-  const totalEsperado = openCaixa?.saldo_final ?? openCaixa?.valor_inicial ?? 0;
+  // Calculating total expected (can be more complex based on real API response)
+  const saldoDinheiroEsperado = parseFloat(openCaixa?.valor_esperado_dinheiro || "0") || parseFloat(openCaixa?.valor_inicial || "0");
+  const saldoPosEsperado = parseFloat(openCaixa?.valor_esperado_pos || "0");
+  const saldoTransferenciaEsperado = parseFloat(openCaixa?.valor_esperado_transferencia || "0");
+
+  const totalEsperado = saldoDinheiroEsperado + saldoPosEsperado + saldoTransferenciaEsperado;
   const totalDeclarado = parseFloat(fecharDinheiro || "0") + parseFloat(fecharTransferencia || "0") + parseFloat(fecharPos || "0");
   const isDivergente = Math.abs(totalEsperado - totalDeclarado) > 0.01;
 
@@ -99,75 +124,212 @@ function TabReconciliacao() {
     });
   };
 
+  const handleMovimento = () => {
+    if (!movimentoVal) return;
+    movimentoMutation.mutate({
+      tipo: modalType === "reforco" ? "Reforço" : "Sangria",
+      valor: parseFloat(movimentoVal),
+      descricao: movimentoDesc
+    });
+  };
+
   return (
-    <div className="animate-fade-in grid grid-cols-1 lg:grid-cols-2 gap-8">
-      <div className="space-y-6">
-        <div className="bg-white dark:bg-surface-dark p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-full bg-success/20 flex items-center justify-center text-success">
-              <Banknote size={20} />
+    <div className="animate-fade-in relative">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="space-y-6">
+          <div className="bg-white dark:bg-surface-dark p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-full bg-success/20 flex items-center justify-center text-success">
+                <Banknote size={20} />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Resumo do Caixa</h2>
+                <p className="text-sm text-gray-500">Caixa Atual: #{openCaixa.numero || openCaixa.id}</p>
+              </div>
             </div>
-            <div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Valores Esperados</h2>
-              <p className="text-sm text-gray-500">Caixa Atual: #{openCaixa.numero || openCaixa.id}</p>
+            
+            <div className="space-y-4">
+              <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                <span className="font-medium text-gray-600 dark:text-gray-400">Fundo de Maneio</span>
+                <span className="font-bold text-gray-900 dark:text-white">{formatCurrency(openCaixa.valor_inicial)}</span>
+              </div>
+              <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                <span className="font-medium text-gray-600 dark:text-gray-400">Dinheiro (Esperado)</span>
+                <span className="font-bold text-gray-900 dark:text-white">{formatCurrency(saldoDinheiroEsperado)}</span>
+              </div>
+              <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                <span className="font-medium text-gray-600 dark:text-gray-400">TPA/POS (Esperado)</span>
+                <span className="font-bold text-gray-900 dark:text-white">{formatCurrency(saldoPosEsperado)}</span>
+              </div>
+              <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                <span className="font-medium text-gray-600 dark:text-gray-400">Transferências (Esperado)</span>
+                <span className="font-bold text-gray-900 dark:text-white">{formatCurrency(saldoTransferenciaEsperado)}</span>
+              </div>
+              <div className="flex justify-between items-center p-4 bg-primary/10 rounded-xl border border-primary/20">
+                <span className="font-bold text-primary dark:text-primary">Total Esperado</span>
+                <span className="text-xl font-bold text-primary dark:text-primary">{formatCurrency(totalEsperado)}</span>
+              </div>
             </div>
           </div>
-          
-          <div className="space-y-4">
-            <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-              <span className="font-medium text-gray-600 dark:text-gray-400">Fundo de Maneio</span>
-              <span className="font-bold text-gray-900 dark:text-white">{formatCurrency(openCaixa.valor_inicial)}</span>
+        </div>
+
+        <div className="space-y-6">
+          <div className="bg-white dark:bg-surface-dark p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Ações de Caixa</h2>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+              <button
+                onClick={() => setModalType("reforco")}
+                className="flex flex-col items-center justify-center gap-3 p-6 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/40 text-blue-700 dark:text-blue-300 rounded-2xl border border-blue-200 dark:border-blue-800 transition-colors"
+              >
+                <TrendingUp size={32} />
+                <span className="font-semibold">Reforço (Entrada)</span>
+              </button>
+              
+              <button
+                onClick={() => setModalType("sangria")}
+                className="flex flex-col items-center justify-center gap-3 p-6 bg-orange-50 hover:bg-orange-100 dark:bg-orange-900/20 dark:hover:bg-orange-900/40 text-orange-700 dark:text-orange-300 rounded-2xl border border-orange-200 dark:border-orange-800 transition-colors"
+              >
+                <TrendingDown size={32} />
+                <span className="font-semibold">Sangria (Saída)</span>
+              </button>
             </div>
-            <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-              <span className="font-medium text-gray-600 dark:text-gray-400">Total Esperado</span>
-              <span className="font-bold text-gray-900 dark:text-white">{formatCurrency(totalEsperado)}</span>
+
+            <div className="pt-6 border-t border-gray-100 dark:border-gray-800">
+              <button
+                onClick={() => setModalType("fechar")}
+                className="w-full flex items-center justify-center gap-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100 font-bold py-4 rounded-xl transition-all shadow-lg active:scale-95"
+              >
+                <AlertCircle size={20} />
+                Encerrar Caixa
+              </button>
             </div>
-            {isDivergente && totalDeclarado > 0 && (
-              <div className="p-3 bg-error/10 text-error rounded-lg flex gap-2 items-start text-sm">
-                <AlertCircle size={16} className="mt-0.5 shrink-0" />
-                <span>
-                  <strong>Divergência detetada:</strong> O valor declarado difere do valor esperado no sistema. A justificação é obrigatória.
-                </span>
-              </div>
-            )}
           </div>
         </div>
       </div>
 
-      <div className="bg-white dark:bg-surface-dark p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800">
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Valores Declarados para Fecho</h2>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Dinheiro (STD)</label>
-            <input type="number" step="0.01" value={fecharDinheiro} onChange={(e) => setFecharDinheiro(e.target.value)} className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50" />
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Transferências (STD)</label>
-            <input type="number" step="0.01" value={fecharTransferencia} onChange={(e) => setFecharTransferencia(e.target.value)} className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50" />
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Cartão POS (STD)</label>
-            <input type="number" step="0.01" value={fecharPos} onChange={(e) => setFecharPos(e.target.value)} className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50" />
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Justificação de Divergência</label>
-            <textarea value={fecharJustificativa} onChange={(e) => setFecharJustificativa(e.target.value)} placeholder="Obrigatório em caso de divergência" className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 min-h-[80px]" />
-          </div>
-          {canEdit ? (
-            <button
-              onClick={handleFechar}
-              disabled={fecharMutation.isPending}
-              className="w-full mt-4 bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100 font-bold py-3 rounded-xl transition-all shadow-lg active:scale-95 disabled:opacity-50"
-            >
-              {fecharMutation.isPending ? "A processar..." : "Encerrar Caixa"}
-            </button>
-          ) : (
-            <div className="w-full mt-4 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 font-bold py-3 rounded-xl text-center">
-              Sem permissão para fechar
+      {/* Modals */}
+      {modalType && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="bg-white dark:bg-surface-dark w-full max-w-md rounded-3xl shadow-2xl overflow-hidden border border-gray-100 dark:border-gray-800">
+            {/* Modal Header */}
+            <div className={cn(
+              "p-6 text-white flex justify-between items-start",
+              modalType === "fechar" ? "bg-gray-900 dark:bg-gray-800" :
+              modalType === "reforco" ? "bg-blue-600" : "bg-orange-500"
+            )}>
+              <div>
+                <h3 className="text-2xl font-bold mb-1">
+                  {modalType === "fechar" ? "Encerrar Caixa" :
+                   modalType === "reforco" ? "Registar Reforço" : "Registar Sangria"}
+                </h3>
+                <p className="text-white/80 text-sm">
+                  {modalType === "fechar" ? "Declare os valores físicos em caixa." :
+                   `Insira o valor e justificação para a ${modalType === "reforco" ? "entrada" : "saída"}.`}
+                </p>
+              </div>
+              <button onClick={() => setModalType(null)} className="text-white/70 hover:text-white bg-black/10 hover:bg-black/20 p-2 rounded-full transition-colors">
+                <X size={20} />
+              </button>
             </div>
-          )}
+
+            {/* Modal Body: Movimentos */}
+            {modalType !== "fechar" && (
+              <div className="p-6 space-y-5">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Valor (STD)</label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">Db</span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={movimentoVal}
+                      onChange={(e) => setMovimentoVal(e.target.value)}
+                      placeholder="0.00"
+                      className="w-full pl-12 pr-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl font-bold text-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Justificação (Obrigatório)</label>
+                  <textarea
+                    value={movimentoDesc}
+                    onChange={(e) => setMovimentoDesc(e.target.value)}
+                    placeholder={`Motivo do ${modalType}...`}
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 min-h-[100px]"
+                  />
+                </div>
+                
+                <div className="pt-4 flex gap-3">
+                  <button onClick={() => setModalType(null)} className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold rounded-xl transition-colors">
+                    Cancelar
+                  </button>
+                  <button 
+                    disabled={!movimentoVal || !movimentoDesc || movimentoMutation.isPending}
+                    onClick={handleMovimento}
+                    className={cn(
+                      "flex-1 py-3 text-white font-semibold rounded-xl transition-colors shadow-lg active:scale-95 disabled:opacity-50",
+                      modalType === "reforco" ? "bg-blue-600 hover:bg-blue-700 shadow-blue-500/30" : "bg-orange-500 hover:bg-orange-600 shadow-orange-500/30"
+                    )}
+                  >
+                    {movimentoMutation.isPending ? "A processar..." : "Confirmar"}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Modal Body: Fechar Caixa */}
+            {modalType === "fechar" && (
+              <div className="p-6">
+                <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl mb-6 flex justify-between items-center border border-gray-200 dark:border-gray-700">
+                  <span className="text-gray-600 dark:text-gray-400 font-medium">Total Esperado:</span>
+                  <span className="text-xl font-bold text-gray-900 dark:text-white">{formatCurrency(totalEsperado)}</span>
+                </div>
+
+                <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-2">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Dinheiro em Gaveta</label>
+                    <input type="number" step="0.01" value={fecharDinheiro} onChange={(e) => setFecharDinheiro(e.target.value)} className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Total TPA / POS</label>
+                    <input type="number" step="0.01" value={fecharPos} onChange={(e) => setFecharPos(e.target.value)} className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Total Transferências</label>
+                    <input type="number" step="0.01" value={fecharTransferencia} onChange={(e) => setFecharTransferencia(e.target.value)} className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                  </div>
+                  
+                  {isDivergente && (
+                    <div className="bg-error/10 p-4 rounded-xl border border-error/20">
+                      <div className="flex gap-2 text-error text-sm font-medium mb-3">
+                        <AlertCircle size={18} className="shrink-0" />
+                        <span>Divergência detetada entre valores esperados e declarados!</span>
+                      </div>
+                      <label className="block text-xs font-bold text-error mb-1">Justificação Obrigatória</label>
+                      <textarea value={fecharJustificativa} onChange={(e) => setFecharJustificativa(e.target.value)} placeholder="Indique o motivo da divergência..." className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-error/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-error/50 min-h-[60px] text-sm" />
+                    </div>
+                  )}
+                </div>
+
+                <div className="pt-6 mt-2 flex gap-3">
+                  <button onClick={() => setModalType(null)} className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold rounded-xl transition-colors">
+                    Cancelar
+                  </button>
+                  <button 
+                    disabled={fecharMutation.isPending || (isDivergente && !fecharJustificativa.trim())}
+                    onClick={handleFechar}
+                    className="flex-1 py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100 font-semibold rounded-xl transition-colors shadow-lg active:scale-95 disabled:opacity-50"
+                  >
+                    {fecharMutation.isPending ? "A processar..." : "Confirmar Fecho"}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

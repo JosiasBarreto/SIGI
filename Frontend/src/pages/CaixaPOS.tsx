@@ -1,21 +1,16 @@
 import React, { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import {
   productService,
   clientService,
   orderService,
-  financialService,
   documentService,
 } from "../services";
 import { useComercial } from "../hooks";
-import { TipoProduto } from "../enums";
 import {
   Calculator,
   ShoppingCart,
   Search,
-  Plus,
-  Minus,
-  Trash2,
   CreditCard,
   Banknote,
   FileText,
@@ -28,10 +23,10 @@ import Swal from "sweetalert2";
 import { toast } from "react-toastify";
 import ProductGrid from "./CaixaPOS/ProductGrid";
 import CartList from "./CaixaPOS/CartList";
-import { SearchableSelect } from "../components/Common/SearchableSelect";
+import { useCaixaCart } from "./CaixaPOS/useCaixaCart";
+import { useCaixaSession } from "./CaixaPOS/useCaixaSession";
 
 export default function CaixaPOS() {
-  const queryClient = useQueryClient();
   const { createVenda, checkoutPedido, enviarFatura } = useComercial();
   const [activeCategory, setActiveCategory] = useState<string>("Revenda");
   const config = JSON.parse(localStorage.getItem("sigi_config") || "{}");
@@ -57,14 +52,11 @@ export default function CaixaPOS() {
     queryKey: ["clients"],
     queryFn: () => clientService.getAll({ per_page: 1000 }),
   });
-
-  const [cart, setCart] = useState<any[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
   const [selectedClient, setSelectedClient] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("Dinheiro");
   const [step, setStep] = useState(1);
   const [amountReceived, setAmountReceived] = useState<number>(0);
-  const [showPriceWithIva, setShowPriceWithIva] = useState(true);
+  const [showPriceWithIva] = useState(true);
 
   // Scheduled order options
   const [tipoPedido, setTipoPedido] = useState<"Imediato" | "Agendado">(
@@ -90,95 +82,31 @@ export default function CaixaPOS() {
   const descontoClientePercent = Number(
     selectedClientObj?.percentagem_desconto_padrao || 0
   );
-  
- 
+  const {
+    cart,
+    searchTerm,
+    setSearchTerm,
+    displayProducts,
+    subtotal,
+    totalComIva,
+    Iva,
+    descontoAutomatico,
+    total,
+    addToCart: handleAddToCart,
+    updateQty,
+    removeItem,
+    clearCart,
+  } = useCaixaCart(products, descontoClientePercent);
 
-  const { data: caixasResponse } = useQuery({
-    queryKey: ["caixas"],
-    queryFn: () => financialService.getAll(),
-  });
-
-  const caixas = caixasResponse?.items || caixasResponse || [];
-  const openCaixa = Array.isArray(caixas)
-    ? caixas.find((c: any) => c.estado === "Aberto")
-    : null;
-  const isCaixaAberta = !!openCaixa;
-  const caixaId = openCaixa?.id || null;
-
-  const posProducts = products;
-
-  const displayProducts = posProducts.filter((p: any) => {
-    const pName = p.name || p.nome || "";
-    const pCategory = p.category || p.categoria || "";
-    const pTipo = p.tipo || "";
-    const matchSearch = pName.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchCategory =
-      activeCategory === activeCategory || pCategory === activeCategory;
-
-    // Hide ingredients/consumables from POS
-    if (activeCategory === "Tudo" && pCategory === "Ingredientes") return false;
-    if (
-      pTipo === TipoProduto.CONSUMIVEL ||
-      pTipo === "Consumível" ||
-      pTipo === "Consumivel"
-    )
-      return false;
-
-    return matchSearch && matchCategory;
-  });
-
-  const subtotal = cart.reduce(
-    (sum, item) =>
-      sum + (item.salePrice || item.preco_venda || item.preco_iva) * item.qty,
-    0
-  );
-  const totalComIva = cart.reduce((sum, item) => {
-    if (item.preco_iva > 0 && item.taxa_iva > 0) {
-      return sum + Number(item.preco_iva) * item.qty;
-    } else {
-      return sum + Number(item.preco_venda) * item.qty;
-    }
-  }, 0);
-  const Iva = cart.reduce((sum, item) => {
-    const precoVenda = Number(item.preco_venda || 0);
-    const precoIva = Number(item.preco_iva || precoVenda);
-
-    const valorIva = precoIva - precoVenda;
-
-    return sum + valorIva * item.qty;
-  }, 0);
-
-  const descontoAutomatico = subtotal * (descontoClientePercent / 100);
-  const total = Math.max(0, totalComIva - descontoAutomatico);
-
-  const handleAddToCart = (product: any) => {
-    const exists = cart.find((i) => i.id === product.id);
-    if (exists) {
-      setCart(
-        cart.map((i) => (i.id === product.id ? { ...i, qty: i.qty + 1 } : i))
-      );
-    } else {
-      setCart([...cart, { ...product, qty: 1 }]);
-    }
-  };
-  
-
-  const updateQty = (id: string | number, delta: number) => {
-    setCart(
-      cart.map((item) => {
-        if (item.id === id) {
-          const newQty = item.qty + delta;
-          
-          return newQty > 0 ? { ...item, qty: newQty } : item;
-        }
-        return item;
-      })
-    );
-  };
-
-  const removeItem = (id: string | number) => {
-    setCart(cart.filter((i) => i.id !== id));
-  };
+  const {
+    openCaixa,
+    caixaId,
+    isCaixaAberta,
+    handleAbrirCaixa,
+    handleFecharCaixa,
+    handleSangria,
+    handleReforco,
+  } = useCaixaSession();
 
   const handleCheckout = () => {
     if (cart.length === 0) {
@@ -436,7 +364,7 @@ export default function CaixaPOS() {
   };
 
   const finishSale = () => {
-    setCart([]);
+    clearCart();
     setSelectedClient("");
     setAmountReceived(0);
     setPaymentMethod("Dinheiro");
@@ -516,155 +444,6 @@ export default function CaixaPOS() {
     `);
     printWindow.document.close();
     printWindow.print();
-  };
-
-  const abrirMutation = useMutation({
-    mutationFn: (valor: number) => financialService.abrir(valor),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["caixas"] });
-      toast.success(`Fundo de maneio registado com sucesso.`);
-    },
-  });
-
-  const fecharMutation = useMutation({
-    mutationFn: ({ id, payload }: { id: number | string; payload: any }) =>
-      financialService.fechar(id, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["caixas"] });
-      toast.success("O turno foi encerrado com sucesso.");
-    },
-    onError: () => {
-      toast.error("Erro ao fechar caixa na API.");
-    },
-  });
-
-  const movimentoMutation = useMutation({
-    mutationFn: ({ tipo, valor }: { tipo: string; valor: number }) =>
-      financialService.movimento(String(caixaId), tipo, valor, tipo),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["caixas"] });
-      toast.success("Movimento registado.");
-    },
-  });
-
-  const handleAbrirCaixa = () => {
-    Swal.fire({
-      title: "Abrir Caixa",
-      text: "Insira o valor de fundo de maneio:",
-      input: "number",
-      showCancelButton: true,
-      confirmButtonText: "Abrir Caixa",
-      cancelButtonText: "Cancelar",
-    }).then((result) => {
-      if (result.isConfirmed) {
-        abrirMutation.mutate(Number(result.value) || 0);
-      }
-    });
-  };
-
-  const handleFecharCaixa = () => {
-    if (!caixaId) return;
-
-    // Detailed closure with counting inputs
-    Swal.fire({
-      title: "Encerramento de Caixa",
-      html: `
-        <div class="text-left space-y-3">
-          <p class="text-xs text-gray-500 mb-4">Insira os valores físicos contados no caixa para reconciliação:</p>
-          <div class="mb-2">
-            <label class="block text-xs font-bold text-gray-700">Valor em Dinheiro (STD)</label>
-            <input id="swal-dinheiro" type="number" step="0.01" class="swal2-input w-full m-0" placeholder="0.00">
-          </div>
-          <div class="mb-2">
-            <label class="block text-xs font-bold text-gray-700">Valor em Transferências (STD)</label>
-            <input id="swal-transferencia" type="number" step="0.01" class="swal2-input w-full m-0" placeholder="0.00">
-          </div>
-          <div class="mb-2">
-            <label class="block text-xs font-bold text-gray-700">Valor em Cartão / POS (STD)</label>
-            <input id="swal-pos" type="number" step="0.01" class="swal2-input w-full m-0" placeholder="0.00">
-          </div>
-          <div class="mb-2">
-            <label class="block text-xs font-bold text-gray-700">Justificação de Divergência</label>
-            <textarea id="swal-justificativa" class="swal2-textarea w-full m-0 h-20" placeholder="Obrigatório em caso de diferença com o valor esperado..."></textarea>
-          </div>
-        </div>
-      `,
-      focusConfirm: false,
-      showCancelButton: true,
-      confirmButtonText: "Encerrar Turno",
-      cancelButtonText: "Cancelar",
-      preConfirm: () => {
-        const dinheiro = parseFloat(
-          (document.getElementById("swal-dinheiro") as HTMLInputElement)
-            .value || "0"
-        );
-        const transferencia = parseFloat(
-          (document.getElementById("swal-transferencia") as HTMLInputElement)
-            .value || "0"
-        );
-        const pos = parseFloat(
-          (document.getElementById("swal-pos") as HTMLInputElement).value || "0"
-        );
-        const justificativa = (
-          document.getElementById("swal-justificativa") as HTMLTextAreaElement
-        ).value;
-
-        // Calculate divergence
-        const totalEsperado = Number(
-          openCaixa?.valor_final ?? openCaixa?.valor_inicial ?? 0
-        );
-        const totalDeclarado = dinheiro + transferencia + pos;
-        const isDivergente = Math.abs(totalEsperado - totalDeclarado) > 0.01;
-
-        if (isDivergente && !justificativa.trim()) {
-          Swal.showValidationMessage(
-            "Uma divergência foi detetada. Justificação é obrigatória!"
-          );
-          return false;
-        }
-
-        return {
-          valor_declarado_dinheiro: dinheiro,
-          valor_declarado_transferencia: transferencia,
-          valor_declarado_pos: pos,
-          explicacao_divergencia: justificativa,
-        };
-      },
-    }).then((result) => {
-      if (result.isConfirmed && result.value) {
-        fecharMutation.mutate({ id: caixaId, payload: result.value });
-      }
-    });
-  };
-
-  const handleSangria = () => {
-    if (!caixaId) return;
-    Swal.fire({
-      title: "Registar Sangria",
-      text: "Valor a retirar do caixa:",
-      input: "number",
-      showCancelButton: true,
-      confirmButtonText: "Registar",
-    }).then(
-      (r) =>
-        r.isConfirmed &&
-        movimentoMutation.mutate({ tipo: "Sangria", valor: Number(r.value) })
-    );
-  };
-
-  const handleReforco = () => {
-    if (!caixaId) return;
-    Swal.fire({
-      title: "Registar Reforço",
-      text: "Valor a adicionar ao caixa:",
-      input: "number",
-      showCancelButton: true,
-      confirmButtonText: "Registar",
-    }).then(
-      (r) =>
-        r.isConfirmed &&
-        movimentoMutation.mutate({ tipo: "Reforço", valor: Number(r.value) })
-    );
   };
 
   if (!isCaixaAberta) {

@@ -1,17 +1,6 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  Plus,
-  Search,
-  Package,
-  Wrench,
-  Apple,
-  ClipboardList,
-  AlertOctagon,
-  User,
-  Clock,
-  Eye
-} from "lucide-react";
+import { Plus, Search, Package, Wrench, Apple, ClipboardList, AlertOctagon, User, Clock, Eye } from "lucide-react";
 import { cn } from "../lib/utils";
 import { toast } from "react-toastify";
 import { requestService } from "../services";
@@ -27,7 +16,6 @@ export default function Requisicoes() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedReq, setSelectedReq] = useState<any>(null);
   const { user } = useAuth();
-
   const queryClient = useQueryClient();
 
   // Queries for requisitions
@@ -52,15 +40,7 @@ export default function Requisicoes() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({
-      id,
-      action,
-      payload
-    }: {
-      id: string | number;
-      action: "aprovar" | "entregar" | "devolver" | "encerrar";
-      payload?: any;
-    }) => {
+    mutationFn: async ({ id, action, payload }: { id: string | number; action: "aprovar" | "entregar" | "devolver" | "encerrar"; payload?: any; }) => {
       if (action === "aprovar") {
         return requestService.aprovar(id, payload.itens);
       }
@@ -102,7 +82,6 @@ export default function Requisicoes() {
 
   const requisitions = requisitionsResponse?.items || [];
   const occurrences = occurrencesResponse?.items || [];
-
   const canCreate = ["Administrador", "Cozinha", "Pastelaria"].includes(user?.role || "");
 
   const tabConfigs = [
@@ -158,35 +137,14 @@ export default function Requisicoes() {
       }
     },
     {
-      accessorKey: "justificacao",
-      header: "Justificação",
-      cell: ({ row }) => <span className="italic text-gray-500 font-medium">{row.original.justificacao || "Sem justificação anotada."}</span>
-    },
-    {
-      accessorKey: "data_ocorrencia",
-      header: "Data",
-      cell: ({ row }) => <span className="font-mono text-[10px] text-gray-400">{row.original.data_ocorrencia ? new Date(row.original.data_ocorrencia).toLocaleString() : "N/A"}</span>
-    },
-    {
-      accessorKey: "estado",
-      header: "Estado",
-      cell: ({ row }) => <span className="font-mono text-[10px] text-gray-400">{row.original.estado || "Em Falta de registo"}</span>
-    },
-    {
-      accessorKey: "responsavel_nome",
-      header: "Responsável",
-      cell: ({ row }) => <span className="font-mono text-[10px] text-gray-400">{row.original.responsavel_nome || "Em Falta de registo"}</span>
-    },
-    {
       id: "acoes",
       header: "Ações",
       cell: ({ row }) => (
         <button
           onClick={() => setSelectedOccurrence(row.original)}
-          className="text-primary hover:text-primary-hover bg-primary/10 hover:bg-primary/20 p-2 rounded-xl transition-all flex items-center justify-center font-bold"
-          title="Ver mais detalhes"
+          className="text-primary hover:text-primary-hover bg-primary/10 hover:bg-primary/20 px-3 py-1.5 rounded-xl transition-all flex items-center justify-center font-bold"
         >
-          <Eye size={16} /> Ver mais
+          <Eye size={16} className="mr-1" /> Ver detalhes
         </button>
       )
     }
@@ -254,9 +212,10 @@ export default function Requisicoes() {
       cell: ({ row }) => (
         <button
           onClick={() => setSelectedReq(row.original)}
-          className="text-primary hover:text-primary-hover bg-primary/10 hover:bg-primary/20 p-2 rounded-xl transition-all flex items-center justify-center gap-1 font-bold text-xs px-3"
+          className="text-primary hover:text-primary-hover bg-primary/10 hover:bg-primary/20 px-3 py-1.5 rounded-xl transition-all flex items-center justify-center font-bold"
+          title="Ver mais detalhes"
         >
-          <Eye size={14} /> Ver mais
+          <Eye size={16} className="mr-1" /> Ver detalhes
         </button>
       )
     }
