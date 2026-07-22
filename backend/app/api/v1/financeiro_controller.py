@@ -81,6 +81,15 @@ def registrar_movimento(id):
     except CaixaEncerradoException as e:
         return jsonify({"msg": str(e)}), 400
 
+
+@financeiro_bp.route('/caixas/<int:id>/valores-esperados', methods=['GET'])
+@jwt_required()
+def get_valores_esperados(id):
+    user_id = get_jwt_identity()
+    result, error = financeiro_service.get_valores_esperados(id)
+    if error: return jsonify({"msg": error}), 400
+    return jsonify(result), 200
+
 # -- CONTAS RECEBER --
 @financeiro_bp.route('/contas-receber', methods=['GET'])
 @jwt_required()

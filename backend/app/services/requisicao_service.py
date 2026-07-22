@@ -112,7 +112,8 @@ class RequisicaoService:
                     mat = db.session.query(Material).filter_by(id=item.item_id).first()
                     if mat:
                         mat.quantidade_disponivel = float(mat.quantidade_disponivel or 0) - float(item.quantidade_entregue)
-                        mat.estado = 'Em Uso'
+                        if float(mat.quantidade_disponivel) <= 0:
+                            mat.estado = 'Em Uso'
                         mov = MovimentoStock(
                             tipo=TipoMovimento.SAIDA, origem=OrigemMovimento.REQUISICAO,
                             entidade_tipo=EntidadeMovimento.MATERIAL, referencia_id=mat.id,

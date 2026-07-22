@@ -370,6 +370,10 @@ export const financialService = {
   },
   async movimento(caixa_id: string | number, tipo: string, valor: number | string, descricao?: string): Promise<any> {
     return apiClient.post<any, any>(`/v1/financeiro/caixas/${caixa_id}/movimentos`, { caixa_id, tipo, valor, descricao });
+  },
+  async getValoresEsperados(id: string | number): Promise<{ valor_esperado_dinheiro: number; valor_esperado_transferencia: number; valor_esperado_pos: number }> {
+    const res = await apiClient.get<any, any>(`/v1/financeiro/caixas/${id}/valores-esperados`);
+    return res?.data || res;
   }
 };
 

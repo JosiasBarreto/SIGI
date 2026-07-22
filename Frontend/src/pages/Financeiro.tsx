@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { financialService, financeiroService, clientService } from '../services';
-import { TrendingUp, TrendingDown, DollarSign, Wallet, Calendar, User, Search, CreditCard, CheckCircle2, AlertCircle, Clock, Check, X, HandCoins, Receipt, Banknote, ShieldAlert, Activity } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Wallet, Calendar, User, Search, CreditCard, CheckCircle2, AlertCircle, Clock, Check, X, HandCoins, Receipt, Banknote, ShieldAlert, Activity, Eye, ClipboardList, RefreshCw, FileSpreadsheet, Lock } from 'lucide-react';
 import { formatCurrency, cn } from '../lib/utils';
 import { toast } from 'react-toastify';
 import Swal from 'sweetalert2';
@@ -862,11 +862,570 @@ function TabFluxoCaixa() {
 }
 
 
+// Sub-Tab 5: Relatório de Histórico, Fechos e Irregularidades
+function TabHistoricoCaixas() {
+  const queryClient = useQueryClient();
+  const [activeFilter, setActiveFilter] = useState<"Todos" | "Abertos" | "Fechados" | "Irregularidades">("Todos");
+  const [dateStart, setDateStart] = useState("");
+  const [dateEnd, setDateEnd] = useState("");
+  const [selectedCaixa, setSelectedCaixa] = useState<any>(null);
+
+  // Fetch caixas history
+  const { data: caixasRes, isLoading, refetch } = useQuery({
+    queryKey: ["caixas_historico"],
+    queryFn: () => financialService.getAll({ per_page: 500 })
+  });
+
+  const caixasData = caixasRes?.items || (Array.isArray(caixasRes) ? caixasRes : []);
+
+  // Filter items
+  const filtered = caixasData.filter((item: any) => {
+    // 1. Estado filter
+    if (activeFilter === "Abertos" && item.estado !== "Aberto") return false;
+    if (activeFilter === "Fechados" && item.estado !== "Fechado") return false;
+    if (activeFilter === "Irregularidades") {
+      const hasDivergence = 
+        (item.diferenca_dinheiro !== null && parseFloat(item.diferenca_dinheiro) !== 0) ||
+        (item.diferenca_transferencia !== null && parseFloat(item.diferenca_transferencia) !== 0) ||
+        (item.diferenca_pos !== null && parseFloat(item.diferenca_pos) !== 0) ||
+        !!item.explicacao_divergencia;
+      if (!hasDivergence) return false;
+    }
+
+    // 2. Date filters
+    if (dateStart) {
+      const itemDate = new Date(item.data_abertura);
+      const startLimit = new Date(dateStart + "T00:00:00");
+      if (itemDate < startLimit) return false;
+    }
+    if (dateEnd) {
+      const itemDate = new Date(item.data_abertura);
+      const endLimit = new Date(dateEnd + "T23:59:59");
+      if (itemDate > endLimit) return false;
+    }
+
+    return true;
+  });
+
+  // Calculate high-level stats from all fetched items
+  const stats = React.useMemo(() => {
+    let totalCount = caixasData.length;
+    let openCount = caixasData.filter((c: any) => c.estado === "Aberto").length;
+    let closedCount = caixasData.filter((c: any) => c.estado === "Fechado").length;
+    let irregularCount = caixasData.filter((c: any) => {
+      return (
+        (c.diferenca_dinheiro !== null && parseFloat(c.diferenca_dinheiro) !== 0) ||
+        (c.diferenca_transferencia !== null && parseFloat(c.diferenca_transferencia) !== 0) ||
+        (c.diferenca_pos !== null && parseFloat(c.diferenca_pos) !== 0) ||
+        !!c.explicacao_divergencia
+      );
+    }).length;
+
+    return { totalCount, openCount, closedCount, irregularCount };
+  }, [caixasData]);
+
+  // Export to CSV helper
+  const handleExportCSV = () => {
+    if (filtered.length === 0) {
+      toast.info("Não há dados para exportar.");
+      return;
+    }
+    const headers = ["ID", "Estado", "Abertura", "Fecho", "Fundo Inicial", "Dif. Dinheiro", "Dif. Transf.", "Dif. TPA/POS", "Justificativa"];
+    const rows = filtered.map((c: any) => [
+      c.id || c.numero,
+      c.estado,
+      c.data_abertura ? new Date(c.data_abertura).toLocaleString("pt-PT") : "",
+      c.data_fecho ? new Date(c.data_fecho).toLocaleString("pt-PT") : "Aberto",
+      c.valor_inicial,
+      c.diferenca_dinheiro ?? 0,
+      c.diferenca_transferencia ?? 0,
+      c.diferenca_pos ?? 0,
+      c.explicacao_divergencia || "Sem irregularidades"
+    ]);
+
+    const csvContent = "data:text/csv;charset=utf-8," 
+      + [headers.join(","), ...rows.map(e => e.map(val => `"${String(val).replace(/"/g, '""')}"`).join(","))].join("\n");
+    
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `historico_caixas_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const columns = React.useMemo<ColumnDef<any>[]>(() => [
+    {
+      accessorKey: 'id',
+      header: 'ID / NÚMERO',
+      cell: ({ row }) => (
+        <span className="font-bold text-gray-900 dark:text-white">
+          #{row.original.numero || row.original.id}
+        </span>
+      )
+    },
+    {
+      accessorKey: 'estado',
+      header: 'ESTADO',
+      cell: ({ getValue }) => {
+        const value = getValue<string>();
+        return (
+          <span className={cn(
+            "px-2.5 py-0.5 rounded-full font-bold text-[10px] uppercase tracking-wider",
+            value === 'Aberto' 
+              ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' 
+              : 'bg-gray-100 text-gray-855 dark:bg-gray-800 dark:text-gray-400'
+          )}>
+            {value}
+          </span>
+        );
+      }
+    },
+    {
+      accessorKey: 'data_abertura',
+      header: 'ABERTURA',
+      cell: ({ getValue }) => {
+        const val = getValue<string>();
+        return val ? <span className="text-gray-600 dark:text-gray-300 font-medium">{new Date(val).toLocaleString('pt-PT')}</span> : '-';
+      }
+    },
+    {
+      accessorKey: 'data_fecho',
+      header: 'FECHO',
+      cell: ({ getValue }) => {
+        const val = getValue<string>();
+        return val ? <span className="text-gray-500 dark:text-gray-400 font-medium">{new Date(val).toLocaleString('pt-PT')}</span> : <span className="text-emerald-500 font-bold text-xs">Ativo</span>;
+      }
+    },
+    {
+      accessorKey: 'valor_inicial',
+      header: 'FUNDO INICIAL',
+      cell: ({ getValue }) => <span className="font-semibold">{formatCurrency(parseFloat(getValue<any>() || 0))}</span>
+    },
+    {
+      id: 'diferencas',
+      header: () => <div className="text-center">DIFERENÇAS (DINH. / TRANSF. / POS)</div>,
+      cell: ({ row }) => {
+        const item = row.original;
+        const difDinh = parseFloat(item.diferenca_dinheiro || 0);
+        const difTrans = parseFloat(item.diferenca_transferencia || 0);
+        const difPos = parseFloat(item.diferenca_pos || 0);
+        const totalDif = difDinh + difTrans + difPos;
+
+        const renderVal = (v: number) => {
+          if (v === 0) return <span className="text-gray-400">0</span>;
+          return <span className={v < 0 ? "text-red-500 font-bold" : "text-green-500 font-bold"}>{v > 0 ? `+${v}` : v}</span>;
+        };
+
+        return (
+          <div className="flex items-center justify-center gap-3 text-xs font-mono">
+            <div className="text-center" title="Dinheiro em Gaveta">
+              <span className="text-[9px] text-gray-400 block font-sans">DINH</span>
+              {renderVal(difDinh)}
+            </div>
+            <span className="text-gray-300 dark:text-gray-700">|</span>
+            <div className="text-center" title="Transferência Bancária">
+              <span className="text-[9px] text-gray-400 block font-sans">TRANSF</span>
+              {renderVal(difTrans)}
+            </div>
+            <span className="text-gray-300 dark:text-gray-700">|</span>
+            <div className="text-center" title="TPA / POS Terminal">
+              <span className="text-[9px] text-gray-400 block font-sans">POS</span>
+              {renderVal(difPos)}
+            </div>
+            {totalDif !== 0 && (
+              <>
+                <span className="text-gray-300 dark:text-gray-700">||</span>
+                <div className="text-center font-bold px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-800" title="Divergência Total">
+                  <span className="text-[9px] text-gray-400 block font-sans">TOTAL</span>
+                  <span className={totalDif < 0 ? "text-error" : "text-green-600"}>{formatCurrency(totalDif)}</span>
+                </div>
+              </>
+            )}
+          </div>
+        );
+      }
+    },
+    {
+      accessorKey: 'explicacao_divergencia',
+      header: 'IRREGULARIDADE / JUSTIFICATIVA',
+      cell: ({ getValue }) => {
+        const val = getValue<string>();
+        return val ? (
+          <span className="text-xs text-amber-600 dark:text-amber-400 font-medium line-clamp-1 max-w-[200px]" title={val}>
+            ⚠️ {val}
+          </span>
+        ) : (
+          <span className="text-xs text-gray-400 italic">Sem desvios</span>
+        );
+      }
+    },
+    {
+      id: 'actions',
+      header: () => <div className="text-right">DETALHES</div>,
+      cell: ({ row }) => (
+        <div className="flex justify-end">
+          <button
+            onClick={() => setSelectedCaixa(row.original)}
+            className="p-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg transition-colors flex items-center gap-1 text-xs font-semibold"
+          >
+            <Eye size={14} /> Detalhes
+          </button>
+        </div>
+      )
+    }
+  ], []);
+
+  return (
+    <div className="animate-fade-in space-y-6">
+      {/* High-level stats panel */}
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+        <div className="bg-white dark:bg-surface-dark p-4 rounded-xl border border-gray-200 dark:border-gray-800 flex items-center gap-4 shadow-sm">
+          <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+            <ClipboardList size={20} />
+          </div>
+          <div>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 block">Total de Caixas</span>
+            <span className="text-xl font-black text-gray-900 dark:text-white">{stats.totalCount}</span>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-surface-dark p-4 rounded-xl border border-gray-200 dark:border-gray-800 flex items-center gap-4 shadow-sm">
+          <div className="w-10 h-10 rounded-xl bg-green-100 text-green-750 dark:bg-green-900/20 dark:text-green-400 flex items-center justify-center shrink-0">
+            <Clock size={20} />
+          </div>
+          <div>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 block">Turnos Ativos</span>
+            <span className="text-xl font-black text-green-600 dark:text-green-400">{stats.openCount}</span>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-surface-dark p-4 rounded-xl border border-gray-200 dark:border-gray-800 flex items-center gap-4 shadow-sm">
+          <div className="w-10 h-10 rounded-xl bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 flex items-center justify-center shrink-0">
+            <Lock size={20} />
+          </div>
+          <div>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 block">Turnos Fechados</span>
+            <span className="text-xl font-black text-gray-655 dark:text-gray-400">{stats.closedCount}</span>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-surface-dark p-4 rounded-xl border border-red-100 text-error dark:border-red-900/20 dark:text-red-400 flex items-center gap-4 shadow-sm">
+          <div className="w-10 h-10 rounded-xl bg-red-100/80 text-red-600 dark:bg-red-950/20 dark:text-red-450 flex items-center justify-center shrink-0">
+            <AlertCircle size={20} />
+          </div>
+          <div>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 block">Irregularidades</span>
+            <span className="text-xl font-black text-red-600 dark:text-red-450">{stats.irregularCount}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Filters card */}
+      <div className="bg-white dark:bg-surface-dark p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+        {/* Tab-like filter buttons */}
+        <div className="flex overflow-x-auto gap-1 border border-gray-100 dark:border-gray-800 p-1 bg-gray-50 dark:bg-gray-800/20 rounded-xl">
+          {(["Todos", "Abertos", "Fechados", "Irregularidades"] as const).map((filter) => (
+            <button
+              key={filter}
+              onClick={() => setActiveFilter(filter)}
+              className={cn(
+                "px-4 py-2 rounded-lg text-xs font-bold whitespace-nowrap transition-all",
+                activeFilter === filter 
+                  ? "bg-white dark:bg-surface-dark text-primary shadow-sm" 
+                  : "text-gray-500 hover:text-gray-900 dark:hover:text-white"
+              )}
+            >
+              {filter}
+            </button>
+          ))}
+        </div>
+
+        {/* Date inputs and Action buttons */}
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] text-gray-400 font-bold uppercase">De:</span>
+            <input 
+              type="date" 
+              value={dateStart} 
+              onChange={e => setDateStart(e.target.value)} 
+              className="px-3 py-1.5 text-xs bg-gray-50 dark:bg-gray-850 border border-gray-200 dark:border-gray-700 rounded-lg dark:text-white outline-none focus:border-primary font-medium" 
+            />
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] text-gray-400 font-bold uppercase">Até:</span>
+            <input 
+              type="date" 
+              value={dateEnd} 
+              onChange={e => setDateEnd(e.target.value)} 
+              className="px-3 py-1.5 text-xs bg-gray-50 dark:bg-gray-855 border border-gray-200 dark:border-gray-700 rounded-lg dark:text-white outline-none focus:border-primary font-medium" 
+            />
+          </div>
+          {(dateStart || dateEnd) && (
+            <button 
+              onClick={() => { setDateStart(""); setDateEnd(""); }}
+              className="text-xs text-error font-bold hover:underline"
+            >
+              Limpar datas
+            </button>
+          )}
+
+          <div className="border-l h-5 border-gray-200 dark:border-gray-700 mx-1 hidden sm:block" />
+
+          <button
+            onClick={() => refetch()}
+            className="p-2 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 transition-colors"
+            title="Recarregar"
+          >
+            <RefreshCw size={14} />
+          </button>
+
+          <button
+            onClick={handleExportCSV}
+            className="bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 text-white dark:text-gray-900 font-bold px-3 py-1.5 rounded-lg text-xs flex items-center gap-1.5 transition-all shadow-sm"
+          >
+            <FileSpreadsheet size={14} /> Exportar CSV
+          </button>
+        </div>
+      </div>
+
+      {/* Main Data Table */}
+      <div className="bg-white dark:bg-surface-dark rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
+        <DataTable 
+          data={filtered} 
+          columns={columns} 
+          isLoading={isLoading} 
+          searchPlaceholder="Pesquisar histórico de caixas..." 
+        />
+      </div>
+
+      {/* Detailed Slide-Over Drawer / Modal for "Visualizar mais detalhes" */}
+      {selectedCaixa && (
+        <div className="fixed inset-0 z-50 flex items-center justify-end bg-black/60 backdrop-blur-sm p-0 animate-fade-in">
+          <div className="bg-white dark:bg-surface-dark w-full max-w-lg h-full shadow-2xl flex flex-col justify-between border-l border-gray-200 dark:border-gray-800 overflow-hidden animate-slide-in-right">
+            
+            {/* Drawer Header */}
+            <div className="p-6 border-b border-gray-105 dark:border-gray-800 flex justify-between items-center bg-gray-50/50 dark:bg-gray-900/10">
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-widest text-primary block mb-1">Auditoria de Caixa</span>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
+                  Turno / Caixa #{selectedCaixa.numero || selectedCaixa.id}
+                </h3>
+              </div>
+              <button 
+                onClick={() => setSelectedCaixa(null)} 
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-white p-2 hover:bg-gray-100 dark:hover:bg-gray-850 rounded-full transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Drawer Body */}
+            <div className="p-6 flex-1 overflow-y-auto space-y-6">
+              
+              {/* Status Badge & General Times */}
+              <div className="bg-gray-50 dark:bg-gray-850 p-4 rounded-xl border border-gray-150 dark:border-gray-850 space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-gray-500 font-semibold">Estado do Turno</span>
+                  <span className={cn(
+                    "px-3 py-1 rounded-full font-bold text-[11px] uppercase tracking-wider",
+                    selectedCaixa.estado === "Aberto" 
+                      ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-450" 
+                      : "bg-gray-200 text-gray-850 dark:bg-gray-800 dark:text-gray-300"
+                  )}>
+                    {selectedCaixa.estado}
+                  </span>
+                </div>
+
+                <div className="border-t border-gray-200 dark:border-gray-800 pt-3 grid grid-cols-2 gap-4">
+                  <div>
+                    <span className="text-[10px] text-gray-400 font-bold block uppercase">Data Abertura</span>
+                    <span className="text-xs font-semibold text-gray-900 dark:text-white block mt-0.5">
+                      {selectedCaixa.data_abertura ? new Date(selectedCaixa.data_abertura).toLocaleString('pt-PT') : '-'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-gray-400 font-bold block uppercase">Data Fecho</span>
+                    <span className="text-xs font-semibold text-gray-900 dark:text-white block mt-0.5">
+                      {selectedCaixa.data_fecho ? new Date(selectedCaixa.data_fecho).toLocaleString('pt-PT') : <span className="text-green-550 font-bold">Ainda Ativo</span>}
+                    </span>
+                  </div>
+                </div>
+
+                {selectedCaixa.data_fecho && selectedCaixa.data_abertura && (
+                  <div className="border-t border-gray-200 dark:border-gray-800 pt-3 flex justify-between items-center text-xs text-gray-500">
+                    <span>Duração total do turno:</span>
+                    <span className="font-bold text-gray-700 dark:text-gray-300">
+                      {(() => {
+                        const diffMs = new Date(selectedCaixa.data_fecho).getTime() - new Date(selectedCaixa.data_abertura).getTime();
+                        const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+                        const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+                        return `${diffHrs}h ${diffMins}m`;
+                      })()}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Fundo de Maneio Inicial */}
+              <div className="flex justify-between items-center p-4 bg-primary/5 dark:bg-primary/10 rounded-xl border border-primary/10">
+                <div>
+                  <span className="text-[10px] text-primary dark:text-primary-hover font-bold block uppercase">Fundo de Maneio Inicial</span>
+                  <span className="text-xs text-gray-500 mt-0.5">Dinheiro de troco alocado na abertura</span>
+                </div>
+                <span className="text-lg font-extrabold text-primary dark:text-primary">
+                  {formatCurrency(parseFloat(selectedCaixa.valor_inicial || 0))}
+                </span>
+              </div>
+
+              {/* Breakdown Table: Expected vs Declared vs Differences */}
+              <div className="space-y-3">
+                <span className="text-[11px] text-gray-400 font-bold block uppercase tracking-wider">Detalhamento Financeiro por Método</span>
+                <div className="border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden divide-y divide-gray-100 dark:divide-gray-800">
+                  
+                  {/* Dinheiro */}
+                  <div className="p-4 flex justify-between items-center hover:bg-gray-50/50 dark:hover:bg-gray-850/20 transition-colors">
+                    <div>
+                      <span className="font-bold text-gray-900 dark:text-white block">Dinheiro em Gaveta</span>
+                      <span className="text-xs text-gray-400">Moedas e notas físicas</span>
+                    </div>
+                    <div className="text-right font-mono text-xs">
+                      <div className="flex gap-1.5 justify-end">
+                        <span className="text-gray-400">Desvio:</span>
+                        <span className={cn(
+                          "font-bold",
+                          parseFloat(selectedCaixa.diferenca_dinheiro || 0) < 0 ? "text-red-500" :
+                          parseFloat(selectedCaixa.diferenca_dinheiro || 0) > 0 ? "text-green-500" : "text-gray-500"
+                        )}>
+                          {parseFloat(selectedCaixa.diferenca_dinheiro || 0) > 0 ? "+" : ""}
+                          {formatCurrency(parseFloat(selectedCaixa.diferenca_dinheiro || 0))}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Transferencias */}
+                  <div className="p-4 flex justify-between items-center hover:bg-gray-50/50 dark:hover:bg-gray-850/20 transition-colors">
+                    <div>
+                      <span className="font-bold text-gray-900 dark:text-white block">Transferências Bancárias</span>
+                      <span className="text-xs text-gray-400">Comprovativos e IBAN</span>
+                    </div>
+                    <div className="text-right font-mono text-xs">
+                      <div className="flex gap-1.5 justify-end">
+                        <span className="text-gray-400">Desvio:</span>
+                        <span className={cn(
+                          "font-bold",
+                          parseFloat(selectedCaixa.diferenca_transferencia || 0) < 0 ? "text-red-500" :
+                          parseFloat(selectedCaixa.diferenca_transferencia || 0) > 0 ? "text-green-500" : "text-gray-500"
+                        )}>
+                          {parseFloat(selectedCaixa.diferenca_transferencia || 0) > 0 ? "+" : ""}
+                          {formatCurrency(parseFloat(selectedCaixa.diferenca_transferencia || 0))}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* TPA/POS */}
+                  <div className="p-4 flex justify-between items-center hover:bg-gray-50/50 dark:hover:bg-gray-850/20 transition-colors">
+                    <div>
+                      <span className="font-bold text-gray-900 dark:text-white block">Multicaixa / POS</span>
+                      <span className="text-xs text-gray-400">Terminais TPA automáticos</span>
+                    </div>
+                    <div className="text-right font-mono text-xs">
+                      <div className="flex gap-1.5 justify-end">
+                        <span className="text-gray-400">Desvio:</span>
+                        <span className={cn(
+                          "font-bold",
+                          parseFloat(selectedCaixa.diferenca_pos || 0) < 0 ? "text-red-500" :
+                          parseFloat(selectedCaixa.diferenca_pos || 0) > 0 ? "text-green-500" : "text-gray-500"
+                        )}>
+                          {parseFloat(selectedCaixa.diferenca_pos || 0) > 0 ? "+" : ""}
+                          {formatCurrency(parseFloat(selectedCaixa.diferenca_pos || 0))}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+              {/* Total Divergence Alert & Explanations */}
+              {(() => {
+                const totalDif = parseFloat(selectedCaixa.diferenca_dinheiro || 0) + 
+                                 parseFloat(selectedCaixa.diferenca_transferencia || 0) + 
+                                 parseFloat(selectedCaixa.diferenca_pos || 0);
+                
+                if (totalDif === 0 && !selectedCaixa.explicacao_divergencia) {
+                  return (
+                    <div className="bg-emerald-55/40 dark:bg-emerald-950/20 border border-emerald-200/50 dark:border-emerald-900/30 p-4 rounded-xl flex gap-3">
+                      <CheckCircle2 size={20} className="text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                      <div>
+                        <span className="text-sm font-bold text-emerald-800 dark:text-emerald-400 block">Conformidade Auditada</span>
+                        <p className="text-xs text-emerald-600 dark:text-emerald-500 mt-1">Este caixa foi encerrado sem qualquer desvio ou divergência registada pelo operador de caixa.</p>
+                      </div>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="space-y-4">
+                    <div className={cn(
+                      "p-4 rounded-xl border flex gap-3",
+                      totalDif < 0 ? "bg-red-50/70 border-red-200 text-red-800 dark:bg-red-950/20 dark:border-red-900/30" : "bg-amber-50/70 border-amber-200 text-amber-800 dark:bg-amber-950/20 dark:border-amber-900/30"
+                    )}>
+                      <AlertCircle className={totalDif < 0 ? "text-red-600 dark:text-red-400 shrink-0 mt-0.5" : "text-amber-600 dark:text-amber-400 shrink-0 mt-0.5"} size={20} />
+                      <div>
+                        <span className={cn("text-sm font-bold block", totalDif < 0 ? "text-red-800 dark:text-red-400" : "text-amber-800 dark:text-amber-400")}>
+                          Divergência Total de Caixa: {formatCurrency(totalDif)}
+                        </span>
+                        <p className={cn("text-xs mt-1", totalDif < 0 ? "text-red-600 dark:text-red-500" : "text-amber-600 dark:text-amber-500")}>
+                          {totalDif < 0 
+                            ? "Existe uma quebra de caixa. O valor declarado pelo operador é inferior ao esperado pelo sistema."
+                            : "Existe uma sobra de caixa. O valor declarado pelo operador excede o registado pelas faturas do sistema."}
+                        </p>
+                      </div>
+                    </div>
+
+                    {selectedCaixa.explicacao_divergencia && (
+                      <div className="bg-amber-50/30 dark:bg-amber-950/10 border border-amber-200/50 dark:border-amber-900/30 p-4 rounded-xl space-y-2">
+                        <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold block uppercase tracking-wider">Justificação da Irregularidade</span>
+                        <p className="text-xs text-gray-700 dark:text-gray-300 font-medium leading-relaxed italic bg-white dark:bg-surface-dark p-3 rounded-lg border border-gray-100 dark:border-gray-800">
+                          "{selectedCaixa.explicacao_divergencia}"
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+
+            </div>
+
+            {/* Drawer Footer */}
+            <div className="p-6 border-t border-gray-100 dark:border-gray-800 bg-gray-50/30 dark:bg-gray-900/20 flex gap-3 justify-end">
+              <button 
+                onClick={() => setSelectedCaixa(null)}
+                className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-750 text-gray-700 dark:text-gray-300 font-bold rounded-xl text-xs transition-colors"
+              >
+                Fechar Painel
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+}
+
+
 export default function Financeiro() {
   const [activeTab, setActiveTab] = useState(0);
 
   const TABS = [
     { label: "Reconciliação & Caixa", icon: <Banknote size={18} /> },
+    { label: "Histórico de Caixas", icon: <ClipboardList size={18} /> },
     { label: "Contas a Receber", icon: <HandCoins size={18} /> },
     { label: "Contas a Pagar", icon: <Receipt size={18} /> },
     { label: "Fluxo de Caixa", icon: <Activity size={18} /> }
@@ -875,7 +1434,7 @@ export default function Financeiro() {
   return (
     <div className="space-y-6 pb-12 max-w-7xl mx-auto">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Gestão Financeira</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Gestão Financeira & Fecho</h1>
         <p className="text-sm text-gray-500 mt-1">Controlo integral de receitas, despesas e relatórios de fecho.</p>
       </div>
 
@@ -900,9 +1459,10 @@ export default function Financeiro() {
       {/* TAB CONTENT */}
       <div className="mt-4">
         {activeTab === 0 && <TabReconciliacao />}
-        {activeTab === 1 && <TabContasReceber />}
-        {activeTab === 2 && <TabContasPagar />}
-        {activeTab === 3 && <TabFluxoCaixa />}
+        {activeTab === 1 && <TabHistoricoCaixas />}
+        {activeTab === 2 && <TabContasReceber />}
+        {activeTab === 3 && <TabContasPagar />}
+        {activeTab === 4 && <TabFluxoCaixa />}
       </div>
     </div>
   );

@@ -432,96 +432,98 @@ export function DataTable<TData>({
         </table>
       </div>
 
-      <div className="p-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/20 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-gray-500">
-        <div className="flex items-center gap-2">
-          <span>Mostrar</span>
-          <select
-            value={table.getState().pagination.pageSize}
-            onChange={(e) => {
-              table.setPageSize(Number(e.target.value));
-            }}
-            className="px-2 py-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-md outline-none focus:ring-1 focus:ring-primary/50 text-gray-900 dark:text-gray-100"
-          >
-            {[10, 25, 50, 100, 200].map((pageSize) => (
-              <option key={pageSize} value={pageSize}>
-                {pageSize}
-              </option>
-            ))}
-          </select>
-          <span>registos</span>
-        </div>
+      {table.getPageCount() > 1 && (
+        <div className="p-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/20 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-gray-500">
+          <div className="flex items-center gap-2">
+            <span>Mostrar</span>
+            <select
+              value={table.getState().pagination.pageSize}
+              onChange={(e) => {
+                table.setPageSize(Number(e.target.value));
+              }}
+              className="px-2 py-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-md outline-none focus:ring-1 focus:ring-primary/50 text-gray-900 dark:text-gray-100"
+            >
+              {[10, 25, 50, 100, 200].map((pageSize) => (
+                <option key={pageSize} value={pageSize}>
+                  {pageSize}
+                </option>
+              ))}
+            </select>
+            <span>registos</span>
+          </div>
 
-        <div>
-          Mostrando{" "}
-          <span className="font-medium text-gray-900 dark:text-gray-100">
-            {table.getState().pagination.pageIndex *
-              table.getState().pagination.pageSize +
-              1}
-          </span>{" "}
-          –{" "}
-          <span className="font-medium text-gray-900 dark:text-gray-100">
-            {manualPagination && pageCount !== undefined
-              ? Math.min(
-                  (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
-                  table.getState().pagination.pageSize * pageCount
-                )
-              : Math.min(
-                  (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
-                  table.getFilteredRowModel().rows.length
-                )}
-          </span>{" "}
-          {manualPagination ? "" : (
-            <>
-              de{" "}
-              <span className="font-medium text-gray-900 dark:text-gray-100">
-                {table.getFilteredRowModel().rows.length}
-              </span>{" "}
-            </>
-          )}
-          registos
-        </div>
+          <div>
+            Mostrando{" "}
+            <span className="font-medium text-gray-900 dark:text-gray-100">
+              {table.getState().pagination.pageIndex *
+                table.getState().pagination.pageSize +
+                1}
+            </span>{" "}
+            –{" "}
+            <span className="font-medium text-gray-900 dark:text-gray-100">
+              {manualPagination && pageCount !== undefined
+                ? Math.min(
+                    (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
+                    table.getState().pagination.pageSize * pageCount
+                  )
+                : Math.min(
+                    (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
+                    table.getFilteredRowModel().rows.length
+                  )}
+            </span>{" "}
+            {manualPagination ? "" : (
+              <>
+                de{" "}
+                <span className="font-medium text-gray-900 dark:text-gray-100">
+                  {table.getFilteredRowModel().rows.length}
+                </span>{" "}
+              </>
+            )}
+            registos
+          </div>
 
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => table.setPageIndex(0)}
-            disabled={!table.getCanPreviousPage()}
-            className="p-1 text-gray-500 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 transition"
-            title="Primeira Página"
-          >
-            <ChevronsLeft size={16} />
-          </button>
-          <button
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-            className="p-1 px-2 text-gray-500 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 transition"
-            title="Página Anterior"
-          >
-            <ChevronLeft size={16} />
-          </button>
-          
-          <span className="px-2 font-medium text-gray-700 dark:text-gray-300">
-            Página {table.getState().pagination.pageIndex + 1} de{" "}
-            {table.getPageCount() === 0 ? 1 : table.getPageCount()}
-          </span>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => table.setPageIndex(0)}
+              disabled={!table.getCanPreviousPage()}
+              className="p-1 text-gray-500 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 transition"
+              title="Primeira Página"
+            >
+              <ChevronsLeft size={16} />
+            </button>
+            <button
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+              className="p-1 px-2 text-gray-500 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 transition"
+              title="Página Anterior"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            
+            <span className="px-2 font-medium text-gray-700 dark:text-gray-300">
+              Página {table.getState().pagination.pageIndex + 1} de{" "}
+              {table.getPageCount() === 0 ? 1 : table.getPageCount()}
+            </span>
 
-          <button
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-            className="p-1 px-2 text-gray-500 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 transition"
-            title="Próxima Página"
-          >
-            <ChevronRight size={16} />
-          </button>
-          <button
-            onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-            disabled={!table.getCanNextPage()}
-            className="p-1 text-gray-500 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 transition"
-            title="Última Página"
-          >
-            <ChevronsRight size={16} />
-          </button>
+            <button
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+              className="p-1 px-2 text-gray-500 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 transition"
+              title="Próxima Página"
+            >
+              <ChevronRight size={16} />
+            </button>
+            <button
+              onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+              disabled={!table.getCanNextPage()}
+              className="p-1 text-gray-500 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 transition"
+              title="Última Página"
+            >
+              <ChevronsRight size={16} />
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

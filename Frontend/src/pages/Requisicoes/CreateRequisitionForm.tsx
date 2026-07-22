@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Package, Wrench, Sparkles, HelpCircle, Trash2 } from "lucide-react";
 import { toast } from "react-toastify";
 import { useQuery } from "@tanstack/react-query";
@@ -11,6 +11,7 @@ import {
 import { cn } from "../../lib/utils";
 import Swal from "sweetalert2";
 import { SearchableSelect } from "../../components/Common/SearchableSelect";
+import { useAuth } from "../../components/AuthContext";
 
 export function CreateRequisitionForm({
   onCancel,
@@ -21,6 +22,7 @@ export function CreateRequisitionForm({
   onSubmit: (data: any) => void;
   createMutation: any;
 }) {
+  const { user } = useAuth();
   const [tipo, setTipo] = useState<"Inicial" | "Complementar">("Inicial");
   const [sector, setSector] = useState<"Cozinha" | "Pastelaria">("Cozinha");
   const [turnoId, setTurnoId] = useState<number | "">("");
@@ -28,6 +30,16 @@ export function CreateRequisitionForm({
     "Necessário para a produção do dia. Prioridade nos ingredientes."
   );
   const [items, setItems] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (user) {
+      if (user.role === "Pastelaria") {
+        setSector("Pastelaria");
+      } else if (user.role === "Cozinha") {
+        setSector("Cozinha");
+      }
+    }
+  }, [user]);
 
   // Fetch lists to populate options
   const { data: consumiveisResp } = useQuery({
@@ -197,26 +209,38 @@ export function CreateRequisitionForm({
 
         {/* Sector Selection */}
         <div className="space-y-2">
-          <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">
-            Setor Requerente
+          <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block flex items-center justify-between">
+            <span>Setor Requerente</span>
+            {!(user?.role === "Administrador" || user?.role === "Armazém" || user?.role === "Controlador de Materiais") && (
+              <span className="text-[9px] font-bold text-amber-500 lowercase normal-case tracking-normal">
+                (Predefinido pelo perfil)
+              </span>
+            )}
           </label>
-          <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
-            {(["Cozinha", "Pastelaria"] as const).map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => setSector(s)}
-                className={cn(
-                  "flex-1 py-2 rounded-lg font-bold text-xs uppercase tracking-wider transition-all",
-                  sector === s
-                    ? "bg-white dark:bg-surface-dark text-primary shadow-sm"
-                    : "text-gray-500 hover:text-gray-900 dark:hover:text-white"
-                )}
-              >
-                {s}
-              </button>
-            ))}
-          </div>
+          {user?.role === "Administrador" || user?.role === "Armazém" || user?.role === "Controlador de Materiais" ? (
+            <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
+              {(["Cozinha", "Pastelaria"] as const).map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setSector(s)}
+                  className={cn(
+                    "flex-1 py-2 rounded-lg font-bold text-xs uppercase tracking-wider transition-all",
+                    sector === s
+                      ? "bg-white dark:bg-surface-dark text-primary shadow-sm"
+                      : "text-gray-500 hover:text-gray-900 dark:hover:text-white"
+                  )}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 px-4 py-2.5 rounded-xl font-bold text-xs text-gray-800 dark:text-gray-200 shadow-inner">
+              <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+              {sector}
+            </div>
+          )}
         </div>
 
         {/* Turno Selection */}

@@ -76,6 +76,49 @@ class FinanceiroService:
         AuditService.log_action(utilizador_id, "FECHAR", "caixas", caixa.id)
         return caixa, None
 
+
+    def get_valores_esperados(self, caixa_id):
+        caixa = self.caixa_repo.get_by_id(caixa_id)
+        if not caixa:
+            return None, "Caixa inválido."
+
+        movimentos = db.session.query(MovimentoCaixa).filter_by(caixa_id=caixa.id).all()
+        
+        esp_dinheiro = float(caixa.valor_inicial or 0)
+        esp_transferencia = 0.0
+        esp_pos = 0.0
+
+        for m in movimentos:
+            v = float(m.valor or 0)
+            if m.tipo == TipoMovimentoCaixa.ABERTURA:
+                continue
+            
+            fp_nome = (m.forma_pagamento or '').lower()
+            is_entry = m.tipo in [TipoMovimentoCaixa.VENDA, TipoMovimentoCaixa.RECEBIMENTO, TipoMovimentoCaixa.REFORCO]
+            is_exit = m.tipo in [TipoMovimentoCaixa.SANGRIA, TipoMovimentoCaixa.DEVOLUCAO, TipoMovimentoCaixa.AJUSTE]
+            
+            if 'transferencia' in fp_nome or 'transferência' in fp_nome:
+                if is_entry:
+                    esp_transferencia += v
+                elif is_exit:
+                    esp_transferencia -= v
+            elif 'pos' in fp_nome:
+                if is_entry:
+                    esp_pos += v
+                elif is_exit:
+                    esp_pos -= v
+            else:
+                if is_entry:
+                    esp_dinheiro += v
+                elif is_exit:
+                    esp_dinheiro -= v
+
+        return {
+            "valor_esperado_dinheiro": esp_dinheiro,
+            "valor_esperado_transferencia": esp_transferencia,
+            "valor_esperado_pos": esp_pos
+        }, None
+
     def fechar_caixa_detalhado(self, caixa_id, dados_fecho, utilizador_id):
         caixa = self.caixa_repo.get_by_id(caixa_id)
         if not caixa or caixa.estado == EstadoCaixa.FECHADO:

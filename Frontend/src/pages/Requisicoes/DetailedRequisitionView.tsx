@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
-import { Package, Wrench, CheckCircle2, TrendingUp, RotateCcw, FileText, Eye } from "lucide-react";
-import { cn } from "../../lib/utils";
+import { Package, Wrench, CheckCircle2, TrendingUp, RotateCcw, FileText, Eye, Printer } from "lucide-react";
+import { cn, formatCurrency } from "../../lib/utils";
 import Swal from "sweetalert2";
 import { useAuth } from "../../components/AuthContext";
 import { DataTable } from "../../components/Common/DataTable";
@@ -19,6 +19,388 @@ export function DetailedRequisitionView({
   onClose: () => void;
 }) {
   const { user } = useAuth();
+  
+  const handlePrint = () => {
+    const config = JSON.parse(localStorage.getItem("sigi_config") || "{}");
+    const companyName = config.empresa || config.nome || "Sabor Imbatível, Lda.";
+    const companyNif = config.nif || "500123456";
+    const companyLocation = config.endereco || config.localizacao || "Luanda, Angola";
+    const companyContact = config.telefone || config.contacto || "+244 923 456 789";
+    const currencySym = config.moeda_simbolo || "Kz";
+
+    // Determine occurrences
+    const occurrences = req.itens?.filter(
+      (item: any) => (Number(item.quantidade_danificada) || 0) > 0 || (Number(item.quantidade_perdida) || 0) > 0
+    ) || [];
+
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      Swal.fire("Erro ao imprimir", "Por favor, permita pop-ups para visualizar a ficha de impressão.", "error");
+      return;
+    }
+
+    const itemsHtml = req.itens?.map((item: any) => {
+      const sol = Number(item.quantidade_solicitada) || 0;
+      const apr = Number(item.quantidade_aprovada) || 0;
+      const ent = Number(item.quantidade_entregue) || 0;
+      const dev = Number(item.quantidade_devolvida) || 0;
+      const dan = Number(item.quantidade_danificada) || 0;
+      const per = Number(item.quantidade_perdida) || 0;
+      const price = Number(item.preco_venda || item.preco_custo || 0);
+      const valTotal = apr * price;
+
+      const formattedPrice = price > 0 ? `${price.toFixed(2)} ${currencySym}` : "-";
+      const formattedTotal = valTotal > 0 ? `${valTotal.toFixed(2)} ${currencySym}` : "-";
+
+      return `
+        <tr>
+          <td>
+            <div style="font-weight: bold; font-size: 13px;">${item.nome || `Item ID #${item.item_id}`}</div>
+            <div style="font-size: 10px; color: #666; font-family: monospace;">${item.codigo || "-"}</div>
+          </td>
+          <td style="text-transform: uppercase; font-size: 11px; font-weight: bold;">${item.tipo_item}</td>
+          <td style="text-align: center; font-weight: bold;">${sol} ${item.unidade_medida || "un"}</td>
+          <td style="text-align: center; font-weight: bold; color: #1e3a8a;">${apr} ${item.unidade_medida || "un"}</td>
+          <td style="text-align: center; font-weight: bold; color: #047857;">${ent} ${item.unidade_medida || "un"}</td>
+          <td style="text-align: center;">${item.tipo_item === 'Material' ? `${dev} un` : '-'}</td>
+          <td style="text-align: right;">${formattedPrice}</td>
+          <td style="text-align: right; font-weight: bold;">${formattedTotal}</td>
+        </tr>
+      `;
+    }).join("") || "<tr><td colspan='8' style='text-align: center;'>Nenhum item registado.</td></tr>";
+
+    const occurrencesHtml = occurrences.map((item: any) => {
+      const dan = Number(item.quantidade_danificada) || 0;
+      const per = Number(item.quantidade_perdida) || 0;
+      const totalOcc = dan + per;
+      return `
+        <div style="border-bottom: 1px solid #fed7d7; padding: 8px 0; margin-bottom: 5px;">
+          <div style="font-weight: bold; color: #c53030; font-size: 12px;">
+            ${item.nome} (${item.codigo || '-'})
+          </div>
+          <div style="font-size: 11px; margin-top: 3px;">
+            <strong>Quantidade Afetada:</strong> ${totalOcc} un 
+            (${dan > 0 ? `${dan} Danificado` : ""} ${per > 0 ? `${per} Perdido` : ""})
+          </div>
+          <div style="font-size: 11px; font-style: italic; color: #4a5568; margin-top: 3px; background: #fff5f5; padding: 6px; border-radius: 4px; border-left: 3px solid #f56565;">
+            "<strong>Causa/Justificação:</strong> ${item.justificacao || 'Nenhuma justificação registada.'}"
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    const totalEstimated = req.itens?.reduce((acc: number, item: any) => {
+      const apr = Number(item.quantidade_aprovada) || 0;
+      const price = Number(item.preco_venda || item.preco_custo || 0);
+      return acc + (apr * price);
+    }, 0) || 0;
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Ficha de Requisicao - ${req.numero || `#${req.id}`}</title>
+        <style>
+          body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            color: #1e293b;
+            background-color: #ffffff;
+            margin: 0;
+            padding: 40px;
+            font-size: 13px;
+            line-height: 1.5;
+          }
+          .header-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #0f172a;
+            padding-bottom: 20px;
+          }
+          .company-title {
+            font-size: 20px;
+            font-weight: 800;
+            color: #0f172a;
+            text-transform: uppercase;
+            margin: 0 0 5px 0;
+            letter-spacing: -0.5px;
+          }
+          .company-info {
+            font-size: 11px;
+            color: #475569;
+            line-height: 1.4;
+          }
+          .doc-title-block {
+            text-align: right;
+          }
+          .doc-title {
+            font-size: 15px;
+            font-weight: 900;
+            color: #1e3a8a;
+            text-transform: uppercase;
+            margin: 0 0 5px 0;
+            letter-spacing: 0.5px;
+          }
+          .doc-num {
+            font-size: 18px;
+            font-weight: 900;
+            color: #0f172a;
+            font-family: monospace;
+          }
+          .meta-grid {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+          }
+          .meta-grid td {
+            padding: 12px 15px;
+            border: 1px solid #e2e8f0;
+            width: 50%;
+            vertical-align: top;
+          }
+          .meta-label {
+            font-size: 9px;
+            text-transform: uppercase;
+            font-weight: 800;
+            color: #64748b;
+            letter-spacing: 0.5px;
+            margin-bottom: 3px;
+          }
+          .meta-val {
+            font-size: 13px;
+            font-weight: 700;
+            color: #0f172a;
+          }
+          .table-items {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+          }
+          .table-items th {
+            background-color: #0f172a;
+            color: #ffffff;
+            font-size: 10px;
+            text-transform: uppercase;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            padding: 10px 12px;
+            border: 1px solid #1e293b;
+            text-align: left;
+          }
+          .table-items td {
+            padding: 10px 12px;
+            border: 1px solid #e2e8f0;
+            vertical-align: middle;
+          }
+          .table-items tr:nth-child(even) {
+            background-color: #f8fafc;
+          }
+          .total-row {
+            background-color: #f1f5f9 !important;
+            font-weight: bold;
+          }
+          .occurrences-section {
+            background-color: #fffaf0;
+            border: 2px solid #ea580c;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 30px;
+          }
+          .occurrences-header {
+            color: #c2410c;
+            font-size: 13px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+            border-bottom: 1px solid #fed7aa;
+            padding-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+          }
+          .occurrences-note {
+            margin-top: 10px;
+            font-size: 10.5px;
+            font-weight: 700;
+            color: #9a3412;
+            background: #ffedd5;
+            padding: 8px;
+            border-radius: 6px;
+          }
+          .obs-box {
+            background-color: #f8fafc;
+            border-left: 4px solid #94a3b8;
+            padding: 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-bottom: 35px;
+          }
+          .signatures-table {
+            width: 100%;
+            margin-top: 60px;
+            border-collapse: collapse;
+          }
+          .signatures-table td {
+            width: 33.33%;
+            text-align: center;
+            padding: 0 15px;
+            vertical-align: top;
+          }
+          .sig-line {
+            border-top: 1.5px solid #0f172a;
+            margin-top: 45px;
+            padding-top: 8px;
+            font-size: 11px;
+            font-weight: bold;
+            color: #334155;
+            text-transform: uppercase;
+          }
+          .sig-subtitle {
+            font-size: 9px;
+            color: #64748b;
+            margin-top: 2px;
+          }
+          @media print {
+            body {
+              padding: 20px;
+              font-size: 12px;
+            }
+            .no-print {
+              display: none;
+            }
+          }
+        </style>
+      </head>
+      <body>
+        <table class="header-table">
+          <tr>
+            <td>
+              <h1 class="company-title">${companyName}</h1>
+              <div class="company-info">
+                NIF: <strong>${companyNif}</strong><br>
+                Localização: ${companyLocation}<br>
+                Contacto: ${companyContact}
+              </div>
+            </td>
+            <td class="doc-title-block">
+              <div class="doc-title">Ficha de Requisição</div>
+              <div class="doc-num">${req.numero || `#${req.id}`}</div>
+              <div style="font-size: 11px; color: #64748b; margin-top: 3px;">
+                Estado: <strong>${req.estado}</strong>
+              </div>
+            </td>
+          </tr>
+        </table>
+
+        <table class="meta-grid">
+          <tr>
+            <td>
+              <div class="meta-label">Setor Requerente</div>
+              <div class="meta-val">${req.sector}</div>
+              
+              <div class="meta-label" style="margin-top: 10px;">Turno de Operação</div>
+              <div class="meta-val">${req.turno_nome || "Geral"}</div>
+            </td>
+            <td>
+              <div class="meta-label">Responsável / Requerente</div>
+              <div class="meta-val">${req.responsavel_nome || `ID #${req.responsavel_id}`}</div>
+
+              <div class="meta-label" style="margin-top: 10px;">Data de Emissão</div>
+              <div class="meta-val">${new Date(req.data_requisicao).toLocaleString()}</div>
+            </td>
+          </tr>
+          <tr>
+            <td colspan="2" style="background-color: #f1f5f9; padding: 10px 15px;">
+              <div style="display: flex; justify-content: space-between; font-size: 11px;">
+                <span>Tipo de Ficha: <strong>Reclamação/Requisição ${req.tipo}</strong></span>
+                <span>Data do Documento: <strong>${new Date().toLocaleDateString()}</strong></span>
+              </div>
+            </td>
+          </tr>
+        </table>
+
+        <table class="table-items">
+          <thead>
+            <tr>
+              <th>Artigo / Código</th>
+              <th>Tipo</th>
+              <th style="text-align: center;">Qtd Solicitada</th>
+              <th style="text-align: center;">Qtd Aprovada</th>
+              <th style="text-align: center;">Qtd Entregue</th>
+              <th style="text-align: center;">Qtd Devolvida</th>
+              <th style="text-align: right;">P. Unitário</th>
+              <th style="text-align: right;">Total Estimado</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemsHtml}
+            <tr class="total-row">
+              <td colspan="6" style="text-align: right; font-weight: 800;">VALOR TOTAL ESTIMADO DA FICHA:</td>
+              <td colspan="2" style="text-align: right; font-weight: 900; color: #1e3a8a; font-size: 14px;">
+                ${totalEstimated.toFixed(2)} ${currencySym}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        ${req.observacoes ? `
+          <div class="obs-box">
+            <div style="font-weight: 800; font-size: 9px; text-transform: uppercase; color: #475569; letter-spacing: 0.5px; margin-bottom: 4px;">Observações do Documento</div>
+            <div>${req.observacoes}</div>
+          </div>
+        ` : ""}
+
+        ${occurrences.length > 0 ? `
+          <div class="occurrences-section">
+            <div class="occurrences-header">
+              ⚠️ REGISTO DE OCORRÊNCIAS / INCIDENTES DE CONTROLO
+            </div>
+            ${occurrencesHtml}
+            <div class="occurrences-note">
+              NOTA DE FISCALIZAÇÃO: Esta ficha contém o registo de quebras ou perdas de materiais reutilizáveis durante a operação do turno. As ocorrências foram arquivadas no sistema de controlo de quebras para efeitos de responsabilização e auditoria física.
+            </div>
+          </div>
+        ` : ""}
+
+        <table class="signatures-table">
+          <tr>
+            <td>
+              <div class="sig-line">Entregue por (Armazém)</div>
+              <div class="sig-subtitle">Assinatura / Carimbo</div>
+            </td>
+            <td>
+              <div class="sig-line">Recebido por (Requerente)</div>
+              <div class="sig-subtitle">Assinatura / Carimbo</div>
+            </td>
+            <td>
+              <div class="sig-line">Controlador de Materiais</div>
+              <div class="sig-subtitle">Assinatura / Carimbo</div>
+            </td>
+          </tr>
+        </table>
+
+        <div style="margin-top: 60px; text-align: center; font-size: 9px; color: #94a3b8; border-top: 1px dashed #e2e8f0; padding-top: 10px;" class="no-print">
+          Documento gerado eletronicamente em ${new Date().toLocaleString()} por ${user?.name || 'Utilizador do Sistema'}. <br>
+          <button onclick="window.print();" style="margin-top: 10px; padding: 6px 15px; background: #0f172a; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">Imprimir Documento</button>
+        </div>
+
+        <script>
+          window.onload = function() {
+            setTimeout(function() {
+              window.print();
+            }, 300);
+          }
+        </script>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
+
   const [approvedQuantities, setApprovedQuantities] = useState<Record<number, number>>(() => {
     const qtys: Record<number, number> = {};
     req.itens?.forEach((item: any) => {
@@ -550,6 +932,13 @@ export function DetailedRequisitionView({
 
       {/* Close button at the very bottom */}
       <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-800">
+        <button
+          onClick={handlePrint}
+          className="px-5 py-3 font-bold text-white bg-blue-600 hover:bg-blue-700 transition uppercase text-[10px] active:scale-95 rounded-xl flex items-center gap-1.5 shadow-sm"
+          title="Gerar e Imprimir Ficha de Requisição Oficial"
+        >
+          <Printer size={14} /> Imprimir Ficha
+        </button>
         <button
           onClick={onClose}
           className="px-6 py-3 font-bold text-gray-500 hover:text-gray-900 dark:hover:text-white transition uppercase text-[10px] active:scale-95 border-2 border-gray-100 dark:border-gray-800 rounded-xl"

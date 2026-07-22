@@ -25,6 +25,8 @@ import ProductGrid from "./CaixaPOS/ProductGrid";
 import CartList from "./CaixaPOS/CartList";
 import { useCaixaCart } from "./CaixaPOS/useCaixaCart";
 import { useCaixaSession } from "./CaixaPOS/useCaixaSession";
+import CaixaSessionModals from "../components/CaixaSessionModals";
+
 
 export default function CaixaPOS() {
   const { createVenda, checkoutPedido, enviarFatura } = useComercial();
@@ -102,11 +104,14 @@ export default function CaixaPOS() {
     openCaixa,
     caixaId,
     isCaixaAberta,
-    handleAbrirCaixa,
-    handleFecharCaixa,
-    handleSangria,
-    handleReforco,
+    abrirMutation,
+    fecharMutation,
+    movimentoMutation,
   } = useCaixaSession();
+
+  const [activeSessionModal, setActiveSessionModal] = useState<
+    "abrir" | "fechar" | "sangria" | "reforco" | null
+  >(null);
 
   const handleCheckout = () => {
     if (cart.length === 0) {
@@ -213,45 +218,48 @@ export default function CaixaPOS() {
             : [],
       });
 
-      if (isAgendado) {
-        const d = new Date();
-        const current_date = d.toISOString().split("T")[0];
-        const current_time = d.toTimeString().split(" ")[0];
+      const d = new Date();
+      const current_date = d.toISOString().split("T")[0];
+      const current_time = d.toTimeString().split(" ")[0];
 
-        // Build a strictly valid order creation payload
-        const orderPayload = {
-          cliente_id: selectedClient ? Number(selectedClient) : null,
-          tipo: "Simples",
-          origem: "Balcao",
-          data_entrega: isAgendado ? dataEntrega.split("T")[0] : current_date,
-          hora_entrega: isAgendado
-            ? `${dataEntrega.split("T")[1] || "12:00"}:00`.substring(0, 8)
-            : current_time,
-          estado: "Pendente",
-          observacoes: `Pedido Agendado. Caixa: #${caixaId}`,
-          itens: cart.map((i) => {
-            let tipoItem = "PRODUTO";
-            const cat = String(i.category || i.categoria || "").toLowerCase();
-            if (cat.includes("servi") || cat.includes("servic")) {
-              tipoItem = "Servico";
-            }
+      // Build a strictly valid order creation payload
+      const orderPayload = {
+        cliente_id: selectedClient ? Number(selectedClient) : null,
+        tipo: tipoPedido,
+        origem: "Balcao",
+        data_entrega: isAgendado ? dataEntrega.split("T")[0] : current_date,
+        hora_entrega: isAgendado
+          ? `${dataEntrega.split("T")[1] || "12:00"}:00`.substring(0, 8)
+          : current_time,
+        estado: "Pendente",
+        observacoes: `Pedido ${tipoPedido}. Caixa: #${caixaId}`,
+        itens: cart.map((i) => {
+          let tipoItem = "PRODUTO";
+          const cat = String(i.category || i.categoria || "").toLowerCase();
+          if (cat.includes("servi") || cat.includes("servic")) {
+            tipoItem = "Servico";
+          }
 
-            const produtoId = isNaN(Number(i.id)) ? null : Number(i.id);
+          const produtoId = isNaN(Number(i.id)) ? null : Number(i.id);
 
-            return {
-              tipo_item: tipoItem === "PRODUTO" ? "Produto" : tipoItem,
-              produto_id: produtoId,
-              descricao: i.name || i.nome || "Item de Venda",
-              quantidade: Number(i.qty),
-              preco_unitario: Number(i.salePrice || i.preco_venda || 0),
-            };
-          }),
-        };
+          return {
+            tipo_item: tipoItem === "PRODUTO" ? "Produto" : tipoItem,
+            produto_id: produtoId,
+            descricao: i.name || i.nome || "Item de Venda",
+            quantidade: Number(i.qty),
+            preco_unitario: Number(i.salePrice || i.preco_venda || 0),
+          };
+        }),
+      };
 
-        // Create the order first
-        const createdOrder: any = await orderService.create(orderPayload);
+      // Create the order first (Passo 1: POST /api/v1/pedidos)
+      const createdOrder: any = await orderService.create(orderPayload);
 
-        // Perform the Checkout step to financially finalize the order and register the payment
+      // Perform the Checkout step (Passo 4: POST /api/v1/comercial/checkout-pedido/<id>)
+      // If tipoPedido === 'Imediato' or a payment value is defined, trigger immediate checkout
+      const shouldCheckout = tipoPedido === "Imediato" || valorPagoNum > 0;
+      
+      if (shouldCheckout) {
         const vendaRes = await checkoutPedido.mutateAsync({
           pedido_id: createdOrder.id,
           pagamento: {
@@ -260,89 +268,21 @@ export default function CaixaPOS() {
             codigo_transferencia:
               paymentMethod !== "Dinheiro" ? codigoTransferencia : null,
             emissor: paymentMethod !== "Dinheiro" ? emissor : null,
-            observacoes: `Checkout via Caixa/POS. Pedido ${
-              isAgendado ? "Agendado" : "Imediato"
-            }.`,
+            observacoes: `Checkout via Caixa/POS. Pedido ${tipoPedido}.`,
           },
         });
         setCreatedVenda(vendaRes);
       } else {
-        let vendaRes: any;
-        try {
-          vendaRes = await createVenda.mutateAsync(buildVendaPayload(false));
-        } catch (err: any) {
-          if (
-            err?.code !== "STOCK_INSUFICIENTE" &&
-            err?.error_code !== "CONFLICT_409"
-          ) {
-            throw err;
-          }
-
-          const itens = err?.itens || [];
-          const quantidadesDisponiveis = itens.reduce(
-            (acc: Record<number, number>, item: any) => {
-              acc[Number(item.produto_id)] = Number(item.disponivel || 0);
-              return acc;
-            },
-            {}
-          );
-          const totalVendaImediata = mapCartToVendaItens(
-            quantidadesDisponiveis
-          ).reduce((sum, item) => {
-            return (
-              sum +
-              Math.max(
-                0,
-                Number(item.preco_unitario) * Number(item.quantidade) -
-                  Number(item.desconto || 0)
-              )
-            );
-          }, 0);
-          const pagamentoVendaImediata = Math.min(
-            valorPagoNum,
-            totalVendaImediata
-          );
-          const linhas = itens
-            .map(
-              (i: any) => `
-            <tr>
-              <td class="text-left py-1">${i.descricao}</td>
-              <td class="text-right py-1">${i.disponivel}</td>
-              <td class="text-right py-1">${i.em_falta}</td>
-            </tr>
-          `
-            )
-            .join("");
-
-          const result = await Swal.fire({
-            title: "Stock insuficiente",
-            html: `
-              <p class="text-sm text-gray-600 mb-3">Deseja vender a quantidade disponível e converter a diferença num Pedido?</p>
-              <p class="text-xs text-gray-500 mb-3">O pagamento imediato será limitado a ${formatCurrency(
-                pagamentoVendaImediata
-              )}.</p>
-              <table class="w-full text-xs">
-                <thead><tr><th class="text-left">Produto</th><th class="text-right">Disponível</th><th class="text-right">Pedido</th></tr></thead>
-                <tbody>${linhas}</tbody>
-              </table>
-            `,
-            icon: "warning",
-            showCancelButton: true,
-            confirmButtonText: "Converter",
-            cancelButtonText: "Cancelar",
-          });
-
-          if (!result.isConfirmed) return;
-          vendaRes = await createVenda.mutateAsync(
-            buildVendaPayload(true, pagamentoVendaImediata)
-          );
-        }
-        setCreatedVenda(vendaRes);
-        if (vendaRes?.pedido_convertido_id) {
-          toast.info(
-            `Pedido #${vendaRes.pedido_convertido_id} criado para a quantidade em falta.`
-          );
-        }
+        // Just represent the pending order as a created venda
+        setCreatedVenda({
+          id: createdOrder.id,
+          pedido_id: createdOrder.id,
+          numero: createdOrder.numero,
+          total: total,
+          saldo: total,
+          estado_pagamento: "PENDENTE",
+          itens: createdOrder.itens
+        });
       }
 
       // Pre-fill contact details if client is selected
@@ -448,27 +388,40 @@ export default function CaixaPOS() {
 
   if (!isCaixaAberta) {
     return (
-      <div className="flex flex-col items-center justify-center h-[calc(100vh-8rem)] bg-surface dark:bg-surface-dark border border-gray-200 dark:border-border-dark rounded-xl shadow-sm animate-fade-in-up">
-        <Store size={64} className="text-gray-300 dark:text-gray-600 mb-6" />
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-          Caixa Fechado
-        </h2>
-        <p className="text-gray-500 mb-8 text-center max-w-md">
-          O caixa encontra-se fechado. Para registar vendas e operações ao
-          balcão, inicie o turno preenchendo o fundo de maneio.
-        </p>
-        <button
-          onClick={handleAbrirCaixa}
-          className="bg-primary hover:bg-primary-hover text-white font-bold py-3 px-8 rounded-xl shadow-lg shadow-primary/20 transition-all flex items-center gap-2"
-        >
-          <Lock size={18} /> Abrir Caixa
-        </button>
-      </div>
+      <>
+        <div className="flex flex-col items-center justify-center h-[calc(100vh-8rem)] bg-surface dark:bg-surface-dark border border-gray-200 dark:border-border-dark rounded-xl shadow-sm animate-fade-in-up">
+          <Store size={64} className="text-gray-300 dark:text-gray-600 mb-6" />
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            Caixa Fechado
+          </h2>
+          <p className="text-gray-500 mb-8 text-center max-w-md">
+            O caixa encontra-se fechado. Para registar vendas e operações ao
+            balcão, inicie o turno preenchendo o fundo de maneio.
+          </p>
+          <button
+            onClick={() => setActiveSessionModal("abrir")}
+            className="bg-primary hover:bg-primary-hover text-white font-bold py-3 px-8 rounded-xl shadow-lg shadow-primary/20 transition-all flex items-center gap-2"
+          >
+            <Lock size={18} /> Abrir Caixa
+          </button>
+        </div>
+
+        <CaixaSessionModals
+          type={activeSessionModal}
+          onClose={() => setActiveSessionModal(null)}
+          caixaId={caixaId}
+          openCaixa={openCaixa}
+          abrirMutation={abrirMutation}
+          fecharMutation={fecharMutation}
+          movimentoMutation={movimentoMutation}
+        />
+      </>
     );
   }
 
   return (
-    <div className="h-[calc(100vh-8rem)] flex gap-6 overflow-hidden animate-fade-in">
+    <>
+      <div className="h-[calc(100vh-8rem)] flex gap-6 overflow-hidden animate-fade-in">
       <div className="flex-1 bg-surface dark:bg-surface-dark border border-gray-200 dark:border-border-dark rounded-xl flex flex-col overflow-hidden shadow-sm">
         <div className="p-4 border-b border-gray-200 dark:border-border-dark flex items-center justify-between bg-white dark:bg-surface-dark z-10 shrink-0">
           <div className="flex items-center gap-4">
@@ -492,19 +445,19 @@ export default function CaixaPOS() {
           </div>
           <div className="flex gap-2">
             <button
-              onClick={handleSangria}
+              onClick={() => setActiveSessionModal("sangria")}
               className="text-sm font-medium px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-200 rounded-lg transition-colors border border-gray-200 dark:border-gray-700 flex items-center gap-2"
             >
               Sangria
             </button>
             <button
-              onClick={handleReforco}
+              onClick={() => setActiveSessionModal("reforco")}
               className="text-sm font-medium px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-200 rounded-lg transition-colors border border-gray-200 dark:border-gray-700 flex items-center gap-2"
             >
               Reforço
             </button>
             <button
-              onClick={handleFecharCaixa}
+              onClick={() => setActiveSessionModal("fechar")}
               className="text-sm font-medium px-4 py-2 bg-error/10 text-error hover:bg-error/20 rounded-lg transition-colors border border-error/20 flex items-center gap-2"
             >
               <Lock size={16} /> Fechar Caixa
@@ -1023,5 +976,16 @@ export default function CaixaPOS() {
         )}
       </div>
     </div>
+
+    <CaixaSessionModals
+      type={activeSessionModal}
+      onClose={() => setActiveSessionModal(null)}
+      caixaId={caixaId}
+      openCaixa={openCaixa}
+      abrirMutation={abrirMutation}
+      fecharMutation={fecharMutation}
+      movimentoMutation={movimentoMutation}
+    />
+  </>
   );
 }

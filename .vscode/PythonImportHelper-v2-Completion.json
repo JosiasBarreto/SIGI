@@ -8040,6 +8040,15 @@
         "documentation": {}
     },
     {
+        "label": "get_valores_esperados",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.financeiro_controller",
+        "description": "backend.app.api.v1.financeiro_controller",
+        "peekOfCode": "def get_valores_esperados(id):\n    user_id = get_jwt_identity()\n    result, error = financeiro_service.get_valores_esperados(id)\n    if error: return jsonify({\"msg\": error}), 400\n    return jsonify(result), 200\n# -- CONTAS RECEBER --\n@financeiro_bp.route('/contas-receber', methods=['GET'])\n@jwt_required()\ndef get_contas_receber():\n    return build_pagination(financeiro_service.conta_receber_repo, ContaReceberSchema, request)",
+        "detail": "backend.app.api.v1.financeiro_controller",
+        "documentation": {}
+    },
+    {
         "label": "get_contas_receber",
         "kind": 2,
         "importPath": "backend.app.api.v1.financeiro_controller",
