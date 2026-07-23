@@ -225,7 +225,7 @@ export default function Dashboard() {
             <Wallet size={18} className="text-indigo-500" />
           </div>
           <div>
-            <h3 className="text-xl font-bold font-mono text-gray-900 dark:text-white tracking-tight">{formatCurrency(vendasDoDia || 185000)}</h3>
+            <h3 className="text-xl font-bold font-mono text-gray-900 dark:text-white tracking-tight">{formatCurrency(vendasDoDia)}</h3>
             <p className="text-[10px] text-gray-400 mt-1">Acumulado do mês: <span className="font-bold text-gray-600 dark:text-gray-200">{formatCurrency(vendasDoMes || 4250000)}</span></p>
           </div>
         </div>

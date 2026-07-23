@@ -390,6 +390,31 @@ class ArmazemService:
         AuditService.log_action(user_id, "UPDATE", "materiais", material.id, new_values=data)
         return material, None
 
+    def activate_material(self, id, user_id):
+        material = self.material_repo.get_by_id(id)
+        if not material:
+            return None, "Material não encontrado"
+        material.ativo = True
+        material.updated_by = user_id
+        self.material_repo.update(material)
+        AuditService.log_action(user_id, "ACTIVATE", "materiais", material.id)
+        return material, None
+
+    def deactivate_material(self, id, user_id):
+        material = self.material_repo.get_by_id(id)
+        if not material:
+            return None, "Material não encontrado"
+            
+        # Integrity Rules
+        if material.quantidade_disponivel > 0 or material.quantidade_reservada > 0:
+            return None, "O material não pode ser desativado porque ainda tem stock disponível ou reservado."
+            
+        material.ativo = False
+        material.updated_by = user_id
+        self.material_repo.update(material)
+        AuditService.log_action(user_id, "DEACTIVATE", "materiais", material.id)
+        return material, None
+
     def delete_material(self, material_id, user_id):
         material = self.material_repo.get_by_id(material_id)
         if not material:
@@ -509,55 +534,17 @@ class ArmazemService:
         return mov, None
 
     # --- Armazem Management ---
-    
-    
-    
-    
     def create_armazem(self, data, user_id):
-        from sqlalchemy import text
-
-        # Gerar código automaticamente caso não seja informado
-        if not data.get("codigo"):
-            prefix = "ARM"
-
-            sql = text("""
-                SELECT MAX(CAST(SUBSTRING(codigo, 4) AS UNSIGNED))
-                FROM armazens
-                WHERE codigo LIKE :prefix
-            """)
-
-            result = db.session.execute(
-                sql,
-                {"prefix": f"{prefix}%"}
-            ).scalar()
-
-            next_num = 1 if result is None else int(result) + 1
-            data["codigo"] = f"{prefix}{next_num:06d}"
-
-        # Verificar se o código já existe
-        if db.session.query(Armazem).filter_by(
-            codigo=data["codigo"],
-            is_active=True
-        ).first():
+        codigo = data.get('codigo')
+        if db.session.query(Armazem).filter_by(codigo=codigo, is_active=True).first():
             return None, "Código de armazém já existe."
 
-        # Garantir apenas um armazém principal
-        if data.get("principal"):
-            db.session.query(Armazem).update(
-                {Armazem.principal: False}
-            )
+        if data.get('principal'):
+            db.session.query(Armazem).update({Armazem.principal: False})
 
         armazem = Armazem(**data)
         self.armazem_repo.create(armazem)
-
-        AuditService.log_action(
-            user_id,
-            "CREATE",
-            "armazens",
-            armazem.id,
-            new_values=data
-        )
-
+        AuditService.log_action(user_id, "CREATE", "armazens", armazem.id, new_values=data)
         return armazem, None
 
     def update_armazem(self, armazem_id, data, user_id):
@@ -576,15 +563,103 @@ class ArmazemService:
         AuditService.log_action(user_id, "UPDATE", "armazens", armazem.id, new_values=data)
         return armazem, None
 
-    def get_armazem_stock(self, armazem_id):
+    def activate_armazem(self, id, user_id):
+        armazem = self.armazem_repo.get_by_id(id)
+        if not armazem:
+            return None, "Armazém não encontrado."
+        armazem.is_active = True
+        armazem.updated_by = user_id
+        self.armazem_repo.update(armazem)
+        AuditService.log_action(user_id, "ACTIVATE", "armazens", armazem.id)
+        return armazem, None
+
+    def deactivate_armazem(self, id, user_id):
+        armazem = self.armazem_repo.get_by_id(id)
+        if not armazem:
+            return None, "Armazém não encontrado."
+        if armazem.principal:
+            return None, "Não é possível desativar o armazém principal."
+            
+        has_prod_stock = any(float(item.stock_atual) > 0 for item in armazem.produtos_stock) if armazem.produtos_stock else False
+        has_ing_stock = any(float(item.stock_atual) > 0 for item in armazem.ingredientes_stock) if armazem.ingredientes_stock else False
+        has_mat_stock = any(float(item.stock_atual) > 0 for item in armazem.materiais_stock) if armazem.materiais_stock else False
+        
+        if has_prod_stock or has_ing_stock or has_mat_stock:
+            return None, "Não é possível desativar o armazém porque ainda contém stock disponível."
+            
+        armazem.is_active = False
+        armazem.updated_by = user_id
+        self.armazem_repo.update(armazem)
+        AuditService.log_action(user_id, "DEACTIVATE", "armazens", armazem.id)
+        return armazem, None
+
+    def delete_armazem(self, id, user_id):
+        armazem = self.armazem_repo.get_by_id(id)
+        if not armazem:
+            return None, "Armazém não encontrado."
+        if armazem.principal:
+            return None, "Não é possível remover o armazém principal."
+            
+        has_prod_stock = any(float(item.stock_atual) > 0 for item in armazem.produtos_stock) if armazem.produtos_stock else False
+        has_ing_stock = any(float(item.stock_atual) > 0 for item in armazem.ingredientes_stock) if armazem.ingredientes_stock else False
+        has_mat_stock = any(float(item.stock_atual) > 0 for item in armazem.materiais_stock) if armazem.materiais_stock else False
+        
+        if has_prod_stock or has_ing_stock or has_mat_stock:
+            return None, "Não é possível remover o armazém porque ainda contém stock disponível."
+            
+        armazem.soft_delete()
+        self.armazem_repo.update(armazem)
+        AuditService.log_action(user_id, "DELETE", "armazens", armazem.id)
+        return {"msg": "Armazém removido com sucesso"}, None
+
+    def get_armazem_stock(self, armazem_id, filters=None):
         armazem = self.armazem_repo.get_by_id(armazem_id)
         if not armazem:
             return None, "Armazém não encontrado."
         
+        produtos = armazem.produtos_stock or []
+        ingredientes = armazem.ingredientes_stock or []
+        materiais = armazem.materiais_stock or []
+
+        if filters:
+            tipo = filters.get('tipo')
+            categoria = filters.get('categoria')
+            busca = filters.get('busca')
+
+            if tipo:
+                tipo_lower = tipo.lower()
+                if tipo_lower == 'ingrediente':
+                    produtos = []
+                    materiais = []
+                elif tipo_lower in ['reutilizavel', 'consumivel']:
+                    ingredientes = []
+                    produtos = [p for p in produtos if p.produto and p.produto.tipo.value.lower() == tipo_lower]
+                    materiais = [m for m in materiais if m.material and m.material.tipo.value.lower() == tipo_lower]
+                elif tipo_lower in ['acabado', 'revenda']:
+                    ingredientes = []
+                    materiais = []
+                    produtos = [p for p in produtos if p.produto and p.produto.tipo.value.lower() == tipo_lower]
+                else:
+                    produtos = [p for p in produtos if p.produto and p.produto.tipo.value.lower() == tipo_lower]
+                    ingredientes = []
+                    materiais = [m for m in materiais if m.material and m.material.tipo.value.lower() == tipo_lower]
+
+            if categoria:
+                cat_lower = categoria.lower()
+                produtos = [p for p in produtos if p.produto and ((p.produto.categoria and cat_lower in p.produto.categoria.lower()) or (p.produto.categoria_rel and cat_lower in p.produto.categoria_rel.nome.lower()))]
+                ingredientes = [i for i in ingredientes if i.ingrediente and i.ingrediente.categoria and cat_lower in i.ingrediente.categoria.lower()]
+                materiais = [m for m in materiais if m.material and m.material.categoria and cat_lower in m.material.categoria.lower()]
+
+            if busca:
+                b_lower = busca.lower()
+                produtos = [p for p in produtos if p.produto and (b_lower in p.produto.nome.lower() or (p.produto.codigo and b_lower in p.produto.codigo.lower()))]
+                ingredientes = [i for i in ingredientes if i.ingrediente and (b_lower in i.ingrediente.nome.lower() or (i.ingrediente.codigo and b_lower in i.ingrediente.codigo.lower()))]
+                materiais = [m for m in materiais if m.material and (b_lower in m.material.nome.lower() or (m.material.codigo and b_lower in m.material.codigo.lower()))]
+
         return {
-            "produtos": armazem.produtos_stock,
-            "ingredientes": armazem.ingredientes_stock,
-            "materiais": armazem.materiais_stock
+            "produtos": produtos,
+            "ingredientes": ingredientes,
+            "materiais": materiais
         }, None
 
     def transferir_stock(self, data, user_id):
@@ -648,14 +723,4 @@ class ArmazemService:
         db.session.commit()
         AuditService.log_action(user_id, "TRANSFER_STOCK", "armazens", origem_id, new_values=data)
         return {"msg": "Transferência realizada com sucesso!"}, None
-    
-def get_preco_com_iva(preco, taxa_iva):
-    """
-    Calculate the price including VAT.
-    :param preco: Base price (float)
-    :param taxa_iva: VAT rate in percentage (float)
-    :return: Price including VAT (float)
-    """
-    if preco is None or taxa_iva is None:
-        return None
-    return round(float(preco) * (1 + float(taxa_iva) / 100), 2)
+

@@ -7,22 +7,28 @@ import {
 } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import * as allServices from "../../services";
-import { Plus, Edit2, Trash2, Eye, Power, PackageOpen } from "lucide-react";
+import { Plus, Edit2, Trash2, Eye, Power, PackageOpen, Activity, Info } from "lucide-react";
 import Swal from "sweetalert2";
 import { toast } from "react-toastify";
 import { schemas } from "../../data/schemas";
 import Modal from "../../components/Common/Modal";
 import { DataTable } from "../../components/Common/DataTable";
 import { ColumnDef } from "@tanstack/react-table";
+import { useAuth } from "../../components/AuthContext";
+import { ProductDetailsModal } from "../../components/Common/ProductDetailsModal";
 
 export default function Acabado() {
   const title = "Produtos";
   const moduleName = "products";
 
+  const { user } = useAuth();
+  const isAdmin = ["Administrador"].includes(user?.role || "");
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [isStockModalOpen, setIsStockModalOpen] = useState(false);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [stockOpType, setStockOpType] = useState<"Entrada" | "Saída">(
     "Entrada"
   );
@@ -381,14 +387,24 @@ export default function Acabado() {
             </button>
             <button
               onClick={() => {
+                setCurrentRecord(item);
+                setIsDetailsModalOpen(true);
+              }}
+              className="p-1.5 text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded transition-colors"
+              title="Visualizar Detalhes"
+            >
+              <Info size={16} />
+            </button>
+            <button
+              onClick={() => {
                 handleOpenForm(item);
                 setIsModalOpen(false);
                 setIsHistoryModalOpen(true);
               }}
               className="p-1.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
-              title="Ver Detalhes"
+              title="Histórico de Movimentos"
             >
-              <Eye size={16} />
+              <Activity size={16} />
             </button>
             <button
               onClick={() => handleOpenForm(item)}
@@ -397,13 +413,15 @@ export default function Acabado() {
             >
               <Edit2 size={16} />
             </button>
-            <button
-              onClick={() => handleDelete(item.id)}
-              className="p-1.5 text-gray-400 hover:text-error hover:bg-error/10 rounded transition-colors"
-              title="Eliminar"
-            >
-              <Trash2 size={16} />
-            </button>
+            {isAdmin && (
+              <button
+                onClick={() => handleDelete(item.id)}
+                className="p-1.5 text-gray-400 hover:text-error hover:bg-error/10 rounded transition-colors"
+                title="Eliminar"
+              >
+                <Trash2 size={16} />
+              </button>
+            )}
 
             <button
               type="button"
@@ -1014,6 +1032,12 @@ export default function Acabado() {
           }}
         />
       </Modal>
+
+      <ProductDetailsModal
+        isOpen={isDetailsModalOpen}
+        onClose={() => setIsDetailsModalOpen(false)}
+        product={currentRecord}
+      />
     </div>
   );
 }

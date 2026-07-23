@@ -257,6 +257,21 @@ export const schemas: Record<string, ModuleSchema> = {
           );
         },
       },
+      {
+        key: "is_active",
+        label: "Ativo",
+        render: (val: boolean) => (
+          <span
+            className={`px-2 py-1 text-xs font-medium rounded-full ${
+              val
+                ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400"
+                : "bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400"
+            }`}
+          >
+            {val ? "Ativo" : "Inativo"}
+          </span>
+        ),
+      },
     ],
     fields: [
       { name: "nome", label: "Nome", type: "text", required: true },
@@ -673,6 +688,7 @@ export const schemas: Record<string, ModuleSchema> = {
   },
   pedidos: {
     title: "Fila de Pedidos",
+    fields: [],
     columns: [
       { key: "numero", label: "Número de Pedido" },
       { key: "origem", label: "Origem" },

@@ -1,26 +1,37 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as allServices from '../services';
-import { Plus, Edit2, Trash2, Eye, Wrench, CheckCircle, ArrowRightLeft, PackageOpen } from 'lucide-react';
+import { Plus, Edit2, Trash2, Eye, Wrench, CheckCircle, ArrowRightLeft, PackageOpen, Activity, Info, Power } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { toast } from 'react-toastify';
 import { schemas } from '../data/schemas';
 import Modal from '../components/Common/Modal';
 import { DataTable } from '../components/Common/DataTable';
 import { ColumnDef } from '@tanstack/react-table';
+import { useAuth } from '../components/AuthContext';
+import { MaterialDetailsModal } from '../components/Common/MaterialDetailsModal';
 
 export default function Materiais() {
   const title = "Materiais";
   const moduleName = "materials";
   
+  const { user } = useAuth();
+  const isAdmin = ["Administrador"].includes(user?.role || "");
+
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('active');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [isMovementOpen, setIsMovementOpen] = useState(false);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [currentRecord, setCurrentRecord] = useState<any>(null);
   
   const [page, setPage] = useState(1);
   const [perPage] = useState(10);
+  
+  const [historyPage, setHistoryPage] = useState(1);
+  const [historyPerPage, setHistoryPerPage] = useState(10);
   
   const queryClient = useQueryClient();
   const apiAccessor = allServices.materialService;
@@ -28,8 +39,19 @@ export default function Materiais() {
   const schema = schemas[moduleName];
 
   const { data: paginatedResponse, isLoading } = useQuery({
-    queryKey: [moduleName, page, perPage, searchTerm],
-    queryFn: () => apiAccessor.getAll({ page, per_page: perPage, search: searchTerm })
+    queryKey: [moduleName, page, perPage, searchTerm, statusFilter],
+    queryFn: () => {
+      const params: any = { page, per_page: perPage, search: searchTerm };
+      if (statusFilter === 'active') params.ativo = true;
+      if (statusFilter === 'inactive') params.ativo = false;
+      return apiAccessor.getAll(params);
+    }
+  });
+
+  const { data: historyResponse, isLoading: isLoadingHistory } = useQuery({
+    queryKey: ['material_history', currentRecord?.id, historyPage, historyPerPage],
+    queryFn: () => apiAccessor.getMovimentos(currentRecord?.id, { page: historyPage, per_page: historyPerPage }),
+    enabled: isHistoryModalOpen && !!currentRecord?.id
   });
 
   const { data: armazensResponse } = useQuery({
@@ -75,12 +97,39 @@ export default function Materiais() {
   });
 
   const toggleStatusMutation = useMutation({
-    mutationFn: ({ id, estado }: { id: string, estado: string }) => apiAccessor.update(id, { estado }),
+    mutationFn: ({ id, estado }: { id: string, estado: string }) => apiAccessor.updateEstado(id, estado),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [moduleName] });
       toast.success('Estado atualizado com sucesso.');
     },
-    onError: () => toast.error('Erro ao atualizar estado.')
+    onError: (error: any) => {
+      const msg = error.response?.data?.msg || error.message || 'Erro ao atualizar estado.';
+      toast.error(msg);
+    }
+  });
+
+  const ativarMutation = useMutation({
+    mutationFn: (id: string) => apiAccessor.ativar(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [moduleName] });
+      toast.success('Material ativado com sucesso.');
+    },
+    onError: (error: any) => {
+      const msg = error.response?.data?.msg || error.message || 'Erro ao ativar material.';
+      toast.error(msg);
+    }
+  });
+
+  const desativarMutation = useMutation({
+    mutationFn: (id: string) => apiAccessor.desativar(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [moduleName] });
+      toast.success('Material desativado com sucesso.');
+    },
+    onError: (error: any) => {
+      const msg = error.response?.data?.msg || error.message || 'O material não pode ser desativado porque ainda tem stock disponível ou reservado.';
+      toast.error(msg);
+    }
   });
 
   const movementMutation = useMutation({
@@ -214,6 +263,26 @@ export default function Materiais() {
             </button>
             <button 
               onClick={() => {
+                setCurrentRecord(item);
+                setIsHistoryModalOpen(true);
+              }}
+              className="p-1.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors" 
+              title="Histórico de Movimentos"
+            >
+              <Activity size={16} />
+            </button>
+            <button 
+              onClick={() => {
+                setCurrentRecord(item);
+                setIsDetailsModalOpen(true);
+              }}
+              className="p-1.5 text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded transition-colors"
+              title="Visualizar Detalhes"
+            >
+              <Info size={16} />
+            </button>
+            <button 
+              onClick={() => {
                 const isManutencao = item.estado === 'Manutenção' || item.estado === 'Manutencao';
                 toggleStatusMutation.mutate({ 
                   id: item.id, 
@@ -225,15 +294,27 @@ export default function Materiais() {
             >
               {item.estado === 'Manutenção' || item.estado === 'Manutencao' ? <CheckCircle size={16} /> : <Wrench size={16} />}
             </button>
-            <button onClick={() => handleOpenView(item)} className="p-1.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors" title="Ver Detalhes">
-              <Eye size={16} />
+            <button 
+              onClick={() => {
+                if (item.ativo) {
+                  desativarMutation.mutate(item.id);
+                } else {
+                  ativarMutation.mutate(item.id);
+                }
+              }}
+              className={`p-1.5 rounded transition-colors ${item.ativo ? 'text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20' : 'text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'}`}
+              title={item.ativo ? "Desativar" : "Ativar"}
+            >
+              <Power size={16} />
             </button>
             <button onClick={() => handleOpenForm(item)} className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/10 rounded transition-colors" title="Editar">
               <Edit2 size={16} />
             </button>
-            <button onClick={() => handleDelete(item.id)} className="p-1.5 text-gray-400 hover:text-error hover:bg-error/10 rounded transition-colors" title="Eliminar">
-              <Trash2 size={16} />
-            </button>
+            {isAdmin && (
+              <button onClick={() => handleDelete(item.id)} className="p-1.5 text-gray-400 hover:text-error hover:bg-error/10 rounded transition-colors" title="Eliminar">
+                <Trash2 size={16} />
+              </button>
+            )}
           </div>
         );
       }
@@ -241,6 +322,39 @@ export default function Materiais() {
 
     return cols;
   }, [schema]);
+
+  const tableColumnsHistory = React.useMemo<ColumnDef<any>[]>(() => {
+    return [
+      {
+        accessorKey: "created_at",
+        header: "Data",
+        cell: (info) => new Date(info.getValue() as string).toLocaleString("pt-PT")
+      },
+      {
+        accessorKey: "tipo",
+        header: "Tipo",
+        cell: (info) => {
+          const val = info.getValue() as string;
+          let color = "bg-gray-100 text-gray-800";
+          if (val === "Entrada") color = "bg-emerald-100 text-emerald-800";
+          if (val === "Saida" || val === "Saída") color = "bg-rose-100 text-rose-800";
+          if (val === "Danificado" || val === "Perda") color = "bg-amber-100 text-amber-800";
+          if (val === "Ajuste") color = "bg-blue-100 text-blue-800";
+          return <span className={`px-2 py-1 rounded-full text-xs font-medium ${color}`}>{val}</span>;
+        }
+      },
+      {
+        accessorKey: "quantidade",
+        header: "Quantidade",
+        cell: (info) => (info.getValue() as string | number) || "0"
+      },
+      {
+        accessorKey: "justificacao",
+        header: "Justificação",
+        cell: (info) => (info.getValue() as string) || "-"
+      }
+    ];
+  }, [currentRecord]);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -276,6 +390,12 @@ export default function Materiais() {
         }}
         onClearFilters={() => {
           setSearchTerm('');
+          setStatusFilter('all');
+          setPage(1);
+        }}
+        statusFilter={statusFilter}
+        onStatusFilterChange={(status) => {
+          setStatusFilter(status);
           setPage(1);
         }}
       />
@@ -507,6 +627,68 @@ export default function Materiais() {
         </form>
       </Modal>
 
+      <Modal
+        isOpen={isHistoryModalOpen}
+        onClose={() => setIsHistoryModalOpen(false)}
+        title={`Histórico de Movimentos: ${currentRecord?.nome}`}
+        maxWidth="max-w-6xl"
+        footer={
+          <>
+            <button
+              onClick={() => setIsHistoryModalOpen(false)}
+              className="px-6 py-2 rounded-lg font-medium bg-gray-200 text-gray-800 dark:bg-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors"
+            >
+              Fechar
+            </button>
+            {currentRecord && (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsHistoryModalOpen(false);
+                  setIsMovementOpen(true);
+                }}
+                className="px-5 py-2 rounded-lg font-medium border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              >
+                Atualizar Stock
+              </button>
+            )}
+          </>
+        }
+      >
+        <DataTable
+          data={historyResponse?.items || []}
+          columns={tableColumnsHistory}
+          isLoading={isLoadingHistory}
+          searchPlaceholder={`Pesquisar no histórico de ${currentRecord?.nome}...`}
+          manualPagination={true}
+          pageCount={historyResponse?.pages || 0}
+          paginationState={{
+            pageIndex: historyPage - 1,
+            pageSize: historyPerPage,
+          }}
+          onPaginationChange={(updater) => {
+            const current = {
+              pageIndex: historyPage - 1,
+              pageSize: historyPerPage,
+            };
+
+            const newState =
+              typeof updater === "function" ? updater(current) : updater;
+
+            setHistoryPage(newState.pageIndex + 1);
+            setHistoryPerPage(newState.pageSize);
+          }}
+          searchValue={""}
+          onSearchChange={() => {}}
+          onClearFilters={() => {}}
+        />
+      </Modal>
+
+      <MaterialDetailsModal
+        isOpen={isDetailsModalOpen}
+        onClose={() => setIsDetailsModalOpen(false)}
+        material={currentRecord}
+      />
     </div>
   );
 }

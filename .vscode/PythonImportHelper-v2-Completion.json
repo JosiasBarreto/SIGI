@@ -784,119 +784,7 @@
         "documentation": {}
     },
     {
-        "label": "literal",
-        "importPath": "sqlalchemy",
-        "description": "sqlalchemy",
-        "isExtraImport": true,
-        "detail": "sqlalchemy",
-        "documentation": {}
-    },
-    {
-        "label": "extract",
-        "importPath": "sqlalchemy",
-        "description": "sqlalchemy",
-        "isExtraImport": true,
-        "detail": "sqlalchemy",
-        "documentation": {}
-    },
-    {
-        "label": "func",
-        "importPath": "sqlalchemy",
-        "description": "sqlalchemy",
-        "isExtraImport": true,
-        "detail": "sqlalchemy",
-        "documentation": {}
-    },
-    {
-        "label": "MetaData",
-        "importPath": "sqlalchemy",
-        "description": "sqlalchemy",
-        "isExtraImport": true,
-        "detail": "sqlalchemy",
-        "documentation": {}
-    },
-    {
-        "label": "func",
-        "importPath": "sqlalchemy",
-        "description": "sqlalchemy",
-        "isExtraImport": true,
-        "detail": "sqlalchemy",
-        "documentation": {}
-    },
-    {
-        "label": "func",
-        "importPath": "sqlalchemy",
-        "description": "sqlalchemy",
-        "isExtraImport": true,
-        "detail": "sqlalchemy",
-        "documentation": {}
-    },
-    {
-        "label": "func",
-        "importPath": "sqlalchemy",
-        "description": "sqlalchemy",
-        "isExtraImport": true,
-        "detail": "sqlalchemy",
-        "documentation": {}
-    },
-    {
-        "label": "text",
-        "importPath": "sqlalchemy",
-        "description": "sqlalchemy",
-        "isExtraImport": true,
-        "detail": "sqlalchemy",
-        "documentation": {}
-    },
-    {
-        "label": "text",
-        "importPath": "sqlalchemy",
-        "description": "sqlalchemy",
-        "isExtraImport": true,
-        "detail": "sqlalchemy",
-        "documentation": {}
-    },
-    {
-        "label": "text",
-        "importPath": "sqlalchemy",
-        "description": "sqlalchemy",
-        "isExtraImport": true,
-        "detail": "sqlalchemy",
-        "documentation": {}
-    },
-    {
-        "label": "text",
-        "importPath": "sqlalchemy",
-        "description": "sqlalchemy",
-        "isExtraImport": true,
-        "detail": "sqlalchemy",
-        "documentation": {}
-    },
-    {
-        "label": "text",
-        "importPath": "sqlalchemy",
-        "description": "sqlalchemy",
-        "isExtraImport": true,
-        "detail": "sqlalchemy",
-        "documentation": {}
-    },
-    {
-        "label": "text",
-        "importPath": "sqlalchemy",
-        "description": "sqlalchemy",
-        "isExtraImport": true,
-        "detail": "sqlalchemy",
-        "documentation": {}
-    },
-    {
         "label": "ArmazemService",
-        "importPath": "app.services.armazem_service",
-        "description": "app.services.armazem_service",
-        "isExtraImport": true,
-        "detail": "app.services.armazem_service",
-        "documentation": {}
-    },
-    {
-        "label": "get_preco_com_iva",
         "importPath": "app.services.armazem_service",
         "description": "app.services.armazem_service",
         "isExtraImport": true,
@@ -3101,6 +2989,102 @@
         "description": "app.models.requisicao",
         "isExtraImport": true,
         "detail": "app.models.requisicao",
+        "documentation": {}
+    },
+    {
+        "label": "extract",
+        "importPath": "sqlalchemy",
+        "description": "sqlalchemy",
+        "isExtraImport": true,
+        "detail": "sqlalchemy",
+        "documentation": {}
+    },
+    {
+        "label": "func",
+        "importPath": "sqlalchemy",
+        "description": "sqlalchemy",
+        "isExtraImport": true,
+        "detail": "sqlalchemy",
+        "documentation": {}
+    },
+    {
+        "label": "MetaData",
+        "importPath": "sqlalchemy",
+        "description": "sqlalchemy",
+        "isExtraImport": true,
+        "detail": "sqlalchemy",
+        "documentation": {}
+    },
+    {
+        "label": "func",
+        "importPath": "sqlalchemy",
+        "description": "sqlalchemy",
+        "isExtraImport": true,
+        "detail": "sqlalchemy",
+        "documentation": {}
+    },
+    {
+        "label": "func",
+        "importPath": "sqlalchemy",
+        "description": "sqlalchemy",
+        "isExtraImport": true,
+        "detail": "sqlalchemy",
+        "documentation": {}
+    },
+    {
+        "label": "func",
+        "importPath": "sqlalchemy",
+        "description": "sqlalchemy",
+        "isExtraImport": true,
+        "detail": "sqlalchemy",
+        "documentation": {}
+    },
+    {
+        "label": "text",
+        "importPath": "sqlalchemy",
+        "description": "sqlalchemy",
+        "isExtraImport": true,
+        "detail": "sqlalchemy",
+        "documentation": {}
+    },
+    {
+        "label": "text",
+        "importPath": "sqlalchemy",
+        "description": "sqlalchemy",
+        "isExtraImport": true,
+        "detail": "sqlalchemy",
+        "documentation": {}
+    },
+    {
+        "label": "text",
+        "importPath": "sqlalchemy",
+        "description": "sqlalchemy",
+        "isExtraImport": true,
+        "detail": "sqlalchemy",
+        "documentation": {}
+    },
+    {
+        "label": "text",
+        "importPath": "sqlalchemy",
+        "description": "sqlalchemy",
+        "isExtraImport": true,
+        "detail": "sqlalchemy",
+        "documentation": {}
+    },
+    {
+        "label": "text",
+        "importPath": "sqlalchemy",
+        "description": "sqlalchemy",
+        "isExtraImport": true,
+        "detail": "sqlalchemy",
+        "documentation": {}
+    },
+    {
+        "label": "text",
+        "importPath": "sqlalchemy",
+        "description": "sqlalchemy",
+        "isExtraImport": true,
+        "detail": "sqlalchemy",
         "documentation": {}
     },
     {
@@ -7504,7 +7488,7 @@
         "kind": 2,
         "importPath": "backend.app.api.v1.armazem_controller",
         "description": "backend.app.api.v1.armazem_controller",
-        "peekOfCode": "def get_materiais():\n    from app.models.material import Material\n    page = request.args.get('page', 1, type=int)\n    per_page = request.args.get('per_page', 10, type=int)\n    search = request.args.get('search', '')\n    query = Material.query.filter_by(is_active=True)\n    tipo = request.args.get('tipo', '')\n    if tipo:\n        query = query.filter_by(tipo=tipo)\n    have_stock = request.args.get('have_stock', '')",
+        "peekOfCode": "def get_materiais():\n    from app.models.material import Material\n    page = request.args.get('page', 1, type=int)\n    per_page = request.args.get('per_page', 10, type=int)\n    search = request.args.get('search', '')\n    query = Material.query.filter_by(is_active=True)\n    tipo = request.args.get('tipo', '')\n    if tipo:\n        query = query.filter_by(tipo=tipo)\n    ativo = request.args.get('ativo', '')",
         "detail": "backend.app.api.v1.armazem_controller",
         "documentation": {}
     },
@@ -7531,7 +7515,25 @@
         "kind": 2,
         "importPath": "backend.app.api.v1.armazem_controller",
         "description": "backend.app.api.v1.armazem_controller",
-        "peekOfCode": "def delete_material(id):\n    user_id = get_jwt_identity()\n    result, error = armazem_service.delete_material(id, user_id)\n    if error:\n        return jsonify({\"msg\": error}), 400\n    return jsonify(result), 200\n# --- MOVIMENTAÇÕES ---\n@armazem_bp.route('/movimentacoes', methods=['GET'])\n@jwt_required()\ndef get_movimentacoes():",
+        "peekOfCode": "def delete_material(id):\n    user_id = get_jwt_identity()\n    result, error = armazem_service.delete_material(id, user_id)\n    if error:\n        return jsonify({\"msg\": error}), 400\n    return jsonify(result), 200\n@armazem_bp.route('/materiais/<int:id>/ativar', methods=['PUT'])\n@jwt_required()\n@requires_roles('Administrador', 'Armazém', 'Controlador de Materiais')\ndef activate_material(id):",
+        "detail": "backend.app.api.v1.armazem_controller",
+        "documentation": {}
+    },
+    {
+        "label": "activate_material",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.armazem_controller",
+        "description": "backend.app.api.v1.armazem_controller",
+        "peekOfCode": "def activate_material(id):\n    user_id = get_jwt_identity()\n    material, error = armazem_service.activate_material(id, user_id)\n    if error:\n        return jsonify({\"msg\": error}), 400\n    return jsonify({\"msg\": \"Material ativado com sucesso.\"}), 200\n@armazem_bp.route('/materiais/<int:id>/desativar', methods=['PUT'])\n@jwt_required()\n@requires_roles('Administrador', 'Armazém', 'Controlador de Materiais')\ndef deactivate_material(id):",
+        "detail": "backend.app.api.v1.armazem_controller",
+        "documentation": {}
+    },
+    {
+        "label": "deactivate_material",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.armazem_controller",
+        "description": "backend.app.api.v1.armazem_controller",
+        "peekOfCode": "def deactivate_material(id):\n    user_id = get_jwt_identity()\n    material, error = armazem_service.deactivate_material(id, user_id)\n    if error:\n        return jsonify({\"msg\": error}), 400\n    return jsonify({\"msg\": \"Material desativado com sucesso.\"}), 200\n# --- MOVIMENTAÇÕES ---\n@armazem_bp.route('/movimentacoes', methods=['GET'])\n@jwt_required()\ndef get_movimentacoes():",
         "detail": "backend.app.api.v1.armazem_controller",
         "documentation": {}
     },
@@ -7581,11 +7583,38 @@
         "documentation": {}
     },
     {
+        "label": "activate_armazem",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.armazem_controller",
+        "description": "backend.app.api.v1.armazem_controller",
+        "peekOfCode": "def activate_armazem(id):\n    user_id = get_jwt_identity()\n    result, error = armazem_service.activate_armazem(id, user_id)\n    if error:\n        return jsonify({\"msg\": error}), 400\n    return jsonify(ArmazemSchema().dump(result)), 200\n@armazem_bp.route('/armazens/<int:id>/desativar', methods=['PUT'])\n@jwt_required()\n@requires_roles('Administrador', 'Armazém')\ndef deactivate_armazem(id):",
+        "detail": "backend.app.api.v1.armazem_controller",
+        "documentation": {}
+    },
+    {
+        "label": "deactivate_armazem",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.armazem_controller",
+        "description": "backend.app.api.v1.armazem_controller",
+        "peekOfCode": "def deactivate_armazem(id):\n    user_id = get_jwt_identity()\n    result, error = armazem_service.deactivate_armazem(id, user_id)\n    if error:\n        return jsonify({\"msg\": error}), 400\n    return jsonify(ArmazemSchema().dump(result)), 200\n@armazem_bp.route('/armazens/<int:id>', methods=['DELETE'])\n@jwt_required()\n@requires_roles('Administrador', 'Armazém')\ndef delete_armazem(id):",
+        "detail": "backend.app.api.v1.armazem_controller",
+        "documentation": {}
+    },
+    {
+        "label": "delete_armazem",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.armazem_controller",
+        "description": "backend.app.api.v1.armazem_controller",
+        "peekOfCode": "def delete_armazem(id):\n    user_id = get_jwt_identity()\n    result, error = armazem_service.delete_armazem(id, user_id)\n    if error:\n        return jsonify({\"msg\": error}), 400\n    return jsonify(result), 200\n@armazem_bp.route('/armazens/<int:id>/stock', methods=['GET'])\n@jwt_required()\ndef get_armazem_stock(id):\n    filters = {",
+        "detail": "backend.app.api.v1.armazem_controller",
+        "documentation": {}
+    },
+    {
         "label": "get_armazem_stock",
         "kind": 2,
         "importPath": "backend.app.api.v1.armazem_controller",
         "description": "backend.app.api.v1.armazem_controller",
-        "peekOfCode": "def get_armazem_stock(id):\n    result, error = armazem_service.get_armazem_stock(id)\n    if error:\n        return jsonify({\"msg\": error}), 400\n    return jsonify({\n        \"produtos\": ProdutoStockArmazemSchema(many=True).dump(result[\"produtos\"]),\n        \"ingredientes\": IngredienteStockArmazemSchema(many=True).dump(result[\"ingredientes\"]),\n        \"materiais\": MaterialStockArmazemSchema(many=True).dump(result[\"materiais\"])\n    }), 200\n@armazem_bp.route('/transferir', methods=['POST'])",
+        "peekOfCode": "def get_armazem_stock(id):\n    filters = {\n        'tipo': request.args.get('tipo', ''),\n        'categoria': request.args.get('categoria', ''),\n        'busca': request.args.get('busca', '')\n    }\n    result, error = armazem_service.get_armazem_stock(id, filters)\n    if error:\n        return jsonify({\"msg\": error}), 400\n    return jsonify({",
         "detail": "backend.app.api.v1.armazem_controller",
         "documentation": {}
     },
@@ -9583,7 +9612,7 @@
         "kind": 6,
         "importPath": "backend.app.models.material",
         "description": "backend.app.models.material",
-        "peekOfCode": "class TipoMaterial(str, Enum):\n    REUTILIZAVEL = 'Reutilizavel'\n    CONSUMIVEL = 'Consumivel'\nclass EstadoMaterial(str, Enum):\n    DISPONIVEL = 'Disponivel'\n    RESERVADO = 'Reservado'\n    EM_USO = 'Em Uso'\n    DEVOLVIDO = 'Devolvido'\n    DANIFICADO = 'Danificado'\n    MANUTENCAO = 'Manutencao'",
+        "peekOfCode": "class TipoMaterial(str, Enum):\n    REUTILIZAVEL = 'Reutilizavel'\n    CONSUMIVEL = 'Consumivel'\nclass EstadoMaterial(str, Enum):\n    DISPONIVEL = 'Disponivel'\n    RESERVADO = 'Reservado'\n    EM_USO = 'Em Uso'\n    DANIFICADO = 'Danificado'\n    MANUTENCAO = 'Manutencao'\nclass Material(BaseModel):",
         "detail": "backend.app.models.material",
         "documentation": {}
     },
@@ -9592,7 +9621,7 @@
         "kind": 6,
         "importPath": "backend.app.models.material",
         "description": "backend.app.models.material",
-        "peekOfCode": "class EstadoMaterial(str, Enum):\n    DISPONIVEL = 'Disponivel'\n    RESERVADO = 'Reservado'\n    EM_USO = 'Em Uso'\n    DEVOLVIDO = 'Devolvido'\n    DANIFICADO = 'Danificado'\n    MANUTENCAO = 'Manutencao'\n    CANCELADO = 'Cancelado'\nclass Material(BaseModel):\n    __tablename__ = 'materiais'",
+        "peekOfCode": "class EstadoMaterial(str, Enum):\n    DISPONIVEL = 'Disponivel'\n    RESERVADO = 'Reservado'\n    EM_USO = 'Em Uso'\n    DANIFICADO = 'Danificado'\n    MANUTENCAO = 'Manutencao'\nclass Material(BaseModel):\n    __tablename__ = 'materiais'\n    codigo = db.Column(db.String(50), unique=True, nullable=True)\n    nome = db.Column(db.String(100), nullable=False)",
         "detail": "backend.app.models.material",
         "documentation": {}
     },
@@ -10411,7 +10440,7 @@
         "kind": 6,
         "importPath": "backend.app.schemas.armazem_schema",
         "description": "backend.app.schemas.armazem_schema",
-        "peekOfCode": "class MovimentoStockSchema(Schema):\n    id = fields.Int(dump_only=True)\n    tipo = fields.Enum(TipoMovimento, by_value=True, required=True)\n    origem = fields.Enum(OrigemMovimento, by_value=True, required=True)\n    entidade_tipo = fields.Enum(EntidadeMovimento, by_value=True, required=True)\n    referencia_id = fields.Int(required=True)\n    quantidade = fields.Decimal(required=True)\n    justificacao = fields.Str(required=False)\n    armazem_id = fields.Int(required=False, allow_none=True)\n    created_at = fields.DateTime(dump_only=True)",
+        "peekOfCode": "class MovimentoStockSchema(Schema):\n    id = fields.Int(dump_only=True)\n    tipo = fields.Enum(TipoMovimento, by_value=True, required=True)\n    origem = fields.Enum(OrigemMovimento, by_value=True, required=True)\n    entidade_tipo = fields.Enum(EntidadeMovimento, by_value=True, required=True)\n    referencia_id = fields.Int(required=True)\n    entidade_nome = fields.Method(\"get_entidade_nome\")\n    quantidade = fields.Decimal(required=True)\n    justificacao = fields.Str(required=False)\n    armazem_id = fields.Int(required=False, allow_none=True)",
         "detail": "backend.app.schemas.armazem_schema",
         "documentation": {}
     },
@@ -10429,7 +10458,7 @@
         "kind": 6,
         "importPath": "backend.app.schemas.armazem_schema",
         "description": "backend.app.schemas.armazem_schema",
-        "peekOfCode": "class ProdutoStockArmazemSchema(Schema):\n    id = fields.Int(dump_only=True)\n    produto_id = fields.Int(required=True)\n    produto_nome = fields.Function(lambda obj: obj.produto.nome if obj.produto else None)\n    produto_codigo = fields.Function(lambda obj: obj.produto.codigo if obj.produto else None)\n    armazem_id = fields.Int(required=True)\n    armazem_nome = fields.Function(lambda obj: obj.armazem.nome if obj.armazem else None)\n    stock_atual = fields.Decimal(required=True)\n    stock_minimo = fields.Decimal(required=True)\n    preco_compra = fields.Function(lambda obj: obj.produto.preco_compra if obj.produto else None)",
+        "peekOfCode": "class ProdutoStockArmazemSchema(Schema):\n    id = fields.Int(dump_only=True)\n    produto_id = fields.Int(required=True)\n    produto_nome = fields.Function(lambda obj: obj.produto.nome if obj.produto else None)\n    produto_codigo = fields.Function(lambda obj: obj.produto.codigo if obj.produto else None)\n    armazem_id = fields.Int(required=True)\n    armazem_nome = fields.Function(lambda obj: obj.armazem.nome if obj.armazem else None)\n    stock_atual = fields.Decimal(required=True)\n    stock_minimo = fields.Decimal(required=True)\n    unidade_medida = fields.Function(lambda obj: obj.produto.unidade_medida.sigla if (obj.produto and obj.produto.unidade_medida) else None)",
         "detail": "backend.app.schemas.armazem_schema",
         "documentation": {}
     },
@@ -10438,7 +10467,7 @@
         "kind": 6,
         "importPath": "backend.app.schemas.armazem_schema",
         "description": "backend.app.schemas.armazem_schema",
-        "peekOfCode": "class IngredienteStockArmazemSchema(Schema):\n    id = fields.Int(dump_only=True)\n    ingrediente_id = fields.Int(required=True)\n    ingrediente_nome = fields.Function(lambda obj: obj.ingrediente.nome if obj.ingrediente else None)\n    ingrediente_codigo = fields.Function(lambda obj: obj.ingrediente.codigo if obj.ingrediente else None)\n    armazem_id = fields.Int(required=True)\n    armazem_nome = fields.Function(lambda obj: obj.armazem.nome if obj.armazem else None)\n    stock_atual = fields.Decimal(required=True)\n    stock_minimo = fields.Decimal(required=True)\nclass MaterialStockArmazemSchema(Schema):",
+        "peekOfCode": "class IngredienteStockArmazemSchema(Schema):\n    id = fields.Int(dump_only=True)\n    ingrediente_id = fields.Int(required=True)\n    ingrediente_nome = fields.Function(lambda obj: obj.ingrediente.nome if obj.ingrediente else None)\n    ingrediente_codigo = fields.Function(lambda obj: obj.ingrediente.codigo if obj.ingrediente else None)\n    armazem_id = fields.Int(required=True)\n    armazem_nome = fields.Function(lambda obj: obj.armazem.nome if obj.armazem else None)\n    stock_atual = fields.Decimal(required=True)\n    stock_minimo = fields.Decimal(required=True)\n    unidade_medida = fields.Function(lambda obj: obj.ingrediente.unidade_medida if obj.ingrediente else None)",
         "detail": "backend.app.schemas.armazem_schema",
         "documentation": {}
     },
@@ -10447,7 +10476,7 @@
         "kind": 6,
         "importPath": "backend.app.schemas.armazem_schema",
         "description": "backend.app.schemas.armazem_schema",
-        "peekOfCode": "class MaterialStockArmazemSchema(Schema):\n    id = fields.Int(dump_only=True)\n    material_id = fields.Int(required=True)\n    material_nome = fields.Function(lambda obj: obj.material.nome if obj.material else None)\n    material_codigo = fields.Function(lambda obj: obj.material.codigo if obj.material else None)\n    armazem_id = fields.Int(required=True)\n    armazem_nome = fields.Function(lambda obj: obj.armazem.nome if obj.armazem else None)\n    stock_atual = fields.Decimal(required=True)\n    stock_minimo = fields.Decimal(required=True)\n    unidade_medida_sigla = fields.Function(",
+        "peekOfCode": "class MaterialStockArmazemSchema(Schema):\n    id = fields.Int(dump_only=True)\n    material_id = fields.Int(required=True)\n    material_nome = fields.Function(lambda obj: obj.material.nome if obj.material else None)\n    material_codigo = fields.Function(lambda obj: obj.material.codigo if obj.material else None)\n    armazem_id = fields.Int(required=True)\n    armazem_nome = fields.Function(lambda obj: obj.armazem.nome if obj.armazem else None)\n    stock_atual = fields.Decimal(required=True)\n    stock_minimo = fields.Decimal(required=True)\n    unidade_medida = fields.Function(lambda obj: obj.material.unidade_medida.sigla if (obj.material and obj.material.unidade_medida) else None)",
         "detail": "backend.app.schemas.armazem_schema",
         "documentation": {}
     },
@@ -10826,15 +10855,6 @@
         "importPath": "backend.app.services.armazem_service",
         "description": "backend.app.services.armazem_service",
         "peekOfCode": "class ArmazemService:\n    def __init__(self):\n        self.fornecedor_repo = FornecedorRepository()\n        self.ingrediente_repo = IngredienteRepository()\n        self.produto_repo = ProdutoRepository()\n        self.material_repo = MaterialRepository()\n        self.movimento_repo = MovimentoStockRepository()\n        self.categoria_produto_repo = CategoriaProdutoRepository()\n        self.unidade_medida_repo = UnidadeMedidaRepository()\n        self.armazem_repo = ArmazemRepository()",
-        "detail": "backend.app.services.armazem_service",
-        "documentation": {}
-    },
-    {
-        "label": "get_preco_com_iva",
-        "kind": 2,
-        "importPath": "backend.app.services.armazem_service",
-        "description": "backend.app.services.armazem_service",
-        "peekOfCode": "def get_preco_com_iva(preco, taxa_iva):\n    \"\"\"\n    Calculate the price including VAT.\n    :param preco: Base price (float)\n    :param taxa_iva: VAT rate in percentage (float)\n    :return: Price including VAT (float)\n    \"\"\"\n    if preco is None or taxa_iva is None:\n        return None\n    return round(float(preco) * (1 + float(taxa_iva) / 100), 2)",
         "detail": "backend.app.services.armazem_service",
         "documentation": {}
     },

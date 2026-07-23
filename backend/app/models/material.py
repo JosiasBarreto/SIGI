@@ -10,10 +10,8 @@ class EstadoMaterial(str, Enum):
     DISPONIVEL = 'Disponivel'
     RESERVADO = 'Reservado'
     EM_USO = 'Em Uso'
-    DEVOLVIDO = 'Devolvido'
     DANIFICADO = 'Danificado'
     MANUTENCAO = 'Manutencao'
-    CANCELADO = 'Cancelado'
 
 class Material(BaseModel):
     __tablename__ = 'materiais'
@@ -28,6 +26,7 @@ class Material(BaseModel):
     quantidade_reservada = db.Column(db.Numeric(10, 2), default=0)
     
     estado = db.Column(db.Enum(EstadoMaterial), default=EstadoMaterial.DISPONIVEL)
+    ativo = db.Column(db.Boolean, default=True)
     valor_unitario = db.Column(db.Numeric(10, 2), default=0)
     unidade_medida_id = db.Column(db.Integer, db.ForeignKey('unidades_medida.id'), nullable=True)
 
@@ -39,3 +38,4 @@ class Material(BaseModel):
         cascade='all, delete-orphan',
         lazy=True
     )
+

@@ -1,6 +1,5 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from sqlalchemy import literal
 from app.services.armazem_service import ArmazemService
 from app.schemas.armazem_schema import (
     FornecedorSchema, IngredienteSchema, ProdutoSchema,
@@ -136,6 +135,16 @@ def run_migrations():
         db.session.execute(text("ALTER TABLE categorias_produto DROP COLUMN ativo;"))
     except Exception as e:
         pass
+    try:
+        db.session.execute(text("ALTER TABLE materiais ADD COLUMN ativo BOOLEAN DEFAULT TRUE;"))
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+    try:
+        db.session.execute(text("ALTER TABLE produtos ADD COLUMN ativo BOOLEAN DEFAULT TRUE;"))
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
     try:
         db.session.execute(text("CREATE INDEX idx_produtos_codigo ON produtos (codigo);"))
     except: pass
@@ -403,7 +412,6 @@ def get_produtos():
     order_by = request.args.get('order_by', 'created_at')
     order_dir = request.args.get('order_dir', 'desc')
     
-       
     if hasattr(Produto, order_by):
         col = getattr(Produto, order_by)
         if order_dir == 'desc':
@@ -574,6 +582,11 @@ def get_materiais():
     tipo = request.args.get('tipo', '')
     if tipo:
         query = query.filter_by(tipo=tipo)
+
+    ativo = request.args.get('ativo', '')
+    if ativo:
+        is_ativo = ativo.lower() == 'true' or ativo == '1'
+        query = query.filter_by(ativo=is_ativo)
         
     have_stock = request.args.get('have_stock', '')
     if have_stock:
@@ -648,6 +661,26 @@ def delete_material(id):
         return jsonify({"msg": error}), 400
     return jsonify(result), 200
 
+@armazem_bp.route('/materiais/<int:id>/ativar', methods=['PUT'])
+@jwt_required()
+@requires_roles('Administrador', 'Armazém', 'Controlador de Materiais')
+def activate_material(id):
+    user_id = get_jwt_identity()
+    material, error = armazem_service.activate_material(id, user_id)
+    if error:
+        return jsonify({"msg": error}), 400
+    return jsonify({"msg": "Material ativado com sucesso."}), 200
+
+@armazem_bp.route('/materiais/<int:id>/desativar', methods=['PUT'])
+@jwt_required()
+@requires_roles('Administrador', 'Armazém', 'Controlador de Materiais')
+def deactivate_material(id):
+    user_id = get_jwt_identity()
+    material, error = armazem_service.deactivate_material(id, user_id)
+    if error:
+        return jsonify({"msg": error}), 400
+    return jsonify({"msg": "Material desativado com sucesso."}), 200
+
 # --- MOVIMENTAÇÕES ---
 @armazem_bp.route('/movimentacoes', methods=['GET'])
 @jwt_required()
@@ -705,10 +738,45 @@ def update_armazem(id):
         return jsonify({"msg": error}), 400
     return jsonify(ArmazemSchema().dump(result)), 200
 
+@armazem_bp.route('/armazens/<int:id>/ativar', methods=['PUT'])
+@jwt_required()
+@requires_roles('Administrador', 'Armazém')
+def activate_armazem(id):
+    user_id = get_jwt_identity()
+    result, error = armazem_service.activate_armazem(id, user_id)
+    if error:
+        return jsonify({"msg": error}), 400
+    return jsonify(ArmazemSchema().dump(result)), 200
+
+@armazem_bp.route('/armazens/<int:id>/desativar', methods=['PUT'])
+@jwt_required()
+@requires_roles('Administrador', 'Armazém')
+def deactivate_armazem(id):
+    user_id = get_jwt_identity()
+    result, error = armazem_service.deactivate_armazem(id, user_id)
+    if error:
+        return jsonify({"msg": error}), 400
+    return jsonify(ArmazemSchema().dump(result)), 200
+
+@armazem_bp.route('/armazens/<int:id>', methods=['DELETE'])
+@jwt_required()
+@requires_roles('Administrador', 'Armazém')
+def delete_armazem(id):
+    user_id = get_jwt_identity()
+    result, error = armazem_service.delete_armazem(id, user_id)
+    if error:
+        return jsonify({"msg": error}), 400
+    return jsonify(result), 200
+
 @armazem_bp.route('/armazens/<int:id>/stock', methods=['GET'])
 @jwt_required()
 def get_armazem_stock(id):
-    result, error = armazem_service.get_armazem_stock(id)
+    filters = {
+        'tipo': request.args.get('tipo', ''),
+        'categoria': request.args.get('categoria', ''),
+        'busca': request.args.get('busca', '')
+    }
+    result, error = armazem_service.get_armazem_stock(id, filters)
     if error:
         return jsonify({"msg": error}), 400
         

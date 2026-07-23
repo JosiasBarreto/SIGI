@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -20,8 +20,13 @@ import {
   ChevronsLeft,
   ChevronsRight,
   FileSpreadsheet,
+  FileText,
+  FileDown,
   Plus,
 } from "lucide-react";
+import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 interface DataTableProps<TData> {
   data: TData[];
@@ -139,6 +144,7 @@ export function DataTable<TData>({
 
   const hasStatusField = React.useMemo(() => {
     if (showStatusFilter !== undefined) return showStatusFilter;
+    if (statusFilter !== undefined) return true;
     if (!safeData || safeData.length === 0) return false;
     return safeData.slice(0, 10).some((item: any) => 
       item && (
@@ -147,7 +153,7 @@ export function DataTable<TData>({
         item.status !== undefined
       )
     );
-  }, [safeData, showStatusFilter]);
+  }, [safeData, showStatusFilter, statusFilter]);
 
   const filteredData = React.useMemo(() => {
     if (activeStatusFilter === 'all') return safeData;
@@ -211,43 +217,87 @@ export function DataTable<TData>({
     autoResetPageIndex: !manualPagination,
   });
 
-  const exportCSV = () => {
-    // Captura os cabeçalhos visíveis
+  const getExportData = () => {
     const headers = table
       .getAllLeafColumns()
-      .map((col) => col.columnDef.header || col.id) // usa header se existir
-      .join(",");
-  
-    // Captura as linhas visíveis
-    const rows = table.getRowModel().rows
-      .map((row) =>
-        row
-          .getVisibleCells()
-          .map((cell) => {
-            const value = cell.getValue();
-            // Escapa aspas duplas e vírgulas
-            const safeValue = value !== undefined && value !== null
-              ? String(value).replace(/"/g, '""')
-              : "";
-            return `"${safeValue}"`;
-          })
-          .join(",")
-      )
-      .join("\n");
-  
-    // Adiciona BOM para compatibilidade com Excel
-    const csvContent = "\uFEFF" + headers + "\n" + rows;
-  
-    // Cria o arquivo para download
+      .filter((col) => col.id !== "actions")
+      .map((col) => {
+        if (typeof col.columnDef.header === "string") return col.columnDef.header;
+        return col.id.toUpperCase().replace(/_/g, ' ');
+      });
+
+    const rows = table.getRowModel().rows.map((row) =>
+      row
+        .getVisibleCells()
+        .filter((cell) => cell.column.id !== "actions")
+        .map((cell) => {
+          let value = cell.getValue();
+          if (typeof value === "boolean") {
+            return value ? "Ativo" : "Inativo";
+          }
+          if (cell.column.id === "precoliquido" || cell.column.id === "preco_venda" || cell.column.id === "preco_compra") {
+            if (value && !isNaN(Number(value))) {
+              return Number(value).toFixed(2);
+            }
+          }
+          if (value instanceof Date) {
+            return value.toLocaleDateString();
+          }
+          return value !== undefined && value !== null ? String(value) : "";
+        })
+    );
+
+    return { headers, rows };
+  };
+
+  const exportCSV = () => {
+    const { headers, rows } = getExportData();
+    const csvContent = "\uFEFF" + [headers.join(","), ...rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(","))].join("\n");
+    
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
     link.setAttribute("href", url);
-    link.setAttribute("download", "export.csv");
+    link.setAttribute("download", "exportacao.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
+
+  const exportExcel = () => {
+    const { headers, rows } = getExportData();
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Dados");
+    XLSX.writeFile(wb, "exportacao.xlsx");
+  };
+
+  const exportPDF = () => {
+    const { headers, rows } = getExportData();
+    const doc = new jsPDF("landscape");
+    doc.text("Relatório de Exportação", 14, 15);
+    autoTable(doc, {
+      head: [headers],
+      body: rows,
+      startY: 20,
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [15, 23, 42] }
+    });
+    doc.save("exportacao.pdf");
+  };
+
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const exportMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (exportMenuRef.current && !exportMenuRef.current.contains(event.target as Node)) {
+        setShowExportMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   return (
     <div className="bg-surface dark:bg-surface-dark rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden flex flex-col">
@@ -325,13 +375,38 @@ export function DataTable<TData>({
               Limpar Filtros
             </button>
           )}
-          <button
-            onClick={exportCSV}
-            title="Exportar CSV"
-            className="p-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition"
-          >
-            <FileSpreadsheet size={18} />
-          </button>
+          
+          <div className="relative" ref={exportMenuRef}>
+            <button
+              onClick={() => setShowExportMenu(!showExportMenu)}
+              title="Exportar Dados"
+              className="p-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition flex items-center gap-2"
+            >
+              <FileDown size={18} />
+            </button>
+            {showExportMenu && (
+              <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden z-50">
+                <button
+                  onClick={() => { exportExcel(); setShowExportMenu(false); }}
+                  className="w-full text-left px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 flex items-center gap-2 transition"
+                >
+                  <FileSpreadsheet size={16} className="text-emerald-600" /> Excel (.xlsx)
+                </button>
+                <button
+                  onClick={() => { exportCSV(); setShowExportMenu(false); }}
+                  className="w-full text-left px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 flex items-center gap-2 transition"
+                >
+                  <FileText size={16} className="text-blue-600" /> CSV
+                </button>
+                <button
+                  onClick={() => { exportPDF(); setShowExportMenu(false); }}
+                  className="w-full text-left px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 flex items-center gap-2 transition"
+                >
+                  <FileText size={16} className="text-red-600" /> PDF
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

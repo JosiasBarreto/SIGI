@@ -162,6 +162,12 @@ export const receitaService = {
 
 export const productService = {
   ...createService<ProdutoDTO>('/v1/armazem/produtos', 'products'),
+  async ativar(id: string | number): Promise<any> {
+    return apiClient.put<any, any>(`/v1/armazem/produtos/${id}/ativar`);
+  },
+  async desativar(id: string | number): Promise<any> {
+    return apiClient.put<any, any>(`/v1/armazem/produtos/${id}/desativar`);
+  },
   entradaStock: async (id: string | number, data: any): Promise<any> => {
     return apiClient.post(`/v1/armazem/produtos/${id}/entrada-stock`, data);
   },
@@ -231,7 +237,45 @@ export const productService = {
 };
 
 export const ingredientService = createService<IngredienteDTO>('/v1/armazem/ingredientes', 'inventory');
-export const materialService = createService<MaterialDTO>('/v1/armazem/materiais', 'materials');
+export const materialService = {
+  ...createService<MaterialDTO>('/v1/armazem/materiais', 'materials'),
+  async ativar(id: string | number): Promise<any> {
+    return apiClient.put<any, any>(`/v1/armazem/materiais/${id}/ativar`);
+  },
+  async desativar(id: string | number): Promise<any> {
+    return apiClient.put<any, any>(`/v1/armazem/materiais/${id}/desativar`);
+  },
+  async updateEstado(id: string | number, estado: string): Promise<any> {
+    return apiClient.put<any, any>(`/v1/armazem/materiais/${id}`, { estado });
+  },
+  async getMovimentos(id: string | number, params?: any): Promise<any> {
+    const res = await apiClient.get<any, any>(`/v1/armazem/movimentacoes`, { 
+      params: { 
+        ...params, 
+        entidade_tipo: 'Material', 
+        referencia_id: id 
+      } 
+    });
+    const response = res?.data || res || [];
+    if (Array.isArray(response)) {
+      const page = Number(params?.page || 1);
+      const perPage = Number(params?.per_page || 10);
+      const total = response.length;
+      const pages = Math.max(1, Math.ceil(total / perPage));
+      const startIndex = (page - 1) * perPage;
+      const endIndex = startIndex + perPage;
+      
+      return {
+        items: response.slice(startIndex, endIndex),
+        total,
+        page,
+        pages,
+        per_page: perPage
+      };
+    }
+    return response;
+  }
+};
 export const supplierService = createService<FornecedorDTO>('/v1/armazem/fornecedores', 'clients'); 
 export const clientService = {
   ...createService<ClienteDTO>('/v1/pedidos/clientes', 'clients'),
@@ -307,12 +351,20 @@ export const eventService = {
 
 export const warehouseService = {
   ...createService<any>('/v1/armazem/armazens', 'inventory'),
-  async getStock(id: string | number) {
-    const res = await apiClient.get<any, any>(`/v1/armazem/armazens/${id}/stock`);
+  async getStock(id: string | number, params?: any) {
+    const res = await apiClient.get<any, any>(`/v1/armazem/armazens/${id}/stock`, { params });
     return res;
   },
   async transfer(data: any) {
     const res = await apiClient.post<any, any>('/v1/armazem/transferir', data);
+    return res;
+  },
+  async ativar(id: string | number) {
+    const res = await apiClient.put<any, any>(`/v1/armazem/armazens/${id}/ativar`);
+    return res;
+  },
+  async desativar(id: string | number) {
+    const res = await apiClient.put<any, any>(`/v1/armazem/armazens/${id}/desativar`);
     return res;
   },
   async createMovimentacao(data: any) {
