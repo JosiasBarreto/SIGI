@@ -31,10 +31,18 @@ class ConsumoIngredienteSchema(Schema):
     quantidade_consumida = fields.Decimal(required=False, allow_none=True)
     data_consumo = fields.DateTime(dump_only=True)
 
+class OrdemProducaoItemSchema(Schema):
+    id = fields.Int(dump_only=True)
+    produto_id = fields.Int(required=True)
+    quantidade = fields.Decimal(required=True)
+    observacoes = fields.Str(required=False, allow_none=True)
+
 class OrdemProducaoSchema(Schema):
     id = fields.Int(dump_only=True)
     numero = fields.Str(dump_only=True)
     pedido_id = fields.Int(required=True)
+    produto_id = fields.Int(required=False, allow_none=True) # backward compat
+    quantidade = fields.Decimal(required=False, allow_none=True) # backward compat
     sector = fields.Enum(SectorProducao, by_value=True, required=True)
     data_producao = fields.Date(required=False, allow_none=True)
     hora_inicio = fields.DateTime(required=False, allow_none=True)
@@ -43,6 +51,7 @@ class OrdemProducaoSchema(Schema):
     estado = fields.Enum(EstadoProducao, by_value=True, required=False)
     observacoes = fields.Str(required=False)
     
+    itens = fields.List(fields.Nested(OrdemProducaoItemSchema), required=False)
     consumos = fields.List(fields.Nested(ConsumoIngredienteSchema), dump_only=True)
 
 class ReservaIngredienteSchema(Schema):

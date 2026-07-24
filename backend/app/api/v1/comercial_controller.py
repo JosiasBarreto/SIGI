@@ -56,19 +56,7 @@ def create_venda():
     data = request.json
     try:
         venda = comercial_service.create_venda(data, user_id)
-        return jsonify({
-            'id': venda.id,
-            'numero_documento': venda.numero_documento,
-            'total': str(venda.total),
-            'pedido_convertido_id': getattr(getattr(venda, 'pedido_convertido', None), 'id', None),
-            'stock_insuficiente_convertido': getattr(venda, 'stock_insuficiente_convertido', [])
-        }), 201
-    except StockInsuficienteError as e:
-        return jsonify({
-            'error': str(e),
-            'code': 'STOCK_INSUFICIENTE',
-            'itens': e.itens
-        }), 409
+        return jsonify({'id': venda.id, 'numero_documento': venda.numero_documento, 'total': str(venda.total)}), 201
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 

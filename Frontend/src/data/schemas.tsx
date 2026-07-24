@@ -393,6 +393,7 @@ export const schemas: Record<string, ModuleSchema> = {
       { name: "servico_descricao", label: "Servico Principal", type: "text" },
       { name: "valor_pago", label: "Valor Pago", type: "number" },
       { name: "descricao", label: "Descrição / Observações", type: "textarea" },
+
     ],
   },
   users: {

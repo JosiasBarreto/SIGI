@@ -43,8 +43,7 @@ class PedidoService:
             "email": cliente.email,
             "morada": cliente.morada,
             "empresa": cliente.empresa,
-            "observacoes": cliente.observacoes,
-            "percentagem_desconto_padrao": str(cliente.percentagem_desconto_padrao or 0)
+            "observacoes": cliente.observacoes
         }
         
         if 'nome' in data: cliente.nome = data['nome']
@@ -55,8 +54,8 @@ class PedidoService:
         if 'morada' in data: cliente.morada = data['morada']
         if 'empresa' in data: cliente.empresa = data['empresa']
         if 'observacoes' in data: cliente.observacoes = data['observacoes']
-        if 'percentagem_desconto_padrao' in data:
-            cliente.percentagem_desconto_padrao = data['percentagem_desconto_padrao'] or 0
+        if 'is_active' in data: cliente.is_active = data['is_active']
+        if 'ativo' in data: cliente.is_active = data['ativo']
         
         from app.core.database import db
         db.session.commit()
@@ -65,38 +64,9 @@ class PedidoService:
         AuditService.log_action(user_id, "UPDATE", "clientes", cliente.id, old_values=old_values, new_values=data)
         
         return cliente, None
-#ativar e desativar cliente
-    def toggle_cliente_status_services(self, cliente_id, user_id):
-        cliente = self.cliente_repo.get_by_id(cliente_id)
-        if not cliente:
-            return None, "Cliente não encontrado."
-            
-        old_status = cliente.is_active
-        cliente.is_active = not old_status
-        db.session.commit()
-        
-        AuditService.log_action(user_id, "TOGGLE_STATUS", "clientes", cliente.id, 
-                                old_values={"is_active": old_status}, 
-                                new_values={"is_active": cliente.is_active})
-                                
-        return cliente, None
 
-    def _sync_evento_link(self, pedido):
-        if not pedido.evento_id:
-            return
-        from app.models.evento import Evento
-        evento = db.session.query(Evento).with_for_update().get(pedido.evento_id)
-        if evento:
-            evento.pedido_id = pedido.id
-            if not evento.cliente_id and pedido.cliente_id:
-                evento.cliente_id = pedido.cliente_id
-
-    def _produto_tipo_value(self, produto):
-        return produto.tipo.value if hasattr(produto.tipo, 'value') else produto.tipo
-
-    def create_pedido(self, data, user_id, auto_commit=True):
+    def create_pedido(self, data, user_id):
         itens_data = data.pop('itens', [])
-        evento_data = data.pop('evento', None)
         
         # Validar itens para proibir ingredientes
         for item in itens_data:
@@ -104,7 +74,7 @@ class PedidoService:
                 produto = db.session.query(Produto).filter_by(id=item['produto_id']).first()
                 if not produto:
                     return None, f"Produto ID {item['produto_id']} não encontrado."
-                if self._produto_tipo_value(produto) not in [TipoProduto.ACABADO.value, TipoProduto.REVENDA.value]:
+                if produto.tipo not in [TipoProduto.ACABADO.value, TipoProduto.REVENDA.value]:
                     return None, f"Item inválido. Apenas produtos acabados ou de revenda são permitidos."
                     
         # Generate Pedido Number
@@ -115,29 +85,62 @@ class PedidoService:
         valor_pago = float(data.get('valor_pago', 0))
         
         pedido = Pedido(**data, created_by=user_id)
-        
-        total = 0
-        
+
+        subtotal_pedido = 0.0
+        total_desconto = 0.0
+        base_tributavel = 0.0
+        total_iva = 0.0
+        total = 0.0
+
         for item in itens_data:
             qtd = float(item['quantidade'])
             preco = float(item['preco_unitario'])
-            subtotal = qtd * preco
-            total += subtotal
-            
+            item_sub = qtd * preco
+
+            # Cálculo de IVA
+            iva_perc = 0.0
+            taxa_iva_id = None
+            if item.get('produto_id'):
+                produto = db.session.query(Produto).filter_by(id=item['produto_id']).first()
+                if produto and produto.taxa_iva:
+                    iva_perc = float(produto.taxa_iva.percentagem)
+                    taxa_iva_id = produto.taxa_iva_id
+
+            item_desc = float(item.get('desconto', 0))
+            item_base = item_sub - item_desc
+            item_iva_val = item_base * (iva_perc / 100.0)
+            item_total = item_base + item_iva_val
+
+            subtotal_pedido += item_sub
+            total_desconto += item_desc
+            base_tributavel += item_base
+            total_iva += item_iva_val
+            total += item_total
+
             i_pedido = ItemPedido(
                 tipo_item=item['tipo_item'],
                 produto_id=item.get('produto_id'),
                 descricao=item.get('descricao'),
                 quantidade=qtd,
                 preco_unitario=preco,
-                subtotal=subtotal,
+                desconto=item_desc,
+                taxa_iva_id=taxa_iva_id,
+                taxa_iva=iva_perc,
+                valor_iva=item_iva_val,
+                subtotal=item_sub,
+                total=item_total,
                 pedido=pedido,
                 created_by=user_id
             )
             db.session.add(i_pedido)
-            
+
+        pedido.subtotal = subtotal_pedido
+        pedido.desconto_total = total_desconto
+        pedido.base_tributavel = base_tributavel
+        pedido.total_iva = total_iva
         pedido.valor_total = total
         pedido.saldo = total - valor_pago
+
         
         if pedido.saldo <= 0 and pedido.valor_total > 0:
             pedido.estado_pagamento = EstadoPagamento.PAGO
@@ -148,18 +151,6 @@ class PedidoService:
             
         db.session.add(pedido)
         db.session.flush() # get ID
-
-        if evento_data:
-            from app.services.evento_service import EventoService
-            evento_data['cliente_id'] = evento_data.get('cliente_id') or pedido.cliente_id
-            evento_data['pedido_id'] = pedido.id
-            evento, error = EventoService().create_evento(evento_data, user_id, auto_commit=False)
-            if error:
-                db.session.rollback()
-                return None, error
-            pedido.evento_id = evento.id
-        else:
-            self._sync_evento_link(pedido)
         
         # Reservas de ingredientes para pedidos com data futura / agendados
         from datetime import date
@@ -170,7 +161,7 @@ class PedidoService:
             for item in itens_data:
                 if item.get('produto_id'):
                     # Pega a ficha tecnica do produto
-                    ficha = db.session.query(FichaTecnica).filter_by(produto_acabado_id=item['produto_id']).first()
+                    ficha = db.session.query(FichaTecnica).filter_by(produto_id=item['produto_id']).first()
                     if ficha:
                         for f_item in ficha.itens:
                             qtd_reservar = float(f_item.quantidade) * float(item['quantidade'])
@@ -182,9 +173,6 @@ class PedidoService:
                             )
                             db.session.add(reserva)
                             
-        if not auto_commit:
-            return pedido, None
-
         db.session.commit()
         
         # Generate production orders automatically for kitchen and pastry
@@ -202,6 +190,60 @@ class PedidoService:
 
         
         return pedido, None
+
+    def add_pagamento(self, pedido_id, data, user_id):
+        pedido = db.session.query(Pedido).get(pedido_id)
+        if not pedido: return None, "Pedido não encontrado"
+        
+        valor_entregue = float(data.get('valor', 0))
+        if valor_entregue <= 0: return None, "Valor do pagamento deve ser positivo"
+        
+        saldo_pendente = float(pedido.saldo)
+        valor_pagar_real = min(valor_entregue, saldo_pendente)
+        
+        from app.models.caixa import Caixa, MovimentoCaixa, TipoMovimentoCaixa
+        from app.models.financeiro import Pagamento, EstadoPagamento
+        
+        caixa = Caixa.query.with_for_update().filter_by(estado='Aberto').first()
+        if not caixa: return None, "Não existe nenhum caixa aberto no momento."
+        
+        pagamento = Pagamento(
+            pedido_id=pedido.id,
+            valor=valor_entregue,
+            forma_pagamento_id=data.get('forma_pagamento_id'),
+            referencia=data.get('referencia'),
+            observacoes=data.get('observacoes', ''),
+            estado=EstadoPagamento.PAGO,
+            data_pagamento=datetime.utcnow()
+        )
+        db.session.add(pagamento)
+        
+        pedido.valor_pago = float(pedido.valor_pago) + valor_pagar_real
+        pedido.saldo = float(pedido.valor_total) - float(pedido.valor_pago)
+        
+        if pedido.saldo <= 0:
+            pedido.estado_pagamento = EstadoPagamento.PAGO
+        else:
+            pedido.estado_pagamento = EstadoPagamento.PARCIAL
+            
+        mov = MovimentoCaixa(
+            caixa_id=caixa.id,
+            utilizador_id=user_id,
+            tipo=TipoMovimentoCaixa.ENTRADA,
+            valor=valor_pagar_real,
+            descricao=f"Pagamento Pedido #{pedido.numero}",
+            forma_pagamento_id=data.get('forma_pagamento_id')
+        )
+        db.session.add(mov)
+        
+        caixa.saldo_atual += valor_pagar_real
+        
+        # Auditoria Pagamento
+        from app.services.audit_service import AuditService
+        AuditService.log_action(user_id, "ADD_PAGAMENTO", "pedidos", pedido.id, new_values={'valor': valor_pagar_real})
+        
+        db.session.commit()
+        return pagamento, None
 
     def alterar_estado(self, pedido_id, data, user_id):
         pedido = self.pedido_repo.get_by_id(pedido_id)

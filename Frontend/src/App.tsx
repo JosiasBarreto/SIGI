@@ -52,6 +52,7 @@ import { RoleRoute } from "./components/Guards/RoleRoute";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 
 import { SocketListeners } from "./components/SocketListeners";
+import PedidoCaixaEventos from "./PedidoCaixaEventos";
 
 const queryClient = new QueryClient();
 
@@ -188,6 +189,8 @@ export default function App() {
                           <Route path="financeiro/contas-receber" element={<ContasReceber />} />
                           <Route path="financeiro/fecho-diario" element={<FechoDiario />} />
                           <Route path="relatorios" element={<Relatorios />} />
+                          <Route path="ppp" element={<PedidoCaixaEventos />} />
+                          
                         </Route>
 
                         {/* Sales routes */}

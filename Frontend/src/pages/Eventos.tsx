@@ -30,6 +30,11 @@ export default function Eventos() {
     queryKey: [moduleName, page, perPage, searchTerm],
     queryFn: () => apiAccessor.getAll({ page, per_page: perPage, search: searchTerm })
   });
+  const { data: clientsResponse } = useQuery({
+    queryKey: ["clients", "all"],
+    queryFn: () => allServices.clientService.getAll({ per_page: 1000 })
+  });
+  const clients = clientsResponse?.items || [];
 
   const createMutation = useMutation({
     mutationFn: (newRecord: any) => apiAccessor.create(newRecord),
@@ -147,7 +152,8 @@ export default function Eventos() {
     });
 
     if (result.isConfirmed && result.value) {
-      faturarMutation.mutate({ id: currentRecord.id, pagamento: result.value });
+      // The backend /faturar just requires serie_id and observacoes
+      faturarMutation.mutate({ id: currentRecord.id, pagamento: { serie_id: 1, observacoes: result.value.observacoes } as any });
     }
   };
 
@@ -289,7 +295,19 @@ export default function Eventos() {
                 <label className="text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">
                   {field.label} {field.required && <span className="text-error">*</span>}
                 </label>
-                {field.type === 'textarea' ? (
+                {field.name === 'cliente_id' ? (
+                  <select 
+                    name={field.name} 
+                    defaultValue={currentRecord?.[field.name] || ''}
+                    required={field.required}
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  >
+                    <option value="">Selecione um cliente...</option>
+                    {clients.map((c: any) => (
+                      <option key={c.id} value={c.id}>{c.nome} - {c.telefone}</option>
+                    ))}
+                  </select>
+                ) : field.type === 'textarea' ? (
                   <textarea 
                     name={field.name} 
                     defaultValue={currentRecord?.[field.name] || ''}

@@ -306,7 +306,7 @@ export default function Calendario() {
       if (result.isConfirmed && result.value) {
         try {
           // Trigger checkout/payment balance logic
-          await orderService.checkoutPedido(order.id, {
+          await orderService.adicionarPagamento(order.id, {
             forma_pagamento_id: result.value.method === 'Transferência' ? 2 : (result.value.method === 'TPA / POS' ? 3 : 1),
             valor: result.value.amount,
             codigo_transferencia: result.value.method !== 'Dinheiro' ? result.value.code : null,

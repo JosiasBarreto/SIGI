@@ -289,20 +289,11 @@ export const orderService = {
   async updateEstado(id: string | number, estado: string, justificativa_cancelamento?: string): Promise<PedidoDTO> {
     return apiClient.put<any, PedidoDTO>(`/v1/pedidos/${id}/estado`, { estado, justificativa_cancelamento });
   },
-  async checkoutPedido(id: string | number, payload: { forma_pagamento_id?: number | string; valor: number; codigo_transferencia?: string | null; emissor?: string | null; observacoes?: string }): Promise<any> {
-    const robustPayload = {
-      pagamento: {
-        ...payload
-      }
-    };
-    try {
-      return await apiClient.post<any, any>(`/v1/vendas/checkout-pedido/${id}`, robustPayload);
-    } catch (err: any) {
-      if (err?.response?.status === 404 || err?.status === 404) {
-        return apiClient.post<any, any>(`/v1/comercial/checkout-pedido/${id}`, robustPayload);
-      }
-      throw err;
-    }
+  async checkoutPedido(id: string | number, payload: { forma_pagamento_id?: number | string; valor?: number; codigo_transferencia?: string | null; emissor?: string | null; observacoes?: string; serie_id?: number }): Promise<any> {
+    return await apiClient.post<any, any>(`/v1/comercial/checkout-pedido/${id}`, payload);
+  },
+  async adicionarPagamento(id: string | number, payload: { forma_pagamento_id?: number | string; valor: number; codigo_transferencia?: string | null; emissor?: string | null; referencia?: string; observacoes?: string }): Promise<any> {
+    return apiClient.post<any, any>(`/v1/pedidos/${id}/pagamentos`, payload);
   }
 };
 
@@ -346,6 +337,17 @@ export const eventService = {
   ...createService<EventoDTO>('/v1/eventos', 'events'),
   faturar: async (id: string | number, pagamento?: { valor: number; forma_pagamento_id: number; codigo_transferencia?: string | null; emissor?: string | null; observacoes?: string }): Promise<any> => {
     return apiClient.post<any, any>(`/v1/eventos/${id}/faturar`, { pagamento: pagamento || {} });
+  },
+  async updateEstado(id: string | number, estado: string): Promise<EventoDTO> {
+    return apiClient.put<any, EventoDTO>(`/v1/eventos/${id}/estado`, { estado });
+  },
+  espacos: {
+    async listar(): Promise<any> {
+      return apiClient.get<any, any>('/v1/eventos/espacos');
+    },
+    async criar(data: any): Promise<any> {
+      return apiClient.post<any, any>('/v1/eventos/espacos', data);
+    }
   }
 };
 
@@ -420,11 +422,18 @@ export const financialService = {
   async fechar(id: string | number, data?: any): Promise<any> {
     return apiClient.put<any, any>(`/v1/financeiro/caixas/${id}/fechar`, data || {});
   },
-  async movimento(caixa_id: string | number, tipo: string, valor: number | string, descricao?: string): Promise<any> {
-    return apiClient.post<any, any>(`/v1/financeiro/caixas/${caixa_id}/movimentos`, { caixa_id, tipo, valor, descricao });
+  async movimento(caixa_id: string | number, tipo: string, valor: number | string, descricao?: string, forma_pagamento?: string): Promise<any> {
+    return apiClient.post<any, any>(`/v1/financeiro/caixas/${caixa_id}/movimentos`, { caixa_id, tipo, valor, descricao, forma_pagamento });
   },
   async getValoresEsperados(id: string | number): Promise<{ valor_esperado_dinheiro: number; valor_esperado_transferencia: number; valor_esperado_pos: number }> {
     const res = await apiClient.get<any, any>(`/v1/financeiro/caixas/${id}/valores-esperados`);
+    return res?.data || res;
+  },
+  async getFluxoCaixa(inicio?: string, fim?: string): Promise<any> {
+    const params: any = {};
+    if (inicio) params.inicio = inicio;
+    if (fim) params.fim = fim;
+    const res = await apiClient.get<any, any>('/v1/financeiro/fluxo-caixa', { params });
     return res?.data || res;
   }
 };

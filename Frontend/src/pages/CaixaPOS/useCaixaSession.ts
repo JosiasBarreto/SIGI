@@ -49,8 +49,8 @@ export function useCaixaSession() {
   });
 
   const movimentoMutation = useMutation({
-    mutationFn: ({ tipo, valor, descricao }: { tipo: string; valor: number; descricao?: string }) =>
-      financialService.movimento(String(caixaId), tipo, valor, descricao || tipo),
+    mutationFn: ({ tipo, valor, descricao, forma_pagamento = "Dinheiro" }: { tipo: string; valor: number; descricao?: string; forma_pagamento?: string }) =>
+      financialService.movimento(String(caixaId), tipo, valor, descricao || tipo, forma_pagamento),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["caixas"] });
       toast.success("Movimento registado.");

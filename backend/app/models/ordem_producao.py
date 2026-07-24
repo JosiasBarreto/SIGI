@@ -27,11 +27,10 @@ class EstadoProducao(str, Enum):
 
 class OrdemProducao(BaseModel):
     __tablename__ = 'ordens_producao'
-
     numero = db.Column(db.String(50), unique=True, nullable=False)
     pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=False)
-    produto_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=True)
-    quantidade = db.Column(db.Numeric(10, 2), nullable=True)
+    produto_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=True) # Keeping for backward compat
+    quantidade = db.Column(db.Numeric(10, 2), nullable=True) # Keeping for backward compat
     sector = db.Column(db.Enum(SectorProducao), nullable=False)
     turno = db.Column(db.Enum(TurnoProducao), nullable=True)
     
@@ -45,6 +44,16 @@ class OrdemProducao(BaseModel):
 
     pedido = db.relationship('Pedido', backref='ordens_producao')
     consumos = db.relationship('ConsumoIngrediente', backref='ordem', cascade="all, delete-orphan", lazy='selectin')
+    itens = db.relationship('OrdemProducaoItem', backref='ordem', cascade="all, delete-orphan", lazy='selectin')
+
+class OrdemProducaoItem(db.Model):
+    __tablename__ = 'ordem_producao_itens'
+    id = db.Column(db.Integer, primary_key=True)
+    ordem_producao_id = db.Column(db.Integer, db.ForeignKey('ordens_producao.id'), nullable=False)
+    produto_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=False)
+    quantidade = db.Column(db.Numeric(10, 2), nullable=False)
+    observacoes = db.Column(db.Text, nullable=True)
+    produto = db.relationship('Produto')
 
 class ConsumoIngrediente(db.Model):
     __tablename__ = 'consumos_ingredientes'

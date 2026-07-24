@@ -30,10 +30,10 @@
   --color-error: #EF4444;
 
   --color-surface: #F0FDFF;
-  --color-surface-dark: #102228;
+  --color-surface-dark: #0F1115;
 
   --color-background: #FFFFFF;
-  --color-background-dark: #081316;
+  --color-background-dark: #0F1115;
 
   --color-sidebar: #F8FEFF;
   --color-sidebar-dark: #0F1C20;
@@ -51,10 +51,10 @@
   --color-error: #EF4444;
 
   --color-surface: #FAF8FF;
-  --color-surface-dark: #191427;
+  --color-surface-dark: #0F1115;
 
   --color-background: #FFFFFF;
-  --color-background-dark: #0E0A17;
+  --color-background-dark: #0F1115;
 
   --color-sidebar: #FCFBFF;
   --color-sidebar-dark: #171223;
@@ -72,10 +72,10 @@
   --color-error: #B91C1C;
 
   --color-surface: #FFF7F7;
-  --color-surface-dark: #211313;
+  --color-surface-dark: #0F1115;
 
   --color-background: #FFFFFF;
-  --color-background-dark: #120B0B;
+  --color-background-dark: #0F1115;
 
   --color-sidebar: #FFF9F9;
   --color-sidebar-dark: #1C1111;
@@ -93,10 +93,10 @@
   --color-error: #EF4444;
 
   --color-surface: #F5F9FF;
-  --color-surface-dark: #101827;
+  --color-surface-dark: #0F1115;
 
   --color-background: #FFFFFF;
-  --color-background-dark: #0B1120;
+  --color-background-dark: #0F1115;
 
   --color-sidebar: #F8FBFF;
   --color-sidebar-dark: #111C2E;
@@ -114,10 +114,10 @@
   --color-error: #DC2626;
 
   --color-surface: #F6FFF9;
-  --color-surface-dark: #112017;
+  --color-surface-dark: #0F1115;
 
   --color-background: #FFFFFF;
-  --color-background-dark: #0B1510;
+  --color-background-dark: #0F1115;
 
   --color-sidebar: #F8FFFA;
   --color-sidebar-dark: #102116;
@@ -135,10 +135,10 @@
   --color-error: #EF4444;
 
   --color-surface: #F5F5F5;
-  --color-surface-dark: #1A1A1A;
+  --color-surface-dark: #0F1115;
 
   --color-background: #FFFFFF;
-  --color-background-dark: #0A0A0A;
+  --color-background-dark: #0F1115;
 
   --color-sidebar: #FAFAFA;
   --color-sidebar-dark: #111111;
@@ -156,10 +156,10 @@
   --color-error: #DC2626;
 
   --color-surface: #F8FAF3;
-  --color-surface-dark: #1B1F14;
+  --color-surface-dark: #0F1115;
 
   --color-background: #FFFFFF;
-  --color-background-dark: #0E100B;
+  --color-background-dark: #0F1115;
 
   --color-sidebar: #FBFCF8;
   --color-sidebar-dark: #171A12;
@@ -177,10 +177,10 @@
   --color-error: #DC2626;
 
   --color-surface: #FFF9F2;
-  --color-surface-dark: #251A0F;
+  --color-surface-dark: #0F1115;
 
   --color-background: #FFFFFF;
-  --color-background-dark: #140E08;
+  --color-background-dark: #0F1115;
 
   --color-sidebar: #FFFCF8;
   --color-sidebar-dark: #1B130C;
@@ -198,10 +198,10 @@
   --color-error: #DC2626;
 
   --color-surface: #FBFEEB;
-  --color-surface-dark: #1F2412;
+  --color-surface-dark: #0F1115;
 
   --color-background: #FFFFFF;
-  --color-background-dark: #0F1208;
+  --color-background-dark: #0F1115;
 
   --color-sidebar: #FEFFF8;
   --color-sidebar-dark: #171B0D;
@@ -219,10 +219,10 @@
   --color-error: #EF4444;
 
   --color-surface: #F6F7FF;
-  --color-surface-dark: #17172A;
+  --color-surface-dark: #0F1115;
 
   --color-background: #FFFFFF;
-  --color-background-dark: #0D1020;
+  --color-background-dark: #0F1115;
 
   --color-sidebar: #FAFBFF;
   --color-sidebar-dark: #15182A;
@@ -240,10 +240,10 @@
   --color-error: #DC2626;
 
   --color-surface: #F0FDFA;
-  --color-surface-dark: #10211F;
+  --color-surface-dark: #0F1115;
 
   --color-background: #FFFFFF;
-  --color-background-dark: #091412;
+  --color-background-dark: #0F1115;
 
   --color-sidebar: #F8FFFE;
   --color-sidebar-dark: #10201D;
@@ -264,10 +264,10 @@
   --color-surface-dark: #1E1714;
 
   --color-background: #FFFFFF;
-  --color-background-dark: #0F0B09;
+  --color-background-dark: #0F1115;
 
   --color-sidebar: #FCFAF8;
-  --color-sidebar-dark: #181210;
+  --color-sidebar-dark: #0F1115;
 
   --color-border: #D7C3B4;
   --color-border-dark: #433126;
@@ -282,10 +282,10 @@
   --color-error: #DC2626;
 
   --color-surface: #FCF8F5;
-  --color-surface-dark: #211814;
+  --color-surface-dark: #0F1115;
 
   --color-background: #FFFFFF;
-  --color-background-dark: #120E0C;
+  --color-background-dark: #0F1115;
 
   --color-sidebar: #FDFBF9;
   --color-sidebar-dark: #191310;
@@ -303,10 +303,10 @@
   --color-error: #DC2626;
 
   --color-surface: #FFFDF2;
-  --color-surface-dark: #241F10;
+  --color-surface-dark: #0F1115;
 
   --color-background: #FFFFFF;
-  --color-background-dark: #141209;
+  --color-background-dark: #0F1115;
 
   --color-sidebar: #FFFEF7;
   --color-sidebar-dark: #1A170D;
@@ -324,10 +324,10 @@
   --color-error: #EF4444;
 
   --color-surface: #FFF5FA;
-  --color-surface-dark: #24131C;
+  --color-surface-dark: #0F1115;
 
   --color-background: #FFFFFF;
-  --color-background-dark: #140C11;
+  --color-background-dark: #0F1115;
 
   --color-sidebar: #FFF9FC;
   --color-sidebar-dark: #1B1117;

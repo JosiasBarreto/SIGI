@@ -194,7 +194,13 @@ export default function Orders() {
       }
 
       // Build a strictly valid order creation payload
-      const orderPayload = {
+      const strFormaPagamento = paymentOption === "Sem Pagamento" ? "Dinheiro" : (paymentMethod === "Transferência" ? "Transferencia" : (paymentMethod === "TPA / POS" ? "POS" : "Dinheiro"));
+      
+      const orderPayload: any = {
+        forma_pagamento: strFormaPagamento,
+        estado_pagamento: paymentOption === "Sem Pagamento" ? "Pendente" : (vPaid >= totalFinal ? "Pago" : (vPaid > 0 ? "Parcial" : "Pendente")),
+        valor_pago: paymentOption === "Sem Pagamento" ? 0 : vPaid,
+
         cliente_id: finalClientId ? Number(finalClientId) : null,
         tipo: orderType === "Composto" ? "Composto" : "Simples",
         origem: "Balcao",

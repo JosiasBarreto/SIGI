@@ -28,19 +28,14 @@ export const commercialService = {
     const pedidoId = data.pedido_id;
     const pag = data.pagamento as any;
     const payload = {
-      pagamento: {
-        valor: pag?.valor || 0,
-        forma_pagamento_id: pag?.forma_pagamento_id || 1,
-        codigo_transferencia: pag?.codigo_transferencia || null,
-        emissor: pag?.emissor || null,
-        observacoes: pag?.observacoes || ''
-      }
+      serie_id: 1,
+      observacoes: pag?.observacoes || 'Processado no POS.'
     };
     try {
-      return await apiClient.post<any, VendaResponse>(`/v1/vendas/checkout-pedido/${pedidoId}`, payload);
+      return await apiClient.post<any, VendaResponse>(`/v1/comercial/checkout-pedido/${pedidoId}`, payload);
     } catch (err: any) {
       if (err?.response?.status === 404 || err?.status === 404 || err?.response?.status === 405) {
-        return apiClient.post<any, VendaResponse>(`/v1/comercial/checkout-pedido/${pedidoId}`, payload);
+        return apiClient.post<any, VendaResponse>(`/v1/vendas/checkout-pedido/${pedidoId}`, payload);
       }
       throw err;
     }

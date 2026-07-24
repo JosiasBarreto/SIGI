@@ -524,6 +524,10 @@ class ArmazemService:
         # Update stock of entity
         setattr(entity, stock_field, new_stock)
         
+        # Capture before and after stock levels
+        data['quantidade_antes'] = wh_current_stock
+        data['quantidade_depois'] = wh_new_stock
+        
         # Create Movimento
         mov = MovimentoStock(**data, created_by=user_id)
         db.session.add(mov)

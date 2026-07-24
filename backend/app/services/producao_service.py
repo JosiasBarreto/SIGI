@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, timedelta
 from app.models.ficha_tecnica import FichaTecnica, FichaTecnicaItem, TipoFicha
-from app.models.ordem_producao import OrdemProducao, SectorProducao, PrioridadeProducao, EstadoProducao, ConsumoIngrediente
+from app.models.ordem_producao import OrdemProducao, OrdemProducaoItem, SectorProducao, PrioridadeProducao, EstadoProducao, ConsumoIngrediente
 from app.models.reserva import ReservaIngrediente, EstadoReserva
 from app.models.pedido import Pedido, EstadoPedido
 from app.models.item_pedido import ItemPedido, TipoItem
@@ -46,6 +46,12 @@ class ProducaoService:
         hoje = datetime.utcnow().date()
         producao_futura = pedido.data_entrega and pedido.data_entrega > hoje
         
+        itens_por_setor = {
+            SectorProducao.COZINHA: [],
+            SectorProducao.PASTELARIA: []
+        }
+        ordens_criadas = []
+        
         for item in pedido.itens:
             # Só interessa para ordens se for produto ACABADO e que tenha Ficha Tecnica
             if item.tipo_item != TipoItem.PRODUTO_ACABADO.value:
@@ -55,12 +61,18 @@ class ProducaoService:
             if not ficha:
                 continue
                 
-            numero = f"OP-{datetime.utcnow().strftime('%Y%M')}-{str(uuid.uuid4())[:6].upper()}"
+            setor = SectorProducao.COZINHA if ficha.tipo == TipoFicha.COZINHA.value else SectorProducao.PASTELARIA
+            itens_por_setor[setor].append((item, ficha))
             
+        for setor, items in itens_por_setor.items():
+            if not items:
+                continue
+                
+            numero = f"OP-{setor.value[:3].upper()}-{datetime.utcnow().strftime('%Y%m')}-{str(uuid.uuid4())[:6].upper()}"
             ordem = OrdemProducao(
                 numero=numero,
                 pedido_id=pedido.id,
-                sector=SectorProducao.COZINHA if ficha.tipo == TipoFicha.COZINHA.value else SectorProducao.PASTELARIA,
+                sector=setor,
                 prioridade=PrioridadeProducao.MEDIA,
                 data_producao=pedido.data_entrega if producao_futura else hoje,
                 estado=EstadoProducao.PENDENTE,
@@ -68,28 +80,42 @@ class ProducaoService:
             )
             db.session.add(ordem)
             db.session.flush() # Para gerar o ID da ordem
+            ordens_criadas.append(ordem)
             
-            # Consumos previstos e reservas
-            for req in ficha.itens:
-                qtd_total_prevista = float(req.quantidade) * float(item.quantidade)
-                
-                consumo = ConsumoIngrediente(
+            for item, ficha in items:
+                # Cria o item na ordem de producao
+                op_item = OrdemProducaoItem(
                     ordem_producao_id=ordem.id,
-                    ingrediente_id=req.ingrediente_id,
-                    quantidade_prevista=qtd_total_prevista
+                    produto_id=item.produto_id,
+                    quantidade=item.quantidade,
+                    observacoes=item.observacoes
                 )
-                db.session.add(consumo)
+                db.session.add(op_item)
                 
-                # Se for agendado para o futuro, criar reserva
-                if producao_futura:
-                    reserva = ReservaIngrediente(
+                # Consumos previstos e reservas
+                for req in ficha.itens:
+                    qtd_total_prevista = float(req.quantidade) * float(item.quantidade)
+                    
+                    consumo = ConsumoIngrediente(
+                        ordem_producao_id=ordem.id,
                         ingrediente_id=req.ingrediente_id,
-                        pedido_id=pedido.id,
-                        quantidade=qtd_total_prevista
+                        quantidade_prevista=qtd_total_prevista
                     )
-                    db.session.add(reserva)
+                    db.session.add(consumo)
+                    
+                    # Se for agendado para o futuro, criar reserva
+                    if producao_futura:
+                        reserva = ReservaIngrediente(
+                            ingrediente_id=req.ingrediente_id,
+                            pedido_id=pedido.id,
+                            quantidade=qtd_total_prevista
+                        )
+                        db.session.add(reserva)
         
         db.session.commit()
+        for ordem in ordens_criadas:
+            AuditService.log_action(user_id, "CREATE", "ordens_producao", ordem.id)
+            
         socketio.emit('nova_ordem_producao', {'pedido_id': pedido.id})
         return True, None
 

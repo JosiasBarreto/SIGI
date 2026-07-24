@@ -27,7 +27,6 @@ import { useCaixaCart } from "./CaixaPOS/useCaixaCart";
 import { useCaixaSession } from "./CaixaPOS/useCaixaSession";
 import CaixaSessionModals from "../components/CaixaSessionModals";
 
-
 export default function CaixaPOS() {
   const { createVenda, checkoutPedido, enviarFatura } = useComercial();
   const [activeCategory, setActiveCategory] = useState<string>("Revenda");
@@ -223,9 +222,15 @@ export default function CaixaPOS() {
       const current_time = d.toTimeString().split(" ")[0];
 
       // Build a strictly valid order creation payload
-      const orderPayload = {
+      const strFormaPagamento = paymentMethod === "Transferência" ? "Transferencia" : (paymentMethod === "TPA / POS" ? "POS" : "Dinheiro");
+
+      const orderPayload: any = {
+        forma_pagamento: strFormaPagamento,
+        estado_pagamento: valorPagoNum >= total ? "Pago" : (valorPagoNum > 0 ? "Parcial" : "Pendente"),
+        valor_pago: valorPagoNum,
+
         cliente_id: selectedClient ? Number(selectedClient) : null,
-        tipo: tipoPedido,
+        tipo: "Simples",
         origem: "Balcao",
         data_entrega: isAgendado ? dataEntrega.split("T")[0] : current_date,
         hora_entrega: isAgendado
@@ -252,37 +257,39 @@ export default function CaixaPOS() {
         }),
       };
 
-      // Create the order first (Passo 1: POST /api/v1/pedidos)
-      const createdOrder: any = await orderService.create(orderPayload);
-
-      // Perform the Checkout step (Passo 4: POST /api/v1/comercial/checkout-pedido/<id>)
-      // If tipoPedido === 'Imediato' or a payment value is defined, trigger immediate checkout
-      const shouldCheckout = tipoPedido === "Imediato" || valorPagoNum > 0;
-      
-      if (shouldCheckout) {
-        const vendaRes = await checkoutPedido.mutateAsync({
-          pedido_id: createdOrder.id,
-          pagamento: {
-            forma_pagamento_id: paymentMethodId,
-            valor: valorPagoNum,
-            codigo_transferencia:
-              paymentMethod !== "Dinheiro" ? codigoTransferencia : null,
-            emissor: paymentMethod !== "Dinheiro" ? emissor : null,
-            observacoes: `Checkout via Caixa/POS. Pedido ${tipoPedido}.`,
-          },
-        });
+      if (tipoPedido === "Imediato") {
+        // Venda Direta (Balcão)
+        const vendaPayload = buildVendaPayload(false, valorPagoNum);
+        const vendaRes = await createVenda.mutateAsync(vendaPayload);
         setCreatedVenda(vendaRes);
       } else {
-        // Just represent the pending order as a created venda
-        setCreatedVenda({
-          id: createdOrder.id,
-          pedido_id: createdOrder.id,
-          numero: createdOrder.numero,
-          total: total,
-          saldo: total,
-          estado_pagamento: "PENDENTE",
-          itens: createdOrder.itens
-        });
+        // Create the order first (Passo 1: POST /api/v1/pedidos)
+        const createdOrder: any = await orderService.create(orderPayload);
+        
+        if (valorPagoNum > 0) {
+          const vendaRes = await checkoutPedido.mutateAsync({
+            pedido_id: createdOrder.id,
+            pagamento: {
+              observacoes: `Sinal de pagamento. Pedido Agendado.`,
+              valor: valorPagoNum,
+              forma_pagamento_id: paymentMethodId,
+              codigo_transferencia: paymentMethod !== "Dinheiro" ? codigoTransferencia : undefined,
+              emissor: paymentMethod !== "Dinheiro" ? emissor : undefined
+            } as any,
+          });
+          setCreatedVenda(vendaRes);
+        } else {
+          // Just represent the pending order as a created venda
+          setCreatedVenda({
+            id: createdOrder.id,
+            pedido_id: createdOrder.id,
+            numero: createdOrder.numero,
+            total: total,
+            saldo: total,
+            estado_pagamento: "PENDENTE",
+            itens: createdOrder.itens
+          });
+        }
       }
 
       // Pre-fill contact details if client is selected

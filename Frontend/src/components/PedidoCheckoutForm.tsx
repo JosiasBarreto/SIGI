@@ -38,7 +38,7 @@ export default function PedidoCheckoutForm({
   const [observacoes, setObservacoes] = useState(defaultObs);
 
   const checkoutMutation = useMutation({
-    mutationFn: (payload: any) => orderService.checkoutPedido(orderId, payload),
+    mutationFn: (payload: any) => orderService.adicionarPagamento(orderId, payload),
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
       queryClient.invalidateQueries({ queryKey: ["orders-cal"] });

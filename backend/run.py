@@ -37,7 +37,7 @@ with app.app_context():
     from app.models.comercial import TaxaIVA, SerieDocumento, Venda, VendaItem, FechoDiario
     from app.models.pedido import Pedido
     from app.models.item_pedido import ItemPedido
-    from app.models.evento import Espaco, Evento, EventoServico, ReservaEspaco, ReservaMaterial, EventoEquipa, HistoricoReservaMaterial
+    from app.models.evento import Espaco, Evento, EventoServico, ReservaEspaco, ReservaMaterial, EventoEquipa
     from app.models.ficha_tecnica import FichaTecnica, FichaTecnicaItem
     from app.models.financeiro import FormaPagamento, Pagamento, ContaReceber, ContaPagar, Receita, CentroCusto, Despesa
     from app.models.logistica import Motorista, Viatura, Entrega, ReservaViatura, OcorrenciaLogistica, ChecklistEntrega
@@ -190,6 +190,30 @@ with app.app_context():
         print("[OK] Updated columns in movimentacoes_armazem to VARCHAR(50).")
     except Exception as e:
         db.session.rollback()
+
+    for sql in [
+        "ALTER TABLE vendas ADD COLUMN pedido_id INTEGER;",
+        "ALTER TABLE eventos ADD COLUMN pedido_id INTEGER;",
+        "ALTER TABLE requisicoes ADD COLUMN motivo TEXT;",
+        "ALTER TABLE movimentacoes_armazem ADD COLUMN quantidade_antes NUMERIC(10,3) DEFAULT 0;",
+        "ALTER TABLE movimentacoes_armazem ADD COLUMN quantidade_depois NUMERIC(10,3) DEFAULT 0;",
+        "ALTER TABLE vendas MODIFY subtotal NUMERIC(12,2) NULL;",
+        "ALTER TABLE vendas MODIFY desconto_total NUMERIC(12,2) NULL;",
+        "ALTER TABLE vendas MODIFY base_tributavel NUMERIC(12,2) NULL;",
+        "ALTER TABLE vendas MODIFY total_iva NUMERIC(12,2) NULL;",
+        "ALTER TABLE vendas MODIFY total NUMERIC(12,2) NULL;",
+        "ALTER TABLE vendas MODIFY valor_pago NUMERIC(12,2) NULL;",
+        "ALTER TABLE vendas MODIFY saldo NUMERIC(12,2) NULL;",
+        "ALTER TABLE eventos MODIFY valor_total NUMERIC(10,2) NULL;",
+        "ALTER TABLE eventos MODIFY valor_pago NUMERIC(10,2) NULL;",
+        "ALTER TABLE eventos MODIFY saldo NUMERIC(10,2) NULL;",
+    ]:
+        try:
+            db.session.execute(text(sql))
+            db.session.commit()
+            print(f"[OK] Executed: {sql}")
+        except Exception:
+            db.session.rollback()
 
     for sql in [
         "ALTER TABLE pedidos ADD CONSTRAINT fk_pedido_evento FOREIGN KEY (evento_id) REFERENCES eventos(id);",

@@ -31,7 +31,6 @@ def build_pagination(repo, schema, request):
     }), 200
 
 # --- CLIENTES ---
-#
 @pedido_bp.route('/clientes', methods=['GET'])
 @jwt_required()
 def get_clientes():
@@ -64,34 +63,6 @@ def create_cliente():
     if error:
         return jsonify({"msg": error}), 400
     return jsonify(ClienteSchema().dump(result)), 201
-# editar cliente
-@pedido_bp.route('/clientes/<int:id>', methods=['PUT'])
-@jwt_required()
-@requires_roles('Administrador', 'Atendimento')
-def update_cliente(id):
-    try:
-        data = ClienteSchema().load(request.get_json())
-    except ValidationError as err:
-        return jsonify({"msg": "Validation error", "errors": err.messages}), 400
-        
-    user_id = get_jwt_identity()
-    result, error = pedido_service.update_cliente(id, data, user_id)
-    if error:
-        return jsonify({"msg": error}), 400
-    return jsonify(ClienteSchema().dump(result)), 200
-#ativar e desativar cliente
-@pedido_bp.route('/clientes/<int:id>/toggle', methods=['PUT'])
-@jwt_required()
-@requires_roles('Administrador', 'Atendimento')
-def toggle_cliente_status(id):
-    try:
-        user_id = get_jwt_identity()
-        result, error = pedido_service.toggle_cliente_status_services(id,  user_id)
-        if error:
-            return jsonify({"msg": error}), 400
-        return jsonify(ClienteSchema().dump(result)), 200
-    except Exception as e:
-        return jsonify({"msg": str(e)}), 500
 
 # --- PEDIDOS ---
 @pedido_bp.route('', methods=['GET'])
@@ -128,6 +99,18 @@ def update_estado(id):
         return jsonify({"msg": error}), 400
     return jsonify(PedidoSchema().dump(result)), 200
 
+@pedido_bp.route('/<int:id>/pagamentos', methods=['POST'])
+@jwt_required()
+@requires_roles('Administrador', 'Financeiro', 'Atendimento')
+def add_pagamento(id):
+    data = request.json
+    user_id = get_jwt_identity()
+    pagamento, error = pedido_service.add_pagamento(id, data, user_id)
+    if error:
+        return jsonify({'error': error}), 400
+    
+    return jsonify({'message': 'Pagamento registado com sucesso', 'id': pagamento.id}), 201
+
 # --- PDF ---
 @pedido_bp.route('/<int:id>/pdf', methods=['GET'])
 @jwt_required()
@@ -150,3 +133,21 @@ def gerar_recibo(id):
     buffer = generate_pedido_receipt(pedido)
     
     return send_file(buffer, as_attachment=False, download_name=f"recibo_{pedido.numero}.pdf", mimetype='application/pdf')
+
+@pedido_bp.route('/clientes/<int:id>', methods=['PUT'])
+@jwt_required()
+@requires_roles('Administrador', 'Atendimento')
+def update_cliente(id):
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"msg": "Nenhum dado fornecido"}), 400
+            
+    except Exception as err:
+        return jsonify({"msg": "Erro no payload", "errors": str(err)}), 400
+        
+    user_id = get_jwt_identity()
+    result, error = pedido_service.update_cliente(id, data, user_id)
+    if error:
+        return jsonify({"msg": error}), 400
+    return jsonify(ClienteSchema().dump(result)), 200

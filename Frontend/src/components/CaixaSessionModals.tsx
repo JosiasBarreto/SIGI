@@ -42,6 +42,7 @@ export default function CaixaSessionModals({
   // Sangria & Reforço states
   const [valorMovimento, setValorMovimento] = useState("");
   const [descricaoMovimento, setDescricaoMovimento] = useState("");
+  const [formaPagamentoMovimento, setFormaPagamentoMovimento] = useState("Dinheiro");
 
   // Fechar states
   const [valoresEsperados, setValoresEsperados] = useState({
@@ -133,7 +134,8 @@ export default function CaixaSessionModals({
       movimentoMutation.mutate({
         tipo: "Sangria",
         valor: val,
-        descricao: descricaoMovimento || "Sangria de caixa"
+        descricao: descricaoMovimento || "Sangria de caixa",
+        forma_pagamento: formaPagamentoMovimento
       }, {
         onSuccess: () => onClose()
       });
@@ -148,7 +150,8 @@ export default function CaixaSessionModals({
       movimentoMutation.mutate({
         tipo: "Reforço",
         valor: val,
-        descricao: descricaoMovimento || "Reforço de caixa"
+        descricao: descricaoMovimento || "Reforço de caixa",
+        forma_pagamento: formaPagamentoMovimento
       }, {
         onSuccess: () => onClose()
       });
@@ -295,6 +298,18 @@ export default function CaixaSessionModals({
                 </div>
 
                 <div>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
+                    Forma de Pagamento
+                  </label>
+                  <select
+                    value={formaPagamentoMovimento}
+                    onChange={(e) => setFormaPagamentoMovimento(e.target.value)}
+                    className="w-full bg-gray-50 border border-gray-200 dark:border-gray-700 dark:bg-gray-800 rounded-lg px-4 py-2.5 text-base focus:border-primary outline-none mb-4"
+                  >
+                    <option value="Dinheiro">Dinheiro</option>
+                    <option value="Transferencia">Transferência</option>
+                    <option value="POS">TPA / POS</option>
+                  </select>
                   <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
                     Descrição / Motivo
                   </label>
