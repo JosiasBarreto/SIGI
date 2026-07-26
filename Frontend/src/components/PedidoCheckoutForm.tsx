@@ -69,8 +69,7 @@ export default function PedidoCheckoutForm({
     checkoutMutation.mutate({
       forma_pagamento_id: paymentMethod === "Transferência" ? 2 : paymentMethod === "TPA / POS" ? 3 : 1,
       valor: parsedValue,
-      codigo_transferencia: requiresReference ? codigo : null,
-      emissor: requiresReference ? emissor : null,
+      referencia: requiresReference ? (codigo + (emissor ? ' / ' + emissor : '')) : null,
       observacoes,
     });
   };

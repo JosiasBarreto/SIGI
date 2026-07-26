@@ -8,7 +8,7 @@ interface Product {
   nome?: string;
   salePrice?: number;
   preco_venda?: number;
-  preco_iva?: number;
+  preco_venda_com_iva?: number;
   quantity?: number;
   stock_atual?: number;
   unit?: string;
@@ -42,7 +42,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({
 
           const iva = Number(p.taxa_iva || 0);
 
-          const priceWithIva = iva ? p.preco_iva : price;
+          const priceWithIva = iva ? p.preco_venda_com_iva : price;
           const displayPrice = showPriceWithIva ? priceWithIva : price;
           const secondaryPrice = showPriceWithIva ? price : priceWithIva;
 

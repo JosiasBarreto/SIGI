@@ -66,6 +66,7 @@ class ProdutoSchema(Schema):
     taxa_iva_id = fields.Int(required=False, allow_none=True)
     data_validade = fields.Date(required=False, allow_none=True)
     taxa_iva = fields.Function(lambda obj: obj.taxa_iva.percentagem if obj.taxa_iva else None)
+    preco_venda_com_iva = fields.Function(lambda obj: float(round(float(obj.preco_venda) * (1 + float(obj.taxa_iva.percentagem) / 100), 2)) if (obj.preco_venda is not None and obj.taxa_iva is not None) else (float(obj.preco_venda) if obj.preco_venda is not None else None))
     unidade_medida_sigla = fields.Function(lambda obj: obj.unidade_medida.sigla if obj.unidade_medida else None)
     categoria_nome = fields.Function(lambda obj: obj.categoria_rel.nome if hasattr(obj, 'categoria_rel') and obj.categoria_rel else None)
     armazem_id = fields.Function(

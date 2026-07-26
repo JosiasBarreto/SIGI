@@ -94,40 +94,58 @@ class PedidoService:
 
         for item in itens_data:
             qtd = float(item['quantidade'])
-            preco = float(item['preco_unitario'])
-            item_sub = qtd * preco
-
-            # Cálculo de IVA
+            
+            # Fetch produto to get price and IVA
+            preco = 0.0
             iva_perc = 0.0
             taxa_iva_id = None
+            produto = None
             if item.get('produto_id'):
                 produto = db.session.query(Produto).filter_by(id=item['produto_id']).first()
-                if produto and produto.taxa_iva:
-                    iva_perc = float(produto.taxa_iva.percentagem)
-                    taxa_iva_id = produto.taxa_iva_id
-
+                if produto:
+                    preco = float(produto.preco_venda) if produto.preco_venda is not None else 0.0
+                    if produto.taxa_iva:
+                        iva_perc = float(produto.taxa_iva.percentagem)
+                        taxa_iva_id = produto.taxa_iva_id
+                        
+            # Se for serviço, e não enviar produto_id, usa o preço enviado
+            if 'preco_unitario' in item and not item.get('produto_id'):
+                preco = float(item['preco_unitario'])
+            
+            # Preco_unitario na base de dados é sem IVA (ou com IVA, mas vamos seguir a lógica de que preco_venda é s/IVA e o frontend mostra com IVA, ou o preco_venda já tem IVA? O user disse "calcula o custo aplicando iva quando necessario").
+            # Vamos aplicar a lógica: se preco_venda for a base, calculamos preco_com_iva.
+            # O user disse "o backend calcula o valor de produto com iva e retorna e os que não tiver iva retorna o valor de venda normal".
+            # Isso quer dizer que preco_venda no DB é o preço base (s/ IVA). 
+            # Então preco_unitario = preco + IVA? 
+            # Mas espera, se preco_venda for base, então preco_unitario base = preco.
+            # E preco_com_iva = preco * (1 + iva_perc/100).
+            
+            preco_base = preco
+            
+            item_sub_base = qtd * preco_base
             item_desc = float(item.get('desconto', 0))
-            item_base = item_sub - item_desc
+            
+            item_base = item_sub_base - item_desc
             item_iva_val = item_base * (iva_perc / 100.0)
             item_total = item_base + item_iva_val
 
-            subtotal_pedido += item_sub
+            subtotal_pedido += item_sub_base
             total_desconto += item_desc
             base_tributavel += item_base
             total_iva += item_iva_val
             total += item_total
 
             i_pedido = ItemPedido(
-                tipo_item=item['tipo_item'],
+                tipo_item=item.get('tipo_item', 'Produto'),
                 produto_id=item.get('produto_id'),
-                descricao=item.get('descricao'),
+                descricao=item.get('descricao', produto.nome if produto else 'Item'),
                 quantidade=qtd,
-                preco_unitario=preco,
+                preco_unitario=preco_base,
                 desconto=item_desc,
                 taxa_iva_id=taxa_iva_id,
                 taxa_iva=iva_perc,
                 valor_iva=item_iva_val,
-                subtotal=item_sub,
+                subtotal=item_sub_base,
                 total=item_total,
                 pedido=pedido,
                 created_by=user_id
@@ -161,7 +179,7 @@ class PedidoService:
             for item in itens_data:
                 if item.get('produto_id'):
                     # Pega a ficha tecnica do produto
-                    ficha = db.session.query(FichaTecnica).filter_by(produto_id=item['produto_id']).first()
+                    ficha = db.session.query(FichaTecnica).filter_by(produto_acabado_id=item['produto_id']).first()
                     if ficha:
                         for f_item in ficha.itens:
                             qtd_reservar = float(f_item.quantidade) * float(item['quantidade'])
@@ -229,14 +247,14 @@ class PedidoService:
         mov = MovimentoCaixa(
             caixa_id=caixa.id,
             utilizador_id=user_id,
-            tipo=TipoMovimentoCaixa.ENTRADA,
+            tipo=TipoMovimentoCaixa.RECEBIMENTO,
             valor=valor_pagar_real,
             descricao=f"Pagamento Pedido #{pedido.numero}",
-            forma_pagamento_id=data.get('forma_pagamento_id')
+            forma_pagamento=str(data.get('forma_pagamento_id'))
         )
         db.session.add(mov)
         
-        caixa.saldo_atual += valor_pagar_real
+        
         
         # Auditoria Pagamento
         from app.services.audit_service import AuditService

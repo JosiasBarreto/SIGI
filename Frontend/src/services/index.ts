@@ -284,10 +284,31 @@ export const clientService = {
   }
 };
 
+const normalizePedidoEstado = (estado: string): string => {
+  if (!estado) return "Pendente";
+  const e = estado.trim();
+  if (e === "Em Produção" || e === "Em Produçao" || e === "Em_Producao") return "Em Producao";
+  if (e === "Concluído" || e === "Concluido" || e === "Concluida") return "Concluido";
+  const validMap: Record<string, string> = {
+    "pendente": "Pendente",
+    "agendado": "Agendado",
+    "confirmado": "Confirmado",
+    "em producao": "Em Producao",
+    "em produção": "Em Producao",
+    "pronto": "Pronto",
+    "entregue": "Entregue",
+    "concluido": "Concluido",
+    "concluído": "Concluido",
+    "cancelado": "Cancelado"
+  };
+  return validMap[e.toLowerCase()] || e;
+};
+
 export const orderService = {
   ...createService<PedidoDTO>('/v1/pedidos', 'orders'),
   async updateEstado(id: string | number, estado: string, justificativa_cancelamento?: string): Promise<PedidoDTO> {
-    return apiClient.put<any, PedidoDTO>(`/v1/pedidos/${id}/estado`, { estado, justificativa_cancelamento });
+    const estadoNormalized = normalizePedidoEstado(estado);
+    return apiClient.put<any, PedidoDTO>(`/v1/pedidos/${id}/estado`, { estado: estadoNormalized, justificativa_cancelamento });
   },
   async checkoutPedido(id: string | number, payload: { forma_pagamento_id?: number | string; valor?: number; codigo_transferencia?: string | null; emissor?: string | null; observacoes?: string; serie_id?: number }): Promise<any> {
     return await apiClient.post<any, any>(`/v1/comercial/checkout-pedido/${id}`, payload);

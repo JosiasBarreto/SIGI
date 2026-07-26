@@ -215,14 +215,15 @@ export default function Orders() {
             tipoItem = "Servico";
           }
 
-          const produtoId = isNaN(Number(item.id)) ? null : Number(item.id);
+          const produtoId = isNaN(Number(item.id)) ? undefined : Number(item.id);
 
           return {
             tipo_item: tipoItem === "PRODUTO" ? "Produto" : tipoItem,
             produto_id: produtoId,
             descricao: item.name || item.nome || "Item de Pedido",
             quantidade: Number(item.qty),
-            preco_unitario: Number(item.price)
+            preco_unitario: Number(item.price),
+            desconto: Number(item.discount || 0)
           };
         })
       };
@@ -270,7 +271,7 @@ export default function Orders() {
       setCart([...cart, {
         ...item,
         qty: 1,
-        price: item.salePrice || Number(item.preco_venda || 1000),
+        price: Number(item.preco_venda_com_iva || item.salePrice || item.preco_venda || 0),
         discount: 0,
         notes: ""
       }]);
@@ -662,7 +663,7 @@ export default function Orders() {
                           <span className="font-bold text-gray-900 dark:text-white leading-snug">{item.name || item.nome}</span>
                           <div className="flex justify-between items-center text-gray-500 mt-1">
                             <span className="px-1.5 py-0.5 bg-gray-100 rounded dark:bg-gray-800">{item.category}</span>
-                            <span className="font-semibold text-primary">{formatCurrency(item.salePrice || Number(item.preco_venda || 0))}</span>
+                            <span className="font-semibold text-primary">{formatCurrency(Number(item.preco_venda_com_iva || item.salePrice || item.preco_venda || 0))}</span>
                           </div>
                         </button>
                       ))}

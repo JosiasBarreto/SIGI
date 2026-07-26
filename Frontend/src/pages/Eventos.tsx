@@ -153,7 +153,7 @@ export default function Eventos() {
 
     if (result.isConfirmed && result.value) {
       // The backend /faturar just requires serie_id and observacoes
-      faturarMutation.mutate({ id: currentRecord.id, pagamento: { serie_id: 1, observacoes: result.value.observacoes } as any });
+      faturarMutation.mutate({ id: currentRecord.id, pagamento: result.value as any });
     }
   };
 
@@ -182,7 +182,8 @@ export default function Eventos() {
         tipo: 'Cozinha',
         descricao: dataObj.servico_descricao || dataObj.descricao || dataObj.titulo || 'Servico de evento',
         quantidade: 1,
-        valor_unitario: valorEvento
+        valor_unitario: valorEvento,
+        desconto: Number(dataObj.desconto || 0)
       }];
     }
     delete dataObj.valor_evento;

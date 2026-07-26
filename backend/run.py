@@ -58,6 +58,12 @@ with app.app_context():
     from app.models.empresa import Empresa
 
     # Recreate any missing tables (like movimentos_stock or movimentacoes_armazem)
+    try:
+        from apply_migration import run_migrations
+        run_migrations()
+    except Exception as _mig_err:
+        print("[WARN] Migration warning:", _mig_err)
+
     run_with_ddl_retry(db.create_all, "db.create_all")
 
     # Seed default shifts

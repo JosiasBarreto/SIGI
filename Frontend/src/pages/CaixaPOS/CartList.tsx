@@ -6,7 +6,7 @@ interface CartItem {
   nome: string;
   salePrice?: number;
   preco_venda?: number;
-  preco_iva?: number;
+  preco_venda_com_iva?: number;
   taxa_iva?: number;
   qty: number;
 }
@@ -37,7 +37,7 @@ const CartList: React.FC<CartListProps> = ({
         cart.map((item) => {
           const precoSemIva = Number(item.preco_venda || 0);
           const iva = Number(item.taxa_iva || 0);
-          const preco_iva = Number(item.preco_iva || 0);
+          const preco_iva = Number(item.preco_venda_com_iva || 0);
          
 
           const precoComIva =

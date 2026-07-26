@@ -85,10 +85,9 @@ export const schemas: Record<string, ModuleSchema> = {
         label: "Preço Com IVA",
         render: (val, item) => {
           const precoVenda = Number(item.preco_venda);
-          const taxaIva = Number(item.taxa_iva);
-          if (taxaIva) {
-            const precoLiquido = precoVenda + (taxaIva / 100) * precoVenda;
-            return formatarValor(precoLiquido);
+          const precoComIva = Number(item.preco_venda_com_iva);
+          if (!isNaN(precoComIva) && precoComIva > 0) {
+            return formatarValor(precoComIva);
           }
           return formatarValor(precoVenda);
         },
@@ -392,6 +391,7 @@ export const schemas: Record<string, ModuleSchema> = {
       },
       { name: "servico_descricao", label: "Servico Principal", type: "text" },
       { name: "valor_pago", label: "Valor Pago", type: "number" },
+      { name: "desconto", label: "Desconto", type: "number" },
       { name: "descricao", label: "Descrição / Observações", type: "textarea" },
 
     ],

@@ -62,31 +62,42 @@ class ComercialService:
         total_iva = 0.0
 
         for item_data in data.get('itens', []):
+            produto = None
             if item_data.get('item_tipo', 'Produto') == 'Produto' and item_data.get('item_id'):
                 produto = Produto.query.get(item_data['item_id'])
                 if produto and produto.tipo == TipoProduto.CONSUMIVEL.value:
                     db.session.rollback()
                     raise ValueError(f"O produto '{produto.nome}' é consumível e não pode ser vendido.")
 
-            preco_unit = float(item_data['preco_unitario'])
             qtd = float(item_data['quantidade'])
-            desc = float(item_data.get('desconto', 0))
             
-            sub = preco_unit * qtd
-            total_item = sub - desc
-            
+            preco_unit = 0.0
             taxa_iva = None
-            if item_data.get('taxa_iva_id'):
+            if produto:
+                preco_unit = float(produto.preco_venda) if produto.preco_venda is not None else 0.0
+                if produto.taxa_iva:
+                    taxa_iva = produto.taxa_iva
+                    
+            if 'preco_unitario' in item_data and not produto:
+                preco_unit = float(item_data['preco_unitario'])
+                
+            if item_data.get('taxa_iva_id') and not taxa_iva:
                 taxa_iva = TaxaIVA.query.get(item_data['taxa_iva_id'])
             
             iva_perc = float(taxa_iva.percentagem) if taxa_iva else 0.0
-            valor_iva = total_item * (iva_perc / 100.0)
+            
+            desc = float(item_data.get('desconto', 0))
+            
+            sub = preco_unit * qtd
+            item_base = sub - desc
+            valor_iva = item_base * (iva_perc / 100.0)
+            total_item = item_base + valor_iva
             
             venda_item = VendaItem(
                 venda_id=venda.id,
                 item_tipo=item_data.get('item_tipo', 'Produto'),
                 item_id=item_data.get('item_id'),
-                descricao=item_data['descricao'],
+                descricao=item_data.get('descricao', produto.nome if produto else 'Item'),
                 quantidade=qtd,
                 preco_unitario=preco_unit,
                 desconto=desc,
@@ -94,14 +105,14 @@ class ComercialService:
                 taxa_iva=iva_perc,
                 valor_iva=valor_iva,
                 subtotal=sub,
-                total=total_item + valor_iva
+                total=total_item
             )
             
             db.session.add(venda_item)
             
             subtotal += sub
             total_desconto += desc
-            base_tributavel += total_item
+            base_tributavel += item_base
             total_iva += valor_iva
             
         if venda.pedido_id:
@@ -136,9 +147,10 @@ class ComercialService:
             self.audit_service.log_action(
                 user_id=user_id,
                 action='CREATE_VENDA',
-                module='COMERCIAL',
-                ip_address='',
-                details={'venda_id': venda.id, 'numero': venda.numero_documento}
+                entidade='vendas',
+                record_id=venda.id,
+                new_values={'numero': venda.numero_documento},
+                modulo='COMERCIAL'
             )
             return venda
         except Exception as e:
@@ -257,7 +269,7 @@ class ComercialService:
         )
         db.session.add(mov)
         
-        caixa.saldo_atual = float(caixa.saldo_atual) + valor_pagar
+        
         
         evento.valor_pago = float(evento.valor_pago) + valor_pagar
         evento.saldo = float(evento.valor_total) - float(evento.valor_pago)
@@ -297,9 +309,9 @@ class ComercialService:
             self.audit_service.log_action(
                 user_id=user_id,
                 action='CANCEL_VENDA',
-                module='COMERCIAL',
-                ip_address=ip_address,
-                details={'venda_id': venda.id}
+                entidade='vendas',
+                record_id=venda.id,
+                modulo='COMERCIAL'
             )
             return venda
         except Exception as e:
@@ -330,7 +342,6 @@ class ComercialService:
         pagamento = Pagamento(
             venda_id=venda.id,
             valor=valor_entregue,
-            troco=troco if hasattr(Pagamento, 'troco') else 0, # Se a model Pagamento não tiver troco, evitamos crash
             forma_pagamento_id=data.get('forma_pagamento_id'),
             referencia=data.get('referencia'),
             observacoes=f"Pagamento. Troco: {troco}. " + data.get('observacoes', ''),
@@ -356,7 +367,7 @@ class ComercialService:
             utilizador_id=user_id
         )
         db.session.add(mov)
-        caixa.saldo_atual = float(caixa.saldo_atual) + valor_pagar_real
+        
         
         if auto_commit:
             try:

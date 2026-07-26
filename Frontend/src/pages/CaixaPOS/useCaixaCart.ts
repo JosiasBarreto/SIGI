@@ -4,6 +4,7 @@ import { TipoProduto } from "../../enums";
 export function useCaixaCart(products: any[], descontoClientePercent: number) {
   const [cart, setCart] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [descontoManual, setDescontoManual] = useState<number>(0);
 
   const displayProducts = useMemo(() => {
     return products.filter((product: any) => {
@@ -30,7 +31,7 @@ export function useCaixaCart(products: any[], descontoClientePercent: number) {
     () =>
       cart.reduce(
         (sum, item) =>
-          sum + Number(item.salePrice || item.preco_venda || item.preco_iva || 0) * Number(item.qty),
+          sum + Number(item.preco_venda || item.salePrice || 0) * Number(item.qty),
         0
       ),
     [cart]
@@ -39,8 +40,8 @@ export function useCaixaCart(products: any[], descontoClientePercent: number) {
   const totalComIva = useMemo(
     () =>
       cart.reduce((sum, item) => {
-        if (Number(item.preco_iva) > 0 && Number(item.taxa_iva) > 0) {
-          return sum + Number(item.preco_iva) * Number(item.qty);
+        if (Number(item.preco_venda_com_iva) > 0 && Number(item.taxa_iva) > 0) {
+          return sum + Number(item.preco_venda_com_iva) * Number(item.qty);
         }
         return sum + Number(item.preco_venda || 0) * Number(item.qty);
       }, 0),
@@ -51,14 +52,14 @@ export function useCaixaCart(products: any[], descontoClientePercent: number) {
     () =>
       cart.reduce((sum, item) => {
         const precoVenda = Number(item.preco_venda || 0);
-        const precoIva = Number(item.preco_iva || precoVenda);
+        const precoIva = Number(item.preco_venda_com_iva || precoVenda);
         return sum + (precoIva - precoVenda) * Number(item.qty);
       }, 0),
     [cart]
   );
 
   const descontoAutomatico = subtotal * (descontoClientePercent / 100);
-  const total = Math.max(0, totalComIva - descontoAutomatico);
+  const total = Math.max(0, totalComIva - descontoAutomatico - descontoManual);
 
   const addToCart = (product: any) => {
     setCart((currentCart) => {
@@ -86,9 +87,11 @@ export function useCaixaCart(products: any[], descontoClientePercent: number) {
     setCart((currentCart) => currentCart.filter((item) => item.id !== id));
   };
 
-  const clearCart = () => setCart([]);
+  const clearCart = () => { setCart([]); setDescontoManual(0); };
 
   return {
+    descontoManual,
+    setDescontoManual,
     cart,
     setCart,
     searchTerm,

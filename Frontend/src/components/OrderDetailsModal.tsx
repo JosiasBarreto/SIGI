@@ -42,17 +42,19 @@ export default function OrderDetailsModal({ order, isOpen, onClose, onUpdateStat
   const client = clients?.find((c: any) => String(c.id) === String(order.clientId || order.cliente_id));
   
   const orderSteps = [
-    { status: 'Agendado', icon: FileText },
-    { status: 'Confirmado', icon: CreditCard },
-    { status: 'Em Produção', icon: Play },
-    { status: 'Pronto', icon: Gift },
-    { status: 'Entregue', icon: CheckCircle },
-    { status: 'Concluído', icon: CheckCircle },
+    { status: 'Agendado', value: 'Agendado', icon: FileText },
+    { status: 'Confirmado', value: 'Confirmado', icon: CreditCard },
+    { status: 'Em Produção', value: 'Em Producao', icon: Play },
+    { status: 'Pronto', value: 'Pronto', icon: Gift },
+    { status: 'Entregue', value: 'Entregue', icon: CheckCircle },
+    { status: 'Concluído', value: 'Concluido', icon: CheckCircle },
   ];
 
   // If status is Cancelado, handle it separately.
   const isCanceled = orderStatus === 'Cancelado';
-  let currentIndex = isCanceled ? -1 : orderSteps.findIndex(s => s.status === orderStatus);
+  let currentIndex = isCanceled
+    ? -1
+    : orderSteps.findIndex((s) => s.status === orderStatus || s.value === orderStatus);
   
   // Map older statuses to new ones if necessary
   if (!isCanceled && currentIndex === -1) {
@@ -219,7 +221,7 @@ export default function OrderDetailsModal({ order, isOpen, onClose, onUpdateStat
                          <span className="text-sm font-bold text-gray-900 dark:text-white">{quantidade}x {item.descricao || (prod ? prod.nome : `Produto (${item.productId || item.produto_id})`)}</span>
                          {prod && <span className="text-xs text-gray-500">{prod.categoria}</span>}
                        </div>
-                       <span className="font-semibold text-sm text-primary">{formatCurrency(Number(item.subtotal || item.preco_unitario || prod?.preco_venda || 0) * (item.subtotal ? 1 : quantidade))}</span>
+                       <span className="font-semibold text-sm text-primary">{formatCurrency(Number(item.subtotal || item.preco_unitario || prod?.preco_venda_com_iva || prod?.preco_venda || 0) * (item.subtotal ? 1 : quantidade))}</span>
                      </div>
                    );
                  })}
@@ -306,7 +308,7 @@ export default function OrderDetailsModal({ order, isOpen, onClose, onUpdateStat
              {!isCanceled && currentIndex < orderSteps.length - 1 && (
                <button 
                  onClick={() => {
-                   onUpdateStatus(order.id, orderSteps[currentIndex + 1].status);
+                   onUpdateStatus(order.id, orderSteps[currentIndex + 1].value);
                    onClose();
                  }}
                  className="w-full sm:w-auto px-6 py-4 sm:py-3 text-sm font-bold text-white bg-primary hover:bg-primary-hover rounded-xl shadow-xl shadow-primary/20 transition-colors flex justify-center items-center gap-2"

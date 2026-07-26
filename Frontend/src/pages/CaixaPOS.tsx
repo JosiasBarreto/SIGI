@@ -92,6 +92,8 @@ export default function CaixaPOS() {
     totalComIva,
     Iva,
     descontoAutomatico,
+    descontoManual,
+    setDescontoManual,
     total,
     addToCart: handleAddToCart,
     updateQty,
@@ -168,20 +170,22 @@ export default function CaixaPOS() {
 
       const mapCartToVendaItens = (
         quantidadesDisponiveis?: Record<number, number>
-      ) =>
-        cart.map((i) => {
+      ) => {
+        const cartTotalValue = cart.reduce((acc, it) => acc + Number(it.preco_venda_com_iva || it.salePrice || it.preco_venda || 0) * Number(quantidadesDisponiveis?.[Number(it.id)] ?? it.qty), 0);
+        return cart.map((i) => {
           let tipoItem = "Produto";
           const cat = String(i.category || i.categoria || "").toLowerCase();
           if (cat.includes("servi") || cat.includes("servic")) {
             tipoItem = "Servico";
           }
-          const preco = Number(i.salePrice || i.preco_venda || 0);
+          const preco = Number(i.preco_venda_com_iva || i.salePrice || i.preco_venda || 0);
           const itemId = Number(i.id);
           const quantidade = quantidadesDisponiveis?.[itemId] ?? Number(i.qty);
-          const descontoItem =
-            descontoClientePercent > 0
-              ? (preco * quantidade * descontoClientePercent) / 100
-              : 0;
+          let descontoItem = descontoClientePercent > 0 ? (preco * quantidade * descontoClientePercent) / 100 : 0;
+          if (descontoManual > 0 && cartTotalValue > 0) {
+             const proportionalRatio = (preco * quantidade) / cartTotalValue;
+             descontoItem += (descontoManual * proportionalRatio);
+          }
           return {
             item_id: itemId,
             item_tipo: tipoItem,
@@ -191,6 +195,7 @@ export default function CaixaPOS() {
             desconto: descontoItem,
           };
         });
+      };
 
       const buildVendaPayload = (
         converterStockInsuficiente = false,
@@ -199,7 +204,6 @@ export default function CaixaPOS() {
         tipo_documento: "FR",
         cliente_id: selectedClient ? Number(selectedClient) : undefined,
         observacoes: "Venda direta via POS",
-        converter_stock_insuficiente: converterStockInsuficiente,
         itens: mapCartToVendaItens(),
         pagamentos:
           valorPagamento > 0
@@ -207,11 +211,8 @@ export default function CaixaPOS() {
                 {
                   forma_pagamento_id: paymentMethodId,
                   valor: valorPagamento,
-                  codigo_transferencia:
-                    paymentMethod !== "Dinheiro"
-                      ? codigoTransferencia
-                      : undefined,
-                  emissor: paymentMethod !== "Dinheiro" ? emissor : undefined,
+                  codigo_transferencia: paymentMethod !== "Dinheiro" ? (codigoTransferencia || null) : null,
+                  emissor: paymentMethod !== "Dinheiro" ? (emissor || null) : null,
                 },
               ]
             : [],
@@ -225,11 +226,7 @@ export default function CaixaPOS() {
       const strFormaPagamento = paymentMethod === "Transferência" ? "Transferencia" : (paymentMethod === "TPA / POS" ? "POS" : "Dinheiro");
 
       const orderPayload: any = {
-        forma_pagamento: strFormaPagamento,
-        estado_pagamento: valorPagoNum >= total ? "Pago" : (valorPagoNum > 0 ? "Parcial" : "Pendente"),
-        valor_pago: valorPagoNum,
-
-        cliente_id: selectedClient ? Number(selectedClient) : null,
+        cliente_id: selectedClient ? Number(selectedClient) : undefined,
         tipo: "Simples",
         origem: "Balcao",
         data_entrega: isAgendado ? dataEntrega.split("T")[0] : current_date,
@@ -238,23 +235,34 @@ export default function CaixaPOS() {
           : current_time,
         estado: "Pendente",
         observacoes: `Pedido ${tipoPedido}. Caixa: #${caixaId}`,
-        itens: cart.map((i) => {
-          let tipoItem = "PRODUTO";
+        valor_pago: valorPagoNum,
+        forma_pagamento: strFormaPagamento,
+        itens: (() => {
+          const cartTotalValue = cart.reduce((acc, it) => acc + Number(it.preco_venda_com_iva || it.salePrice || it.preco_venda || 0) * Number(it.qty), 0);
+          return cart.map((i) => {
+          const preco = Number(i.preco_venda_com_iva || i.salePrice || i.preco_venda || 0);
+          const quantidade = Number(i.qty);
+          let descontoItem = descontoClientePercent > 0 ? (preco * quantidade * descontoClientePercent) / 100 : 0;
+          if (descontoManual > 0 && cartTotalValue > 0) {
+             const proportionalRatio = (preco * quantidade) / cartTotalValue;
+             descontoItem += (descontoManual * proportionalRatio);
+          }
+          let tipoItem = "Produto";
           const cat = String(i.category || i.categoria || "").toLowerCase();
           if (cat.includes("servi") || cat.includes("servic")) {
             tipoItem = "Servico";
           }
-
-          const produtoId = isNaN(Number(i.id)) ? null : Number(i.id);
-
+          const produtoId = isNaN(Number(i.id)) ? undefined : Number(i.id);
           return {
-            tipo_item: tipoItem === "PRODUTO" ? "Produto" : tipoItem,
+            tipo_item: tipoItem,
             produto_id: produtoId,
             descricao: i.name || i.nome || "Item de Venda",
             quantidade: Number(i.qty),
-            preco_unitario: Number(i.salePrice || i.preco_venda || 0),
+            preco_unitario: preco,
+            desconto: descontoItem,
           };
-        }),
+        })
+        })(),
       };
 
       if (tipoPedido === "Imediato") {
@@ -270,11 +278,11 @@ export default function CaixaPOS() {
           const vendaRes = await checkoutPedido.mutateAsync({
             pedido_id: createdOrder.id,
             pagamento: {
-              observacoes: `Sinal de pagamento. Pedido Agendado.`,
+              observacoes: `Liquidação em caixa`,
               valor: valorPagoNum,
               forma_pagamento_id: paymentMethodId,
-              codigo_transferencia: paymentMethod !== "Dinheiro" ? codigoTransferencia : undefined,
-              emissor: paymentMethod !== "Dinheiro" ? emissor : undefined
+              codigo_transferencia: paymentMethod !== "Dinheiro" ? (codigoTransferencia || null) : null,
+              emissor: paymentMethod !== "Dinheiro" ? (emissor || null) : null
             } as any,
           });
           setCreatedVenda(vendaRes);
@@ -311,6 +319,8 @@ export default function CaixaPOS() {
   };
 
   const finishSale = () => {
+    setSearchTerm("");
+    setStep(1);
     clearCart();
     setSelectedClient("");
     setAmountReceived(0);
@@ -340,7 +350,7 @@ export default function CaixaPOS() {
       <tr>
         <td>${Number(item.qty)}x ${item.name || item.nome}</td>
         <td style="text-align:right">${formatCurrency(
-          Number(item.salePrice || item.preco_venda || 0) * Number(item.qty)
+          Number(item.preco_venda_com_iva || item.salePrice || item.preco_venda || 0) * Number(item.qty)
         )}</td>
       </tr>
     `
@@ -561,8 +571,27 @@ export default function CaixaPOS() {
 
                 {descontoAutomatico > 0 && (
                   <div className="flex justify-between text-red-500">
-                    <span>Desconto ({descontoClientePercent}%)</span>
+                    <span>Desconto Cliente ({descontoClientePercent}%)</span>
                     <span>- {formatCurrency(descontoAutomatico)}</span>
+                  </div>
+                )}
+                
+                <div className="flex justify-between items-center text-gray-600 dark:text-gray-400">
+                  <span className="flex items-center gap-1">Desconto Extra (Valor)</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    className="w-24 px-2 py-1 text-right text-sm border rounded dark:bg-gray-800 dark:border-gray-700 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary"
+                    placeholder="0.00"
+                    value={descontoManual || ""}
+                    onChange={(e) => setDescontoManual(Math.max(0, parseFloat(e.target.value) || 0))}
+                  />
+                </div>
+                {descontoManual > 0 && (
+                  <div className="flex justify-between text-red-500">
+                    <span>Desconto Extra Aplicado</span>
+                    <span>- {formatCurrency(descontoManual)}</span>
                   </div>
                 )}
                 {/* IVA */}

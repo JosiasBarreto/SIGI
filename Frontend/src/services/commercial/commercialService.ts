@@ -26,11 +26,7 @@ export const commercialService = {
   checkoutPedido: async (data: CheckoutPedidoRequest): Promise<VendaResponse> => {
     // Transforma Pedido em Venda (gera documento fiscal)
     const pedidoId = data.pedido_id;
-    const pag = data.pagamento as any;
-    const payload = {
-      serie_id: 1,
-      observacoes: pag?.observacoes || 'Processado no POS.'
-    };
+    const payload = { pagamento: data.pagamento };
     try {
       return await apiClient.post<any, VendaResponse>(`/v1/comercial/checkout-pedido/${pedidoId}`, payload);
     } catch (err: any) {

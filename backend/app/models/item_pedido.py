@@ -8,7 +8,6 @@ class TipoItem(str, Enum):
     PRODUTO_REVENDA = 'Produto Revenda'
     SERVICO = 'Servico'
     ALUGUER = 'Aluguer'
-    MATERIAL = 'Material'
 
 class ItemPedido(BaseModel):
     __tablename__ = 'itens_pedido'
@@ -24,6 +23,11 @@ class ItemPedido(BaseModel):
     
     quantidade = db.Column(db.Numeric(10, 2), nullable=False)
     preco_unitario = db.Column(db.Numeric(10, 2), nullable=False)
+    
+    desconto = db.Column(db.Numeric(10, 2), default=0)
+    taxa_iva_id = db.Column(db.Integer, db.ForeignKey('taxas_iva.id'), nullable=True)
+    taxa_iva = db.Column(db.Numeric(5, 2), default=0)
+    valor_iva = db.Column(db.Numeric(10, 2), default=0)
+    
     subtotal = db.Column(db.Numeric(10, 2), nullable=False)
-
-    produto = db.relationship('Produto', lazy='joined')
+    total = db.Column(db.Numeric(10, 2), nullable=False)

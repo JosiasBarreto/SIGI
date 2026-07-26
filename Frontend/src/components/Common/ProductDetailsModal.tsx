@@ -122,7 +122,7 @@ export function ProductDetailsModal({ isOpen, onClose, product }: ProductDetails
               <div className="flex justify-between items-center pb-2 border-b border-gray-50 dark:border-gray-800/50">
                 <span className="text-xs font-medium text-gray-500">Preço de Venda (C/ IVA)</span>
                 <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
-                  {product.preco_venda ? formatCurrency(Number(product.preco_venda) * (1 + (Number(product.taxa_iva || 0) / 100))) : '-'}
+                  {product.preco_venda_com_iva ? formatCurrency(Number(product.preco_venda_com_iva)) : product.preco_venda ? formatCurrency(Number(product.preco_venda)) : '-'}
                 </span>
               </div>
               <div className="flex justify-between items-center">
