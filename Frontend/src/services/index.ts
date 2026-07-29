@@ -1,4 +1,6 @@
 import apiClient, { ApiResponse, PaginatedData } from '../api/client';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { 
   UserDTO, 
   ProdutoDTO, 
@@ -285,16 +287,31 @@ export const clientService = {
 };
 
 const normalizePedidoEstado = (estado: string): string => {
-  if (!estado) return "Pendente";
+  if (!estado) return "Agendado";
   const e = estado.trim();
-  if (e === "Em Produção" || e === "Em Produçao" || e === "Em_Producao") return "Em Producao";
-  if (e === "Concluído" || e === "Concluido" || e === "Concluida") return "Concluido";
+  const upper = e.toUpperCase().replace(/\s+/g, '_');
+  
+  if (upper === 'EM_PRODUCAO' || upper === 'EM_PRODUÇÃO' || upper === 'EM_PREPARACAO' || upper === 'EM_PREPARAÇÃO') {
+    return 'Em Producao';
+  }
+  if (upper === 'CONCLUIDO' || upper === 'CONCLUÍDO' || upper === 'CONCLUIDA' || upper === 'COMPLETADO') {
+    return 'Concluido';
+  }
+  if (upper === 'PENDENTE' || upper === 'AGENDADO' || upper === 'RASCUNHO') {
+    return 'Agendado';
+  }
+  if (upper === 'CONFIRMADO') return 'Confirmado';
+  if (upper === 'PRONTO') return 'Pronto';
+  if (upper === 'ENTREGUE') return 'Entregue';
+  if (upper === 'CANCELADO') return 'Cancelado';
+
   const validMap: Record<string, string> = {
-    "pendente": "Pendente",
     "agendado": "Agendado",
+    "pendente": "Agendado",
     "confirmado": "Confirmado",
     "em producao": "Em Producao",
     "em produção": "Em Producao",
+    "em_producao": "Em Producao",
     "pronto": "Pronto",
     "entregue": "Entregue",
     "concluido": "Concluido",
@@ -304,11 +321,33 @@ const normalizePedidoEstado = (estado: string): string => {
   return validMap[e.toLowerCase()] || e;
 };
 
+const baseOrderService = createService<PedidoDTO>('/v1/pedidos', 'orders');
+
 export const orderService = {
-  ...createService<PedidoDTO>('/v1/pedidos', 'orders'),
+  ...baseOrderService,
+  async create(data: Partial<PedidoDTO>): Promise<PedidoDTO> {
+    const payload = { ...data };
+    if (payload.estado) {
+      payload.estado = normalizePedidoEstado(payload.estado);
+    } else {
+      payload.estado = "Agendado";
+    }
+    return baseOrderService.create(payload);
+  },
+  async update(id: string | number, data: Partial<PedidoDTO>): Promise<PedidoDTO> {
+    const payload = { ...data };
+    if (payload.estado) {
+      payload.estado = normalizePedidoEstado(payload.estado);
+    }
+    return baseOrderService.update(String(id), payload);
+  },
   async updateEstado(id: string | number, estado: string, justificativa_cancelamento?: string): Promise<PedidoDTO> {
     const estadoNormalized = normalizePedidoEstado(estado);
-    return apiClient.put<any, PedidoDTO>(`/v1/pedidos/${id}/estado`, { estado: estadoNormalized, justificativa_cancelamento });
+    const body: any = { estado: estadoNormalized };
+    if (estadoNormalized === 'Cancelado' && justificativa_cancelamento) {
+      body.justificativa_cancelamento = justificativa_cancelamento;
+    }
+    return apiClient.put<any, PedidoDTO>(`/v1/pedidos/${id}/estado`, body);
   },
   async checkoutPedido(id: string | number, payload: { forma_pagamento_id?: number | string; valor?: number; codigo_transferencia?: string | null; emissor?: string | null; observacoes?: string; serie_id?: number }): Promise<any> {
     return await apiClient.post<any, any>(`/v1/comercial/checkout-pedido/${id}`, payload);
@@ -318,56 +357,576 @@ export const orderService = {
   }
 };
 
-export const documentService = {
-  async openAuthenticated(path: string, filename: string): Promise<void> {
-    const baseUrl = String(apiClient.defaults.baseURL || '').replace(/\/$/, '');
-    const token = localStorage.getItem('access_token');
-    const response = await fetch(`${baseUrl}${path}`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {}
-    });
-    if (!response.ok) {
-      throw new Error(`Erro ao gerar documento (${response.status})`);
-    }
-    const blob = await response.blob();
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.target = '_blank';
-    link.rel = 'noopener';
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 30000);
-  },
-  vendaPdf(id: string | number) {
-    return this.openAuthenticated(`/v1/vendas/${id}/pdf`, `venda_${id}.pdf`);
-  },
-  pedidoPdf(id: string | number) {
-    return this.openAuthenticated(`/v1/pedidos/${id}/pdf`, `pedido_${id}.pdf`);
-  },
-  pedidoRecibo(id: string | number) {
-    return this.openAuthenticated(`/v1/pedidos/${id}/recibo`, `recibo_pedido_${id}.pdf`);
-  },
-  eventoDocumento(id: string | number, tipo: 'proforma' | 'pdf' | 'word' = 'proforma') {
-    return this.openAuthenticated(`/v1/eventos/${id}/documento/${tipo}`, `evento_${id}_${tipo}.${tipo === 'word' ? 'docx' : 'pdf'}`);
+const getCompanyConfig = () => {
+  try {
+    const sigi = JSON.parse(localStorage.getItem('sigi_config') || '{}');
+    return {
+      empresa: sigi.empresa || sigi.nome_empresa || sigi.nome || 'Sabor Imbatível, S.A.',
+      nif: sigi.nif || '500123456',
+      telefone: sigi.telefone || sigi.telemovel || '923000000',
+      email: sigi.email || 'comercial@saborimbativel.co.ao',
+      endereco: sigi.endereco || sigi.morada || 'Luanda, Angola',
+      licenca: sigi.licenca || sigi.certificado || '001/SIGI/2026'
+    };
+  } catch {
+    return {
+      empresa: 'Sabor Imbatível, S.A.',
+      nif: '500123456',
+      telefone: '923000000',
+      email: 'comercial@saborimbativel.co.ao',
+      endereco: 'Luanda, Angola',
+      licenca: '001/SIGI/2026'
+    };
   }
 };
 
+async function fetchBlobWithFallbacks(paths: string[]): Promise<Blob> {
+  let lastErr: any = null;
+  for (const path of paths) {
+    try {
+      const res = await apiClient.get<any, Blob>(path, { responseType: 'blob' });
+      const blob = res as unknown as Blob;
+      if (blob && blob.size > 0) {
+        if (blob.type && blob.type.includes('json')) {
+          const text = await blob.text();
+          try {
+            const parsed = JSON.parse(text);
+            lastErr = new Error(parsed.detail || parsed.message || 'Erro no documento');
+            continue;
+          } catch {
+            // Not json
+          }
+        }
+        return blob;
+      }
+    } catch (err: any) {
+      lastErr = err;
+    }
+  }
+  throw lastErr || new Error('Documento não disponível no servidor.');
+}
+
+async function fetchJsonWithFallbacks(paths: string[]): Promise<any> {
+  let lastErr: any = null;
+  for (const path of paths) {
+    try {
+      const res = await apiClient.get<any, any>(path);
+      if (res) return res.data || res;
+    } catch (err: any) {
+      lastErr = err;
+    }
+  }
+  throw lastErr || new Error('Dados do documento não encontrados.');
+}
+
+function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.target = '_blank';
+  link.rel = 'noopener';
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 30000);
+}
+
+function printBlob(blob: Blob) {
+  const url = URL.createObjectURL(blob);
+  const iframe = document.createElement('iframe');
+  iframe.style.position = 'fixed';
+  iframe.style.right = '0';
+  iframe.style.bottom = '0';
+  iframe.style.width = '0';
+  iframe.style.height = '0';
+  iframe.style.border = '0';
+  iframe.src = url;
+  document.body.appendChild(iframe);
+
+  iframe.onload = () => {
+    setTimeout(() => {
+      try {
+        iframe.contentWindow?.focus();
+        iframe.contentWindow?.print();
+      } catch (e) {
+        window.open(url, '_blank');
+      }
+      setTimeout(() => {
+        iframe.remove();
+        URL.revokeObjectURL(url);
+      }, 60000);
+    }, 300);
+  };
+}
+
+function printHtmlThermalReceipt(raw: any) {
+  const company = getCompanyConfig();
+  const d = raw?.data || raw?.recibo || raw || {};
+  const items = d.itens || d.items || [];
+  
+  const docTipo = d.tipo_documento || d.documento_tipo || 'FR';
+  const docNumero = d.numero || d.numero_documento || d.codigo || d.id;
+  const docSerie = d.serie || '2026';
+  const fullDocNum = docNumero ? `${docTipo} ${docSerie}/${docNumero}` : `${docTipo} ${d.id || 'N/A'}`;
+  
+  const clienteNome = d.cliente_nome || d.cliente?.nome || d.client_name || 'Consumidor Final';
+  const clienteNif = d.cliente_nif || d.cliente?.nif || 'Consumidor Final';
+  const operador = d.operador || d.usuario || d.atendente || 'Operador POS';
+  
+  const dataHora = d.data_venda ? new Date(d.data_venda).toLocaleString('pt-PT') : new Date().toLocaleString('pt-PT');
+  const dataAgendada = (d.data_agendada || d.data_entrega || d.data_recebimento) 
+    ? new Date(d.data_agendada || d.data_entrega || d.data_recebimento).toLocaleString('pt-PT') 
+    : null;
+
+  const subtotal = Number(d.subtotal || d.valor_subtotal || 0);
+  const desconto = Number(d.desconto || d.valor_desconto || 0);
+  const totalIva = Number(d.total_iva || d.iva_valor || d.iva || 0);
+  const total = Number(d.total || d.valor_total || (subtotal - desconto + totalIva));
+  const valorPago = Number(d.valor_pago || d.pago || total);
+  const troco = Number(d.troco || (valorPago > total ? valorPago - total : 0));
+  const saldo = Number(d.saldo || (total > valorPago ? total - valorPago : 0));
+  const formaPagamento = d.forma_pagamento || d.pagamento_forma || 'Dinheiro';
+
+  const itemsHtml = items.map((it: any) => {
+    const qtd = it.quantidade || it.qty || 1;
+    const un = it.unidade || 'un';
+    const nome = it.produto_nome || it.nome || it.descricao || 'Item';
+    const preco = Number(it.preco_unitario || it.preco || 0);
+    const itemTotal = Number(it.total || it.subtotal || (qtd * preco));
+    return `
+      <tr>
+        <td colspan="2" style="font-weight: bold; padding-top: 4px;">${nome}</td>
+      </tr>
+      <tr>
+        <td style="color: #444;">${qtd} ${un} x ${preco.toLocaleString('pt-AO', { minimumFractionDigits: 2 })} Kz</td>
+        <td style="text-align: right; font-weight: bold;">${itemTotal.toLocaleString('pt-AO', { minimumFractionDigits: 2 })} Kz</td>
+      </tr>
+    `;
+  }).join('');
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>Recibo ${fullDocNum}</title>
+        <meta charset="utf-8">
+        <style>
+          @page { size: 80mm auto; margin: 2mm; }
+          body { width: 74mm; font-family: 'Courier New', Courier, monospace; font-size: 11px; color: #000; margin: 0 auto; padding: 4px; line-height: 1.2; }
+          .center { text-align: center; }
+          .bold { font-weight: bold; }
+          .right { text-align: right; }
+          .title { font-size: 14px; font-weight: bold; margin-bottom: 2px; }
+          .divider { border-top: 1px dashed #000; margin: 6px 0; }
+          table { width: 100%; border-collapse: collapse; }
+          td { vertical-align: top; font-size: 11px; }
+          .highlight { background: #f0f0f0; padding: 4px; margin: 4px 0; border: 1px solid #000; }
+        </style>
+      </head>
+      <body>
+        <div class="center title">${company.empresa}</div>
+        <div class="center">NIF: ${company.nif}</div>
+        <div class="center">Tel: ${company.telefone}</div>
+        <div class="center">${company.endereco}</div>
+        <div class="center" style="font-size: 9px; margin-top: 2px;">Certificado: ${company.licenca}</div>
+        
+        <div class="divider"></div>
+        
+        <div class="bold center" style="font-size: 12px;">${fullDocNum}</div>
+        <div>Data/Hora: ${dataHora}</div>
+        <div>Operador: ${operador}</div>
+        <div>Cliente: ${clienteNome} (NIF: ${clienteNif})</div>
+        ${dataAgendada ? `<div class="highlight center bold">📅 ENTREGA/RECEBIMENTO:<br/>${dataAgendada}</div>` : ''}
+
+        <div class="divider"></div>
+
+        <table>
+          <thead>
+            <tr style="border-bottom: 1px solid #000;">
+              <th style="text-align: left;">Descrição</th>
+              <th style="text-align: right;">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemsHtml || '<tr><td colspan="2">Sem itens</td></tr>'}
+          </tbody>
+        </table>
+
+        <div class="divider"></div>
+
+        <table>
+          <tr><td>Subtotal:</td><td class="right">${subtotal.toLocaleString('pt-AO', { minimumFractionDigits: 2 })} Kz</td></tr>
+          ${desconto > 0 ? `<tr><td>Desconto:</td><td class="right">-${desconto.toLocaleString('pt-AO', { minimumFractionDigits: 2 })} Kz</td></tr>` : ''}
+          <tr><td>Total IVA:</td><td class="right">${totalIva.toLocaleString('pt-AO', { minimumFractionDigits: 2 })} Kz</td></tr>
+          <tr class="bold" style="font-size: 13px;"><td>TOTAL GERAL:</td><td class="right">${total.toLocaleString('pt-AO', { minimumFractionDigits: 2 })} Kz</td></tr>
+        </table>
+
+        <div class="divider"></div>
+
+        <table>
+          <tr><td>Forma Pagamento:</td><td class="right">${formaPagamento}</td></tr>
+          <tr><td>Valor Pago:</td><td class="right">${valorPago.toLocaleString('pt-AO', { minimumFractionDigits: 2 })} Kz</td></tr>
+          ${troco > 0 ? `<tr class="bold"><td>Troco:</td><td class="right">${troco.toLocaleString('pt-AO', { minimumFractionDigits: 2 })} Kz</td></tr>` : ''}
+          ${saldo > 0 ? `<tr class="bold" style="color: red;"><td>Saldo Restante:</td><td class="right">${saldo.toLocaleString('pt-AO', { minimumFractionDigits: 2 })} Kz</td></tr>` : ''}
+        </table>
+
+        <div class="divider"></div>
+        <div class="center bold">Obrigado pela preferência!</div>
+        <div class="center" style="font-size: 9px; margin-top: 4px;">Processado por Software Validado nº ${company.licenca}</div>
+      </body>
+    </html>
+  `;
+
+  const iframe = document.createElement('iframe');
+  iframe.style.position = 'fixed';
+  iframe.style.right = '0';
+  iframe.style.bottom = '0';
+  iframe.style.width = '0';
+  iframe.style.height = '0';
+  iframe.style.border = '0';
+  document.body.appendChild(iframe);
+
+  const doc = iframe.contentWindow?.document;
+  if (doc) {
+    doc.open();
+    doc.write(html);
+    doc.close();
+    setTimeout(() => {
+      try {
+        iframe.contentWindow?.focus();
+        iframe.contentWindow?.print();
+      } catch (e) {
+        const win = window.open('', '_blank');
+        if (win) {
+          win.document.write(html);
+          win.document.close();
+          win.print();
+        }
+      }
+      setTimeout(() => iframe.remove(), 30000);
+    }, 300);
+  }
+}
+
+function downloadJsPdfReceipt(raw: any, filename: string) {
+  const company = getCompanyConfig();
+  const d = raw?.data || raw?.recibo || raw || {};
+  const items = d.itens || d.items || [];
+  
+  const docTipo = d.tipo_documento || d.documento_tipo || 'FR';
+  const docNumero = d.numero || d.numero_documento || d.codigo || d.id;
+  const docSerie = d.serie || '2026';
+  const fullDocNum = docNumero ? `${docTipo} ${docSerie}/${docNumero}` : `${docTipo} ${d.id || 'N/A'}`;
+  
+  const clienteNome = d.cliente_nome || d.cliente?.nome || d.client_name || 'Consumidor Final';
+  const clienteNif = d.cliente_nif || d.cliente?.nif || 'Consumidor Final';
+  const operador = d.operador || d.usuario || d.atendente || 'Operador POS';
+  
+  const dataHora = d.data_venda ? new Date(d.data_venda).toLocaleString('pt-PT') : new Date().toLocaleString('pt-PT');
+
+  const subtotal = Number(d.subtotal || d.valor_subtotal || 0);
+  const desconto = Number(d.desconto || d.valor_desconto || 0);
+  const totalIva = Number(d.total_iva || d.iva_valor || d.iva || 0);
+  const total = Number(d.total || d.valor_total || (subtotal - desconto + totalIva));
+  const valorPago = Number(d.valor_pago || d.pago || total);
+  const troco = Number(d.troco || (valorPago > total ? valorPago - total : 0));
+  const saldo = Number(d.saldo || (total > valorPago ? total - valorPago : 0));
+  const formaPagamento = d.forma_pagamento || d.pagamento_forma || 'Dinheiro';
+
+  const doc = new jsPDF();
+
+  doc.setFontSize(16);
+  doc.setFont('helvetica', 'bold');
+  doc.text(company.empresa, 14, 20);
+
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`NIF: ${company.nif} | Tel: ${company.telefone} | Email: ${company.email}`, 14, 26);
+  doc.text(`Endereço: ${company.endereco}`, 14, 31);
+  doc.text(`Certificado/Licença: ${company.licenca}`, 14, 36);
+
+  doc.setLineWidth(0.5);
+  doc.line(14, 40, 196, 40);
+
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.text(`DOCUMENTO: ${fullDocNum}`, 14, 48);
+
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Data/Hora: ${dataHora}`, 14, 55);
+  doc.text(`Operador: ${operador}`, 14, 60);
+  doc.text(`Cliente: ${clienteNome} (NIF: ${clienteNif})`, 14, 65);
+
+  const tableData = items.map((it: any) => [
+    it.produto_nome || it.nome || it.descricao || 'Item',
+    `${it.quantidade || it.qty || 1} ${it.unidade || 'un'}`,
+    `${Number(it.preco_unitario || it.preco || 0).toLocaleString('pt-AO', { minimumFractionDigits: 2 })} Kz`,
+    `${Number(it.total || it.subtotal || 0).toLocaleString('pt-AO', { minimumFractionDigits: 2 })} Kz`
+  ]);
+
+  autoTable(doc, {
+    startY: 72,
+    head: [['Descrição do Item', 'Qtd', 'Preço Unit.', 'Total']],
+    body: tableData.length > 0 ? tableData : [['Nenhum item listado', '-', '-', '0.00 Kz']],
+    theme: 'striped',
+    headStyles: { fillColor: [30, 41, 59] },
+  });
+
+  const finalY = (doc as any).lastAutoTable?.finalY || 120;
+
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Subtotal: ${subtotal.toLocaleString('pt-AO', { minimumFractionDigits: 2 })} Kz`, 130, finalY + 10);
+  if (desconto > 0) {
+    doc.text(`Desconto: -${desconto.toLocaleString('pt-AO', { minimumFractionDigits: 2 })} Kz`, 130, finalY + 16);
+  }
+  doc.text(`Total IVA: ${totalIva.toLocaleString('pt-AO', { minimumFractionDigits: 2 })} Kz`, 130, finalY + 22);
+  
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.text(`TOTAL GERAL: ${total.toLocaleString('pt-AO', { minimumFractionDigits: 2 })} Kz`, 130, finalY + 30);
+
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Forma de Pagamento: ${formaPagamento}`, 14, finalY + 10);
+  doc.text(`Valor Pago: ${valorPago.toLocaleString('pt-AO', { minimumFractionDigits: 2 })} Kz`, 14, finalY + 16);
+  if (troco > 0) doc.text(`Troco: ${troco.toLocaleString('pt-AO', { minimumFractionDigits: 2 })} Kz`, 14, finalY + 22);
+  if (saldo > 0) doc.text(`Saldo Restante: ${saldo.toLocaleString('pt-AO', { minimumFractionDigits: 2 })} Kz`, 14, finalY + 28);
+
+  doc.save(filename);
+}
+
+export const documentService = {
+  async vendaPdf(id: string | number) {
+    const filename = `fatura_a4_${id}.pdf`;
+    try {
+      const blob = await fetchBlobWithFallbacks([
+        `/v1/vendas/${id}/pdf`,
+        `/v1/comercial/vendas/${id}/pdf`,
+        `/v1/comercial/${id}/pdf`,
+        `/v1/vendas/${id}/recibo`,
+        `/v1/comercial/${id}/recibo`
+      ]);
+      downloadBlob(blob, filename);
+    } catch {
+      const data = await this.vendaReciboData(id);
+      downloadJsPdfReceipt(data, filename);
+    }
+  },
+
+  async vendaRecibo(id: string | number) {
+    const filename = `recibo_termico_${id}.pdf`;
+    try {
+      const blob = await fetchBlobWithFallbacks([
+        `/v1/vendas/${id}/recibo`,
+        `/v1/comercial/vendas/${id}/recibo`,
+        `/v1/comercial/${id}/recibo`,
+        `/v1/vendas/${id}/pdf`,
+        `/v1/comercial/${id}/pdf`
+      ]);
+      downloadBlob(blob, filename);
+    } catch {
+      const data = await this.vendaReciboData(id);
+      downloadJsPdfReceipt(data, filename);
+    }
+  },
+
+  async imprimirReciboVenda(id: string | number) {
+    try {
+      const blob = await fetchBlobWithFallbacks([
+        `/v1/vendas/${id}/recibo`,
+        `/v1/comercial/vendas/${id}/recibo`,
+        `/v1/comercial/${id}/recibo`
+      ]);
+      printBlob(blob);
+    } catch {
+      const data = await this.vendaReciboData(id);
+      printHtmlThermalReceipt(data);
+    }
+  },
+
+  async vendaReciboData(id: string | number): Promise<any> {
+    return await fetchJsonWithFallbacks([
+      `/v1/vendas/${id}/recibo-data`,
+      `/v1/vendas/${id}`,
+      `/v1/comercial/vendas/${id}`,
+      `/v1/comercial/${id}/recibo-data`,
+      `/v1/comercial/vendas/${id}/recibo-data`
+    ]);
+  },
+
+  async pedidoPdf(id: string | number) {
+    const filename = `pedido_${id}.pdf`;
+    try {
+      const blob = await fetchBlobWithFallbacks([
+        `/v1/pedidos/${id}/pdf`,
+        `/v1/comercial/pedidos/${id}/pdf`,
+        `/v1/pedidos/${id}/recibo`
+      ]);
+      downloadBlob(blob, filename);
+    } catch {
+      const data = await this.pedidoReciboData(id);
+      downloadJsPdfReceipt(data, filename);
+    }
+  },
+
+  async pedidoRecibo(id: string | number) {
+    const filename = `recibo_pedido_${id}.pdf`;
+    try {
+      const blob = await fetchBlobWithFallbacks([
+        `/v1/pedidos/${id}/recibo`,
+        `/v1/comercial/pedidos/${id}/recibo`,
+        `/v1/pedidos/${id}/pdf`
+      ]);
+      downloadBlob(blob, filename);
+    } catch {
+      const data = await this.pedidoReciboData(id);
+      downloadJsPdfReceipt(data, filename);
+    }
+  },
+
+  async imprimirReciboPedido(id: string | number) {
+    try {
+      const blob = await fetchBlobWithFallbacks([
+        `/v1/pedidos/${id}/recibo`,
+        `/v1/comercial/pedidos/${id}/recibo`
+      ]);
+      printBlob(blob);
+    } catch {
+      const data = await this.pedidoReciboData(id);
+      printHtmlThermalReceipt(data);
+    }
+  },
+
+  async pedidoReciboData(id: string | number): Promise<any> {
+    return await fetchJsonWithFallbacks([
+      `/v1/pedidos/${id}/recibo-data`,
+      `/v1/comercial/pedidos/${id}/recibo-data`,
+      `/v1/pedidos/${id}`
+    ]);
+  },
+
+  async eventoDocumento(id: string | number, tipo: 'proforma' | 'pdf' | 'word' = 'proforma') {
+    const filename = `evento_${id}_${tipo}.${tipo === 'word' ? 'docx' : 'pdf'}`;
+    try {
+      const blob = await fetchBlobWithFallbacks([
+        `/v1/eventos/${id}/documento/${tipo}`,
+        `/v1/eventos/${id}/${tipo}`
+      ]);
+      downloadBlob(blob, filename);
+    } catch {
+      const data = await fetchJsonWithFallbacks([`/v1/eventos/${id}`]);
+      downloadJsPdfReceipt(data, filename);
+    }
+  }
+};
+
+const baseEventService = createService<EventoDTO>('/v1/eventos', 'events');
+
 export const eventService = {
-  ...createService<EventoDTO>('/v1/eventos', 'events'),
+  ...baseEventService,
+  async create(data: Partial<EventoDTO>): Promise<EventoDTO> {
+    const payload: any = { ...data };
+    delete payload.espaco_id;
+    return baseEventService.create(payload);
+  },
+  async update(id: string | number, data: Partial<EventoDTO>): Promise<EventoDTO> {
+    const payload: any = { ...data };
+    delete payload.espaco_id;
+    return baseEventService.update(String(id), payload);
+  },
   faturar: async (id: string | number, pagamento?: { valor: number; forma_pagamento_id: number; codigo_transferencia?: string | null; emissor?: string | null; observacoes?: string }): Promise<any> => {
     return apiClient.post<any, any>(`/v1/eventos/${id}/faturar`, { pagamento: pagamento || {} });
+  },
+  gerarPlaneamento: async (id: string | number): Promise<any> => {
+    return apiClient.post<any, any>(`/v1/eventos/${id}/gerar-planeamento`, {});
   },
   async updateEstado(id: string | number, estado: string): Promise<EventoDTO> {
     return apiClient.put<any, EventoDTO>(`/v1/eventos/${id}/estado`, { estado });
   },
+  sugerirPreco: async (data: { tipo_evento?: string; numero_convidados?: number; tipo_item?: string; referencia_id?: number; nome_item?: string }): Promise<any> => {
+    return apiClient.post<any, any>('/v1/eventos/sugerir-preco', data);
+  },
+  // Cadastros Auxiliares
+  tiposEvento: {
+    async listar(params?: any): Promise<any> {
+      return apiClient.get<any, any>('/v1/eventos/cadastros/tipos-evento', { params });
+    },
+    async criar(data: any): Promise<any> {
+      return apiClient.post<any, any>('/v1/eventos/cadastros/tipos-evento', data);
+    },
+    async atualizar(id: string | number, data: any): Promise<any> {
+      return apiClient.put<any, any>(`/v1/eventos/cadastros/tipos-evento/${id}`, data);
+    },
+    async desativar(id: string | number): Promise<any> {
+      return apiClient.patch<any, any>(`/v1/eventos/cadastros/tipos-evento/${id}/desativar`);
+    }
+  },
+  servicosCadastro: {
+    async listar(params?: any): Promise<any> {
+      return apiClient.get<any, any>('/v1/eventos/cadastros/servicos', { params });
+    },
+    async criar(data: any): Promise<any> {
+      return apiClient.post<any, any>('/v1/eventos/cadastros/servicos', data);
+    },
+    async atualizar(id: string | number, data: any): Promise<any> {
+      return apiClient.put<any, any>(`/v1/eventos/cadastros/servicos/${id}`, data);
+    },
+    async desativar(id: string | number): Promise<any> {
+      return apiClient.patch<any, any>(`/v1/eventos/cadastros/servicos/${id}/desativar`);
+    }
+  },
+  equipasCadastro: {
+    async listar(params?: any): Promise<any> {
+      return apiClient.get<any, any>('/v1/eventos/cadastros/equipas', { params });
+    },
+    async criar(data: any): Promise<any> {
+      return apiClient.post<any, any>('/v1/eventos/cadastros/equipas', data);
+    },
+    async atualizar(id: string | number, data: any): Promise<any> {
+      return apiClient.put<any, any>(`/v1/eventos/cadastros/equipas/${id}`, data);
+    },
+    async desativar(id: string | number): Promise<any> {
+      return apiClient.patch<any, any>(`/v1/eventos/cadastros/equipas/${id}/desativar`);
+    }
+  },
   espacos: {
-    async listar(): Promise<any> {
-      return apiClient.get<any, any>('/v1/eventos/espacos');
+    async listar(params?: any): Promise<any> {
+      return apiClient.get<any, any>('/v1/eventos/espacos', { params });
     },
     async criar(data: any): Promise<any> {
       return apiClient.post<any, any>('/v1/eventos/espacos', data);
+    },
+    async atualizar(id: string | number, data: any): Promise<any> {
+      return apiClient.put<any, any>(`/v1/eventos/espacos/${id}`, data);
+    },
+    async desativar(id: string | number): Promise<any> {
+      return apiClient.patch<any, any>(`/v1/eventos/espacos/${id}/desativar`);
+    }
+  },
+  politicasComerciais: {
+    async listar(params?: any): Promise<any> {
+      return apiClient.get<any, any>('/v1/eventos/politicas-comerciais', { params });
+    },
+    async obter(id: string | number): Promise<any> {
+      return apiClient.get<any, any>(`/v1/eventos/politicas-comerciais/${id}`);
+    },
+    async criar(data: any): Promise<any> {
+      return apiClient.post<any, any>('/v1/eventos/politicas-comerciais', data);
+    },
+    async atualizar(id: string | number, data: any): Promise<any> {
+      return apiClient.put<any, any>(`/v1/eventos/politicas-comerciais/${id}`, data);
+    },
+    async desativar(id: string | number): Promise<any> {
+      return apiClient.patch<any, any>(`/v1/eventos/politicas-comerciais/${id}/desativar`);
+    },
+    async criarRegra(politicaId: string | number, data: any): Promise<any> {
+      return apiClient.post<any, any>(`/v1/eventos/politicas-comerciais/${politicaId}/regras`, data);
+    },
+    async eliminarRegra(politicaId: string | number, regraId: string | number): Promise<any> {
+      return apiClient.delete<any, any>(`/v1/eventos/politicas-comerciais/${politicaId}/regras/${regraId}`);
     }
   }
 };
@@ -399,7 +958,18 @@ export const warehouseService = {
 export const productionService = {
   ...createService<OrdemProducaoDTO>('/v1/producao/ordens', 'orders'),
   async updateEstado(id: string | number, estado: string): Promise<OrdemProducaoDTO> {
-    return apiClient.put<any, OrdemProducaoDTO>(`/v1/producao/ordens/${id}/estado`, { estado });
+    const upper = String(estado || '').trim().toUpperCase().replace(/\s+/g, '_');
+    const estadoNormalized =
+      upper === 'EM_PRODUCAO' || upper === 'EM_PRODUÇÃO' || upper === 'EM_PREPARACAO' || upper === 'EM_PREPARAÇÃO'
+        ? 'Em Producao'
+        : upper === 'PENDENTE'
+          ? 'Pendente'
+          : upper === 'PRONTO'
+            ? 'Pronto'
+            : upper === 'ENTREGUE' || upper === 'CONCLUIDO' || upper === 'CONCLUÍDO'
+              ? 'Entregue'
+              : estado;
+    return apiClient.put<any, OrdemProducaoDTO>(`/v1/producao/ordens/${id}/estado`, { estado: estadoNormalized });
   }
 };
 

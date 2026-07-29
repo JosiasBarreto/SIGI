@@ -53,10 +53,9 @@ class ProducaoService:
         ordens_criadas = []
         
         for item in pedido.itens:
-            # Só interessa para ordens se for produto ACABADO e que tenha Ficha Tecnica
-            if item.tipo_item != TipoItem.PRODUTO_ACABADO.value:
+            if not item.produto_id:
                 continue
-                
+
             ficha = db.session.query(FichaTecnica).filter_by(produto_acabado_id=item.produto_id, ativo=True).first()
             if not ficha:
                 continue

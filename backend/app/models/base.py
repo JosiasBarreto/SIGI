@@ -1,6 +1,11 @@
 from datetime import datetime
 from app.core.database import db
 
+def enum_values(enum_cls):
+    if not enum_cls:
+        return []
+    return [e.value for e in enum_cls]
+
 class BaseModel(db.Model):
     __abstract__ = True
 

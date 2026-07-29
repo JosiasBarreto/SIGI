@@ -148,7 +148,7 @@ export default function CaixaSessionModals({
         return;
       }
       movimentoMutation.mutate({
-        tipo: "Reforço",
+        tipo: "Reforco",
         valor: val,
         descricao: descricaoMovimento || "Reforço de caixa",
         forma_pagamento: formaPagamentoMovimento
@@ -557,3 +557,4 @@ export default function CaixaSessionModals({
     </div>
   );
 }
+

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, CheckCircle, Clock, Play, FileText, Gift, CreditCard, ChevronRight, User, Truck, History } from 'lucide-react';
+import { X, CheckCircle, Clock, Play, FileText, Gift, CreditCard, ChevronRight, User, Truck, History, Printer } from 'lucide-react';
 import { formatCurrency, cn } from '../lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { clientService, productService, documentService } from '../services';
@@ -11,7 +11,7 @@ interface OrderDetailsModalProps {
   order: any;
   isOpen: boolean;
   onClose: () => void;
-  onUpdateStatus: (id: string, newStatus: string) => void;
+  onUpdateStatus: (id: string, newStatus: string, justificativa?: string) => void;
 }
 
 export default function OrderDetailsModal({ order, isOpen, onClose, onUpdateStatus }: OrderDetailsModalProps) {
@@ -213,7 +213,7 @@ export default function OrderDetailsModal({ order, isOpen, onClose, onUpdateStat
                </div>
                <div className="p-4 sm:p-5 flex-1 overflow-y-auto max-h-[300px] space-y-3">
                  {orderItems?.map((item: any, idx: number) => {
-                   const prod = products?.find((p: any) => String(p.id) === String(item.productId || item.produto_id));
+                   const prod: any = products?.find((p: any) => String(p.id) === String(item.productId || item.produto_id));
                    const quantidade = Number(item.quantity || item.quantidade || 0);
                    return (
                      <div key={idx} className="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-800 last:border-0">
@@ -267,37 +267,53 @@ export default function OrderDetailsModal({ order, isOpen, onClose, onUpdateStat
             Fechar Janela
           </button>
           
-          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto sm:ml-auto">
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto sm:ml-auto">
              <button
                type="button"
                onClick={() => documentService.pedidoPdf(orderId).catch((err) => toast.error(err?.message || 'Erro ao gerar PDF do pedido.'))}
-               className="w-full sm:w-auto px-6 py-4 sm:py-3 text-sm font-bold text-primary bg-primary/10 hover:bg-primary/20 rounded-xl transition-colors flex justify-center items-center gap-2"
+               className="w-full sm:w-auto px-4 py-2.5 text-xs font-bold text-primary bg-primary/10 hover:bg-primary/20 rounded-xl transition-colors flex justify-center items-center gap-1.5"
              >
-               <FileText size={18} /> PDF Pedido
+               <FileText size={16} /> Fatura/PDF Pedido
+             </button>
+             <button
+               type="button"
+               onClick={() => documentService.imprimirReciboPedido(orderId).catch((err) => toast.error(err?.message || 'Erro ao imprimir recibo térmico.'))}
+               className="w-full sm:w-auto px-4 py-2.5 text-xs font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-100 hover:bg-emerald-200 dark:bg-emerald-900/30 dark:hover:bg-emerald-900/50 rounded-xl transition-colors flex justify-center items-center gap-1.5"
+             >
+               <Printer size={16} /> Recibo Térmico (80mm)
              </button>
              <button
                type="button"
                onClick={() => documentService.pedidoRecibo(orderId).catch((err) => toast.error(err?.message || 'Erro ao gerar recibo do pedido.'))}
-               className="w-full sm:w-auto px-6 py-4 sm:py-3 text-sm font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-300 dark:hover:bg-emerald-900/30 rounded-xl transition-colors flex justify-center items-center gap-2"
+               className="w-full sm:w-auto px-4 py-2.5 text-xs font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700 rounded-xl transition-colors flex justify-center items-center gap-1.5"
              >
-               <CreditCard size={18} /> Recibo
+               <CreditCard size={16} /> Baixar Recibo PDF
              </button>
              {!isCanceled && (
                  <button 
                  onClick={() => {
                    Swal.fire({
                      title: 'Cancelar Pedido?',
-                     text: 'Esta ação não pode ser revertida.',
+                     text: 'Por favor, indique a justificativa do cancelamento:',
+                     input: 'textarea',
+                     inputPlaceholder: 'Motivo do cancelamento...',
                      icon: 'warning',
                      showCancelButton: true,
                      confirmButtonColor: '#C62828',
-                     confirmButtonText: 'Sim, cancelar'
+                     cancelButtonColor: '#6B7280',
+                     confirmButtonText: 'Sim, cancelar pedido',
+                     cancelButtonText: 'Voltar',
+                     inputValidator: (value) => {
+                       if (!value || !value.trim()) {
+                         return 'A justificativa de cancelamento é obrigatória!';
+                       }
+                     }
                    }).then((result) => {
-                     if (result.isConfirmed) {
-                       onUpdateStatus(order.id, 'Cancelado');
+                     if (result.isConfirmed && result.value) {
+                       onUpdateStatus(order.id, 'Cancelado', result.value.trim());
                        onClose();
                      }
-                   })
+                   });
                  }}
                  className="w-full sm:w-auto px-6 py-4 sm:py-3 text-sm font-bold text-error bg-error/10 hover:bg-error/20 rounded-xl transition-colors"
                >

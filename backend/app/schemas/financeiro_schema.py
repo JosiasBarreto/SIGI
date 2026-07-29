@@ -21,6 +21,29 @@ class CaixaSchema(Schema):
     diferenca_transferencia = fields.Decimal(dump_only=True)
     diferenca_pos = fields.Decimal(dump_only=True)
     explicacao_divergencia = fields.Str(required=False, allow_none=True)
+    operador = fields.Method("get_operador")
+    utilizador_abertura_nome = fields.Method("get_utilizador_abertura_nome")
+    utilizador_fecho_nome = fields.Method("get_utilizador_fecho_nome")
+    movimentos = fields.Nested(lambda: MovimentoCaixaSchema, many=True, dump_only=True)
+
+    def get_operador(self, obj):
+        return self.get_utilizador_abertura_nome(obj)
+
+    def get_utilizador_abertura_nome(self, obj):
+        return self._get_user_name(getattr(obj, 'utilizador_abertura_id', None))
+
+    def get_utilizador_fecho_nome(self, obj):
+        return self._get_user_name(getattr(obj, 'utilizador_fecho_id', None))
+
+    def _get_user_name(self, user_id):
+        if not user_id:
+            return None
+        try:
+            from app.models.user import User
+            user = User.query.get(user_id)
+            return user.name if user else None
+        except Exception:
+            return None
 
 class MovimentoCaixaSchema(Schema):
     id = fields.Int(dump_only=True)
@@ -32,6 +55,19 @@ class MovimentoCaixaSchema(Schema):
     codigo_transferencia = fields.Str(required=False, allow_none=True)
     emissor = fields.Str(required=False, allow_none=True)
     forma_pagamento = fields.Str(required=False, allow_none=True)
+    utilizador_id = fields.Int(dump_only=True)
+    utilizador_nome = fields.Method("get_utilizador_nome")
+
+    def get_utilizador_nome(self, obj):
+        user_id = getattr(obj, 'utilizador_id', None)
+        if not user_id:
+            return None
+        try:
+            from app.models.user import User
+            user = User.query.get(user_id)
+            return user.name if user else None
+        except Exception:
+            return None
 
 class PagamentoSchema(Schema):
     id = fields.Int(dump_only=True)

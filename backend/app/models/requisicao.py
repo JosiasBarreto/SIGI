@@ -10,6 +10,11 @@ class TipoRequisicao(str, Enum):
 class SectorRequisicao(str, Enum):
     COZINHA = 'Cozinha'
     PASTELARIA = 'Pastelaria'
+    BAR = 'Bar'
+    EVENTOS = 'Eventos'
+    LOGISTICA = 'Logistica'
+    ALUGUER = 'Aluguer'
+    OUTRO = 'Outro'
 
 class EstadoRequisicao(str, Enum):
     PENDENTE = 'Pendente'
@@ -29,9 +34,11 @@ class Requisicao(BaseModel):
     sector = db.Column(db.Enum(SectorRequisicao), nullable=False)
     turno_id = db.Column(db.Integer, db.ForeignKey('turnos.id'), nullable=True) 
     responsavel_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=True)
     
     data_requisicao = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     estado = db.Column(db.Enum(EstadoRequisicao), default=EstadoRequisicao.PENDENTE)
+    motivo = db.Column(db.Text, nullable=True)
     observacoes = db.Column(db.Text, nullable=True)
     
     itens = db.relationship('RequisicaoItem', backref='requisicao', cascade="all, delete-orphan", lazy='selectin')

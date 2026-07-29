@@ -14,10 +14,16 @@ export interface EventoDTO {
   titulo: string;
   descricao?: string;
   local_evento?: string;
+  espaco_id?: number | null;
   data_evento?: string;
   hora_inicio?: string;
   hora_fim?: string;
   numero_convidados?: number;
+  cobrar_iva_servicos?: boolean;
+  taxa_iva_servicos?: number;
+  valor_deslocacao?: number;
+  outros_encargos?: number;
+  desconto_total?: number;
   estado: string;
   observacoes?: string;
   valor_total: string | number;
@@ -27,4 +33,6 @@ export interface EventoDTO {
   reservas_espaco: any[];
   reservas_material: any[];
   equipas: any[];
+  itens?: any[];
+  resumo_financeiro?: any;
 }

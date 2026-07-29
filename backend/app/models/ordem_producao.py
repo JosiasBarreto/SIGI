@@ -6,6 +6,7 @@ from datetime import datetime
 class SectorProducao(str, Enum):
     COZINHA = 'Cozinha'
     PASTELARIA = 'Pastelaria'
+    BAR = 'Bar'
 
 class TurnoProducao(str, Enum):
     MANHA = 'Manhã'
@@ -33,6 +34,7 @@ class OrdemProducao(BaseModel):
     quantidade = db.Column(db.Numeric(10, 2), nullable=True) # Keeping for backward compat
     sector = db.Column(db.Enum(SectorProducao), nullable=False)
     turno = db.Column(db.Enum(TurnoProducao), nullable=True)
+    responsavel_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     
     data_producao = db.Column(db.Date, nullable=True)
     hora_inicio = db.Column(db.DateTime, nullable=True)
@@ -43,6 +45,7 @@ class OrdemProducao(BaseModel):
     observacoes = db.Column(db.Text, nullable=True)
 
     pedido = db.relationship('Pedido', backref='ordens_producao')
+    responsavel = db.relationship('User', foreign_keys=[responsavel_id])
     consumos = db.relationship('ConsumoIngrediente', backref='ordem', cascade="all, delete-orphan", lazy='selectin')
     itens = db.relationship('OrdemProducaoItem', backref='ordem', cascade="all, delete-orphan", lazy='selectin')
 

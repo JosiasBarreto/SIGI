@@ -1,0 +1,1 @@
+export const ApiSockeit ="http://192.168.100.141:8000";

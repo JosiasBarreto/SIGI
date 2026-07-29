@@ -1152,14 +1152,6 @@
         "documentation": {}
     },
     {
-        "label": "pre_load",
-        "importPath": "marshmallow",
-        "description": "marshmallow",
-        "isExtraImport": true,
-        "detail": "marshmallow",
-        "documentation": {}
-    },
-    {
         "label": "Schema",
         "importPath": "marshmallow",
         "description": "marshmallow",
@@ -1269,6 +1261,38 @@
         "description": "marshmallow",
         "isExtraImport": true,
         "detail": "marshmallow",
+        "documentation": {}
+    },
+    {
+        "label": "db",
+        "importPath": "app.core.database",
+        "description": "app.core.database",
+        "isExtraImport": true,
+        "detail": "app.core.database",
+        "documentation": {}
+    },
+    {
+        "label": "db",
+        "importPath": "app.core.database",
+        "description": "app.core.database",
+        "isExtraImport": true,
+        "detail": "app.core.database",
+        "documentation": {}
+    },
+    {
+        "label": "db",
+        "importPath": "app.core.database",
+        "description": "app.core.database",
+        "isExtraImport": true,
+        "detail": "app.core.database",
+        "documentation": {}
+    },
+    {
+        "label": "db",
+        "importPath": "app.core.database",
+        "description": "app.core.database",
+        "isExtraImport": true,
+        "detail": "app.core.database",
         "documentation": {}
     },
     {
@@ -1896,6 +1920,54 @@
         "documentation": {}
     },
     {
+        "label": "ServicoCadastro",
+        "importPath": "app.models.evento",
+        "description": "app.models.evento",
+        "isExtraImport": true,
+        "detail": "app.models.evento",
+        "documentation": {}
+    },
+    {
+        "label": "TipoEventoCadastro",
+        "importPath": "app.models.evento",
+        "description": "app.models.evento",
+        "isExtraImport": true,
+        "detail": "app.models.evento",
+        "documentation": {}
+    },
+    {
+        "label": "EquipaCadastro",
+        "importPath": "app.models.evento",
+        "description": "app.models.evento",
+        "isExtraImport": true,
+        "detail": "app.models.evento",
+        "documentation": {}
+    },
+    {
+        "label": "PoliticaComercialEvento",
+        "importPath": "app.models.evento",
+        "description": "app.models.evento",
+        "isExtraImport": true,
+        "detail": "app.models.evento",
+        "documentation": {}
+    },
+    {
+        "label": "PoliticaComercialRegra",
+        "importPath": "app.models.evento",
+        "description": "app.models.evento",
+        "isExtraImport": true,
+        "detail": "app.models.evento",
+        "documentation": {}
+    },
+    {
+        "label": "Evento",
+        "importPath": "app.models.evento",
+        "description": "app.models.evento",
+        "isExtraImport": true,
+        "detail": "app.models.evento",
+        "documentation": {}
+    },
+    {
         "label": "Evento",
         "importPath": "app.models.evento",
         "description": "app.models.evento",
@@ -1968,6 +2040,22 @@
         "documentation": {}
     },
     {
+        "label": "TipoItemEvento",
+        "importPath": "app.models.evento",
+        "description": "app.models.evento",
+        "isExtraImport": true,
+        "detail": "app.models.evento",
+        "documentation": {}
+    },
+    {
+        "label": "TipoCalculoPolitica",
+        "importPath": "app.models.evento",
+        "description": "app.models.evento",
+        "isExtraImport": true,
+        "detail": "app.models.evento",
+        "documentation": {}
+    },
+    {
         "label": "Evento",
         "importPath": "app.models.evento",
         "description": "app.models.evento",
@@ -2016,6 +2104,54 @@
         "documentation": {}
     },
     {
+        "label": "EventoItem",
+        "importPath": "app.models.evento",
+        "description": "app.models.evento",
+        "isExtraImport": true,
+        "detail": "app.models.evento",
+        "documentation": {}
+    },
+    {
+        "label": "ServicoCadastro",
+        "importPath": "app.models.evento",
+        "description": "app.models.evento",
+        "isExtraImport": true,
+        "detail": "app.models.evento",
+        "documentation": {}
+    },
+    {
+        "label": "TipoEventoCadastro",
+        "importPath": "app.models.evento",
+        "description": "app.models.evento",
+        "isExtraImport": true,
+        "detail": "app.models.evento",
+        "documentation": {}
+    },
+    {
+        "label": "EquipaCadastro",
+        "importPath": "app.models.evento",
+        "description": "app.models.evento",
+        "isExtraImport": true,
+        "detail": "app.models.evento",
+        "documentation": {}
+    },
+    {
+        "label": "PoliticaComercialEvento",
+        "importPath": "app.models.evento",
+        "description": "app.models.evento",
+        "isExtraImport": true,
+        "detail": "app.models.evento",
+        "documentation": {}
+    },
+    {
+        "label": "PoliticaComercialRegra",
+        "importPath": "app.models.evento",
+        "description": "app.models.evento",
+        "isExtraImport": true,
+        "detail": "app.models.evento",
+        "documentation": {}
+    },
+    {
         "label": "EstadoEvento",
         "importPath": "app.models.evento",
         "description": "app.models.evento",
@@ -2025,6 +2161,94 @@
     },
     {
         "label": "EstadoReservaEspaco",
+        "importPath": "app.models.evento",
+        "description": "app.models.evento",
+        "isExtraImport": true,
+        "detail": "app.models.evento",
+        "documentation": {}
+    },
+    {
+        "label": "TipoItemEvento",
+        "importPath": "app.models.evento",
+        "description": "app.models.evento",
+        "isExtraImport": true,
+        "detail": "app.models.evento",
+        "documentation": {}
+    },
+    {
+        "label": "TipoCalculoPolitica",
+        "importPath": "app.models.evento",
+        "description": "app.models.evento",
+        "isExtraImport": true,
+        "detail": "app.models.evento",
+        "documentation": {}
+    },
+    {
+        "label": "Evento",
+        "importPath": "app.models.evento",
+        "description": "app.models.evento",
+        "isExtraImport": true,
+        "detail": "app.models.evento",
+        "documentation": {}
+    },
+    {
+        "label": "EventoItem",
+        "importPath": "app.models.evento",
+        "description": "app.models.evento",
+        "isExtraImport": true,
+        "detail": "app.models.evento",
+        "documentation": {}
+    },
+    {
+        "label": "ReservaEspaco",
+        "importPath": "app.models.evento",
+        "description": "app.models.evento",
+        "isExtraImport": true,
+        "detail": "app.models.evento",
+        "documentation": {}
+    },
+    {
+        "label": "ReservaMaterial",
+        "importPath": "app.models.evento",
+        "description": "app.models.evento",
+        "isExtraImport": true,
+        "detail": "app.models.evento",
+        "documentation": {}
+    },
+    {
+        "label": "EventoEquipa",
+        "importPath": "app.models.evento",
+        "description": "app.models.evento",
+        "isExtraImport": true,
+        "detail": "app.models.evento",
+        "documentation": {}
+    },
+    {
+        "label": "EstadoEvento",
+        "importPath": "app.models.evento",
+        "description": "app.models.evento",
+        "isExtraImport": true,
+        "detail": "app.models.evento",
+        "documentation": {}
+    },
+    {
+        "label": "EstadoReservaEspaco",
+        "importPath": "app.models.evento",
+        "description": "app.models.evento",
+        "isExtraImport": true,
+        "detail": "app.models.evento",
+        "documentation": {}
+    },
+    {
+        "label": "TipoItemEvento",
+        "importPath": "app.models.evento",
+        "description": "app.models.evento",
+        "isExtraImport": true,
+        "detail": "app.models.evento",
+        "documentation": {}
+    },
+    {
+        "label": "Espaco",
         "importPath": "app.models.evento",
         "description": "app.models.evento",
         "isExtraImport": true,
@@ -2176,7 +2400,39 @@
         "documentation": {}
     },
     {
+        "label": "Pedido",
+        "importPath": "app.models.pedido",
+        "description": "app.models.pedido",
+        "isExtraImport": true,
+        "detail": "app.models.pedido",
+        "documentation": {}
+    },
+    {
+        "label": "EstadoPedido",
+        "importPath": "app.models.pedido",
+        "description": "app.models.pedido",
+        "isExtraImport": true,
+        "detail": "app.models.pedido",
+        "documentation": {}
+    },
+    {
         "label": "EstadoPagamento",
+        "importPath": "app.models.pedido",
+        "description": "app.models.pedido",
+        "isExtraImport": true,
+        "detail": "app.models.pedido",
+        "documentation": {}
+    },
+    {
+        "label": "Pedido",
+        "importPath": "app.models.pedido",
+        "description": "app.models.pedido",
+        "isExtraImport": true,
+        "detail": "app.models.pedido",
+        "documentation": {}
+    },
+    {
+        "label": "ItemPedido",
         "importPath": "app.models.pedido",
         "description": "app.models.pedido",
         "isExtraImport": true,
@@ -2592,14 +2848,6 @@
         "documentation": {}
     },
     {
-        "label": "ReservaViatura",
-        "importPath": "app.models.logistica",
-        "description": "app.models.logistica",
-        "isExtraImport": true,
-        "detail": "app.models.logistica",
-        "documentation": {}
-    },
-    {
         "label": "Motorista",
         "importPath": "app.models.logistica",
         "description": "app.models.logistica",
@@ -2801,6 +3049,54 @@
     },
     {
         "label": "EstadoOcorrencia",
+        "importPath": "app.models.requisicao",
+        "description": "app.models.requisicao",
+        "isExtraImport": true,
+        "detail": "app.models.requisicao",
+        "documentation": {}
+    },
+    {
+        "label": "Requisicao",
+        "importPath": "app.models.requisicao",
+        "description": "app.models.requisicao",
+        "isExtraImport": true,
+        "detail": "app.models.requisicao",
+        "documentation": {}
+    },
+    {
+        "label": "RequisicaoItem",
+        "importPath": "app.models.requisicao",
+        "description": "app.models.requisicao",
+        "isExtraImport": true,
+        "detail": "app.models.requisicao",
+        "documentation": {}
+    },
+    {
+        "label": "TipoRequisicao",
+        "importPath": "app.models.requisicao",
+        "description": "app.models.requisicao",
+        "isExtraImport": true,
+        "detail": "app.models.requisicao",
+        "documentation": {}
+    },
+    {
+        "label": "SectorRequisicao",
+        "importPath": "app.models.requisicao",
+        "description": "app.models.requisicao",
+        "isExtraImport": true,
+        "detail": "app.models.requisicao",
+        "documentation": {}
+    },
+    {
+        "label": "EstadoRequisicao",
+        "importPath": "app.models.requisicao",
+        "description": "app.models.requisicao",
+        "isExtraImport": true,
+        "detail": "app.models.requisicao",
+        "documentation": {}
+    },
+    {
+        "label": "TipoItemRequisicao",
         "importPath": "app.models.requisicao",
         "description": "app.models.requisicao",
         "isExtraImport": true,
@@ -3088,11 +3384,35 @@
         "documentation": {}
     },
     {
+        "label": "text",
+        "importPath": "sqlalchemy",
+        "description": "sqlalchemy",
+        "isExtraImport": true,
+        "detail": "sqlalchemy",
+        "documentation": {}
+    },
+    {
+        "label": "text",
+        "importPath": "sqlalchemy",
+        "description": "sqlalchemy",
+        "isExtraImport": true,
+        "detail": "sqlalchemy",
+        "documentation": {}
+    },
+    {
         "label": "datetime",
         "kind": 6,
         "isExtraImport": true,
         "importPath": "datetime",
         "description": "datetime",
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
         "detail": "datetime",
         "documentation": {}
     },
@@ -3393,6 +3713,70 @@
         "documentation": {}
     },
     {
+        "label": "generate_venda_receipt",
+        "importPath": "app.services.pdf_generator",
+        "description": "app.services.pdf_generator",
+        "isExtraImport": true,
+        "detail": "app.services.pdf_generator",
+        "documentation": {}
+    },
+    {
+        "label": "get_venda_receipt_data",
+        "importPath": "app.services.pdf_generator",
+        "description": "app.services.pdf_generator",
+        "isExtraImport": true,
+        "detail": "app.services.pdf_generator",
+        "documentation": {}
+    },
+    {
+        "label": "Cliente",
+        "importPath": "app.models.cliente",
+        "description": "app.models.cliente",
+        "isExtraImport": true,
+        "detail": "app.models.cliente",
+        "documentation": {}
+    },
+    {
+        "label": "Cliente",
+        "importPath": "app.models.cliente",
+        "description": "app.models.cliente",
+        "isExtraImport": true,
+        "detail": "app.models.cliente",
+        "documentation": {}
+    },
+    {
+        "label": "Cliente",
+        "importPath": "app.models.cliente",
+        "description": "app.models.cliente",
+        "isExtraImport": true,
+        "detail": "app.models.cliente",
+        "documentation": {}
+    },
+    {
+        "label": "Cliente",
+        "importPath": "app.models.cliente",
+        "description": "app.models.cliente",
+        "isExtraImport": true,
+        "detail": "app.models.cliente",
+        "documentation": {}
+    },
+    {
+        "label": "Cliente",
+        "importPath": "app.models.cliente",
+        "description": "app.models.cliente",
+        "isExtraImport": true,
+        "detail": "app.models.cliente",
+        "documentation": {}
+    },
+    {
+        "label": "Cliente",
+        "importPath": "app.models.cliente",
+        "description": "app.models.cliente",
+        "isExtraImport": true,
+        "detail": "app.models.cliente",
+        "documentation": {}
+    },
+    {
         "label": "EventoService",
         "importPath": "app.services.evento_service",
         "description": "app.services.evento_service",
@@ -3418,6 +3802,46 @@
     },
     {
         "label": "AlterarEstadoEventoSchema",
+        "importPath": "app.schemas.evento_schema",
+        "description": "app.schemas.evento_schema",
+        "isExtraImport": true,
+        "detail": "app.schemas.evento_schema",
+        "documentation": {}
+    },
+    {
+        "label": "ServicoCadastroSchema",
+        "importPath": "app.schemas.evento_schema",
+        "description": "app.schemas.evento_schema",
+        "isExtraImport": true,
+        "detail": "app.schemas.evento_schema",
+        "documentation": {}
+    },
+    {
+        "label": "TipoEventoCadastroSchema",
+        "importPath": "app.schemas.evento_schema",
+        "description": "app.schemas.evento_schema",
+        "isExtraImport": true,
+        "detail": "app.schemas.evento_schema",
+        "documentation": {}
+    },
+    {
+        "label": "EquipaCadastroSchema",
+        "importPath": "app.schemas.evento_schema",
+        "description": "app.schemas.evento_schema",
+        "isExtraImport": true,
+        "detail": "app.schemas.evento_schema",
+        "documentation": {}
+    },
+    {
+        "label": "PoliticaComercialEventoSchema",
+        "importPath": "app.schemas.evento_schema",
+        "description": "app.schemas.evento_schema",
+        "isExtraImport": true,
+        "detail": "app.schemas.evento_schema",
+        "documentation": {}
+    },
+    {
+        "label": "PoliticaComercialRegraSchema",
         "importPath": "app.schemas.evento_schema",
         "description": "app.schemas.evento_schema",
         "isExtraImport": true,
@@ -3610,6 +4034,14 @@
         "documentation": {}
     },
     {
+        "label": "ProducaoService",
+        "importPath": "app.services.producao_service",
+        "description": "app.services.producao_service",
+        "isExtraImport": true,
+        "detail": "app.services.producao_service",
+        "documentation": {}
+    },
+    {
         "label": "FichaTecnicaSchema",
         "importPath": "app.schemas.producao_schema",
         "description": "app.schemas.producao_schema",
@@ -3786,7 +4218,31 @@
         "documentation": {}
     },
     {
+        "label": "Produto",
+        "importPath": "app.models.produto",
+        "description": "app.models.produto",
+        "isExtraImport": true,
+        "detail": "app.models.produto",
+        "documentation": {}
+    },
+    {
+        "label": "Produto",
+        "importPath": "app.models.produto",
+        "description": "app.models.produto",
+        "isExtraImport": true,
+        "detail": "app.models.produto",
+        "documentation": {}
+    },
+    {
         "label": "TipoProduto",
+        "importPath": "app.models.produto",
+        "description": "app.models.produto",
+        "isExtraImport": true,
+        "detail": "app.models.produto",
+        "documentation": {}
+    },
+    {
+        "label": "Produto",
         "importPath": "app.models.produto",
         "description": "app.models.produto",
         "isExtraImport": true,
@@ -4099,14 +4555,6 @@
         "documentation": {}
     },
     {
-        "label": "RoleEnum",
-        "importPath": "app.models.user",
-        "description": "app.models.user",
-        "isExtraImport": true,
-        "detail": "app.models.user",
-        "documentation": {}
-    },
-    {
         "label": "User",
         "importPath": "app.models.user",
         "description": "app.models.user",
@@ -4259,6 +4707,22 @@
         "documentation": {}
     },
     {
+        "label": "RoleEnum",
+        "importPath": "app.models.user",
+        "description": "app.models.user",
+        "isExtraImport": true,
+        "detail": "app.models.user",
+        "documentation": {}
+    },
+    {
+        "label": "User",
+        "importPath": "app.models.user",
+        "description": "app.models.user",
+        "isExtraImport": true,
+        "detail": "app.models.user",
+        "documentation": {}
+    },
+    {
         "label": "User",
         "importPath": "app.models.user",
         "description": "app.models.user",
@@ -4304,6 +4768,14 @@
         "description": "app.models.user",
         "isExtraImport": true,
         "detail": "app.models.user",
+        "documentation": {}
+    },
+    {
+        "label": "Empresa",
+        "importPath": "app.models.empresa",
+        "description": "app.models.empresa",
+        "isExtraImport": true,
+        "detail": "app.models.empresa",
         "documentation": {}
     },
     {
@@ -4585,6 +5057,14 @@
         "description": "werkzeug.exceptions",
         "isExtraImport": true,
         "detail": "werkzeug.exceptions",
+        "documentation": {}
+    },
+    {
+        "label": "AuditService",
+        "importPath": "app.services.audit_service",
+        "description": "app.services.audit_service",
+        "isExtraImport": true,
+        "detail": "app.services.audit_service",
         "documentation": {}
     },
     {
@@ -5261,6 +5741,14 @@
     },
     {
         "label": "EstadoMaterial",
+        "importPath": "app.models.material",
+        "description": "app.models.material",
+        "isExtraImport": true,
+        "detail": "app.models.material",
+        "documentation": {}
+    },
+    {
+        "label": "Material",
         "importPath": "app.models.material",
         "description": "app.models.material",
         "isExtraImport": true,
@@ -6252,38 +6740,6 @@
         "documentation": {}
     },
     {
-        "label": "Cliente",
-        "importPath": "app.models.cliente",
-        "description": "app.models.cliente",
-        "isExtraImport": true,
-        "detail": "app.models.cliente",
-        "documentation": {}
-    },
-    {
-        "label": "Cliente",
-        "importPath": "app.models.cliente",
-        "description": "app.models.cliente",
-        "isExtraImport": true,
-        "detail": "app.models.cliente",
-        "documentation": {}
-    },
-    {
-        "label": "Cliente",
-        "importPath": "app.models.cliente",
-        "description": "app.models.cliente",
-        "isExtraImport": true,
-        "detail": "app.models.cliente",
-        "documentation": {}
-    },
-    {
-        "label": "Cliente",
-        "importPath": "app.models.cliente",
-        "description": "app.models.cliente",
-        "isExtraImport": true,
-        "detail": "app.models.cliente",
-        "documentation": {}
-    },
-    {
         "label": "ItemPedido",
         "importPath": "app.models.item_pedido",
         "description": "app.models.item_pedido",
@@ -6749,6 +7205,14 @@
         "documentation": {}
     },
     {
+        "label": "socketio",
+        "importPath": "app.websocket.socket_manager",
+        "description": "app.websocket.socket_manager",
+        "isExtraImport": true,
+        "detail": "app.websocket.socket_manager",
+        "documentation": {}
+    },
+    {
         "label": "CaixaRepository",
         "importPath": "app.repositories.financeiro_repos",
         "description": "app.repositories.financeiro_repos",
@@ -6995,6 +7459,22 @@
         "description": "flask_socketio",
         "isExtraImport": true,
         "detail": "flask_socketio",
+        "documentation": {}
+    },
+    {
+        "label": "create_app",
+        "importPath": "app",
+        "description": "app",
+        "isExtraImport": true,
+        "detail": "app",
+        "documentation": {}
+    },
+    {
+        "label": "create_app",
+        "importPath": "app",
+        "description": "app",
+        "isExtraImport": true,
+        "detail": "app",
         "documentation": {}
     },
     {
@@ -7786,7 +8266,7 @@
         "kind": 2,
         "importPath": "backend.app.api.v1.comercial_controller",
         "description": "backend.app.api.v1.comercial_controller",
-        "peekOfCode": "def create_venda():\n    from flask_jwt_extended import get_jwt_identity\n    user_id = get_jwt_identity()\n    data = request.json\n    try:\n        venda = comercial_service.create_venda(data, user_id)\n        return jsonify({'id': venda.id, 'numero_documento': venda.numero_documento, 'total': str(venda.total)}), 201\n    except Exception as e:\n        return jsonify({'error': str(e)}), 400\n@comercial_bp.route('', methods=['GET'])",
+        "peekOfCode": "def create_venda():\n    from flask_jwt_extended import get_jwt_identity\n    user_id = get_jwt_identity()\n    data = request.json\n    try:\n        venda = comercial_service.create_venda(data, user_id)\n        return jsonify(_serialize_venda_dict(venda)), 201\n    except Exception as e:\n        return jsonify({'error': str(e)}), 400\n@comercial_bp.route('', methods=['GET'])",
         "detail": "backend.app.api.v1.comercial_controller",
         "documentation": {}
     },
@@ -7795,7 +8275,7 @@
         "kind": 2,
         "importPath": "backend.app.api.v1.comercial_controller",
         "description": "backend.app.api.v1.comercial_controller",
-        "peekOfCode": "def get_vendas():\n    vendas = comercial_service.get_vendas()\n    result = [{\n        'id': v.id,\n        'numero_documento': v.numero_documento,\n        'tipo': v.tipo_documento.value,\n        'total': str(v.total),\n        'estado': v.estado.value,\n        'created_at': v.created_at.isoformat() if v.created_at else None\n    } for v in vendas]",
+        "peekOfCode": "def get_vendas():\n    vendas = comercial_service.get_vendas()\n    result = [_serialize_venda_dict(v) for v in vendas]\n    return jsonify(result), 200\n@comercial_bp.route('/<int:venda_id>', methods=['GET'])\n@jwt_required()\ndef get_venda(venda_id):\n    venda = comercial_service.get_venda(venda_id)\n    if not venda:\n        return jsonify({'error': 'Venda not found'}), 404",
         "detail": "backend.app.api.v1.comercial_controller",
         "documentation": {}
     },
@@ -7804,7 +8284,7 @@
         "kind": 2,
         "importPath": "backend.app.api.v1.comercial_controller",
         "description": "backend.app.api.v1.comercial_controller",
-        "peekOfCode": "def get_venda(venda_id):\n    venda = comercial_service.get_venda(venda_id)\n    if not venda:\n        return jsonify({'error': 'Venda not found'}), 404\n    result = {\n        'id': venda.id,\n        'numero_documento': venda.numero_documento,\n        'tipo_documento': venda.tipo_documento.value,\n        'subtotal': str(venda.subtotal),\n        'desconto_total': str(venda.desconto_total),",
+        "peekOfCode": "def get_venda(venda_id):\n    venda = comercial_service.get_venda(venda_id)\n    if not venda:\n        return jsonify({'error': 'Venda not found'}), 404\n    return jsonify(_serialize_venda_dict(venda)), 200\n@comercial_bp.route('/<int:venda_id>/pdf', methods=['GET'])\n@jwt_required()\ndef get_venda_pdf(venda_id):\n    venda = comercial_service.get_venda(venda_id)\n    if not venda:",
         "detail": "backend.app.api.v1.comercial_controller",
         "documentation": {}
     },
@@ -7814,6 +8294,24 @@
         "importPath": "backend.app.api.v1.comercial_controller",
         "description": "backend.app.api.v1.comercial_controller",
         "peekOfCode": "def get_venda_pdf(venda_id):\n    venda = comercial_service.get_venda(venda_id)\n    if not venda:\n        return jsonify({'error': 'Venda not found'}), 404\n    pdf_buffer = generate_venda_pdf(venda)\n    return send_file(\n        pdf_buffer,\n        as_attachment=True,\n        download_name=f\"{venda.numero_documento.replace('/', '_')}.pdf\",\n        mimetype='application/pdf'",
+        "detail": "backend.app.api.v1.comercial_controller",
+        "documentation": {}
+    },
+    {
+        "label": "get_venda_recibo",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.comercial_controller",
+        "description": "backend.app.api.v1.comercial_controller",
+        "peekOfCode": "def get_venda_recibo(venda_id):\n    venda = comercial_service.get_venda(venda_id)\n    if not venda:\n        return jsonify({'error': 'Venda not found'}), 404\n    pdf_buffer = generate_venda_receipt(venda)\n    return send_file(\n        pdf_buffer,\n        as_attachment=False,\n        download_name=f\"recibo_{venda.numero_documento.replace('/', '_')}.pdf\",\n        mimetype='application/pdf'",
+        "detail": "backend.app.api.v1.comercial_controller",
+        "documentation": {}
+    },
+    {
+        "label": "get_venda_recibo_data",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.comercial_controller",
+        "description": "backend.app.api.v1.comercial_controller",
+        "peekOfCode": "def get_venda_recibo_data(venda_id):\n    venda = comercial_service.get_venda(venda_id)\n    if not venda:\n        return jsonify({'error': 'Venda not found'}), 404\n    data = get_venda_receipt_data(venda)\n    return jsonify(data), 200\n@comercial_bp.route('/<int:venda_id>/send', methods=['POST'])\n@jwt_required()\ndef send_venda_notification(venda_id):\n    from app.services.notification_service import NotificationService",
         "detail": "backend.app.api.v1.comercial_controller",
         "documentation": {}
     },
@@ -7831,7 +8329,7 @@
         "kind": 2,
         "importPath": "backend.app.api.v1.comercial_controller",
         "description": "backend.app.api.v1.comercial_controller",
-        "peekOfCode": "def register_pagamento(venda_id):\n    from flask_jwt_extended import get_jwt_identity\n    user_id = get_jwt_identity()\n    data = request.json\n    try:\n        pagamento = comercial_service.add_pagamento(venda_id, data, user_id)\n        return jsonify({'id': pagamento.id, 'saldo': str(pagamento.venda_rel.saldo)}), 200\n    except Exception as e:\n        return jsonify({'error': str(e)}), 400\n@comercial_bp.route('/<int:venda_id>/pagamentos', methods=['GET'])",
+        "peekOfCode": "def register_pagamento(venda_id):\n    from flask_jwt_extended import get_jwt_identity\n    user_id = get_jwt_identity()\n    data = request.json\n    try:\n        pagamento = comercial_service.add_pagamento(venda_id, data, user_id)\n        return jsonify(_serialize_venda_dict(pagamento.venda_rel)), 200\n    except Exception as e:\n        return jsonify({'error': str(e)}), 400\n@comercial_bp.route('/<int:venda_id>/pagamentos', methods=['GET'])",
         "detail": "backend.app.api.v1.comercial_controller",
         "documentation": {}
     },
@@ -7840,7 +8338,7 @@
         "kind": 2,
         "importPath": "backend.app.api.v1.comercial_controller",
         "description": "backend.app.api.v1.comercial_controller",
-        "peekOfCode": "def get_pagamentos(venda_id):\n    venda = comercial_service.get_venda(venda_id)\n    if not venda:\n        return jsonify({'error': 'Venda not found'}), 404\n    return jsonify([{\n        'id': p.id,\n        'valor': str(p.valor),\n        'estado': p.estado.value,\n        'data_pagamento': p.data_pagamento.isoformat() if p.data_pagamento else None\n    } for p in venda.pagamentos]), 200",
+        "peekOfCode": "def get_pagamentos(venda_id):\n    venda = comercial_service.get_venda(venda_id)\n    if not venda:\n        return jsonify({'error': 'Venda not found'}), 404\n    return jsonify([{\n        'id': p.id,\n        'valor': float(p.valor or 0),\n        'estado': p.estado.value,\n        'data_pagamento': p.data_pagamento.isoformat() if p.data_pagamento else None\n    } for p in venda.pagamentos]), 200",
         "detail": "backend.app.api.v1.comercial_controller",
         "documentation": {}
     },
@@ -7849,7 +8347,7 @@
         "kind": 2,
         "importPath": "backend.app.api.v1.comercial_controller",
         "description": "backend.app.api.v1.comercial_controller",
-        "peekOfCode": "def cancel_venda(venda_id):\n    from flask_jwt_extended import get_jwt_identity\n    user_id = get_jwt_identity()\n    ip_addr = request.remote_addr\n    try:\n        venda = comercial_service.cancel_venda(venda_id, user_id, ip_addr)\n        return jsonify({'id': venda.id, 'estado': venda.estado.value}), 200\n    except Exception as e:\n        return jsonify({'error': str(e)}), 400\n@comercial_bp.route('/checkout-pedido/<int:pedido_id>', methods=['POST'])",
+        "peekOfCode": "def cancel_venda(venda_id):\n    from flask_jwt_extended import get_jwt_identity\n    user_id = get_jwt_identity()\n    ip_addr = request.remote_addr\n    try:\n        venda = comercial_service.cancel_venda(venda_id, user_id, ip_addr)\n        return jsonify(_serialize_venda_dict(venda)), 200\n    except Exception as e:\n        return jsonify({'error': str(e)}), 400\n@comercial_bp.route('/checkout-pedido/<int:pedido_id>', methods=['POST'])",
         "detail": "backend.app.api.v1.comercial_controller",
         "documentation": {}
     },
@@ -7858,7 +8356,7 @@
         "kind": 2,
         "importPath": "backend.app.api.v1.comercial_controller",
         "description": "backend.app.api.v1.comercial_controller",
-        "peekOfCode": "def checkout_pedido(pedido_id):\n    from flask_jwt_extended import get_jwt_identity\n    user_id = get_jwt_identity()\n    data = request.json or {}\n    venda, error = comercial_service.converter_pedido_em_venda(pedido_id, data, user_id)\n    if error:\n        return jsonify({'error': error}), 400\n    return jsonify({\n        'id': venda.id,\n        'numero_documento': venda.numero_documento,",
+        "peekOfCode": "def checkout_pedido(pedido_id):\n    from flask_jwt_extended import get_jwt_identity\n    user_id = get_jwt_identity()\n    data = request.json or {}\n    venda, error = comercial_service.converter_pedido_em_venda(pedido_id, data, user_id)\n    if error:\n        return jsonify({'error': error}), 400\n    return jsonify(_serialize_venda_dict(venda)), 200",
         "detail": "backend.app.api.v1.comercial_controller",
         "documentation": {}
     },
@@ -7867,7 +8365,7 @@
         "kind": 5,
         "importPath": "backend.app.api.v1.comercial_controller",
         "description": "backend.app.api.v1.comercial_controller",
-        "peekOfCode": "comercial_bp = Blueprint('comercial', __name__)\nfiscal_bp = Blueprint('fiscal', __name__)\ncomercial_service = ComercialService()\n@fiscal_bp.route('/iva', methods=['GET'])\n@jwt_required()\ndef get_ivas():\n    ivas = comercial_service.get_todas_taxas_iva()\n    return jsonify([{'id': i.id, 'descricao': i.descricao, 'percentagem': str(i.percentagem), 'ativo': i.ativo} for i in ivas]), 200\n@fiscal_bp.route('/iva', methods=['POST'])\n@jwt_required()",
+        "peekOfCode": "comercial_bp = Blueprint('comercial', __name__)\nfiscal_bp = Blueprint('fiscal', __name__)\nfrom app.services.comercial_service import ComercialService, StockInsuficienteError\nfrom flask_jwt_extended import jwt_required\nfrom app.middleware.auth_middleware import requires_roles\nfrom app.services.pdf_generator import generate_venda_pdf, generate_venda_receipt, get_venda_receipt_data\nfrom app.models.cliente import Cliente\ncomercial_service = ComercialService()\ndef _serialize_venda_dict(venda):\n    cliente_nome = \"Consumidor Final\"",
         "detail": "backend.app.api.v1.comercial_controller",
         "documentation": {}
     },
@@ -7876,7 +8374,7 @@
         "kind": 5,
         "importPath": "backend.app.api.v1.comercial_controller",
         "description": "backend.app.api.v1.comercial_controller",
-        "peekOfCode": "fiscal_bp = Blueprint('fiscal', __name__)\ncomercial_service = ComercialService()\n@fiscal_bp.route('/iva', methods=['GET'])\n@jwt_required()\ndef get_ivas():\n    ivas = comercial_service.get_todas_taxas_iva()\n    return jsonify([{'id': i.id, 'descricao': i.descricao, 'percentagem': str(i.percentagem), 'ativo': i.ativo} for i in ivas]), 200\n@fiscal_bp.route('/iva', methods=['POST'])\n@jwt_required()\n@requires_roles('Administrador', 'Financeiro')",
+        "peekOfCode": "fiscal_bp = Blueprint('fiscal', __name__)\nfrom app.services.comercial_service import ComercialService, StockInsuficienteError\nfrom flask_jwt_extended import jwt_required\nfrom app.middleware.auth_middleware import requires_roles\nfrom app.services.pdf_generator import generate_venda_pdf, generate_venda_receipt, get_venda_receipt_data\nfrom app.models.cliente import Cliente\ncomercial_service = ComercialService()\ndef _serialize_venda_dict(venda):\n    cliente_nome = \"Consumidor Final\"\n    cliente_nif = \"Consumidor Final\"",
         "detail": "backend.app.api.v1.comercial_controller",
         "documentation": {}
     },
@@ -7885,7 +8383,7 @@
         "kind": 5,
         "importPath": "backend.app.api.v1.comercial_controller",
         "description": "backend.app.api.v1.comercial_controller",
-        "peekOfCode": "comercial_service = ComercialService()\n@fiscal_bp.route('/iva', methods=['GET'])\n@jwt_required()\ndef get_ivas():\n    ivas = comercial_service.get_todas_taxas_iva()\n    return jsonify([{'id': i.id, 'descricao': i.descricao, 'percentagem': str(i.percentagem), 'ativo': i.ativo} for i in ivas]), 200\n@fiscal_bp.route('/iva', methods=['POST'])\n@jwt_required()\n@requires_roles('Administrador', 'Financeiro')\ndef create_iva():",
+        "peekOfCode": "comercial_service = ComercialService()\ndef _serialize_venda_dict(venda):\n    cliente_nome = \"Consumidor Final\"\n    cliente_nif = \"Consumidor Final\"\n    cliente_email = \"\"\n    cliente_telefone = \"\"\n    if venda.pedido and venda.pedido.cliente:\n        cliente_nome = venda.pedido.cliente.nome or \"Consumidor Final\"\n        cliente_nif = venda.pedido.cliente.nif or \"Consumidor Final\"\n        cliente_email = venda.pedido.cliente.email or \"\"",
         "detail": "backend.app.api.v1.comercial_controller",
         "documentation": {}
     },
@@ -7899,11 +8397,191 @@
         "documentation": {}
     },
     {
+        "label": "sugerir_preco",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.evento_controller",
+        "description": "backend.app.api.v1.evento_controller",
+        "peekOfCode": "def sugerir_preco():\n    data = request.get_json() or {}\n    res = evento_service.sugerir_preco_item(\n        tipo_evento=data.get('tipo_evento'),\n        numero_convidados=data.get('numero_convidados', 1),\n        tipo_item=data.get('tipo_item'),\n        referencia_id=data.get('referencia_id'),\n        nome_item=data.get('nome_item')\n    )\n    return jsonify(res), 200",
+        "detail": "backend.app.api.v1.evento_controller",
+        "documentation": {}
+    },
+    {
+        "label": "get_politicas_comerciais",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.evento_controller",
+        "description": "backend.app.api.v1.evento_controller",
+        "peekOfCode": "def get_politicas_comerciais():\n    search = request.args.get('search', '').strip()\n    query = PoliticaComercialEvento.query\n    if search:\n        query = query.filter(\n            (PoliticaComercialEvento.nome.ilike(f\"%{search}%\")) |\n            (PoliticaComercialEvento.codigo.ilike(f\"%{search}%\")) |\n            (PoliticaComercialEvento.tipo_evento.ilike(f\"%{search}%\"))\n        )\n    politicas = query.all()",
+        "detail": "backend.app.api.v1.evento_controller",
+        "documentation": {}
+    },
+    {
+        "label": "get_politica_comercial_by_id",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.evento_controller",
+        "description": "backend.app.api.v1.evento_controller",
+        "peekOfCode": "def get_politica_comercial_by_id(id):\n    p = PoliticaComercialEvento.query.get(id)\n    if not p: return jsonify({\"msg\": \"Política comercial não encontrada\"}), 404\n    return jsonify(PoliticaComercialEventoSchema().dump(p)), 200\n@evento_bp.route('/politicas-comerciais', methods=['POST'])\n@jwt_required()\n@requires_roles('Administrador', 'Comercial')\ndef create_politica_comercial():\n    data = request.get_json() or {}\n    regras_data = data.pop('regras', [])",
+        "detail": "backend.app.api.v1.evento_controller",
+        "documentation": {}
+    },
+    {
+        "label": "create_politica_comercial",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.evento_controller",
+        "description": "backend.app.api.v1.evento_controller",
+        "peekOfCode": "def create_politica_comercial():\n    data = request.get_json() or {}\n    regras_data = data.pop('regras', [])\n    p = PoliticaComercialEvento(**data)\n    db.session.add(p)\n    db.session.flush()\n    for r in regras_data:\n        regra = PoliticaComercialRegra(politica_id=p.id, **r)\n        db.session.add(regra)\n    db.session.commit()",
+        "detail": "backend.app.api.v1.evento_controller",
+        "documentation": {}
+    },
+    {
+        "label": "update_politica_comercial",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.evento_controller",
+        "description": "backend.app.api.v1.evento_controller",
+        "peekOfCode": "def update_politica_comercial(id):\n    p = PoliticaComercialEvento.query.get(id)\n    if not p: return jsonify({\"msg\": \"Política comercial não encontrada\"}), 404\n    data = request.get_json() or {}\n    regras_data = data.pop('regras', None)\n    for k, v in data.items():\n        if hasattr(p, k) and k not in ['id', 'regras']:\n            setattr(p, k, v)\n    if regras_data is not None:\n        p.regras.clear()",
+        "detail": "backend.app.api.v1.evento_controller",
+        "documentation": {}
+    },
+    {
+        "label": "desativar_politica_comercial",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.evento_controller",
+        "description": "backend.app.api.v1.evento_controller",
+        "peekOfCode": "def desativar_politica_comercial(id):\n    p = PoliticaComercialEvento.query.get(id)\n    if not p: return jsonify({\"msg\": \"Política comercial não encontrada\"}), 404\n    p.estado = 'Inativa'\n    db.session.commit()\n    return jsonify({\"msg\": f\"Política Comercial '{p.nome}' desativada com sucesso.\"}), 200\n@evento_bp.route('/politicas-comerciais/<int:id>/regras', methods=['POST'])\n@jwt_required()\n@requires_roles('Administrador', 'Comercial')\ndef add_regra_politica_comercial(id):",
+        "detail": "backend.app.api.v1.evento_controller",
+        "documentation": {}
+    },
+    {
+        "label": "add_regra_politica_comercial",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.evento_controller",
+        "description": "backend.app.api.v1.evento_controller",
+        "peekOfCode": "def add_regra_politica_comercial(id):\n    p = PoliticaComercialEvento.query.get(id)\n    if not p: return jsonify({\"msg\": \"Política comercial não encontrada\"}), 404\n    r_data = request.get_json() or {}\n    regra = PoliticaComercialRegra(politica_id=p.id, **r_data)\n    db.session.add(regra)\n    db.session.commit()\n    return jsonify(PoliticaComercialRegraSchema().dump(regra)), 201\n@evento_bp.route('/politicas-comerciais/<int:id>/regras/<int:regra_id>', methods=['DELETE'])\n@jwt_required()",
+        "detail": "backend.app.api.v1.evento_controller",
+        "documentation": {}
+    },
+    {
+        "label": "delete_regra_politica_comercial",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.evento_controller",
+        "description": "backend.app.api.v1.evento_controller",
+        "peekOfCode": "def delete_regra_politica_comercial(id, regra_id):\n    regra = PoliticaComercialRegra.query.filter_by(id=regra_id, politica_id=id).first()\n    if not regra: return jsonify({\"msg\": \"Regra não encontrada\"}), 404\n    db.session.delete(regra)\n    db.session.commit()\n    return jsonify({\"msg\": \"Regra removida com sucesso\"}), 200\n# CADASTROS BASE DE SERVIÇOS\n@evento_bp.route('/cadastros/servicos', methods=['GET'])\n@jwt_required()\ndef get_servicos_cadastro():",
+        "detail": "backend.app.api.v1.evento_controller",
+        "documentation": {}
+    },
+    {
+        "label": "get_servicos_cadastro",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.evento_controller",
+        "description": "backend.app.api.v1.evento_controller",
+        "peekOfCode": "def get_servicos_cadastro():\n    search = request.args.get('search', '').strip()\n    include_inativos = request.args.get('include_inativos', 'false').lower() == 'true'\n    query = ServicoCadastro.query\n    if not include_inativos:\n        query = query.filter_by(ativo=True)\n    if search:\n        query = query.filter(\n            (ServicoCadastro.nome.ilike(f\"%{search}%\")) |\n            (ServicoCadastro.codigo.ilike(f\"%{search}%\")) |",
+        "detail": "backend.app.api.v1.evento_controller",
+        "documentation": {}
+    },
+    {
+        "label": "create_servico_cadastro",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.evento_controller",
+        "description": "backend.app.api.v1.evento_controller",
+        "peekOfCode": "def create_servico_cadastro():\n    data = request.get_json() or {}\n    s = ServicoCadastro(**data)\n    db.session.add(s)\n    db.session.commit()\n    return jsonify(ServicoCadastroSchema().dump(s)), 201\n@evento_bp.route('/cadastros/servicos/<int:id>', methods=['PUT'])\n@jwt_required()\n@requires_roles('Administrador', 'Comercial')\ndef update_servico_cadastro(id):",
+        "detail": "backend.app.api.v1.evento_controller",
+        "documentation": {}
+    },
+    {
+        "label": "update_servico_cadastro",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.evento_controller",
+        "description": "backend.app.api.v1.evento_controller",
+        "peekOfCode": "def update_servico_cadastro(id):\n    s = ServicoCadastro.query.get(id)\n    if not s: return jsonify({\"msg\": \"Serviço não encontrado\"}), 404\n    data = request.get_json() or {}\n    for k, v in data.items():\n        if hasattr(s, k) and k != 'id':\n            setattr(s, k, v)\n    db.session.commit()\n    return jsonify(ServicoCadastroSchema().dump(s)), 200\n@evento_bp.route('/cadastros/servicos/<int:id>/desativar', methods=['PATCH', 'PUT', 'DELETE'])",
+        "detail": "backend.app.api.v1.evento_controller",
+        "documentation": {}
+    },
+    {
+        "label": "desativar_servico_cadastro",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.evento_controller",
+        "description": "backend.app.api.v1.evento_controller",
+        "peekOfCode": "def desativar_servico_cadastro(id):\n    s = ServicoCadastro.query.get(id)\n    if not s: return jsonify({\"msg\": \"Serviço não encontrado\"}), 404\n    s.ativo = False\n    db.session.commit()\n    return jsonify({\"msg\": f\"Serviço '{s.nome}' desativado com sucesso.\"}), 200\n# CADASTROS BASE DE TIPOS DE EVENTO\n@evento_bp.route('/cadastros/tipos-evento', methods=['GET'])\n@jwt_required()\ndef get_tipos_evento_cadastro():",
+        "detail": "backend.app.api.v1.evento_controller",
+        "documentation": {}
+    },
+    {
+        "label": "get_tipos_evento_cadastro",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.evento_controller",
+        "description": "backend.app.api.v1.evento_controller",
+        "peekOfCode": "def get_tipos_evento_cadastro():\n    search = request.args.get('search', '').strip()\n    include_inativos = request.args.get('include_inativos', 'false').lower() == 'true'\n    query = TipoEventoCadastro.query\n    if not include_inativos:\n        query = query.filter_by(ativo=True)\n    if search:\n        query = query.filter(TipoEventoCadastro.nome.ilike(f\"%{search}%\"))\n    tipos = query.order_by(TipoEventoCadastro.nome.asc()).all()\n    return jsonify(TipoEventoCadastroSchema(many=True).dump(tipos)), 200",
+        "detail": "backend.app.api.v1.evento_controller",
+        "documentation": {}
+    },
+    {
+        "label": "create_tipo_evento_cadastro",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.evento_controller",
+        "description": "backend.app.api.v1.evento_controller",
+        "peekOfCode": "def create_tipo_evento_cadastro():\n    data = request.get_json() or {}\n    t = TipoEventoCadastro(**data)\n    db.session.add(t)\n    db.session.commit()\n    return jsonify(TipoEventoCadastroSchema().dump(t)), 201\n@evento_bp.route('/cadastros/tipos-evento/<int:id>', methods=['PUT'])\n@jwt_required()\n@requires_roles('Administrador', 'Comercial')\ndef update_tipo_evento_cadastro(id):",
+        "detail": "backend.app.api.v1.evento_controller",
+        "documentation": {}
+    },
+    {
+        "label": "update_tipo_evento_cadastro",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.evento_controller",
+        "description": "backend.app.api.v1.evento_controller",
+        "peekOfCode": "def update_tipo_evento_cadastro(id):\n    t = TipoEventoCadastro.query.get(id)\n    if not t: return jsonify({\"msg\": \"Tipo de evento não encontrado\"}), 404\n    data = request.get_json() or {}\n    for k, v in data.items():\n        if hasattr(t, k) and k != 'id':\n            setattr(t, k, v)\n    db.session.commit()\n    return jsonify(TipoEventoCadastroSchema().dump(t)), 200\n@evento_bp.route('/cadastros/tipos-evento/<int:id>/desativar', methods=['PATCH', 'PUT', 'DELETE'])",
+        "detail": "backend.app.api.v1.evento_controller",
+        "documentation": {}
+    },
+    {
+        "label": "desativar_tipo_evento_cadastro",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.evento_controller",
+        "description": "backend.app.api.v1.evento_controller",
+        "peekOfCode": "def desativar_tipo_evento_cadastro(id):\n    t = TipoEventoCadastro.query.get(id)\n    if not t: return jsonify({\"msg\": \"Tipo de evento não encontrado\"}), 404\n    t.ativo = False\n    db.session.commit()\n    return jsonify({\"msg\": f\"Tipo de evento '{t.nome}' desativado com sucesso.\"}), 200\n# CADASTROS BASE DE EQUIPAS\n@evento_bp.route('/cadastros/equipas', methods=['GET'])\n@jwt_required()\ndef get_equipas_cadastro():",
+        "detail": "backend.app.api.v1.evento_controller",
+        "documentation": {}
+    },
+    {
+        "label": "get_equipas_cadastro",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.evento_controller",
+        "description": "backend.app.api.v1.evento_controller",
+        "peekOfCode": "def get_equipas_cadastro():\n    search = request.args.get('search', '').strip()\n    include_inativos = request.args.get('include_inativos', 'false').lower() == 'true'\n    query = EquipaCadastro.query\n    if not include_inativos:\n        query = query.filter_by(ativo=True)\n    if search:\n        query = query.filter(\n            (EquipaCadastro.nome.ilike(f\"%{search}%\")) |\n            (EquipaCadastro.departamento.ilike(f\"%{search}%\"))",
+        "detail": "backend.app.api.v1.evento_controller",
+        "documentation": {}
+    },
+    {
+        "label": "create_equipa_cadastro",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.evento_controller",
+        "description": "backend.app.api.v1.evento_controller",
+        "peekOfCode": "def create_equipa_cadastro():\n    data = request.get_json() or {}\n    eq = EquipaCadastro(**data)\n    db.session.add(eq)\n    db.session.commit()\n    return jsonify(EquipaCadastroSchema().dump(eq)), 201\n@evento_bp.route('/cadastros/equipas/<int:id>', methods=['PUT'])\n@jwt_required()\n@requires_roles('Administrador', 'Comercial')\ndef update_equipa_cadastro(id):",
+        "detail": "backend.app.api.v1.evento_controller",
+        "documentation": {}
+    },
+    {
+        "label": "update_equipa_cadastro",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.evento_controller",
+        "description": "backend.app.api.v1.evento_controller",
+        "peekOfCode": "def update_equipa_cadastro(id):\n    eq = EquipaCadastro.query.get(id)\n    if not eq: return jsonify({\"msg\": \"Equipa não encontrada\"}), 404\n    data = request.get_json() or {}\n    for k, v in data.items():\n        if hasattr(eq, k) and k != 'id':\n            setattr(eq, k, v)\n    db.session.commit()\n    return jsonify(EquipaCadastroSchema().dump(eq)), 200\n@evento_bp.route('/cadastros/equipas/<int:id>/desativar', methods=['PATCH', 'PUT', 'DELETE'])",
+        "detail": "backend.app.api.v1.evento_controller",
+        "documentation": {}
+    },
+    {
+        "label": "desativar_equipa_cadastro",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.evento_controller",
+        "description": "backend.app.api.v1.evento_controller",
+        "peekOfCode": "def desativar_equipa_cadastro(id):\n    eq = EquipaCadastro.query.get(id)\n    if not eq: return jsonify({\"msg\": \"Equipa não encontrada\"}), 404\n    eq.ativo = False\n    db.session.commit()\n    return jsonify({\"msg\": f\"Equipa '{eq.nome}' desativada com sucesso.\"}), 200\n# ESPAÇOS\n@evento_bp.route('/espacos', methods=['GET'])\n@jwt_required()\ndef get_espacos():",
+        "detail": "backend.app.api.v1.evento_controller",
+        "documentation": {}
+    },
+    {
         "label": "get_espacos",
         "kind": 2,
         "importPath": "backend.app.api.v1.evento_controller",
         "description": "backend.app.api.v1.evento_controller",
-        "peekOfCode": "def get_espacos():\n    return build_pagination(evento_service.espaco_repo, EspacoSchema, request)\n@evento_bp.route('/espacos', methods=['POST'])\n@jwt_required()\n@requires_roles('Administrador', 'Atendimento')\ndef create_espaco():\n    try:\n        data = EspacoSchema().load(request.get_json())\n    except ValidationError as err:\n        return jsonify({\"msg\": \"Validation error\", \"errors\": err.messages}), 400",
+        "peekOfCode": "def get_espacos():\n    return build_pagination(evento_service.espaco_repo, EspacoSchema, request)\n@evento_bp.route('/espacos', methods=['POST'])\n@jwt_required()\n@requires_roles('Administrador', 'Atendimento', 'Comercial')\ndef create_espaco():\n    try:\n        data = EspacoSchema().load(request.get_json())\n    except ValidationError as err:\n        return jsonify({\"msg\": \"Validation error\", \"errors\": err.messages}), 400",
         "detail": "backend.app.api.v1.evento_controller",
         "documentation": {}
     },
@@ -7912,7 +8590,25 @@
         "kind": 2,
         "importPath": "backend.app.api.v1.evento_controller",
         "description": "backend.app.api.v1.evento_controller",
-        "peekOfCode": "def create_espaco():\n    try:\n        data = EspacoSchema().load(request.get_json())\n    except ValidationError as err:\n        return jsonify({\"msg\": \"Validation error\", \"errors\": err.messages}), 400\n    user_id = get_jwt_identity()\n    result, error = evento_service.create_espaco(data, user_id)\n    if error: return jsonify({\"msg\": error}), 400\n    return jsonify(EspacoSchema().dump(result)), 201\n# EVENTOS",
+        "peekOfCode": "def create_espaco():\n    try:\n        data = EspacoSchema().load(request.get_json())\n    except ValidationError as err:\n        return jsonify({\"msg\": \"Validation error\", \"errors\": err.messages}), 400\n    user_id = get_jwt_identity()\n    result, error = evento_service.create_espaco(data, user_id)\n    if error: return jsonify({\"msg\": error}), 400\n    return jsonify(EspacoSchema().dump(result)), 201\n@evento_bp.route('/espacos/<int:id>', methods=['PUT'])",
+        "detail": "backend.app.api.v1.evento_controller",
+        "documentation": {}
+    },
+    {
+        "label": "update_espaco",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.evento_controller",
+        "description": "backend.app.api.v1.evento_controller",
+        "peekOfCode": "def update_espaco(id):\n    esp = Espaco.query.get(id)\n    if not esp: return jsonify({\"msg\": \"Espaço não encontrado\"}), 404\n    data = request.get_json() or {}\n    for k, v in data.items():\n        if hasattr(esp, k) and k != 'id':\n            setattr(esp, k, v)\n    db.session.commit()\n    return jsonify(EspacoSchema().dump(esp)), 200\n@evento_bp.route('/espacos/<int:id>/desativar', methods=['PATCH', 'PUT', 'DELETE'])",
+        "detail": "backend.app.api.v1.evento_controller",
+        "documentation": {}
+    },
+    {
+        "label": "desativar_espaco",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.evento_controller",
+        "description": "backend.app.api.v1.evento_controller",
+        "peekOfCode": "def desativar_espaco(id):\n    esp = Espaco.query.get(id)\n    if not esp: return jsonify({\"msg\": \"Espaço não encontrado\"}), 404\n    esp.estado = 'Inativo'\n    db.session.commit()\n    return jsonify({\"msg\": f\"Espaço '{esp.nome}' desativado com sucesso.\"}), 200\n# EVENTOS\n@evento_bp.route('', methods=['GET'])\n@jwt_required()\ndef get_eventos():",
         "detail": "backend.app.api.v1.evento_controller",
         "documentation": {}
     },
@@ -7921,7 +8617,25 @@
         "kind": 2,
         "importPath": "backend.app.api.v1.evento_controller",
         "description": "backend.app.api.v1.evento_controller",
-        "peekOfCode": "def get_eventos():\n    return build_pagination(evento_service.evento_repo, EventoSchema, request)\n@evento_bp.route('/<int:id>/faturar', methods=['POST'])\n@jwt_required()\n@requires_roles('Administrador', 'Comercial')\ndef faturar_evento(id):\n    from app.services.comercial_service import ComercialService\n    com_service = ComercialService()\n    data = request.get_json() or {}\n    user_id = get_jwt_identity()",
+        "peekOfCode": "def get_eventos():\n    return build_pagination(evento_service.evento_repo, EventoSchema, request)\n@evento_bp.route('/<int:id>', methods=['GET'])\n@jwt_required()\ndef get_evento_by_id(id):\n    evento = evento_service.evento_repo.get_by_id(id)\n    if not evento:\n        return jsonify({\"msg\": \"Evento não encontrado\"}), 404\n    return jsonify(EventoSchema().dump(evento)), 200\n@evento_bp.route('/<int:id>', methods=['PUT'])",
+        "detail": "backend.app.api.v1.evento_controller",
+        "documentation": {}
+    },
+    {
+        "label": "get_evento_by_id",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.evento_controller",
+        "description": "backend.app.api.v1.evento_controller",
+        "peekOfCode": "def get_evento_by_id(id):\n    evento = evento_service.evento_repo.get_by_id(id)\n    if not evento:\n        return jsonify({\"msg\": \"Evento não encontrado\"}), 404\n    return jsonify(EventoSchema().dump(evento)), 200\n@evento_bp.route('/<int:id>', methods=['PUT'])\n@jwt_required()\n@requires_roles('Administrador', 'Atendimento', 'Comercial')\ndef update_evento(id):\n    try:",
+        "detail": "backend.app.api.v1.evento_controller",
+        "documentation": {}
+    },
+    {
+        "label": "update_evento",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.evento_controller",
+        "description": "backend.app.api.v1.evento_controller",
+        "peekOfCode": "def update_evento(id):\n    try:\n        data = EventoSchema().load(request.get_json(), partial=True)\n    except ValidationError as err:\n        return jsonify({\"msg\": \"Validation error\", \"errors\": err.messages}), 400\n    user_id = get_jwt_identity()\n    result, error = evento_service.update_evento(id, data, user_id)\n    if error: return jsonify({\"msg\": error}), 400\n    return jsonify(EventoSchema().dump(result)), 200\n@evento_bp.route('/<int:id>/faturar', methods=['POST'])",
         "detail": "backend.app.api.v1.evento_controller",
         "documentation": {}
     },
@@ -7939,7 +8653,7 @@
         "kind": 2,
         "importPath": "backend.app.api.v1.evento_controller",
         "description": "backend.app.api.v1.evento_controller",
-        "peekOfCode": "def check_proximos():\n    # Emits an alert for events happening in the next 24 hours\n    from datetime import datetime, timedelta\n    from app.models.evento import Evento, EstadoEvento\n    from app.core.database import db\n    from app.websocket.socket_manager import socketio\n    amanha = datetime.utcnow().date() + timedelta(days=1)\n    hoje = datetime.utcnow().date()\n    eventos = db.session.query(Evento).filter(\n        Evento.data_evento >= hoje,",
+        "peekOfCode": "def check_proximos():\n    from datetime import datetime, timedelta\n    from app.models.evento import Evento\n    from app.websocket.socket_manager import socketio\n    amanha = datetime.utcnow().date() + timedelta(days=1)\n    hoje = datetime.utcnow().date()\n    eventos = db.session.query(Evento).filter(\n        Evento.data_evento >= hoje,\n        Evento.data_evento <= amanha\n    ).all()",
         "detail": "backend.app.api.v1.evento_controller",
         "documentation": {}
     },
@@ -7948,25 +8662,7 @@
         "kind": 2,
         "importPath": "backend.app.api.v1.evento_controller",
         "description": "backend.app.api.v1.evento_controller",
-        "peekOfCode": "def create_evento():\n    try:\n        data = EventoSchema().load(request.get_json())\n    except ValidationError as err:\n        return jsonify({\"msg\": \"Validation error\", \"errors\": err.messages}), 400\n    user_id = get_jwt_identity()\n    result, error = evento_service.create_evento(data, user_id)\n    if error: return jsonify({\"msg\": error}), 400\n    return jsonify(EventoSchema().dump(result)), 201\n@evento_bp.route('/<int:id>', methods=['PUT'])",
-        "detail": "backend.app.api.v1.evento_controller",
-        "documentation": {}
-    },
-    {
-        "label": "update_evento",
-        "kind": 2,
-        "importPath": "backend.app.api.v1.evento_controller",
-        "description": "backend.app.api.v1.evento_controller",
-        "peekOfCode": "def update_evento(id):\n    try:\n        data = EventoSchema(partial=True).load(request.get_json())\n    except ValidationError as err:\n        return jsonify({\"msg\": \"Validation error\", \"errors\": err.messages}), 400\n    user_id = get_jwt_identity()\n    result, error = evento_service.update_evento(id, data, user_id)\n    if error:\n        return jsonify({\"msg\": error}), 400\n    return jsonify(EventoSchema().dump(result)), 200",
-        "detail": "backend.app.api.v1.evento_controller",
-        "documentation": {}
-    },
-    {
-        "label": "delete_evento",
-        "kind": 2,
-        "importPath": "backend.app.api.v1.evento_controller",
-        "description": "backend.app.api.v1.evento_controller",
-        "peekOfCode": "def delete_evento(id):\n    result, error = evento_service.delete_evento(id, get_jwt_identity())\n    if error:\n        return jsonify({\"msg\": error}), 400\n    return jsonify({\"success\": True}), 200\n@evento_bp.route('/<int:id>/estado', methods=['PUT'])\n@jwt_required()\n@requires_roles('Administrador', 'Atendimento')\ndef alterar_estado(id):\n    try:",
+        "peekOfCode": "def create_evento():\n    try:\n        data = EventoSchema().load(request.get_json())\n    except ValidationError as err:\n        return jsonify({\"msg\": \"Validation error\", \"errors\": err.messages}), 400\n    user_id = get_jwt_identity()\n    result, error = evento_service.create_evento(data, user_id)\n    if error: return jsonify({\"msg\": error}), 400\n    return jsonify(EventoSchema().dump(result)), 201\n@evento_bp.route('/<int:id>/estado', methods=['PUT'])",
         "detail": "backend.app.api.v1.evento_controller",
         "documentation": {}
     },
@@ -7975,16 +8671,16 @@
         "kind": 2,
         "importPath": "backend.app.api.v1.evento_controller",
         "description": "backend.app.api.v1.evento_controller",
-        "peekOfCode": "def alterar_estado(id):\n    try:\n        data = AlterarEstadoEventoSchema().load(request.get_json())\n    except ValidationError as err:\n        return jsonify({\"msg\": \"Validation error\", \"errors\": err.messages}), 400\n    user_id = get_jwt_identity()\n    result, error = evento_service.alterar_estado(id, data['estado'], user_id)\n    if error: return jsonify({\"msg\": error}), 400\n    return jsonify(EventoSchema().dump(result)), 200\n@evento_bp.route('/reservas-materiais/<int:id>/estado', methods=['PATCH'])",
+        "peekOfCode": "def alterar_estado(id):\n    try:\n        data = AlterarEstadoEventoSchema().load(request.get_json())\n    except ValidationError as err:\n        return jsonify({\"msg\": \"Validation error\", \"errors\": err.messages}), 400\n    user_id = get_jwt_identity()\n    result, error = evento_service.alterar_estado(id, data['estado'], user_id)\n    if error: return jsonify({\"msg\": error}), 400\n    return jsonify(EventoSchema().dump(result)), 200\n@evento_bp.route('/<int:id>/gerar-planeamento', methods=['POST'])",
         "detail": "backend.app.api.v1.evento_controller",
         "documentation": {}
     },
     {
-        "label": "alterar_estado_reserva_material",
+        "label": "gerar_planeamento",
         "kind": 2,
         "importPath": "backend.app.api.v1.evento_controller",
         "description": "backend.app.api.v1.evento_controller",
-        "peekOfCode": "def alterar_estado_reserva_material(id):\n    data = request.get_json() or {}\n    estado = data.get('estado')\n    if not estado:\n        return jsonify({\"msg\": \"Estado é obrigatório.\"}), 400\n    user_id = get_jwt_identity()\n    result, error = evento_service.alterar_estado_reserva_material(\n        id,\n        estado,\n        user_id,",
+        "peekOfCode": "def gerar_planeamento(id):\n    user_id = get_jwt_identity()\n    resumo, error = evento_service.gerar_planeamento(id, user_id)\n    if error: return jsonify({\"msg\": error}), 400\n    return jsonify({\n        \"msg\": \"Planeamento opercional gerado com sucesso!\",\n        \"resumo_operacional\": resumo\n    }), 200\n# DOCUMENTOS\n@evento_bp.route('/<int:id>/documento/<path:doc_type>', methods=['GET'])",
         "detail": "backend.app.api.v1.evento_controller",
         "documentation": {}
     },
@@ -7993,7 +8689,7 @@
         "kind": 2,
         "importPath": "backend.app.api.v1.evento_controller",
         "description": "backend.app.api.v1.evento_controller",
-        "peekOfCode": "def gerar_documento(id, doc_type):\n    # Dummy document generator\n    from flask import send_file\n    buffer = io.BytesIO()\n    buffer.write(f\"DOCUMENTO {doc_type.upper()} PARA EVENTO {id}\".encode('utf-8'))\n    buffer.seek(0)\n    ext = 'pdf' if doc_type != 'word' else 'docx'\n    mimetype = 'application/pdf' if doc_type != 'word' else 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'\n    return send_file(buffer, as_attachment=True, download_name=f\"{doc_type}_{id}.{ext}\", mimetype=mimetype)",
+        "peekOfCode": "def gerar_documento(id, doc_type):\n    from flask import send_file\n    buffer = io.BytesIO()\n    buffer.write(f\"DOCUMENTO {doc_type.upper()} PARA EVENTO {id}\".encode('utf-8'))\n    buffer.seek(0)\n    ext = 'pdf' if doc_type != 'word' else 'docx'\n    mimetype = 'application/pdf' if doc_type != 'word' else 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'\n    return send_file(buffer, as_attachment=True, download_name=f\"{doc_type}_{id}.{ext}\", mimetype=mimetype)",
         "detail": "backend.app.api.v1.evento_controller",
         "documentation": {}
     },
@@ -8344,7 +9040,7 @@
         "kind": 2,
         "importPath": "backend.app.api.v1.pedido_controller",
         "description": "backend.app.api.v1.pedido_controller",
-        "peekOfCode": "def get_pedidos():\n    return build_pagination(pedido_service.pedido_repo, PedidoSchema, request)\n@pedido_bp.route('', methods=['POST'])\n@jwt_required()\n@requires_roles('Administrador', 'Atendimento')\ndef create_pedido():\n    try:\n        data = PedidoSchema().load(request.get_json())\n    except ValidationError as err:\n        return jsonify({\"msg\": \"Validation error\", \"errors\": err.messages}), 400",
+        "peekOfCode": "def get_pedidos():\n    try:\n        from app.services.producao_service import ProducaoService\n        ProducaoService().processar_pedidos_agendados()\n    except Exception as e:\n        print(\"⚠ Erro ao processar agendados no get_pedidos:\", e)\n    return build_pagination(pedido_service.pedido_repo, PedidoSchema, request)\n@pedido_bp.route('', methods=['POST'])\n@jwt_required()\n@requires_roles('Administrador', 'Atendimento')",
         "detail": "backend.app.api.v1.pedido_controller",
         "documentation": {}
     },
@@ -8389,7 +9085,16 @@
         "kind": 2,
         "importPath": "backend.app.api.v1.pedido_controller",
         "description": "backend.app.api.v1.pedido_controller",
-        "peekOfCode": "def gerar_recibo(id):\n    pedido = pedido_service.pedido_repo.get_by_id(id)\n    if not pedido: return jsonify({\"msg\": \"Not found\"}), 404\n    from app.services.pdf_generator import generate_pedido_receipt\n    buffer = generate_pedido_receipt(pedido)\n    return send_file(buffer, as_attachment=False, download_name=f\"recibo_{pedido.numero}.pdf\", mimetype='application/pdf')\n@pedido_bp.route('/clientes/<int:id>', methods=['PUT'])\n@jwt_required()\n@requires_roles('Administrador', 'Atendimento')\ndef update_cliente(id):",
+        "peekOfCode": "def gerar_recibo(id):\n    pedido = pedido_service.pedido_repo.get_by_id(id)\n    if not pedido: return jsonify({\"msg\": \"Not found\"}), 404\n    from app.services.pdf_generator import generate_pedido_receipt\n    buffer = generate_pedido_receipt(pedido)\n    return send_file(buffer, as_attachment=False, download_name=f\"recibo_{pedido.numero}.pdf\", mimetype='application/pdf')\n@pedido_bp.route('/<int:id>/recibo-data', methods=['GET'])\n@jwt_required()\ndef gerar_recibo_data(id):\n    pedido = pedido_service.pedido_repo.get_by_id(id)",
+        "detail": "backend.app.api.v1.pedido_controller",
+        "documentation": {}
+    },
+    {
+        "label": "gerar_recibo_data",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.pedido_controller",
+        "description": "backend.app.api.v1.pedido_controller",
+        "peekOfCode": "def gerar_recibo_data(id):\n    pedido = pedido_service.pedido_repo.get_by_id(id)\n    if not pedido: return jsonify({\"msg\": \"Not found\"}), 404\n    from app.services.pdf_generator import get_pedido_receipt_data\n    data = get_pedido_receipt_data(pedido)\n    return jsonify(data), 200\n@pedido_bp.route('/clientes/<int:id>', methods=['PUT'])\n@jwt_required()\n@requires_roles('Administrador', 'Atendimento')\ndef update_cliente(id):",
         "detail": "backend.app.api.v1.pedido_controller",
         "documentation": {}
     },
@@ -8452,7 +9157,16 @@
         "kind": 2,
         "importPath": "backend.app.api.v1.producao_controller",
         "description": "backend.app.api.v1.producao_controller",
-        "peekOfCode": "def get_ordens():\n    return build_pagination(producao_service.ordem_repo, OrdemProducaoSchema, request)\n@producao_bp.route('/ordens/<int:id>/estado', methods=['PUT'])\n@jwt_required()\n@requires_roles('Administrador', 'Pastelaria', 'Cozinha')\ndef update_estado_ordem(id):\n    try:\n        data = AlterarEstadoOrdemSchema().load(request.get_json())\n    except ValidationError as err:\n        return jsonify({\"msg\": \"Validation error\", \"errors\": err.messages}), 400",
+        "peekOfCode": "def get_ordens():\n    try:\n        producao_service.processar_pedidos_agendados()\n    except Exception as e:\n        print(\"⚠ Erro ao processar agendados no get_ordens:\", e)\n    return build_pagination(producao_service.ordem_repo, OrdemProducaoSchema, request)\n@producao_bp.route('/processar-agendados', methods=['POST', 'GET'])\n@jwt_required()\ndef processar_agendados():\n    count = producao_service.processar_pedidos_agendados()",
+        "detail": "backend.app.api.v1.producao_controller",
+        "documentation": {}
+    },
+    {
+        "label": "processar_agendados",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.producao_controller",
+        "description": "backend.app.api.v1.producao_controller",
+        "peekOfCode": "def processar_agendados():\n    count = producao_service.processar_pedidos_agendados()\n    return jsonify({\"msg\": \"Processamento concluído\", \"pedidos_processados\": count}), 200\n@producao_bp.route('/ordens/<int:id>/estado', methods=['PUT'])\n@jwt_required()\n@requires_roles('Administrador', 'Pastelaria', 'Cozinha')\ndef update_estado_ordem(id):\n    try:\n        data = AlterarEstadoOrdemSchema().load(request.get_json())\n    except ValidationError as err:",
         "detail": "backend.app.api.v1.producao_controller",
         "documentation": {}
     },
@@ -9033,6 +9747,15 @@
         "documentation": {}
     },
     {
+        "label": "enum_values",
+        "kind": 2,
+        "importPath": "backend.app.models.base",
+        "description": "backend.app.models.base",
+        "peekOfCode": "def enum_values(enum_cls):\n    if not enum_cls:\n        return []\n    return [e.value for e in enum_cls]\nclass BaseModel(db.Model):\n    __abstract__ = True\n    id = db.Column(db.Integer, primary_key=True)\n    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)\n    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)\n    created_by = db.Column(db.Integer, nullable=True) # ID do user",
+        "detail": "backend.app.models.base",
+        "documentation": {}
+    },
+    {
         "label": "EstadoCaixa",
         "kind": 6,
         "importPath": "backend.app.models.caixa",
@@ -9163,7 +9886,7 @@
         "kind": 6,
         "importPath": "backend.app.models.evento",
         "description": "backend.app.models.evento",
-        "peekOfCode": "class TipoEvento(str, Enum):\n    CASAMENTO = 'Casamento'\n    ANIVERSARIO = 'Aniversario'\n    BATIZADO = 'Batizado'\n    EMPRESARIAL = 'Empresarial'\n    CATERING = 'Catering'\n    FORMATURA = 'Formatura'\n    OUTRO = 'Outro'\nclass EstadoEvento(str, Enum):\n    AGENDADO = 'Agendado'",
+        "peekOfCode": "class TipoEvento(str, Enum):\n    CASAMENTO = 'Casamento'\n    ANIVERSARIO = 'Aniversario'\n    BATIZADO = 'Batizado'\n    EMPRESARIAL = 'Empresarial'\n    CATERING = 'Catering'\n    FORMATURA = 'Formatura'\n    CONFERENCIA = 'Conferencia'\n    COCKTAIL = 'Cocktail'\n    FUNERAL = 'Funeral'",
         "detail": "backend.app.models.evento",
         "documentation": {}
     },
@@ -9172,7 +9895,25 @@
         "kind": 6,
         "importPath": "backend.app.models.evento",
         "description": "backend.app.models.evento",
-        "peekOfCode": "class EstadoEvento(str, Enum):\n    AGENDADO = 'Agendado'\n    CONFIRMADO = 'Confirmado'\n    EM_EXECUCAO = 'Em Execucao'\n    CONCLUIDO = 'Concluido'\n    CANCELADO = 'Cancelado'\nclass TipoServicoEvento(str, Enum):\n    COZINHA = 'Cozinha'\n    PASTELARIA = 'Pastelaria'\n    BAR = 'Bar'",
+        "peekOfCode": "class EstadoEvento(str, Enum):\n    RASCUNHO = 'Rascunho'\n    ORCAMENTO = 'Orcamento'\n    ORCAMENTADO = 'Orcamentado'\n    AGUARDANDO_APROVACAO = 'Aguardando Aprovacao'\n    AGENDADO = 'Agendado'\n    CONFIRMADO = 'Confirmado'\n    PLANEAMENTO_GERADO = 'Planeamento Gerado'\n    EM_PREPARACAO = 'Em Preparacao'\n    EM_EXECUCAO = 'Em Execucao'",
+        "detail": "backend.app.models.evento",
+        "documentation": {}
+    },
+    {
+        "label": "TipoItemEvento",
+        "kind": 6,
+        "importPath": "backend.app.models.evento",
+        "description": "backend.app.models.evento",
+        "peekOfCode": "class TipoItemEvento(str, Enum):\n    SERVICO = 'Servico'\n    ESPACO = 'Espaco'\n    MATERIAL = 'Material'\n    PRODUTO = 'Produto'\n    DESLOCACAO = 'Deslocacao'\n    MAO_DE_OBRA = 'MaoDeObra'\n    OUTRO = 'Outro'\nclass TipoCalculoPolitica(str, Enum):\n    FIXO = 'Fixo'",
+        "detail": "backend.app.models.evento",
+        "documentation": {}
+    },
+    {
+        "label": "TipoCalculoPolitica",
+        "kind": 6,
+        "importPath": "backend.app.models.evento",
+        "description": "backend.app.models.evento",
+        "peekOfCode": "class TipoCalculoPolitica(str, Enum):\n    FIXO = 'Fixo'\n    POR_PARTICIPANTE = 'Por Participante'\n    POR_HORA = 'Por Hora'\n    POR_DIA = 'Por Dia'\n    POR_UNIDADE = 'Por Unidade'\nclass TipoServicoEvento(str, Enum):\n    COZINHA = 'Cozinha'\n    PASTELARIA = 'Pastelaria'\n    BAR = 'Bar'",
         "detail": "backend.app.models.evento",
         "documentation": {}
     },
@@ -9181,7 +9922,7 @@
         "kind": 6,
         "importPath": "backend.app.models.evento",
         "description": "backend.app.models.evento",
-        "peekOfCode": "class TipoServicoEvento(str, Enum):\n    COZINHA = 'Cozinha'\n    PASTELARIA = 'Pastelaria'\n    BAR = 'Bar'\n    LOGISTICA = 'Logistica'\n    ALUGUER = 'Aluguer'\n    LIMPEZA = 'Limpeza'\n    SEGURANCA = 'Seguranca'\nclass EstadoEspaco(str, Enum):\n    ATIVO = 'Ativo'",
+        "peekOfCode": "class TipoServicoEvento(str, Enum):\n    COZINHA = 'Cozinha'\n    PASTELARIA = 'Pastelaria'\n    BAR = 'Bar'\n    LOGISTICA = 'Logistica'\n    ALUGUER = 'Aluguer'\n    LIMPEZA = 'Limpeza'\n    SEGURANCA = 'Seguranca'\n    ORNAMENTACAO = 'Ornamentacao'\n    DECORACAO = 'Decoracao'",
         "detail": "backend.app.models.evento",
         "documentation": {}
     },
@@ -9208,7 +9949,52 @@
         "kind": 6,
         "importPath": "backend.app.models.evento",
         "description": "backend.app.models.evento",
-        "peekOfCode": "class FuncaoEquipa(str, Enum):\n    CHEFE_COZINHA = 'Chefe Cozinha'\n    COZINHEIRO = 'Cozinheiro'\n    PASTELEIRO = 'Pasteleiro'\n    ATENDIMENTO = 'Atendimento'\n    BAR = 'Bar'\n    MOTORISTA = 'Motorista'\n    SUPERVISOR = 'Supervisor'\nclass Espaco(BaseModel):\n    __tablename__ = 'espacos'",
+        "peekOfCode": "class FuncaoEquipa(str, Enum):\n    CHEFE_COZINHA = 'Chefe Cozinha'\n    COZINHEIRO = 'Cozinheiro'\n    PASTELEIRO = 'Pasteleiro'\n    ATENDIMENTO = 'Atendimento'\n    BAR = 'Bar'\n    MOTORISTA = 'Motorista'\n    SUPERVISOR = 'Supervisor'\n# CADASTROS DE REFERÊNCIA (NUNCA FORÇAM PREÇOS)\nclass ServicoCadastro(BaseModel):",
+        "detail": "backend.app.models.evento",
+        "documentation": {}
+    },
+    {
+        "label": "ServicoCadastro",
+        "kind": 6,
+        "importPath": "backend.app.models.evento",
+        "description": "backend.app.models.evento",
+        "peekOfCode": "class ServicoCadastro(BaseModel):\n    __tablename__ = 'servicos_cadastro'\n    codigo = db.Column(db.String(50), unique=True, nullable=True)\n    nome = db.Column(db.String(100), nullable=False)\n    categoria = db.Column(db.String(100), nullable=True)\n    descricao = db.Column(db.Text, nullable=True)\n    unidade_padrao = db.Column(db.String(50), default='Unidade')\n    preco_sugerido = db.Column(db.Numeric(10, 2), default=0.0)\n    ativo = db.Column(db.Boolean, default=True)\nclass TipoEventoCadastro(BaseModel):",
+        "detail": "backend.app.models.evento",
+        "documentation": {}
+    },
+    {
+        "label": "TipoEventoCadastro",
+        "kind": 6,
+        "importPath": "backend.app.models.evento",
+        "description": "backend.app.models.evento",
+        "peekOfCode": "class TipoEventoCadastro(BaseModel):\n    __tablename__ = 'tipos_evento_cadastro'\n    nome = db.Column(db.String(100), unique=True, nullable=False)\n    descricao = db.Column(db.Text, nullable=True)\n    ativo = db.Column(db.Boolean, default=True)\nclass EquipaCadastro(BaseModel):\n    __tablename__ = 'equipas_cadastro'\n    nome = db.Column(db.String(100), nullable=False)\n    departamento = db.Column(db.String(100), nullable=True)\n    descricao = db.Column(db.Text, nullable=True)",
+        "detail": "backend.app.models.evento",
+        "documentation": {}
+    },
+    {
+        "label": "EquipaCadastro",
+        "kind": 6,
+        "importPath": "backend.app.models.evento",
+        "description": "backend.app.models.evento",
+        "peekOfCode": "class EquipaCadastro(BaseModel):\n    __tablename__ = 'equipas_cadastro'\n    nome = db.Column(db.String(100), nullable=False)\n    departamento = db.Column(db.String(100), nullable=True)\n    descricao = db.Column(db.Text, nullable=True)\n    custo_sugerido = db.Column(db.Numeric(10, 2), default=0.0)\n    preco_sugerido = db.Column(db.Numeric(10, 2), default=0.0)\n    ativo = db.Column(db.Boolean, default=True)\n# POLÍTICA COMERCIAL E TABELA DE SUGESTÃO DE PREÇOS\nclass PoliticaComercialEvento(BaseModel):",
+        "detail": "backend.app.models.evento",
+        "documentation": {}
+    },
+    {
+        "label": "PoliticaComercialEvento",
+        "kind": 6,
+        "importPath": "backend.app.models.evento",
+        "description": "backend.app.models.evento",
+        "peekOfCode": "class PoliticaComercialEvento(BaseModel):\n    __tablename__ = 'politicas_comerciais_eventos'\n    codigo = db.Column(db.String(50), unique=True, nullable=False)\n    nome = db.Column(db.String(100), nullable=False)\n    tipo_evento = db.Column(db.String(100), nullable=False)\n    estado = db.Column(db.String(20), default='Ativa') # Ativa / Inativa\n    data_inicio = db.Column(db.Date, nullable=True)\n    data_fim = db.Column(db.Date, nullable=True)\n    observacoes = db.Column(db.Text, nullable=True)\n    regras = db.relationship('PoliticaComercialRegra', backref='politica', cascade=\"all, delete-orphan\", lazy='selectin')",
+        "detail": "backend.app.models.evento",
+        "documentation": {}
+    },
+    {
+        "label": "PoliticaComercialRegra",
+        "kind": 6,
+        "importPath": "backend.app.models.evento",
+        "description": "backend.app.models.evento",
+        "peekOfCode": "class PoliticaComercialRegra(BaseModel):\n    __tablename__ = 'politica_comercial_regras'\n    politica_id = db.Column(db.Integer, db.ForeignKey('politicas_comerciais_eventos.id'), nullable=False)\n    tipo_item = db.Column(db.Enum(TipoItemEvento), nullable=False)\n    referencia_id = db.Column(db.Integer, nullable=True)\n    nome_item = db.Column(db.String(255), nullable=True)\n    min_participantes = db.Column(db.Integer, default=1)\n    max_participantes = db.Column(db.Integer, default=99999)\n    valor_sugerido = db.Column(db.Numeric(10, 2), nullable=False)\n    tipo_calculo = db.Column(db.Enum(TipoCalculoPolitica), default=TipoCalculoPolitica.FIXO)",
         "detail": "backend.app.models.evento",
         "documentation": {}
     },
@@ -9217,7 +10003,7 @@
         "kind": 6,
         "importPath": "backend.app.models.evento",
         "description": "backend.app.models.evento",
-        "peekOfCode": "class Espaco(BaseModel):\n    __tablename__ = 'espacos'\n    nome = db.Column(db.String(100), nullable=False)\n    capacidade = db.Column(db.Integer, nullable=False)\n    descricao = db.Column(db.Text, nullable=True)\n    estado = db.Column(db.Enum(EstadoEspaco), default=EstadoEspaco.ATIVO)\nclass Evento(BaseModel):\n    __tablename__ = 'eventos'\n    numero = db.Column(db.String(50), unique=True, nullable=False)\n    _cliente_id = db.Column('cliente_id', db.Integer, db.ForeignKey('clientes.id'), nullable=True)",
+        "peekOfCode": "class Espaco(BaseModel):\n    __tablename__ = 'espacos'\n    nome = db.Column(db.String(100), nullable=False)\n    capacidade = db.Column(db.Integer, nullable=False)\n    localizacao = db.Column(db.String(255), nullable=True)\n    descricao = db.Column(db.Text, nullable=True)\n    preco_aluguer = db.Column(db.Numeric(10, 2), default=0.0)\n    estado = db.Column(db.Enum(EstadoEspaco), default=EstadoEspaco.ATIVO)\nclass Evento(BaseModel):\n    __tablename__ = 'eventos'",
         "detail": "backend.app.models.evento",
         "documentation": {}
     },
@@ -9226,7 +10012,16 @@
         "kind": 6,
         "importPath": "backend.app.models.evento",
         "description": "backend.app.models.evento",
-        "peekOfCode": "class Evento(BaseModel):\n    __tablename__ = 'eventos'\n    numero = db.Column(db.String(50), unique=True, nullable=False)\n    _cliente_id = db.Column('cliente_id', db.Integer, db.ForeignKey('clientes.id'), nullable=True)\n    pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=True)\n    tipo_evento = db.Column(db.Enum(TipoEvento), nullable=False)\n    titulo = db.Column(db.String(100), nullable=False)\n    descricao = db.Column(db.Text, nullable=True)\n    local_evento = db.Column(db.String(255), nullable=True)\n    data_evento = db.Column(db.Date, nullable=False)",
+        "peekOfCode": "class Evento(BaseModel):\n    __tablename__ = 'eventos'\n    numero = db.Column(db.String(50), unique=True, nullable=False)\n    _cliente_id = db.Column('cliente_id', db.Integer, db.ForeignKey('clientes.id'), nullable=True)\n    pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=True)\n    responsavel_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)\n    tipo_evento = db.Column(db.String(100), nullable=False)\n    titulo = db.Column(db.String(100), nullable=False)\n    descricao = db.Column(db.Text, nullable=True)\n    local_evento = db.Column(db.String(255), nullable=True)",
+        "detail": "backend.app.models.evento",
+        "documentation": {}
+    },
+    {
+        "label": "EventoItem",
+        "kind": 6,
+        "importPath": "backend.app.models.evento",
+        "description": "backend.app.models.evento",
+        "peekOfCode": "class EventoItem(db.Model):\n    __tablename__ = 'eventos_itens'\n    id = db.Column(db.Integer, primary_key=True)\n    evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=False)\n    tipo_item = db.Column(db.Enum(TipoItemEvento), nullable=False)\n    referencia_id = db.Column(db.Integer, nullable=True) # Referência ao cadastro base (serviço, espaço, material)\n    produto_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=True) # Se for produto (Acabado, Revenda, Consumível)\n    descricao = db.Column(db.String(255), nullable=False)\n    quantidade = db.Column(db.Numeric(10, 2), nullable=False, default=1.0)\n    unidade = db.Column(db.String(50), default='Unidade')",
         "detail": "backend.app.models.evento",
         "documentation": {}
     },
@@ -9235,7 +10030,7 @@
         "kind": 6,
         "importPath": "backend.app.models.evento",
         "description": "backend.app.models.evento",
-        "peekOfCode": "class EventoServico(db.Model):\n    __tablename__ = 'eventos_servicos'\n    id = db.Column(db.Integer, primary_key=True)\n    evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=False)\n    tipo = db.Column(db.Enum(TipoServicoEvento), nullable=False)\n    descricao = db.Column(db.String(255), nullable=True)\n    quantidade = db.Column(db.Numeric(10, 2), nullable=False)\n    valor_unitario = db.Column(db.Numeric(10, 2), nullable=False)\n    subtotal = db.Column(db.Numeric(10, 2), nullable=False)\nclass ReservaEspaco(db.Model):",
+        "peekOfCode": "class EventoServico(db.Model):\n    __tablename__ = 'eventos_servicos'\n    id = db.Column(db.Integer, primary_key=True)\n    evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=False)\n    tipo = db.Column(db.Enum(TipoServicoEvento), nullable=False)\n    descricao = db.Column(db.String(255), nullable=True)\n    quantidade = db.Column(db.Numeric(10, 2), nullable=False)\n    valor_unitario = db.Column(db.Numeric(10, 2), nullable=False)\n    deslocacao = db.Column(db.Numeric(10, 2), default=0.0)\n    subtotal = db.Column(db.Numeric(10, 2), nullable=False)",
         "detail": "backend.app.models.evento",
         "documentation": {}
     },
@@ -9244,7 +10039,7 @@
         "kind": 6,
         "importPath": "backend.app.models.evento",
         "description": "backend.app.models.evento",
-        "peekOfCode": "class ReservaEspaco(db.Model):\n    __tablename__ = 'reservas_espacos'\n    id = db.Column(db.Integer, primary_key=True)\n    evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=False)\n    espaco_id = db.Column(db.Integer, db.ForeignKey('espacos.id'), nullable=False)\n    data_inicio = db.Column(db.DateTime, nullable=False)\n    data_fim = db.Column(db.DateTime, nullable=False)\n    estado = db.Column(db.Enum(EstadoReservaEspaco), default=EstadoReservaEspaco.RESERVADO)\nclass ReservaMaterial(db.Model):\n    __tablename__ = 'reservas_materiais'",
+        "peekOfCode": "class ReservaEspaco(db.Model):\n    __tablename__ = 'reservas_espacos'\n    id = db.Column(db.Integer, primary_key=True)\n    evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=False)\n    espaco_id = db.Column(db.Integer, db.ForeignKey('espacos.id'), nullable=False)\n    data_inicio = db.Column(db.DateTime, nullable=False)\n    data_fim = db.Column(db.DateTime, nullable=False)\n    valor_aluguer = db.Column(db.Numeric(10, 2), default=0.0)\n    estado = db.Column(db.Enum(EstadoReservaEspaco), default=EstadoReservaEspaco.RESERVADO)\nclass ReservaMaterial(db.Model):",
         "detail": "backend.app.models.evento",
         "documentation": {}
     },
@@ -9253,7 +10048,7 @@
         "kind": 6,
         "importPath": "backend.app.models.evento",
         "description": "backend.app.models.evento",
-        "peekOfCode": "class ReservaMaterial(db.Model):\n    __tablename__ = 'reservas_materiais'\n    id = db.Column(db.Integer, primary_key=True)\n    evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=False)\n    material_id = db.Column(db.Integer, db.ForeignKey('materiais.id'), nullable=False)\n    quantidade = db.Column(db.Numeric(10, 2), nullable=False)\n    data_inicio = db.Column(db.DateTime, nullable=False)\n    data_fim = db.Column(db.DateTime, nullable=False)\n    estado = db.Column(db.String(50), default='Reservado') # RESERVADO, UTILIZADO, DEVOLVIDO, CANCELADO\nclass EventoEquipa(db.Model):",
+        "peekOfCode": "class ReservaMaterial(db.Model):\n    __tablename__ = 'reservas_materiais'\n    id = db.Column(db.Integer, primary_key=True)\n    evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=False)\n    material_id = db.Column(db.Integer, db.ForeignKey('materiais.id'), nullable=False)\n    quantidade = db.Column(db.Numeric(10, 2), nullable=False)\n    valor_unitario = db.Column(db.Numeric(10, 2), default=0.0)\n    subtotal = db.Column(db.Numeric(10, 2), default=0.0)\n    data_inicio = db.Column(db.DateTime, nullable=False)\n    data_fim = db.Column(db.DateTime, nullable=False)",
         "detail": "backend.app.models.evento",
         "documentation": {}
     },
@@ -9478,7 +10273,7 @@
         "kind": 6,
         "importPath": "backend.app.models.item_pedido",
         "description": "backend.app.models.item_pedido",
-        "peekOfCode": "class TipoItem(str, Enum):\n    PRODUTO = 'Produto'\n    PRODUTO_ACABADO = 'Produto Acabado'\n    PRODUTO_REVENDA = 'Produto Revenda'\n    SERVICO = 'Servico'\n    ALUGUER = 'Aluguer'\n    MATERIAL = 'Material'\nclass ItemPedido(BaseModel):\n    __tablename__ = 'itens_pedido'\n    pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=False)",
+        "peekOfCode": "class TipoItem(str, Enum):\n    PRODUTO = 'Produto'\n    PRODUTO_ACABADO = 'Produto Acabado'\n    PRODUTO_REVENDA = 'Produto Revenda'\n    SERVICO = 'Servico'\n    ALUGUER = 'Aluguer'\nclass ItemPedido(BaseModel):\n    __tablename__ = 'itens_pedido'\n    pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=False)\n    tipo_item = db.Column(db.Enum(TipoItem), nullable=False)",
         "detail": "backend.app.models.item_pedido",
         "documentation": {}
     },
@@ -9640,7 +10435,7 @@
         "kind": 6,
         "importPath": "backend.app.models.movimento_stock",
         "description": "backend.app.models.movimento_stock",
-        "peekOfCode": "class MovimentoStock(BaseModel):\n    __tablename__ = 'movimentacoes_armazem'\n    tipo = db.Column(db.Enum(TipoMovimento), nullable=False)\n    origem = db.Column(db.Enum(OrigemMovimento), nullable=False)\n    entidade_tipo = db.Column(db.Enum(EntidadeMovimento), nullable=False)\n    referencia_id = db.Column(db.Integer, nullable=False) # ID of Ingrediente/Produto/Material\n    quantidade = db.Column(db.Numeric(10, 3), nullable=False)\n    justificacao = db.Column(db.String(255), nullable=True)",
+        "peekOfCode": "class MovimentoStock(BaseModel):\n    __tablename__ = 'movimentacoes_armazem'\n    tipo = db.Column(db.Enum(TipoMovimento), nullable=False)\n    origem = db.Column(db.Enum(OrigemMovimento), nullable=False)\n    entidade_tipo = db.Column(db.Enum(EntidadeMovimento), nullable=False)\n    referencia_id = db.Column(db.Integer, nullable=False) # ID of Ingrediente/Produto/Material\n    armazem_id = db.Column(db.Integer, db.ForeignKey('armazens.id'), nullable=True)\n    quantidade = db.Column(db.Numeric(10, 3), nullable=False)\n    quantidade_antes = db.Column(db.Numeric(10, 3), default=0)\n    quantidade_depois = db.Column(db.Numeric(10, 3), default=0)",
         "detail": "backend.app.models.movimento_stock",
         "documentation": {}
     },
@@ -9649,7 +10444,7 @@
         "kind": 6,
         "importPath": "backend.app.models.ordem_producao",
         "description": "backend.app.models.ordem_producao",
-        "peekOfCode": "class SectorProducao(str, Enum):\n    COZINHA = 'Cozinha'\n    PASTELARIA = 'Pastelaria'\nclass TurnoProducao(str, Enum):\n    MANHA = 'Manhã'\n    TARDE = 'Tarde'\n    NOITE = 'Noite'\nclass PrioridadeProducao(str, Enum):\n    BAIXA = 'Baixa'\n    MEDIA = 'Media'",
+        "peekOfCode": "class SectorProducao(str, Enum):\n    COZINHA = 'Cozinha'\n    PASTELARIA = 'Pastelaria'\n    BAR = 'Bar'\nclass TurnoProducao(str, Enum):\n    MANHA = 'Manhã'\n    TARDE = 'Tarde'\n    NOITE = 'Noite'\nclass PrioridadeProducao(str, Enum):\n    BAIXA = 'Baixa'",
         "detail": "backend.app.models.ordem_producao",
         "documentation": {}
     },
@@ -9685,7 +10480,7 @@
         "kind": 6,
         "importPath": "backend.app.models.ordem_producao",
         "description": "backend.app.models.ordem_producao",
-        "peekOfCode": "class OrdemProducao(BaseModel):\n    __tablename__ = 'ordens_producao'\n    numero = db.Column(db.String(50), unique=True, nullable=False)\n    pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=False)\n    produto_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=True) # Keeping for backward compat\n    quantidade = db.Column(db.Numeric(10, 2), nullable=True) # Keeping for backward compat\n    sector = db.Column(db.Enum(SectorProducao), nullable=False)\n    turno = db.Column(db.Enum(TurnoProducao), nullable=True)\n    data_producao = db.Column(db.Date, nullable=True)\n    hora_inicio = db.Column(db.DateTime, nullable=True)",
+        "peekOfCode": "class OrdemProducao(BaseModel):\n    __tablename__ = 'ordens_producao'\n    numero = db.Column(db.String(50), unique=True, nullable=False)\n    pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=False)\n    produto_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=True) # Keeping for backward compat\n    quantidade = db.Column(db.Numeric(10, 2), nullable=True) # Keeping for backward compat\n    sector = db.Column(db.Enum(SectorProducao), nullable=False)\n    turno = db.Column(db.Enum(TurnoProducao), nullable=True)\n    responsavel_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)\n    data_producao = db.Column(db.Date, nullable=True)",
         "detail": "backend.app.models.ordem_producao",
         "documentation": {}
     },
@@ -9829,7 +10624,7 @@
         "kind": 6,
         "importPath": "backend.app.models.requisicao",
         "description": "backend.app.models.requisicao",
-        "peekOfCode": "class TipoRequisicao(str, Enum):\n    INICIAL = 'Inicial'\n    COMPLEMENTAR = 'Complementar'\nclass SectorRequisicao(str, Enum):\n    COZINHA = 'Cozinha'\n    PASTELARIA = 'Pastelaria'\nclass EstadoRequisicao(str, Enum):\n    PENDENTE = 'Pendente'\n    APROVADA = 'Aprovada'\n    ENTREGUE = 'Entregue'",
+        "peekOfCode": "class TipoRequisicao(str, Enum):\n    INICIAL = 'Inicial'\n    COMPLEMENTAR = 'Complementar'\nclass SectorRequisicao(str, Enum):\n    COZINHA = 'Cozinha'\n    PASTELARIA = 'Pastelaria'\n    BAR = 'Bar'\n    EVENTOS = 'Eventos'\n    LOGISTICA = 'Logistica'\n    ALUGUER = 'Aluguer'",
         "detail": "backend.app.models.requisicao",
         "documentation": {}
     },
@@ -9838,7 +10633,7 @@
         "kind": 6,
         "importPath": "backend.app.models.requisicao",
         "description": "backend.app.models.requisicao",
-        "peekOfCode": "class SectorRequisicao(str, Enum):\n    COZINHA = 'Cozinha'\n    PASTELARIA = 'Pastelaria'\nclass EstadoRequisicao(str, Enum):\n    PENDENTE = 'Pendente'\n    APROVADA = 'Aprovada'\n    ENTREGUE = 'Entregue'\n    EM_USO = 'Em Uso'\n    DEVOLUCAO_PARCIAL = 'Devolucao Parcial'\n    DEVOLVIDA = 'Devolvida'",
+        "peekOfCode": "class SectorRequisicao(str, Enum):\n    COZINHA = 'Cozinha'\n    PASTELARIA = 'Pastelaria'\n    BAR = 'Bar'\n    EVENTOS = 'Eventos'\n    LOGISTICA = 'Logistica'\n    ALUGUER = 'Aluguer'\n    OUTRO = 'Outro'\nclass EstadoRequisicao(str, Enum):\n    PENDENTE = 'Pendente'",
         "detail": "backend.app.models.requisicao",
         "documentation": {}
     },
@@ -9856,7 +10651,7 @@
         "kind": 6,
         "importPath": "backend.app.models.requisicao",
         "description": "backend.app.models.requisicao",
-        "peekOfCode": "class Requisicao(BaseModel):\n    __tablename__ = 'requisicoes'\n    numero = db.Column(db.String(50), unique=True, nullable=False)\n    tipo = db.Column(db.Enum(TipoRequisicao), nullable=False)\n    sector = db.Column(db.Enum(SectorRequisicao), nullable=False)\n    turno_id = db.Column(db.Integer, db.ForeignKey('turnos.id'), nullable=True) \n    responsavel_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)\n    data_requisicao = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)\n    estado = db.Column(db.Enum(EstadoRequisicao), default=EstadoRequisicao.PENDENTE)\n    observacoes = db.Column(db.Text, nullable=True)",
+        "peekOfCode": "class Requisicao(BaseModel):\n    __tablename__ = 'requisicoes'\n    numero = db.Column(db.String(50), unique=True, nullable=False)\n    tipo = db.Column(db.Enum(TipoRequisicao), nullable=False)\n    sector = db.Column(db.Enum(SectorRequisicao), nullable=False)\n    turno_id = db.Column(db.Integer, db.ForeignKey('turnos.id'), nullable=True) \n    responsavel_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)\n    evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=True)\n    data_requisicao = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)\n    estado = db.Column(db.Enum(EstadoRequisicao), default=EstadoRequisicao.PENDENTE)",
         "detail": "backend.app.models.requisicao",
         "documentation": {}
     },
@@ -10464,11 +11259,65 @@
         "documentation": {}
     },
     {
+        "label": "ServicoCadastroSchema",
+        "kind": 6,
+        "importPath": "backend.app.schemas.evento_schema",
+        "description": "backend.app.schemas.evento_schema",
+        "peekOfCode": "class ServicoCadastroSchema(Schema):\n    id = fields.Int(dump_only=True)\n    codigo = fields.Str(required=False, allow_none=True)\n    nome = fields.Str(required=True)\n    categoria = fields.Str(required=False, allow_none=True)\n    descricao = fields.Str(required=False, allow_none=True)\n    unidade_padrao = fields.Str(required=False, allow_none=True, default='Unidade')\n    preco_sugerido = fields.Decimal(required=False, allow_none=True, default=0.0)\n    ativo = fields.Bool(required=False, default=True)\nclass TipoEventoCadastroSchema(Schema):",
+        "detail": "backend.app.schemas.evento_schema",
+        "documentation": {}
+    },
+    {
+        "label": "TipoEventoCadastroSchema",
+        "kind": 6,
+        "importPath": "backend.app.schemas.evento_schema",
+        "description": "backend.app.schemas.evento_schema",
+        "peekOfCode": "class TipoEventoCadastroSchema(Schema):\n    id = fields.Int(dump_only=True)\n    nome = fields.Str(required=True)\n    descricao = fields.Str(required=False, allow_none=True)\n    ativo = fields.Bool(required=False, default=True)\nclass EquipaCadastroSchema(Schema):\n    id = fields.Int(dump_only=True)\n    nome = fields.Str(required=True)\n    departamento = fields.Str(required=False, allow_none=True)\n    descricao = fields.Str(required=False, allow_none=True)",
+        "detail": "backend.app.schemas.evento_schema",
+        "documentation": {}
+    },
+    {
+        "label": "EquipaCadastroSchema",
+        "kind": 6,
+        "importPath": "backend.app.schemas.evento_schema",
+        "description": "backend.app.schemas.evento_schema",
+        "peekOfCode": "class EquipaCadastroSchema(Schema):\n    id = fields.Int(dump_only=True)\n    nome = fields.Str(required=True)\n    departamento = fields.Str(required=False, allow_none=True)\n    descricao = fields.Str(required=False, allow_none=True)\n    custo_sugerido = fields.Decimal(required=False, allow_none=True, default=0.0)\n    preco_sugerido = fields.Decimal(required=False, allow_none=True, default=0.0)\n    ativo = fields.Bool(required=False, default=True)\nclass PoliticaComercialRegraSchema(Schema):\n    id = fields.Int(dump_only=True)",
+        "detail": "backend.app.schemas.evento_schema",
+        "documentation": {}
+    },
+    {
+        "label": "PoliticaComercialRegraSchema",
+        "kind": 6,
+        "importPath": "backend.app.schemas.evento_schema",
+        "description": "backend.app.schemas.evento_schema",
+        "peekOfCode": "class PoliticaComercialRegraSchema(Schema):\n    id = fields.Int(dump_only=True)\n    politica_id = fields.Int(dump_only=True)\n    tipo_item = fields.Str(required=True)\n    referencia_id = fields.Int(required=False, allow_none=True)\n    nome_item = fields.Str(required=False, allow_none=True)\n    min_participantes = fields.Int(required=False, allow_none=True, default=1)\n    max_participantes = fields.Int(required=False, allow_none=True, default=99999)\n    valor_sugerido = fields.Decimal(required=True)\n    tipo_calculo = fields.Str(required=False, allow_none=True, default='Fixo')",
+        "detail": "backend.app.schemas.evento_schema",
+        "documentation": {}
+    },
+    {
+        "label": "PoliticaComercialEventoSchema",
+        "kind": 6,
+        "importPath": "backend.app.schemas.evento_schema",
+        "description": "backend.app.schemas.evento_schema",
+        "peekOfCode": "class PoliticaComercialEventoSchema(Schema):\n    id = fields.Int(dump_only=True)\n    codigo = fields.Str(required=True)\n    nome = fields.Str(required=True)\n    tipo_evento = fields.Str(required=True)\n    estado = fields.Str(required=False, allow_none=True, default='Ativa')\n    data_inicio = fields.Date(required=False, allow_none=True)\n    data_fim = fields.Date(required=False, allow_none=True)\n    observacoes = fields.Str(required=False, allow_none=True)\n    regras = fields.List(fields.Nested(PoliticaComercialRegraSchema), required=False)",
+        "detail": "backend.app.schemas.evento_schema",
+        "documentation": {}
+    },
+    {
+        "label": "EventoItemSchema",
+        "kind": 6,
+        "importPath": "backend.app.schemas.evento_schema",
+        "description": "backend.app.schemas.evento_schema",
+        "peekOfCode": "class EventoItemSchema(Schema):\n    id = fields.Int(dump_only=True)\n    evento_id = fields.Int(dump_only=True)\n    tipo_item = fields.Str(required=True)\n    referencia_id = fields.Int(required=False, allow_none=True)\n    produto_id = fields.Int(required=False, allow_none=True)\n    descricao = fields.Str(required=True)\n    quantidade = fields.Decimal(required=False, allow_none=True, default=1.0)\n    unidade = fields.Str(required=False, allow_none=True, default='Unidade')\n    preco_unitario = fields.Decimal(required=False, allow_none=True, default=0.0)",
+        "detail": "backend.app.schemas.evento_schema",
+        "documentation": {}
+    },
+    {
         "label": "EspacoSchema",
         "kind": 6,
         "importPath": "backend.app.schemas.evento_schema",
         "description": "backend.app.schemas.evento_schema",
-        "peekOfCode": "class EspacoSchema(Schema):\n    id = fields.Int(dump_only=True)\n    nome = fields.Str(required=True)\n    capacidade = fields.Int(required=True)\n    descricao = fields.Str(required=False, allow_none=True)\n    estado = fields.Enum(EstadoEspaco, by_value=True, required=False)\nclass EventoServicoSchema(Schema):\n    tipo = fields.Enum(TipoServicoEvento, by_value=True, required=True)\n    descricao = fields.Str(required=False, allow_none=True)\n    quantidade = fields.Decimal(required=True)",
+        "peekOfCode": "class EspacoSchema(Schema):\n    id = fields.Int(dump_only=True)\n    nome = fields.Str(required=True)\n    capacidade = fields.Int(required=True)\n    localizacao = fields.Str(required=False, allow_none=True)\n    descricao = fields.Str(required=False, allow_none=True)\n    preco_aluguer = fields.Decimal(required=False, allow_none=True)\n    estado = fields.Str(required=False, allow_none=True, default='Ativo')\nclass EventoServicoSchema(Schema):\n    id = fields.Int(dump_only=True)",
         "detail": "backend.app.schemas.evento_schema",
         "documentation": {}
     },
@@ -10477,7 +11326,7 @@
         "kind": 6,
         "importPath": "backend.app.schemas.evento_schema",
         "description": "backend.app.schemas.evento_schema",
-        "peekOfCode": "class EventoServicoSchema(Schema):\n    tipo = fields.Enum(TipoServicoEvento, by_value=True, required=True)\n    descricao = fields.Str(required=False, allow_none=True)\n    quantidade = fields.Decimal(required=True)\n    valor_unitario = fields.Decimal(required=True)\n    subtotal = fields.Decimal(dump_only=True)\nclass ReservaEspacoSchema(Schema):\n    espaco_id = fields.Int(required=True)\n    data_inicio = fields.DateTime(required=True)\n    data_fim = fields.DateTime(required=True)",
+        "peekOfCode": "class EventoServicoSchema(Schema):\n    id = fields.Int(dump_only=True)\n    tipo = fields.Str(required=True)\n    descricao = fields.Str(required=False, allow_none=True)\n    quantidade = fields.Decimal(required=True)\n    valor_unitario = fields.Decimal(required=True)\n    deslocacao = fields.Decimal(required=False, allow_none=True)\n    subtotal = fields.Decimal(dump_only=True)\n    observacoes = fields.Str(required=False, allow_none=True)\nclass ReservaEspacoSchema(Schema):",
         "detail": "backend.app.schemas.evento_schema",
         "documentation": {}
     },
@@ -10486,7 +11335,7 @@
         "kind": 6,
         "importPath": "backend.app.schemas.evento_schema",
         "description": "backend.app.schemas.evento_schema",
-        "peekOfCode": "class ReservaEspacoSchema(Schema):\n    espaco_id = fields.Int(required=True)\n    data_inicio = fields.DateTime(required=True)\n    data_fim = fields.DateTime(required=True)\n    estado = fields.Str(dump_only=True)\nclass ReservaMaterialSchema(Schema):\n    material_id = fields.Int(required=True)\n    quantidade = fields.Decimal(required=True)\n    data_inicio = fields.DateTime(required=True)\n    data_fim = fields.DateTime(required=True)",
+        "peekOfCode": "class ReservaEspacoSchema(Schema):\n    id = fields.Int(dump_only=True)\n    espaco_id = fields.Int(required=True)\n    data_inicio = fields.DateTime(required=True)\n    data_fim = fields.DateTime(required=True)\n    valor_aluguer = fields.Decimal(required=False, allow_none=True)\n    estado = fields.Str(dump_only=True)\nclass ReservaMaterialSchema(Schema):\n    id = fields.Int(dump_only=True)\n    material_id = fields.Int(required=True)",
         "detail": "backend.app.schemas.evento_schema",
         "documentation": {}
     },
@@ -10495,7 +11344,7 @@
         "kind": 6,
         "importPath": "backend.app.schemas.evento_schema",
         "description": "backend.app.schemas.evento_schema",
-        "peekOfCode": "class ReservaMaterialSchema(Schema):\n    material_id = fields.Int(required=True)\n    quantidade = fields.Decimal(required=True)\n    data_inicio = fields.DateTime(required=True)\n    data_fim = fields.DateTime(required=True)\n    estado = fields.Str(dump_only=True)\nclass EventoEquipaSchema(Schema):\n    utilizador_id = fields.Int(required=True)\n    funcao = fields.Enum(FuncaoEquipa, by_value=True, required=True)\n    estado = fields.Str(dump_only=True)",
+        "peekOfCode": "class ReservaMaterialSchema(Schema):\n    id = fields.Int(dump_only=True)\n    material_id = fields.Int(required=True)\n    quantidade = fields.Decimal(required=True)\n    valor_unitario = fields.Decimal(required=False, allow_none=True)\n    subtotal = fields.Decimal(dump_only=True)\n    data_inicio = fields.DateTime(required=True)\n    data_fim = fields.DateTime(required=True)\n    estado = fields.Str(dump_only=True)\nclass EventoEquipaSchema(Schema):",
         "detail": "backend.app.schemas.evento_schema",
         "documentation": {}
     },
@@ -10504,7 +11353,7 @@
         "kind": 6,
         "importPath": "backend.app.schemas.evento_schema",
         "description": "backend.app.schemas.evento_schema",
-        "peekOfCode": "class EventoEquipaSchema(Schema):\n    utilizador_id = fields.Int(required=True)\n    funcao = fields.Enum(FuncaoEquipa, by_value=True, required=True)\n    estado = fields.Str(dump_only=True)\nclass EventoSchema(Schema):\n    id = fields.Int(dump_only=True)\n    numero = fields.Str(dump_only=True)\n    cliente_id = fields.Int(required=True)\n    pedido_id = fields.Int(required=False, allow_none=True)\n    tipo_evento = fields.Enum(TipoEvento, by_value=True, required=True)",
+        "peekOfCode": "class EventoEquipaSchema(Schema):\n    id = fields.Int(dump_only=True)\n    utilizador_id = fields.Int(required=True)\n    funcao = fields.Str(required=True)\n    estado = fields.Str(dump_only=True)\nclass EventoSchema(Schema):\n    id = fields.Int(dump_only=True)\n    numero = fields.Str(dump_only=True)\n    cliente_id = fields.Int(required=False, allow_none=True)\n    pedido_id = fields.Int(required=False, allow_none=True)",
         "detail": "backend.app.schemas.evento_schema",
         "documentation": {}
     },
@@ -10513,7 +11362,7 @@
         "kind": 6,
         "importPath": "backend.app.schemas.evento_schema",
         "description": "backend.app.schemas.evento_schema",
-        "peekOfCode": "class EventoSchema(Schema):\n    id = fields.Int(dump_only=True)\n    numero = fields.Str(dump_only=True)\n    cliente_id = fields.Int(required=True)\n    pedido_id = fields.Int(required=False, allow_none=True)\n    tipo_evento = fields.Enum(TipoEvento, by_value=True, required=True)\n    titulo = fields.Str(required=True)\n    descricao = fields.Str(required=False, allow_none=True)\n    local_evento = fields.Str(required=False, allow_none=True)\n    data_evento = fields.Date(required=True)",
+        "peekOfCode": "class EventoSchema(Schema):\n    id = fields.Int(dump_only=True)\n    numero = fields.Str(dump_only=True)\n    cliente_id = fields.Int(required=False, allow_none=True)\n    pedido_id = fields.Int(required=False, allow_none=True)\n    responsavel_id = fields.Int(required=False, allow_none=True)\n    tipo_evento = fields.Str(required=True)\n    titulo = fields.Str(required=True)\n    descricao = fields.Str(required=False, allow_none=True)\n    local_evento = fields.Str(required=False, allow_none=True)",
         "detail": "backend.app.schemas.evento_schema",
         "documentation": {}
     },
@@ -10522,7 +11371,7 @@
         "kind": 6,
         "importPath": "backend.app.schemas.evento_schema",
         "description": "backend.app.schemas.evento_schema",
-        "peekOfCode": "class AlterarEstadoEventoSchema(Schema):\n    estado = fields.Enum(EstadoEvento, by_value=True, required=True)",
+        "peekOfCode": "class AlterarEstadoEventoSchema(Schema):\n    estado = fields.Str(required=True)",
         "detail": "backend.app.schemas.evento_schema",
         "documentation": {}
     },
@@ -10666,7 +11515,7 @@
         "kind": 6,
         "importPath": "backend.app.schemas.pedido_schema",
         "description": "backend.app.schemas.pedido_schema",
-        "peekOfCode": "class ItemPedidoSchema(Schema):\n    id = fields.Int(dump_only=True)\n    pedido_id = fields.Int(dump_only=True)\n    tipo_item = fields.Enum(TipoItem, by_value=True, required=True)\n    produto_id = fields.Int(required=False, allow_none=True)\n    descricao = fields.Str(required=False, allow_none=True)\n    quantidade = fields.Decimal(required=True)\n    preco_unitario = fields.Decimal(required=True)\n    subtotal = fields.Decimal(dump_only=True)\nclass PedidoSchema(Schema):",
+        "peekOfCode": "class ItemPedidoSchema(Schema):\n    id = fields.Int(dump_only=True)\n    pedido_id = fields.Int(dump_only=True)\n    tipo_item = fields.Enum(TipoItem, by_value=True, required=True)\n    produto_id = fields.Int(required=False, allow_none=True)\n    descricao = fields.Str(required=False, allow_none=True)\n    quantidade = fields.Decimal(required=True)\n    preco_unitario = fields.Decimal(required=True)\n    subtotal = fields.Decimal(dump_only=True)\n    desconto = fields.Decimal(required=False, allow_none=True, load_default=0)",
         "detail": "backend.app.schemas.pedido_schema",
         "documentation": {}
     },
@@ -10675,7 +11524,7 @@
         "kind": 6,
         "importPath": "backend.app.schemas.pedido_schema",
         "description": "backend.app.schemas.pedido_schema",
-        "peekOfCode": "class PedidoSchema(Schema):\n    id = fields.Int(dump_only=True)\n    numero = fields.Str(dump_only=True)\n    cliente_id = fields.Int(required=False, allow_none=True)\n    evento_id = fields.Int(required=False, allow_none=True)\n    tipo = fields.Enum(TipoPedido, by_value=True, required=True)\n    origem = fields.Enum(OrigemPedido, by_value=True, required=True)\n    data_pedido = fields.DateTime(dump_only=True)\n    data_entrega = fields.Date(required=False, allow_none=True)\n    hora_entrega = fields.Time(required=False, allow_none=True)",
+        "peekOfCode": "class PedidoSchema(Schema):\n    id = fields.Int(dump_only=True)\n    numero = fields.Str(dump_only=True)\n    cliente_id = fields.Int(required=False, allow_none=True)\n    tipo = fields.Enum(TipoPedido, by_value=True, required=True)\n    origem = fields.Enum(OrigemPedido, by_value=True, required=True)\n    data_pedido = fields.DateTime(dump_only=True)\n    data_entrega = fields.Date(required=False, allow_none=True)\n    hora_entrega = fields.Time(required=False, allow_none=True)\n    estado = fields.Enum(EstadoPedido, by_value=True, required=False)",
         "detail": "backend.app.schemas.pedido_schema",
         "documentation": {}
     },
@@ -10684,7 +11533,7 @@
         "kind": 6,
         "importPath": "backend.app.schemas.pedido_schema",
         "description": "backend.app.schemas.pedido_schema",
-        "peekOfCode": "class AlterarEstadoPedidoSchema(Schema):\n    estado = fields.Enum(EstadoPedido, by_value=True, required=True)\n    justificativa_cancelamento = fields.Str(required=False)",
+        "peekOfCode": "class AlterarEstadoPedidoSchema(Schema):\n    estado = fields.Raw(required=True)\n    justificativa_cancelamento = fields.Str(required=False)",
         "detail": "backend.app.schemas.pedido_schema",
         "documentation": {}
     },
@@ -10711,7 +11560,7 @@
         "kind": 6,
         "importPath": "backend.app.schemas.producao_schema",
         "description": "backend.app.schemas.producao_schema",
-        "peekOfCode": "class ConsumoIngredienteSchema(Schema):\n    id = fields.Int(dump_only=True)\n    ingrediente_id = fields.Int(required=True)\n    quantidade_prevista = fields.Decimal(required=True)\n    quantidade_consumida = fields.Decimal(required=False, allow_none=True)\n    data_consumo = fields.DateTime(dump_only=True)\nclass OrdemProducaoItemSchema(Schema):\n    id = fields.Int(dump_only=True)\n    produto_id = fields.Int(required=True)\n    quantidade = fields.Decimal(required=True)",
+        "peekOfCode": "class ConsumoIngredienteSchema(Schema):\n    id = fields.Int(dump_only=True)\n    ingrediente_id = fields.Int(required=True)\n    ingrediente_nome = fields.Method(\"get_ingrediente_nome\")\n    ingrediente_unidade = fields.Method(\"get_ingrediente_unidade\")\n    quantidade_prevista = fields.Decimal(required=True)\n    quantidade_consumida = fields.Decimal(required=False, allow_none=True)\n    data_consumo = fields.DateTime(dump_only=True)\n    def get_ingrediente_nome(self, obj):\n        return obj.ingrediente.nome if getattr(obj, 'ingrediente', None) else 'Ingrediente'",
         "detail": "backend.app.schemas.producao_schema",
         "documentation": {}
     },
@@ -10720,7 +11569,7 @@
         "kind": 6,
         "importPath": "backend.app.schemas.producao_schema",
         "description": "backend.app.schemas.producao_schema",
-        "peekOfCode": "class OrdemProducaoItemSchema(Schema):\n    id = fields.Int(dump_only=True)\n    produto_id = fields.Int(required=True)\n    quantidade = fields.Decimal(required=True)\n    observacoes = fields.Str(required=False, allow_none=True)\nclass OrdemProducaoSchema(Schema):\n    id = fields.Int(dump_only=True)\n    numero = fields.Str(dump_only=True)\n    pedido_id = fields.Int(required=True)\n    produto_id = fields.Int(required=False, allow_none=True) # backward compat",
+        "peekOfCode": "class OrdemProducaoItemSchema(Schema):\n    id = fields.Int(dump_only=True)\n    produto_id = fields.Int(required=True)\n    produto_nome = fields.Method(\"get_produto_nome\")\n    produto_codigo = fields.Method(\"get_produto_codigo\")\n    quantidade = fields.Decimal(required=True)\n    observacoes = fields.Str(required=False, allow_none=True)\n    def get_produto_nome(self, obj):\n        return obj.produto.nome if getattr(obj, 'produto', None) else 'Produto'\n    def get_produto_codigo(self, obj):",
         "detail": "backend.app.schemas.producao_schema",
         "documentation": {}
     },
@@ -10729,7 +11578,7 @@
         "kind": 6,
         "importPath": "backend.app.schemas.producao_schema",
         "description": "backend.app.schemas.producao_schema",
-        "peekOfCode": "class OrdemProducaoSchema(Schema):\n    id = fields.Int(dump_only=True)\n    numero = fields.Str(dump_only=True)\n    pedido_id = fields.Int(required=True)\n    produto_id = fields.Int(required=False, allow_none=True) # backward compat\n    quantidade = fields.Decimal(required=False, allow_none=True) # backward compat\n    sector = fields.Enum(SectorProducao, by_value=True, required=True)\n    data_producao = fields.Date(required=False, allow_none=True)\n    hora_inicio = fields.DateTime(required=False, allow_none=True)\n    hora_fim = fields.DateTime(required=False, allow_none=True)",
+        "peekOfCode": "class OrdemProducaoSchema(Schema):\n    id = fields.Int(dump_only=True)\n    numero = fields.Str(dump_only=True)\n    pedido_id = fields.Int(required=True)\n    pedido_numero = fields.Method(\"get_pedido_numero\")\n    cliente_nome = fields.Method(\"get_cliente_nome\")\n    data_entrega = fields.Method(\"get_data_entrega\")\n    hora_entrega = fields.Method(\"get_hora_entrega\")\n    observacoes_pedido = fields.Method(\"get_observacoes_pedido\")\n    produto_id = fields.Int(required=False, allow_none=True) # backward compat",
         "detail": "backend.app.schemas.producao_schema",
         "documentation": {}
     },
@@ -10941,20 +11790,20 @@
         "documentation": {}
     },
     {
-        "label": "generate_pedido_pdf",
+        "label": "get_venda_receipt_data",
         "kind": 2,
         "importPath": "backend.app.services.pdf_generator",
         "description": "backend.app.services.pdf_generator",
-        "peekOfCode": "def generate_pedido_pdf(pedido):\n    buffer = io.BytesIO()\n    c = canvas.Canvas(buffer, pagesize=A4)\n    width, height = A4\n    c.setFont(\"Helvetica-Bold\", 16)\n    c.drawString(50, height - 50, \"Sabor Imbatível\")\n    c.setFont(\"Helvetica\", 10)\n    c.drawString(50, height - 70, \"Pedido Nº: \" + (pedido.numero or \"\"))\n    c.drawString(50, height - 85, \"Data: \" + (pedido.data_pedido.strftime(\"%d/%m/%Y %H:%M\") if pedido.data_pedido else \"\"))\n    c.drawString(50, height - 110, \"Dados do Cliente:\")",
+        "peekOfCode": "def get_venda_receipt_data(venda):\n    empresa = _get_empresa_info()\n    moeda = empresa[\"moeda\"]\n    # Operador / User\n    operador_nome = \"Sistema / Atendimento\"\n    if getattr(venda, 'criado_por', None):\n        u = User.query.get(venda.criado_por)\n        if u:\n            operador_nome = u.name\n    # Cliente",
         "detail": "backend.app.services.pdf_generator",
         "documentation": {}
     },
     {
-        "label": "generate_pedido_receipt",
+        "label": "get_pedido_receipt_data",
         "kind": 2,
         "importPath": "backend.app.services.pdf_generator",
         "description": "backend.app.services.pdf_generator",
-        "peekOfCode": "def generate_pedido_receipt(pedido):\n    # Receipt layout ~80mm width\n    # 80mm is about 226 points\n    width = 226\n    height = 600 # Flexible height, but let's make it fixed for now\n    buffer = io.BytesIO()\n    c = canvas.Canvas(buffer, pagesize=(width, height))\n    c.setFont(\"Helvetica-Bold\", 14)\n    c.drawCentredString(width / 2, height - 20, \"Sabor Imbatível\")\n    c.setFont(\"Helvetica\", 10)",
+        "peekOfCode": "def get_pedido_receipt_data(pedido):\n    empresa = _get_empresa_info()\n    moeda = empresa[\"moeda\"]\n    operador_nome = \"Atendimento\"\n    if getattr(pedido, 'created_by', None):\n        u = User.query.get(pedido.created_by)\n        if u:\n            operador_nome = u.name\n    cliente_nome = pedido.cliente.nome if pedido.cliente else \"Consumidor Final\"\n    cliente_nif = pedido.cliente.nif if pedido.cliente and pedido.cliente.nif else \"Consumidor Final\"",
         "detail": "backend.app.services.pdf_generator",
         "documentation": {}
     },
@@ -10963,7 +11812,34 @@
         "kind": 2,
         "importPath": "backend.app.services.pdf_generator",
         "description": "backend.app.services.pdf_generator",
-        "peekOfCode": "def generate_venda_pdf(venda):\n    buffer = io.BytesIO()\n    # Create the PDF object\n    c = canvas.Canvas(buffer, pagesize=A4)\n    width, height = A4\n    # Header\n    c.setFont(\"Helvetica-Bold\", 16)\n    c.drawString(50, height - 50, \"Sabor Imbatível\")\n    c.setFont(\"Helvetica\", 10)\n    c.drawString(50, height - 70, \"Documento: \" + (venda.numero_documento or \"\"))",
+        "peekOfCode": "def generate_venda_pdf(venda):\n    data = get_venda_receipt_data(venda)\n    return _build_a4_pdf(data)\ndef generate_venda_receipt(venda):\n    data = get_venda_receipt_data(venda)\n    return _build_thermal_receipt_pdf(data)\ndef generate_pedido_pdf(pedido):\n    data = get_pedido_receipt_data(pedido)\n    return _build_a4_pdf(data)\ndef generate_pedido_receipt(pedido):",
+        "detail": "backend.app.services.pdf_generator",
+        "documentation": {}
+    },
+    {
+        "label": "generate_venda_receipt",
+        "kind": 2,
+        "importPath": "backend.app.services.pdf_generator",
+        "description": "backend.app.services.pdf_generator",
+        "peekOfCode": "def generate_venda_receipt(venda):\n    data = get_venda_receipt_data(venda)\n    return _build_thermal_receipt_pdf(data)\ndef generate_pedido_pdf(pedido):\n    data = get_pedido_receipt_data(pedido)\n    return _build_a4_pdf(data)\ndef generate_pedido_receipt(pedido):\n    data = get_pedido_receipt_data(pedido)\n    return _build_thermal_receipt_pdf(data)\ndef _build_a4_pdf(rec_data):",
+        "detail": "backend.app.services.pdf_generator",
+        "documentation": {}
+    },
+    {
+        "label": "generate_pedido_pdf",
+        "kind": 2,
+        "importPath": "backend.app.services.pdf_generator",
+        "description": "backend.app.services.pdf_generator",
+        "peekOfCode": "def generate_pedido_pdf(pedido):\n    data = get_pedido_receipt_data(pedido)\n    return _build_a4_pdf(data)\ndef generate_pedido_receipt(pedido):\n    data = get_pedido_receipt_data(pedido)\n    return _build_thermal_receipt_pdf(data)\ndef _build_a4_pdf(rec_data):\n    buffer = io.BytesIO()\n    c = canvas.Canvas(buffer, pagesize=A4)\n    width, height = A4",
+        "detail": "backend.app.services.pdf_generator",
+        "documentation": {}
+    },
+    {
+        "label": "generate_pedido_receipt",
+        "kind": 2,
+        "importPath": "backend.app.services.pdf_generator",
+        "description": "backend.app.services.pdf_generator",
+        "peekOfCode": "def generate_pedido_receipt(pedido):\n    data = get_pedido_receipt_data(pedido)\n    return _build_thermal_receipt_pdf(data)\ndef _build_a4_pdf(rec_data):\n    buffer = io.BytesIO()\n    c = canvas.Canvas(buffer, pagesize=A4)\n    width, height = A4\n    empresa = rec_data[\"empresa\"]\n    doc = rec_data[\"documento\"]\n    cliente = rec_data[\"cliente\"]",
         "detail": "backend.app.services.pdf_generator",
         "documentation": {}
     },
@@ -10974,6 +11850,15 @@
         "description": "backend.app.services.pedido_service",
         "peekOfCode": "class PedidoService:\n    def __init__(self):\n        self.cliente_repo = ClienteRepository()\n        self.pedido_repo = PedidoRepository()\n        self.item_repo = ItemPedidoRepository()\n    def create_cliente(self, data, user_id):\n        if data.get('nif') and db.session.query(Cliente).filter_by(nif=data['nif'], is_active=True).first():\n            return None, \"NIF já cadastrado.\"\n        cliente = Cliente(**data, created_by=user_id)\n        self.cliente_repo.create(cliente)",
         "detail": "backend.app.services.pedido_service",
+        "documentation": {}
+    },
+    {
+        "label": "PlanningEngine",
+        "kind": 6,
+        "importPath": "backend.app.services.planning_engine",
+        "description": "backend.app.services.planning_engine",
+        "peekOfCode": "class PlanningEngine:\n    \"\"\"\n    Motor de Planeamento e Orquestrador Operacional do Módulo de Eventos.\n    Converte o contrato comercial do Evento em ordens operacionais nos módulos responsáveis:\n    - Reserva de Espaços (bloqueio de disponibilidade e gestão de conflitos)\n    - Reserva de Materiais (bloqueio de quantidade sem movimento direto de stock)\n    - Afetação de Equipas (gestão de recursos humanos e disponibilidade)\n    - Pedidos e Ordem de Produção (Integração automática com Cozinha, Pastelaria, Bar e Produção)\n    - Requisições Operacionais (Saída física, entrega, devolução e ocorrências via módulo de Requisições)\n    \"\"\"",
+        "detail": "backend.app.services.planning_engine",
         "documentation": {}
     },
     {
@@ -11118,6 +12003,24 @@
         "description": "backend.app.swagger",
         "peekOfCode": "def build_swagger_template(app):\n    return {\n        \"swagger\": \"2.0\",\n        \"info\": {\n            \"title\": \"API Documentation\",\n            \"description\": \"API documentation for the backend.\",\n            \"version\": \"1.0.0\"\n        },\n        \"basePath\": \"/\",\n        \"schemes\": [",
         "detail": "backend.app.swagger",
+        "documentation": {}
+    },
+    {
+        "label": "SQL",
+        "kind": 5,
+        "importPath": "backend.scripts.fix_pedidos_estado_enum",
+        "description": "backend.scripts.fix_pedidos_estado_enum",
+        "peekOfCode": "SQL = \"\"\"\nALTER TABLE pedidos\nMODIFY COLUMN estado ENUM(\n    'PENDENTE',\n    'AGENDADO',\n    'CONFIRMADO',\n    'EM_PRODUCAO',\n    'PRONTO',\n    'ENTREGUE',\n    'CONCLUIDO',",
+        "detail": "backend.scripts.fix_pedidos_estado_enum",
+        "documentation": {}
+    },
+    {
+        "label": "app",
+        "kind": 5,
+        "importPath": "backend.scripts.fix_pedidos_estado_enum",
+        "description": "backend.scripts.fix_pedidos_estado_enum",
+        "peekOfCode": "app = create_app()\nwith app.app_context():\n    db.session.execute(text(SQL))\n    db.session.commit()\n    print(\"pedidos.estado enum atualizado\")",
+        "detail": "backend.scripts.fix_pedidos_estado_enum",
         "documentation": {}
     },
     {
@@ -11793,6 +12696,15 @@
         "description": "backend.tests.test_vendas_estoque",
         "peekOfCode": "def test_faturacao_evento(app_context):\n    # Test converter_evento_em_venda\n    pass",
         "detail": "backend.tests.test_vendas_estoque",
+        "documentation": {}
+    },
+    {
+        "label": "run_migrations",
+        "kind": 2,
+        "importPath": "backend.apply_migration",
+        "description": "backend.apply_migration",
+        "peekOfCode": "def run_migrations():\n    queries = [\n        # Atualizar ENUM tipo_item na tabela itens_pedido para incluir 'Produto'\n        \"ALTER TABLE itens_pedido MODIFY COLUMN tipo_item ENUM('Produto', 'Produto Acabado', 'Produto Revenda', 'Servico', 'Aluguer') NOT NULL;\",\n        # Garantir todas as colunas de valor/desconto e totais na tabela itens_pedido\n        \"ALTER TABLE itens_pedido ADD COLUMN IF NOT EXISTS subtotal NUMERIC(10,2) DEFAULT 0;\",\n        \"ALTER TABLE itens_pedido ADD COLUMN IF NOT EXISTS total NUMERIC(10,2) DEFAULT 0;\",\n        \"ALTER TABLE itens_pedido ADD COLUMN IF NOT EXISTS desconto NUMERIC(10,2) DEFAULT 0;\",\n        \"ALTER TABLE itens_pedido ADD COLUMN IF NOT EXISTS taxa_iva_id INTEGER NULL;\",\n        \"ALTER TABLE itens_pedido ADD COLUMN IF NOT EXISTS taxa_iva NUMERIC(5,2) DEFAULT 0;\",",
+        "detail": "backend.apply_migration",
         "documentation": {}
     },
     {

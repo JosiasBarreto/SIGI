@@ -43,7 +43,6 @@ class Venda(BaseModel):
     
     _valor_pago = db.Column('valor_pago', db.Numeric(12, 2), default=0, nullable=True)
     _saldo = db.Column('saldo', db.Numeric(12, 2), default=0, nullable=True)
-    _cliente_id = db.Column('cliente_id', db.Integer, db.ForeignKey('clientes.id'), nullable=True)
     
     estado = db.Column(db.Enum(EstadoVenda), default=EstadoVenda.PENDENTE)
     observacoes = db.Column(db.Text, nullable=True)

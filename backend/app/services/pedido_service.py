@@ -268,34 +268,63 @@ class PedidoService:
         if not pedido:
             return None, "Pedido não encontrado."
             
-        novo_estado = data.get('estado')
+        raw_estado = data.get('estado')
         
-        if novo_estado == EstadoPedido.CANCELADO.value:
+        novo_estado_enum = None
+        if hasattr(raw_estado, 'value'):
+            novo_estado_enum = raw_estado
+        elif isinstance(raw_estado, str):
+            clean_str = raw_estado.strip()
+            for e in EstadoPedido:
+                if clean_str.upper() == e.name.upper() or clean_str.lower() == e.value.lower():
+                    novo_estado_enum = e
+                    break
+            if not novo_estado_enum:
+                novo_estado_enum = None
+        else:
+            clean_str = str(raw_estado) if raw_estado is not None else None
+            for e in EstadoPedido:
+                if clean_str and (clean_str.upper() == e.name.upper() or clean_str.lower() == e.value.lower()):
+                    novo_estado_enum = e
+                    break
+            
+        if not novo_estado_enum:
+            return None, "Estado inválido."
+
+        novo_estado = novo_estado_enum.value
+
+        if novo_estado_enum == EstadoPedido.CANCELADO:
             if not data.get('justificativa_cancelamento'):
                 return None, "Justificativa obrigatória para cancelamento."
             pedido.justificativa_cancelamento = data['justificativa_cancelamento']
             
-        old_estado = pedido.estado
-        if novo_estado == EstadoPedido.CONFIRMADO.value and old_estado != EstadoPedido.CONFIRMADO.value:
-            # Generate ordens de produção
-            from app.services.producao_service import ProducaoService
-            prod_service = ProducaoService()
-            prod_service.gerar_ordens_por_pedido(pedido.id, user_id)
-            
-        if novo_estado == EstadoPedido.PRONTO.value and old_estado != EstadoPedido.PRONTO.value:
-            socketio.emit('pedido_pronto', {'numero': pedido.numero, 'cliente': pedido.cliente.nome if pedido.cliente else 'Balcão'})
-            
-        pedido.estado = novo_estado
-        db.session.commit()
+        old_estado = pedido.estado.value if hasattr(pedido.estado, 'value') else str(pedido.estado)
         
-        AuditService.log_action(user_id, "UPDATE_ESTADO", "pedidos", pedido.id, 
-                                old_values={"estado": old_estado}, 
-                                new_values={"estado": novo_estado})
-                                
-        socketio.emit('pedido_atualizado', {
-            'numero': pedido.numero, 
-            'antigo_estado': old_estado, 
-            'novo_estado': novo_estado
-        })
-        
-        return pedido, None
+        try:
+            if novo_estado_enum == EstadoPedido.CONFIRMADO and old_estado != EstadoPedido.CONFIRMADO.value:
+                # Generate ordens de produção
+                from app.services.producao_service import ProducaoService
+                prod_service = ProducaoService()
+                prod_service.gerar_ordens_por_pedido(pedido.id, user_id)
+                
+            if novo_estado_enum == EstadoPedido.PRONTO and old_estado != EstadoPedido.PRONTO.value:
+                socketio.emit('pedido_pronto', {'numero': pedido.numero, 'cliente': pedido.cliente.nome if pedido.cliente else 'Balcão'})
+                
+            pedido.estado = novo_estado_enum
+            
+            db.session.commit()
+            
+            AuditService.log_action(user_id, "UPDATE_ESTADO", "pedidos", pedido.id, 
+                                    old_values={"estado": old_estado}, 
+                                    new_values={"estado": novo_estado})
+                                    
+            socketio.emit('pedido_atualizado', {
+                'numero': pedido.numero, 
+                'antigo_estado': old_estado, 
+                'novo_estado': novo_estado
+            })
+            
+            return pedido, None
+        except Exception as e:
+            db.session.rollback()
+            return None, f"Erro ao atualizar estado do pedido: {str(e)}"

@@ -54,7 +54,17 @@ def create_ficha():
 @producao_bp.route('/ordens', methods=['GET'])
 @jwt_required()
 def get_ordens():
+    try:
+        producao_service.processar_pedidos_agendados()
+    except Exception as e:
+        print("⚠ Erro ao processar agendados no get_ordens:", e)
     return build_pagination(producao_service.ordem_repo, OrdemProducaoSchema, request)
+
+@producao_bp.route('/processar-agendados', methods=['POST', 'GET'])
+@jwt_required()
+def processar_agendados():
+    count = producao_service.processar_pedidos_agendados()
+    return jsonify({"msg": "Processamento concluído", "pedidos_processados": count}), 200
 
 @producao_bp.route('/ordens/<int:id>/estado', methods=['PUT'])
 @jwt_required()

@@ -525,6 +525,7 @@ class ArmazemService:
         setattr(entity, stock_field, new_stock)
         
         # Capture before and after stock levels
+        data['armazem_id'] = armazem.id
         data['quantidade_antes'] = wh_current_stock
         data['quantidade_depois'] = wh_new_stock
         
@@ -727,4 +728,3 @@ class ArmazemService:
         db.session.commit()
         AuditService.log_action(user_id, "TRANSFER_STOCK", "armazens", origem_id, new_values=data)
         return {"msg": "Transferência realizada com sucesso!"}, None
-

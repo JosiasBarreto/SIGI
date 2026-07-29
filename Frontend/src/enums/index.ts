@@ -7,14 +7,13 @@ export enum TipoProduto {
 }
 
 export enum EstadoPedido {
-  PENDENTE = 'PENDENTE',
-  AGENDADO = 'AGENDADO',
-  CONFIRMADO = 'CONFIRMADO',
-  EM_PREPARACAO = 'EM_PREPARACAO',
-  PRONTO = 'PRONTO',
-  ENTREGUE = 'ENTREGUE',
-  CONCLUIDO = 'CONCLUIDO',
-  CANCELADO = 'CANCELADO'
+  AGENDADO = 'Agendado',
+  CONFIRMADO = 'Confirmado',
+  EM_PRODUCAO = 'Em Producao',
+  PRONTO = 'Pronto',
+  ENTREGUE = 'Entregue',
+  CONCLUIDO = 'Concluido',
+  CANCELADO = 'Cancelado'
 }
 
 export enum EstadoVenda {

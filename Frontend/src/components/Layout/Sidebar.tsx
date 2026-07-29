@@ -24,6 +24,7 @@ import {
   Receipt,
   TrendingUp,
   Lock,
+  Wrench,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { useAuth } from "../AuthContext";
@@ -91,6 +92,12 @@ export function Sidebar({
       name: "Eventos",
       icon: PartyPopper,
       path: "/eventos",
+      roles: ["Administrador", "Atendimento"],
+    },
+    {
+      name: "Serviços & Diversos",
+      icon: Wrench,
+      path: "/eventos/servicos-diversos",
       roles: ["Administrador", "Atendimento"],
     },
     {

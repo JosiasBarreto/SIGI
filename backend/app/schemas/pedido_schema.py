@@ -58,5 +58,5 @@ class PedidoSchema(Schema):
     itens = fields.List(fields.Nested(ItemPedidoSchema), required=False)
 
 class AlterarEstadoPedidoSchema(Schema):
-    estado = fields.Enum(EstadoPedido, by_value=True, required=True)
+    estado = fields.Raw(required=True)
     justificativa_cancelamento = fields.Str(required=False)

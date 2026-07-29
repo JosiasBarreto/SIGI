@@ -77,7 +77,16 @@ export function SocketListeners() {
       addNotification({ title: 'Ocorrência Logística', message: msg, type: 'warning' });
     };
 
+    const handleNovoEvento = (payload: any) => {
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+      queryClient.invalidateQueries({ queryKey: ['events-cal'] });
+      const msg = payload?.titulo ? `Novo evento agendado: ${payload.titulo}` : 'Novo evento agendado!';
+      toast.info(msg);
+      addNotification({ title: 'Novo Evento', message: msg, type: 'info' });
+    };
+
     on('novo_pedido', handleNovoPedido);
+    on('novo_evento', handleNovoEvento);
     on('nova_ordem_producao', handleNovaOrdemProducao);
     on('producao_iniciada', handleProducaoIniciada);
     on('producao_concluida', handleProducaoConcluida);
@@ -88,6 +97,7 @@ export function SocketListeners() {
 
     return () => {
       off('novo_pedido', handleNovoPedido);
+      off('novo_evento', handleNovoEvento);
       off('nova_ordem_producao', handleNovaOrdemProducao);
       off('producao_iniciada', handleProducaoIniciada);
       off('producao_concluida', handleProducaoConcluida);

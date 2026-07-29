@@ -1,13 +1,98 @@
 from flask import Blueprint, request, jsonify, send_file
-from app.services.comercial_service import ComercialService, StockInsuficienteError
-from flask_jwt_extended import jwt_required
-from app.middleware.auth_middleware import requires_roles
-from app.services.pdf_generator import generate_venda_pdf
 
 comercial_bp = Blueprint('comercial', __name__)
 fiscal_bp = Blueprint('fiscal', __name__)
 
+from app.services.comercial_service import ComercialService, StockInsuficienteError
+from flask_jwt_extended import jwt_required
+from app.middleware.auth_middleware import requires_roles
+from app.services.pdf_generator import generate_venda_pdf, generate_venda_receipt, get_venda_receipt_data
+from app.models.cliente import Cliente
+
 comercial_service = ComercialService()
+
+def _serialize_venda_dict(venda):
+    cliente_nome = "Consumidor Final"
+    cliente_nif = "Consumidor Final"
+    cliente_email = ""
+    cliente_telefone = ""
+    
+    if venda.pedido and venda.pedido.cliente:
+        cliente_nome = venda.pedido.cliente.nome or "Consumidor Final"
+        cliente_nif = venda.pedido.cliente.nif or "Consumidor Final"
+        cliente_email = venda.pedido.cliente.email or ""
+        cliente_telefone = venda.pedido.cliente.telefone or ""
+    elif getattr(venda, 'cliente_id', None):
+        c = Cliente.query.get(venda.cliente_id)
+        if c:
+            cliente_nome = c.nome or "Consumidor Final"
+            cliente_nif = c.nif or "Consumidor Final"
+            cliente_email = c.email or ""
+            cliente_telefone = c.telefone or ""
+
+    forma_pagamento = "Dinheiro"
+    if venda.pedido and venda.pedido.forma_pagamento:
+        forma_pagamento = venda.pedido.forma_pagamento.value if hasattr(venda.pedido.forma_pagamento, 'value') else str(venda.pedido.forma_pagamento)
+    elif venda.pagamentos:
+        formas = [p.forma_pagamento for p in venda.pagamentos if hasattr(p, 'forma_pagamento') and p.forma_pagamento]
+        if formas:
+            forma_pagamento = ", ".join(set(formas))
+
+    subtotal = float(venda.subtotal or 0)
+    desconto_total = float(venda.desconto_total or 0)
+    base_tributavel = float(venda.base_tributavel or 0)
+    total_iva = float(venda.total_iva or 0)
+    total = float(venda.total or 0)
+    valor_pago = float(venda.valor_pago or 0)
+    saldo = float(venda.saldo or 0)
+    troco = max(0.0, valor_pago - total)
+
+    return {
+        'id': venda.id,
+        'numero_documento': venda.numero_documento,
+        'tipo_documento': venda.tipo_documento.value if hasattr(venda.tipo_documento, 'value') else str(venda.tipo_documento),
+        'tipo': venda.tipo_documento.value if hasattr(venda.tipo_documento, 'value') else str(venda.tipo_documento),
+        'estado': venda.estado.value if hasattr(venda.estado, 'value') else str(venda.estado),
+        
+        'subtotal': subtotal,
+        'desconto_total': desconto_total,
+        'base_tributavel': base_tributavel,
+        'total_iva': total_iva,
+        'total': total,
+        'valor_pago': valor_pago,
+        'saldo': saldo,
+        'troco': troco,
+        
+        'cliente_id': venda.cliente_id,
+        'cliente_nome': cliente_nome,
+        'cliente_nif': cliente_nif,
+        'cliente': {
+            'id': venda.cliente_id,
+            'nome': cliente_nome,
+            'nif': cliente_nif,
+            'email': cliente_email,
+            'telefone': cliente_telefone
+        },
+        
+        'pedido_id': venda.pedido_id,
+        'forma_pagamento': forma_pagamento,
+        'created_at': venda.created_at.isoformat() if venda.created_at else None,
+        'observacoes': venda.observacoes,
+        
+        'itens': [{
+            'id': getattr(i, 'id', None),
+            'item_tipo': getattr(i, 'item_tipo', 'Produto'),
+            'item_id': getattr(i, 'item_id', None),
+            'descricao': i.descricao,
+            'quantidade': float(i.quantidade or 0),
+            'preco_unitario': float(i.preco_unitario or 0),
+            'desconto': float(getattr(i, 'desconto', 0) or 0),
+            'taxa_iva': float(getattr(i, 'taxa_iva', 0) or 0),
+            'valor_iva': float(getattr(i, 'valor_iva', 0) or 0),
+            'subtotal': float(i.subtotal or 0),
+            'total': float(i.total or 0)
+        } for i in (venda.itens or [])]
+    }
 
 @fiscal_bp.route('/iva', methods=['GET'])
 @jwt_required()
@@ -56,7 +141,7 @@ def create_venda():
     data = request.json
     try:
         venda = comercial_service.create_venda(data, user_id)
-        return jsonify({'id': venda.id, 'numero_documento': venda.numero_documento, 'total': str(venda.total)}), 201
+        return jsonify(_serialize_venda_dict(venda)), 201
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
@@ -64,14 +149,7 @@ def create_venda():
 @jwt_required()
 def get_vendas():
     vendas = comercial_service.get_vendas()
-    result = [{
-        'id': v.id,
-        'numero_documento': v.numero_documento,
-        'tipo': v.tipo_documento.value,
-        'total': str(v.total),
-        'estado': v.estado.value,
-        'created_at': v.created_at.isoformat() if v.created_at else None
-    } for v in vendas]
+    result = [_serialize_venda_dict(v) for v in vendas]
     return jsonify(result), 200
 
 @comercial_bp.route('/<int:venda_id>', methods=['GET'])
@@ -80,31 +158,7 @@ def get_venda(venda_id):
     venda = comercial_service.get_venda(venda_id)
     if not venda:
         return jsonify({'error': 'Venda not found'}), 404
-        
-    result = {
-        'id': venda.id,
-        'numero_documento': venda.numero_documento,
-        'tipo_documento': venda.tipo_documento.value,
-        'subtotal': str(venda.subtotal),
-        'desconto_total': str(venda.desconto_total),
-        'base_tributavel': str(venda.base_tributavel),
-        'total_iva': str(venda.total_iva),
-        'total': str(venda.total),
-        'valor_pago': str(venda.valor_pago),
-        'saldo': str(venda.saldo),
-        'estado': venda.estado.value,
-        'itens': [{
-            'descricao': i.descricao,
-            'quantidade': str(i.quantidade),
-            'preco_unitario': str(i.preco_unitario),
-            'subtotal': str(i.subtotal),
-            'desconto': str(i.desconto),
-            'taxa_iva': str(i.taxa_iva),
-            'valor_iva': str(i.valor_iva),
-            'total': str(i.total)
-        } for i in venda.itens]
-    }
-    return jsonify(result), 200
+    return jsonify(_serialize_venda_dict(venda)), 200
 
 @comercial_bp.route('/<int:venda_id>/pdf', methods=['GET'])
 @jwt_required()
@@ -121,7 +175,32 @@ def get_venda_pdf(venda_id):
         mimetype='application/pdf'
     )
 
-@comercial_bp.route('/vendas/<int:venda_id>/send', methods=['POST'])
+@comercial_bp.route('/<int:venda_id>/recibo', methods=['GET'])
+@jwt_required()
+def get_venda_recibo(venda_id):
+    venda = comercial_service.get_venda(venda_id)
+    if not venda:
+        return jsonify({'error': 'Venda not found'}), 404
+        
+    pdf_buffer = generate_venda_receipt(venda)
+    return send_file(
+        pdf_buffer,
+        as_attachment=False,
+        download_name=f"recibo_{venda.numero_documento.replace('/', '_')}.pdf",
+        mimetype='application/pdf'
+    )
+
+@comercial_bp.route('/<int:venda_id>/recibo-data', methods=['GET'])
+@jwt_required()
+def get_venda_recibo_data(venda_id):
+    venda = comercial_service.get_venda(venda_id)
+    if not venda:
+        return jsonify({'error': 'Venda not found'}), 404
+        
+    data = get_venda_receipt_data(venda)
+    return jsonify(data), 200
+
+@comercial_bp.route('/<int:venda_id>/send', methods=['POST'])
 @jwt_required()
 def send_venda_notification(venda_id):
     from app.services.notification_service import NotificationService
@@ -149,7 +228,7 @@ def register_pagamento(venda_id):
     data = request.json
     try:
         pagamento = comercial_service.add_pagamento(venda_id, data, user_id)
-        return jsonify({'id': pagamento.id, 'saldo': str(pagamento.venda_rel.saldo)}), 200
+        return jsonify(_serialize_venda_dict(pagamento.venda_rel)), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
@@ -161,7 +240,7 @@ def get_pagamentos(venda_id):
         return jsonify({'error': 'Venda not found'}), 404
     return jsonify([{
         'id': p.id,
-        'valor': str(p.valor),
+        'valor': float(p.valor or 0),
         'estado': p.estado.value,
         'data_pagamento': p.data_pagamento.isoformat() if p.data_pagamento else None
     } for p in venda.pagamentos]), 200
@@ -174,7 +253,7 @@ def cancel_venda(venda_id):
     ip_addr = request.remote_addr
     try:
         venda = comercial_service.cancel_venda(venda_id, user_id, ip_addr)
-        return jsonify({'id': venda.id, 'estado': venda.estado.value}), 200
+        return jsonify(_serialize_venda_dict(venda)), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
@@ -187,11 +266,5 @@ def checkout_pedido(pedido_id):
     venda, error = comercial_service.converter_pedido_em_venda(pedido_id, data, user_id)
     if error:
         return jsonify({'error': error}), 400
-    return jsonify({
-        'id': venda.id,
-        'numero_documento': venda.numero_documento,
-        'total': str(venda.total),
-        'valor_pago': str(venda.valor_pago),
-        'saldo': str(venda.saldo),
-        'estado': venda.estado.value if hasattr(venda.estado, 'value') else venda.estado
-    }), 200
+    return jsonify(_serialize_venda_dict(venda)), 200
+

@@ -94,14 +94,14 @@ export default function Orders() {
   ];
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, estado }: { id: string | number; estado: string }) =>
-      orderService.updateEstado(id, estado),
+    mutationFn: ({ id, estado, justificativa }: { id: string | number; estado: string; justificativa?: string }) =>
+      orderService.updateEstado(id, estado, justificativa),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
       toast.success("Estado do pedido atualizado com sucesso!");
     },
-    onError: () => {
-      toast.error("Erro ao atualizar estado do pedido.");
+    onError: (err: any) => {
+      toast.error(err?.message || "Erro ao atualizar estado do pedido.");
     }
   });
 
@@ -206,7 +206,7 @@ export default function Orders() {
         origem: "Balcao",
         data_entrega: orderDueDate,
         hora_entrega: `${orderDueTime}:00`, // Ensure HH:MM:SS format
-        estado: "Pendente",
+        estado: "Agendado",
         observacoes: orderNotes,
         itens: cart.map(item => {
           let tipoItem = "PRODUTO";
@@ -380,7 +380,7 @@ export default function Orders() {
   const estadoMap: Record<string, string[]> = {
     "Agendados": ["Pendente", "Agendado"],
     "Confirmados": ["Confirmado"],
-    "Produção": ["Em Producao", "Em Produção"],
+    "Produção": ["Em Producao"],
     "Prontos": ["Pronto"],
     "Concluídos": ["Em Entrega", "Entregue", "Concluido", "Concluído"],
     "Cancelados": ["Cancelado"],
@@ -396,8 +396,8 @@ export default function Orders() {
     return matchesSearch && matchesStatus;
   }) || [];
 
-  const handleUpdateStatus = (id: string, currentStatus: string) => {
-    updateMutation.mutate({ id, estado: currentStatus }, {
+  const handleUpdateStatus = (id: string, currentStatus: string, justificativa?: string) => {
+    updateMutation.mutate({ id, estado: currentStatus, justificativa }, {
       onSuccess: () => {
         toast.success(`Estado do pedido #${id} atualizado para ${currentStatus}!`);
         queryClient.invalidateQueries({ queryKey: ["orders"] });

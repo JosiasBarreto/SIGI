@@ -23,6 +23,8 @@ import Login from "./pages/Login";
 import SetupWizard from "./pages/SetupWizard";
 import Producao from "./pages/Producao";
 import Eventos from "./pages/Eventos";
+import EventoFormPage from "./pages/EventoFormPage";
+import ServicosEDiversos from "./pages/ServicosEDiversos";
 import Produtos from "./pages/Produtos";
 import Receita from "./pages/Receita";
 import Clientes from "./pages/Clientes";
@@ -52,7 +54,6 @@ import { RoleRoute } from "./components/Guards/RoleRoute";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 
 import { SocketListeners } from "./components/SocketListeners";
-import PedidoCaixaEventos from "./PedidoCaixaEventos";
 
 const queryClient = new QueryClient();
 
@@ -70,22 +71,13 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  const [isCheckingSetup, setIsCheckingSetup] = useState(true);
+  const [isCheckingSetup, setIsCheckingSetup] = useState(false);
   const [setupRequired, setSetupRequired] = useState(false);
 
   useEffect(() => {
-    // Verificar se o backend precisa de configuração
-    fetch(import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/v1/setup/check` : 'http://localhost:8000/api/v1/setup/check')
-      .then(res => res.json())
-      .then(data => {
-        setSetupRequired(data.setup_required);
-      })
-      .catch(err => {
-        console.error("Erro ao verificar setup:", err);
-      })
-      .finally(() => {
-        setIsCheckingSetup(false);
-      });
+    // Backend verifications disabled in frontend-only mock environment
+    setIsCheckingSetup(false);
+    setSetupRequired(false);
   }, []);
 
   if (isCheckingSetup) {
@@ -140,6 +132,9 @@ export default function App() {
                           <Route path="clientes" element={<Clientes />} />
                           <Route path="pedidos" element={<Orders />} />
                           <Route path="eventos" element={<Eventos />} />
+                          <Route path="eventos/novo" element={<EventoFormPage />} />
+                          <Route path="eventos/editar/:id" element={<EventoFormPage />} />
+                          <Route path="eventos/servicos-diversos" element={<ServicosEDiversos />} />
                         </Route>
 
                         {/* Caixa/POS sales routes */}
@@ -189,8 +184,6 @@ export default function App() {
                           <Route path="financeiro/contas-receber" element={<ContasReceber />} />
                           <Route path="financeiro/fecho-diario" element={<FechoDiario />} />
                           <Route path="relatorios" element={<Relatorios />} />
-                          <Route path="ppp" element={<PedidoCaixaEventos />} />
-                          
                         </Route>
 
                         {/* Sales routes */}

@@ -355,59 +355,23 @@ export default function Vendas() {
   };
 
   const handlePrintThermal = (venda: any) => {
-    const printWindow = window.open('', '_blank', 'width=420,height=720');
-    if (!printWindow) {
-      toast.error('Por favor, desative o bloqueador de janelas pop-up.');
+    if (!venda?.id) {
+      toast.error('Venda não encontrada para impressão.');
       return;
     }
+    documentService.imprimirReciboVenda(venda.id).catch((err) => {
+      toast.error(err?.message || 'Erro ao gerar recibo térmico no backend.');
+    });
+  };
 
-    const empresa = JSON.parse(localStorage.getItem('sigi_config') || '{}');
-    const linhas = venda.itens || [];
-    const html = `
-      <html>
-        <head>
-          <title>Recibo ${venda.numero || venda.numero_documento || venda.id}</title>
-          <style>
-            @page { size: 80mm auto; margin: 4mm; }
-            body { width: 72mm; font-family: Consolas, monospace; font-size: 11px; color: #111; margin: 0; }
-            .center { text-align: center; }
-            .bold { font-weight: 700; }
-            .line { border-top: 1px dashed #111; margin: 8px 0; }
-            .row { display: flex; justify-content: space-between; gap: 8px; }
-            .item { margin: 6px 0; }
-            .small { font-size: 10px; }
-          </style>
-        </head>
-        <body>
-          <div class="center bold">${empresa.nome_empresa || 'Sabor Imbatível, S.A.'}</div>
-          <div class="center small">NIF: ${empresa.nif || '500123456'}</div>
-          <div class="center small">${empresa.endereco || 'Luanda, Angola'}</div>
-          <div class="line"></div>
-          <div class="center bold">${venda.tipo_documento || 'FR'} ${venda.numero || venda.numero_documento || ''}</div>
-          <div>Data: ${new Date(venda.data_venda || venda.created_at || Date.now()).toLocaleString('pt-PT')}</div>
-          <div>Cliente: ${venda.cliente_nome || 'Consumidor Final'}</div>
-          <div class="line"></div>
-          ${linhas.map((it: any) => `
-            <div class="item">
-              <div>${it.produto_nome || it.descricao || 'Item'}</div>
-              <div class="row"><span>${it.quantidade} x ${formatCurrency(it.preco_unitario)}</span><span>${formatCurrency(it.total || it.subtotal || 0)}</span></div>
-            </div>
-          `).join('')}
-          <div class="line"></div>
-          <div class="row"><span>Subtotal</span><span>${formatCurrency(venda.subtotal || 0)}</span></div>
-          <div class="row"><span>IVA</span><span>${formatCurrency(venda.iva_valor || venda.total_iva || 0)}</span></div>
-          <div class="row bold"><span>Total</span><span>${formatCurrency(venda.total || 0)}</span></div>
-          <div class="row"><span>Pago</span><span>${formatCurrency(venda.valor_pago || 0)}</span></div>
-          <div class="row"><span>Saldo</span><span>${formatCurrency(venda.saldo || 0)}</span></div>
-          <div class="line"></div>
-          <div class="center small">Obrigado pela preferência.</div>
-        </body>
-      </html>
-    `;
-    printWindow.document.write(html);
-    printWindow.document.close();
-    printWindow.focus();
-    printWindow.print();
+  const handleDownloadThermal = (venda: any) => {
+    if (!venda?.id) {
+      toast.error('Venda não encontrada.');
+      return;
+    }
+    documentService.vendaRecibo(venda.id).catch((err) => {
+      toast.error(err?.message || 'Erro ao descarregar recibo do backend.');
+    });
   };
 
   const clearFilters = () => {

@@ -17,23 +17,21 @@ class StockService:
         if entidade_tipo == EntidadeMovimento.PRODUTO.value:
             entidade = db.session.query(Produto).with_for_update().get(referencia_id)
             if entidade:
-                if tipo_movimento == TipoMovimento.SAIDA.value and float(entidade.stock_atual) < quantidade:
-                    # Permite saldo negativo se for Revenda ou Acabado? Não, normalmente bloqueia ou alerta.
-                    # Mas para o nosso caso vamos deixar negativar, ou retornar erro?
-                    # Vamos permitir negativar ou não? Apenas baixamos o stock.
-                    pass
+                stk_atual = float(entidade.stock_atual or 0)
                 if tipo_movimento == TipoMovimento.ENTRADA.value:
-                    entidade.stock_atual = float(entidade.stock_atual) + quantidade
+                    entidade.stock_atual = stk_atual + quantidade
                 elif tipo_movimento in [TipoMovimento.SAIDA.value, TipoMovimento.PERDA.value, TipoMovimento.DANIFICADO.value]:
-                    entidade.stock_atual = float(entidade.stock_atual) - quantidade
+                    # Regra de Ouro: NUNCA PERMITIR STOCK NEGATIVO
+                    entidade.stock_atual = max(0.0, stk_atual - quantidade)
         
         elif entidade_tipo == EntidadeMovimento.INGREDIENTE.value:
             entidade = db.session.query(Ingrediente).with_for_update().get(referencia_id)
             if entidade:
+                stk_atual = float(entidade.stock_atual or 0)
                 if tipo_movimento == TipoMovimento.ENTRADA.value:
-                    entidade.stock_atual = float(entidade.stock_atual) + quantidade
+                    entidade.stock_atual = stk_atual + quantidade
                 elif tipo_movimento in [TipoMovimento.SAIDA.value, TipoMovimento.PERDA.value, TipoMovimento.DANIFICADO.value]:
-                    entidade.stock_atual = float(entidade.stock_atual) - quantidade
+                    entidade.stock_atual = max(0.0, stk_atual - quantidade)
 
         elif entidade_tipo == EntidadeMovimento.MATERIAL.value:
             entidade = db.session.query(Material).with_for_update().get(referencia_id)

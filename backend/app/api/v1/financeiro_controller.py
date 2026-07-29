@@ -33,7 +33,7 @@ def build_pagination(repo, schema, request):
 # -- CAIXA --
 @financeiro_bp.route('/caixas', methods=['GET'])
 @jwt_required()
-@requires_roles('Administrador', 'Financeiro')
+@requires_roles('Administrador', 'Financeiro', 'Atendimento')
 def get_caixas():
     return build_pagination(financeiro_service.caixa_repo, CaixaSchema, request)
 
@@ -230,4 +230,3 @@ def handle_formas_pagamento():
         return jsonify([{"id": f.id, "nome": f.nome} for f in formas]), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 400
-

@@ -68,6 +68,11 @@ def create_cliente():
 @pedido_bp.route('', methods=['GET'])
 @jwt_required()
 def get_pedidos():
+    try:
+        from app.services.producao_service import ProducaoService
+        ProducaoService().processar_pedidos_agendados()
+    except Exception as e:
+        print("⚠ Erro ao processar agendados no get_pedidos:", e)
     return build_pagination(pedido_service.pedido_repo, PedidoSchema, request)
 
 @pedido_bp.route('', methods=['POST'])
@@ -133,6 +138,16 @@ def gerar_recibo(id):
     buffer = generate_pedido_receipt(pedido)
     
     return send_file(buffer, as_attachment=False, download_name=f"recibo_{pedido.numero}.pdf", mimetype='application/pdf')
+
+@pedido_bp.route('/<int:id>/recibo-data', methods=['GET'])
+@jwt_required()
+def gerar_recibo_data(id):
+    pedido = pedido_service.pedido_repo.get_by_id(id)
+    if not pedido: return jsonify({"msg": "Not found"}), 404
+    
+    from app.services.pdf_generator import get_pedido_receipt_data
+    data = get_pedido_receipt_data(pedido)
+    return jsonify(data), 200
 
 @pedido_bp.route('/clientes/<int:id>', methods=['PUT'])
 @jwt_required()

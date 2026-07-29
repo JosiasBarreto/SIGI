@@ -17,6 +17,8 @@ import {
   CheckCircle,
   Store,
   Lock,
+  Printer,
+  Download,
 } from "lucide-react";
 import { formatCurrency, cn } from "../lib/utils";
 import Swal from "sweetalert2";
@@ -233,7 +235,7 @@ export default function CaixaPOS() {
         hora_entrega: isAgendado
           ? `${dataEntrega.split("T")[1] || "12:00"}:00`.substring(0, 8)
           : current_time,
-        estado: "Pendente",
+        estado: "Agendado",
         observacoes: `Pedido ${tipoPedido}. Caixa: #${caixaId}`,
         valor_pago: valorPagoNum,
         forma_pagamento: strFormaPagamento,
@@ -338,69 +340,13 @@ export default function CaixaPOS() {
   };
 
   const printThermalReceipt = (venda: any) => {
-    const printWindow = window.open("", "_blank", "width=360,height=640");
-    if (!printWindow) {
-      toast.error("Ative pop-ups para imprimir o recibo.");
+    if (!venda?.id) {
+      toast.error("Documento não encontrado para impressão.");
       return;
     }
-    const empresa = JSON.parse(localStorage.getItem("sigi_config") || "{}");
-    const linhas = cart
-      .map(
-        (item) => `
-      <tr>
-        <td>${Number(item.qty)}x ${item.name || item.nome}</td>
-        <td style="text-align:right">${formatCurrency(
-          Number(item.preco_venda_com_iva || item.salePrice || item.preco_venda || 0) * Number(item.qty)
-        )}</td>
-      </tr>
-    `
-      )
-      .join("");
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Recibo ${
-            venda.numero_documento || venda.numero || venda.id
-          }</title>
-          <style>
-            body { width: 280px; font-family: monospace; font-size: 12px; color: #111; margin: 0; padding: 10px; }
-            h1 { font-size: 16px; text-align: center; margin: 0 0 4px; }
-            .center { text-align: center; }
-            .line { border-top: 1px dashed #111; margin: 8px 0; }
-            table { width: 100%; border-collapse: collapse; }
-            td { padding: 2px 0; vertical-align: top; }
-            .total { font-size: 15px; font-weight: 700; }
-          </style>
-        </head>
-        <body>
-          <h1>${empresa.empresa || empresa.nome || "Sabor Imbatível"}</h1>
-          <div class="center">NIF: ${empresa.nif || "N/D"}</div>
-          <div class="center">${empresa.telefone || ""}</div>
-          <div class="line"></div>
-          <div>Doc: ${venda.numero_documento || venda.numero || venda.id}</div>
-          <div>Data: ${new Date().toLocaleString("pt-PT")}</div>
-          <div>Cliente: ${selectedClientObj?.nome || "Consumidor Final"}</div>
-          <div class="line"></div>
-          <table>${linhas}</table>
-          <div class="line"></div>
-          <table>
-            <tr><td>Subtotal</td><td style="text-align:right">${formatCurrency(
-              subtotal
-            )}</td></tr>
-            <tr><td>Desconto</td><td style="text-align:right">-${formatCurrency(
-              descontoAutomatico
-            )}</td></tr>
-            <tr class="total"><td>Total</td><td style="text-align:right">${formatCurrency(
-              total
-            )}</td></tr>
-          </table>
-          <div class="line"></div>
-          <div class="center">Obrigado pela preferência!</div>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
-    printWindow.print();
+    documentService.imprimirReciboVenda(venda.id).catch((err) => {
+      toast.error(err?.message || "Erro ao gerar recibo térmico no backend.");
+    });
   };
 
   if (!isCaixaAberta) {
@@ -878,7 +824,14 @@ export default function CaixaPOS() {
 
             {createdVenda && (
               <div className="w-full p-4 mb-6 border border-gray-150 dark:border-border-dark bg-gray-50 dark:bg-gray-900/40 rounded-xl text-left">
-                <div className="grid grid-cols-2 gap-2 mb-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4">
+                  <button
+                    type="button"
+                    onClick={() => printThermalReceipt(createdVenda)}
+                    className="px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors flex items-center justify-center gap-1.5"
+                  >
+                    <Printer size={14} /> Recibo Térmico (80mm)
+                  </button>
                   <button
                     type="button"
                     onClick={() =>
@@ -888,16 +841,22 @@ export default function CaixaPOS() {
                           toast.error(err.message || "Erro ao abrir PDF.")
                         )
                     }
-                    className="px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors"
+                    className="px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors flex items-center justify-center gap-1.5"
                   >
-                    PDF oficial
+                    <FileText size={14} /> Fatura A4
                   </button>
                   <button
                     type="button"
-                    onClick={() => printThermalReceipt(createdVenda)}
-                    className="px-3 py-2 rounded-lg bg-gray-900 hover:bg-gray-800 text-white text-xs font-bold transition-colors"
+                    onClick={() =>
+                      documentService
+                        .vendaRecibo(createdVenda.id)
+                        .catch((err) =>
+                          toast.error(err.message || "Erro ao descarregar recibo.")
+                        )
+                    }
+                    className="px-3 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-white text-xs font-bold transition-colors flex items-center justify-center gap-1.5"
                   >
-                    Recibo térmico
+                    <Download size={14} /> Descarregar PDF
                   </button>
                 </div>
                 <h3 className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-3">
