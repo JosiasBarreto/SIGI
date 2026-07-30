@@ -172,6 +172,13 @@ def run_migrations():
     try:
         db.session.execute(text("ALTER TABLE movimentos_stock ADD COLUMN fornecedor_id INT;"))
     except: pass
+    try:
+        db.session.execute(text("ALTER TABLE produtos ADD COLUMN servico ENUM('ABASTECIMENTO', 'COZINHA', 'PASTELARIA', 'BAR') NULL;"))
+    except: pass
+    try:
+        db.session.execute(text("UPDATE produtos SET servico = 'ABASTECIMENTO' WHERE tipo IN ('Consumivel', 'CONSUMIVEL');"))
+        db.session.execute(text("UPDATE produtos SET servico = 'BAR' WHERE tipo IN ('Revenda', 'REVENDA');"))
+    except: pass
     db.session.commit()
     return jsonify({"msg": "Migrations executed successfully."}), 200
 

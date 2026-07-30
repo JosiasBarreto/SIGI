@@ -6,6 +6,13 @@ export enum TipoProduto {
   ALUGUER = 'ALUGUER'
 }
 
+export enum ServicoEnum {
+  COZINHA = 'COZINHA',
+  PASTELARIA = 'PASTELARIA',
+  BAR = 'BAR',
+  ABASTECIMENTO = 'ABASTECIMENTO'
+}
+
 export enum EstadoPedido {
   AGENDADO = 'Agendado',
   CONFIRMADO = 'Confirmado',

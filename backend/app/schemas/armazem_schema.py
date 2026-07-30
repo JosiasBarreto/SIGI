@@ -1,5 +1,5 @@
 from marshmallow import Schema, fields, validate
-from app.models.produto import TipoProduto
+from app.models.produto import TipoProduto, ServicoEnum
 from app.models.material import TipoMaterial, EstadoMaterial
 from app.models.movimento_stock import TipoMovimento, OrigemMovimento, EntidadeMovimento
 
@@ -54,6 +54,7 @@ class ProdutoSchema(Schema):
     codigo = fields.Str(dump_only=True)
     nome = fields.Str(required=True, validate=validate.Length(min=2))
     tipo = fields.Enum(TipoProduto, by_value=True, required=True)
+    servico = fields.Enum(ServicoEnum, by_value=True, required=False, allow_none=True)
     categoria = fields.Str(required=False) # Mantido por compatibilidade
     categoria_id = fields.Int(required=False, allow_none=True)
     unidade_medida_id = fields.Int(required=False, allow_none=True)

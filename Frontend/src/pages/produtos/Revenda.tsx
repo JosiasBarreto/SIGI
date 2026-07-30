@@ -109,14 +109,18 @@ export default function Revenda() {
   }, [moduleName, ivaResponse, categoriasResponse, unidadesResponse]);
 
   const { data: paginatedResponse, isLoading } = useQuery({
-    queryKey: [moduleName, page, perPage, searchTerm, activeTab],
-    queryFn: () =>
-      apiAccessor.getAll({
+    queryKey: [moduleName, page, perPage, searchTerm, activeTab, statusFilter],
+    queryFn: () => {
+      const params: any = {
         page,
         per_page: perPage,
         search: searchTerm,
         tipo: activeTab,
-      }),
+      };
+      if (statusFilter === 'active') params.ativo = true;
+      if (statusFilter === 'inactive') params.ativo = false;
+      return apiAccessor.getAll(params);
+    },
     placeholderData: keepPreviousData,
   });
 
@@ -358,7 +362,7 @@ export default function Revenda() {
       (campo) => !hiddenColumns[activeTab].includes(campo.key)
     );
     // se config.utiliza_iva = true, então mostra a coluna taxa_iva, caso contrário, oculta-a
-    const ocultas = ["preco_compra", "categoria_nome"];
+    const ocultas = ["preco_compra", "categoria_nome", "servico"];
     if (!config?.utiliza_iva) {
       ocultas.push("taxa_iva");
     }

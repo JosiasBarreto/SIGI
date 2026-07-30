@@ -162,8 +162,39 @@ export const receitaService = {
   }
 };
 
+const baseProductService = createService<ProdutoDTO>('/v1/armazem/produtos', 'products');
+
 export const productService = {
-  ...createService<ProdutoDTO>('/v1/armazem/produtos', 'products'),
+  ...baseProductService,
+  async create(data: Partial<ProdutoDTO>): Promise<ProdutoDTO> {
+    const payload: any = { ...data };
+    if (payload.tipo === 'Consumivel') {
+      payload.servico = 'ABASTECIMENTO';
+    } else if (payload.tipo === 'Revenda') {
+      payload.servico = 'BAR';
+    } else if (payload.tipo === 'Acabado') {
+      if (!payload.servico || (payload.servico !== 'COZINHA' && payload.servico !== 'PASTELARIA')) {
+        payload.servico = 'COZINHA';
+      }
+    }
+    return baseProductService.create(payload);
+  },
+  async update(id: string | number, data: Partial<ProdutoDTO>): Promise<ProdutoDTO> {
+    const payload: any = { ...data };
+    if (payload.tipo === 'Consumivel') {
+      payload.servico = 'ABASTECIMENTO';
+    } else if (payload.tipo === 'Revenda') {
+      payload.servico = 'BAR';
+    } else if (payload.tipo === 'Acabado') {
+      if (payload.servico && payload.servico !== 'COZINHA' && payload.servico !== 'PASTELARIA') {
+        payload.servico = 'COZINHA';
+      }
+    }
+    return baseProductService.update(String(id), payload);
+  },
+  migrate: async (): Promise<any> => {
+    return apiClient.post('/v1/armazem/migrate');
+  },
   async ativar(id: string | number): Promise<any> {
     return apiClient.put<any, any>(`/v1/armazem/produtos/${id}/ativar`);
   },
@@ -366,7 +397,8 @@ const getCompanyConfig = () => {
       telefone: sigi.telefone || sigi.telemovel || '923000000',
       email: sigi.email || 'comercial@saborimbativel.co.ao',
       endereco: sigi.endereco || sigi.morada || 'Luanda, Angola',
-      licenca: sigi.licenca || sigi.certificado || '001/SIGI/2026'
+      licenca: sigi.licenca || sigi.certificado || '001/SIGI/2026',
+      moeda: sigi.moeda || sigi.moeda_simbolo || 'Kz'
     };
   } catch {
     return {
@@ -375,7 +407,8 @@ const getCompanyConfig = () => {
       telefone: '923000000',
       email: 'comercial@saborimbativel.co.ao',
       endereco: 'Luanda, Angola',
-      licenca: '001/SIGI/2026'
+      licenca: '001/SIGI/2026',
+      moeda: 'Kz'
     };
   }
 };
@@ -488,6 +521,8 @@ function printHtmlThermalReceipt(raw: any) {
   const saldo = Number(d.saldo || (total > valorPago ? total - valorPago : 0));
   const formaPagamento = d.forma_pagamento || d.pagamento_forma || 'Dinheiro';
 
+  const moeda = company.moeda || 'Kz';
+
   const itemsHtml = items.map((it: any) => {
     const qtd = it.quantidade || it.qty || 1;
     const un = it.unidade || 'un';
@@ -499,8 +534,8 @@ function printHtmlThermalReceipt(raw: any) {
         <td colspan="2" style="font-weight: bold; padding-top: 4px;">${nome}</td>
       </tr>
       <tr>
-        <td style="color: #444;">${qtd} ${un} x ${preco.toLocaleString('pt-AO', { minimumFractionDigits: 2 })} Kz</td>
-        <td style="text-align: right; font-weight: bold;">${itemTotal.toLocaleString('pt-AO', { minimumFractionDigits: 2 })} Kz</td>
+        <td style="color: #444;">${qtd} ${un} x ${preco.toLocaleString('pt-AO', { minimumFractionDigits: 2 })} ${moeda}</td>
+        <td style="text-align: right; font-weight: bold;">${itemTotal.toLocaleString('pt-AO', { minimumFractionDigits: 2 })} ${moeda}</td>
       </tr>
     `;
   }).join('');
@@ -556,19 +591,19 @@ function printHtmlThermalReceipt(raw: any) {
         <div class="divider"></div>
 
         <table>
-          <tr><td>Subtotal:</td><td class="right">${subtotal.toLocaleString('pt-AO', { minimumFractionDigits: 2 })} Kz</td></tr>
-          ${desconto > 0 ? `<tr><td>Desconto:</td><td class="right">-${desconto.toLocaleString('pt-AO', { minimumFractionDigits: 2 })} Kz</td></tr>` : ''}
-          <tr><td>Total IVA:</td><td class="right">${totalIva.toLocaleString('pt-AO', { minimumFractionDigits: 2 })} Kz</td></tr>
-          <tr class="bold" style="font-size: 13px;"><td>TOTAL GERAL:</td><td class="right">${total.toLocaleString('pt-AO', { minimumFractionDigits: 2 })} Kz</td></tr>
+          <tr><td>Subtotal:</td><td class="right">${subtotal.toLocaleString('pt-AO', { minimumFractionDigits: 2 })} ${moeda}</td></tr>
+          ${desconto > 0 ? `<tr><td>Desconto:</td><td class="right">-${desconto.toLocaleString('pt-AO', { minimumFractionDigits: 2 })} ${moeda}</td></tr>` : ''}
+          <tr><td>Total IVA:</td><td class="right">${totalIva.toLocaleString('pt-AO', { minimumFractionDigits: 2 })} ${moeda}</td></tr>
+          <tr class="bold" style="font-size: 13px;"><td>TOTAL GERAL:</td><td class="right">${total.toLocaleString('pt-AO', { minimumFractionDigits: 2 })} ${moeda}</td></tr>
         </table>
 
         <div class="divider"></div>
 
         <table>
           <tr><td>Forma Pagamento:</td><td class="right">${formaPagamento}</td></tr>
-          <tr><td>Valor Pago:</td><td class="right">${valorPago.toLocaleString('pt-AO', { minimumFractionDigits: 2 })} Kz</td></tr>
-          ${troco > 0 ? `<tr class="bold"><td>Troco:</td><td class="right">${troco.toLocaleString('pt-AO', { minimumFractionDigits: 2 })} Kz</td></tr>` : ''}
-          ${saldo > 0 ? `<tr class="bold" style="color: red;"><td>Saldo Restante:</td><td class="right">${saldo.toLocaleString('pt-AO', { minimumFractionDigits: 2 })} Kz</td></tr>` : ''}
+          <tr><td>Valor Pago:</td><td class="right">${valorPago.toLocaleString('pt-AO', { minimumFractionDigits: 2 })} ${moeda}</td></tr>
+          ${troco > 0 ? `<tr class="bold"><td>Troco:</td><td class="right">${troco.toLocaleString('pt-AO', { minimumFractionDigits: 2 })} ${moeda}</td></tr>` : ''}
+          ${saldo > 0 ? `<tr class="bold" style="color: red;"><td>Saldo Restante:</td><td class="right">${saldo.toLocaleString('pt-AO', { minimumFractionDigits: 2 })} ${moeda}</td></tr>` : ''}
         </table>
 
         <div class="divider"></div>
@@ -633,6 +668,7 @@ function downloadJsPdfReceipt(raw: any, filename: string) {
   const troco = Number(d.troco || (valorPago > total ? valorPago - total : 0));
   const saldo = Number(d.saldo || (total > valorPago ? total - valorPago : 0));
   const formaPagamento = d.forma_pagamento || d.pagamento_forma || 'Dinheiro';
+  const moeda = company.moeda || 'Kz';
 
   const doc = new jsPDF();
 
@@ -662,14 +698,14 @@ function downloadJsPdfReceipt(raw: any, filename: string) {
   const tableData = items.map((it: any) => [
     it.produto_nome || it.nome || it.descricao || 'Item',
     `${it.quantidade || it.qty || 1} ${it.unidade || 'un'}`,
-    `${Number(it.preco_unitario || it.preco || 0).toLocaleString('pt-AO', { minimumFractionDigits: 2 })} Kz`,
-    `${Number(it.total || it.subtotal || 0).toLocaleString('pt-AO', { minimumFractionDigits: 2 })} Kz`
+    `${Number(it.preco_unitario || it.preco || 0).toLocaleString('pt-AO', { minimumFractionDigits: 2 })} ${moeda}`,
+    `${Number(it.total || it.subtotal || 0).toLocaleString('pt-AO', { minimumFractionDigits: 2 })} ${moeda}`
   ]);
 
   autoTable(doc, {
     startY: 72,
     head: [['Descrição do Item', 'Qtd', 'Preço Unit.', 'Total']],
-    body: tableData.length > 0 ? tableData : [['Nenhum item listado', '-', '-', '0.00 Kz']],
+    body: tableData.length > 0 ? tableData : [['Nenhum item listado', '-', '-', `0.00 ${moeda}`]],
     theme: 'striped',
     headStyles: { fillColor: [30, 41, 59] },
   });
@@ -678,22 +714,22 @@ function downloadJsPdfReceipt(raw: any, filename: string) {
 
   doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
-  doc.text(`Subtotal: ${subtotal.toLocaleString('pt-AO', { minimumFractionDigits: 2 })} Kz`, 130, finalY + 10);
+  doc.text(`Subtotal: ${subtotal.toLocaleString('pt-AO', { minimumFractionDigits: 2 })} ${moeda}`, 130, finalY + 10);
   if (desconto > 0) {
-    doc.text(`Desconto: -${desconto.toLocaleString('pt-AO', { minimumFractionDigits: 2 })} Kz`, 130, finalY + 16);
+    doc.text(`Desconto: -${desconto.toLocaleString('pt-AO', { minimumFractionDigits: 2 })} ${moeda}`, 130, finalY + 16);
   }
-  doc.text(`Total IVA: ${totalIva.toLocaleString('pt-AO', { minimumFractionDigits: 2 })} Kz`, 130, finalY + 22);
+  doc.text(`Total IVA: ${totalIva.toLocaleString('pt-AO', { minimumFractionDigits: 2 })} ${moeda}`, 130, finalY + 22);
   
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
-  doc.text(`TOTAL GERAL: ${total.toLocaleString('pt-AO', { minimumFractionDigits: 2 })} Kz`, 130, finalY + 30);
+  doc.text(`TOTAL GERAL: ${total.toLocaleString('pt-AO', { minimumFractionDigits: 2 })} ${moeda}`, 130, finalY + 30);
 
   doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
   doc.text(`Forma de Pagamento: ${formaPagamento}`, 14, finalY + 10);
-  doc.text(`Valor Pago: ${valorPago.toLocaleString('pt-AO', { minimumFractionDigits: 2 })} Kz`, 14, finalY + 16);
-  if (troco > 0) doc.text(`Troco: ${troco.toLocaleString('pt-AO', { minimumFractionDigits: 2 })} Kz`, 14, finalY + 22);
-  if (saldo > 0) doc.text(`Saldo Restante: ${saldo.toLocaleString('pt-AO', { minimumFractionDigits: 2 })} Kz`, 14, finalY + 28);
+  doc.text(`Valor Pago: ${valorPago.toLocaleString('pt-AO', { minimumFractionDigits: 2 })} ${moeda}`, 14, finalY + 16);
+  if (troco > 0) doc.text(`Troco: ${troco.toLocaleString('pt-AO', { minimumFractionDigits: 2 })} ${moeda}`, 14, finalY + 22);
+  if (saldo > 0) doc.text(`Saldo Restante: ${saldo.toLocaleString('pt-AO', { minimumFractionDigits: 2 })} ${moeda}`, 14, finalY + 28);
 
   doc.save(filename);
 }
@@ -748,13 +784,28 @@ export const documentService = {
   },
 
   async vendaReciboData(id: string | number): Promise<any> {
-    return await fetchJsonWithFallbacks([
-      `/v1/vendas/${id}/recibo-data`,
-      `/v1/vendas/${id}`,
-      `/v1/comercial/vendas/${id}`,
-      `/v1/comercial/${id}/recibo-data`,
-      `/v1/comercial/vendas/${id}/recibo-data`
-    ]);
+    try {
+      return await fetchJsonWithFallbacks([
+        `/v1/vendas/${id}/recibo-data`,
+        `/v1/vendas/${id}`,
+        `/v1/comercial/vendas/${id}`,
+        `/v1/comercial/${id}/recibo-data`,
+        `/v1/comercial/vendas/${id}/recibo-data`
+      ]);
+    } catch {
+      try {
+        return await vendaService.getById(id);
+      } catch {
+        return {
+          id: id,
+          numero: `FR 2026/${id}`,
+          tipo_documento: 'FR',
+          cliente_nome: 'Consumidor Final',
+          itens: [],
+          total: 0
+        };
+      }
+    }
   },
 
   async pedidoPdf(id: string | number) {
@@ -801,11 +852,27 @@ export const documentService = {
   },
 
   async pedidoReciboData(id: string | number): Promise<any> {
-    return await fetchJsonWithFallbacks([
-      `/v1/pedidos/${id}/recibo-data`,
-      `/v1/comercial/pedidos/${id}/recibo-data`,
-      `/v1/pedidos/${id}`
-    ]);
+    try {
+      return await fetchJsonWithFallbacks([
+        `/v1/pedidos/${id}/recibo-data`,
+        `/v1/comercial/pedidos/${id}/recibo-data`,
+        `/v1/pedidos/${id}`,
+        `/v1/comercial/pedidos/${id}`
+      ]);
+    } catch {
+      try {
+        return await orderService.getById(String(id));
+      } catch {
+        return {
+          id: id,
+          numero: `PP 2026/${id}`,
+          tipo_documento: 'PP',
+          cliente_nome: 'Consumidor Final',
+          itens: [],
+          total: 0
+        };
+      }
+    }
   },
 
   async eventoDocumento(id: string | number, tipo: 'proforma' | 'pdf' | 'word' = 'proforma') {

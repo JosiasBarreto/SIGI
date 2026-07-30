@@ -817,13 +817,8 @@ export function DetailedRequisitionView({
                                 min="0"
                                 max={item.quantidade_entregue}
                                 value={dev.quantidade_devolvida}
-                                onChange={(e) =>
-                                  setDevolucoes({
-                                    ...devolucoes,
-                                    [item.id]: { ...dev, quantidade_devolvida: Number(e.target.value) }
-                                  })
-                                }
-                                className="w-full bg-gray-50 dark:bg-surface-dark border border-gray-200 dark:border-gray-800 px-2 py-1.5 rounded-lg font-bold text-xs outline-none focus:border-primary shadow-inner"
+                                disabled
+                                className="w-full bg-gray-100 dark:bg-surface-dark border border-gray-200 dark:border-gray-800 px-2 py-1.5 rounded-lg font-bold text-xs outline-none opacity-60 cursor-not-allowed shadow-inner"
                               />
                             </div>
                             <div className="space-y-1">
@@ -835,12 +830,22 @@ export function DetailedRequisitionView({
                                 min="0"
                                 max={item.quantidade_entregue}
                                 value={dev.quantidade_danificada}
-                                onChange={(e) =>
+                                onChange={(e) => {
+                                  const delivered = Number(item.quantidade_entregue) || 0;
+                                  const newDanificada = Math.max(0, Number(e.target.value));
+                                  const maxDanificada = Math.max(0, delivered - dev.quantidade_perdida);
+                                  const finalDanificada = Math.min(newDanificada, maxDanificada);
+                                  const finalDevolvida = Math.max(0, delivered - finalDanificada - dev.quantidade_perdida);
+
                                   setDevolucoes({
                                     ...devolucoes,
-                                    [item.id]: { ...dev, quantidade_danificada: Number(e.target.value) }
-                                  })
-                                }
+                                    [item.id]: {
+                                      ...dev,
+                                      quantidade_danificada: finalDanificada,
+                                      quantidade_devolvida: finalDevolvida
+                                    }
+                                  });
+                                }}
                                 className="w-full bg-gray-50 dark:bg-surface-dark border border-gray-200 dark:border-gray-800 px-2 py-1.5 rounded-lg font-bold text-xs outline-none focus:border-primary shadow-inner"
                               />
                             </div>
@@ -853,12 +858,22 @@ export function DetailedRequisitionView({
                                 min="0"
                                 max={item.quantidade_entregue}
                                 value={dev.quantidade_perdida}
-                                onChange={(e) =>
+                                onChange={(e) => {
+                                  const delivered = Number(item.quantidade_entregue) || 0;
+                                  const newPerdida = Math.max(0, Number(e.target.value));
+                                  const maxPerdida = Math.max(0, delivered - dev.quantidade_danificada);
+                                  const finalPerdida = Math.min(newPerdida, maxPerdida);
+                                  const finalDevolvida = Math.max(0, delivered - dev.quantidade_danificada - finalPerdida);
+
                                   setDevolucoes({
                                     ...devolucoes,
-                                    [item.id]: { ...dev, quantidade_perdida: Number(e.target.value) }
-                                  })
-                                }
+                                    [item.id]: {
+                                      ...dev,
+                                      quantidade_perdida: finalPerdida,
+                                      quantidade_devolvida: finalDevolvida
+                                    }
+                                  });
+                                }}
                                 className="w-full bg-gray-50 dark:bg-surface-dark border border-gray-200 dark:border-gray-800 px-2 py-1.5 rounded-lg font-bold text-xs outline-none focus:border-primary shadow-inner"
                               />
                             </div>

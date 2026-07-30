@@ -21,6 +21,13 @@ def run_migrations():
         
         # Garantir coluna de forma_pagamento em movimentos_caixa
         "ALTER TABLE movimentos_caixa ADD COLUMN IF NOT EXISTS forma_pagamento VARCHAR(100) NULL;",
+        
+        # Garantir coluna servico na tabela produtos
+        "ALTER TABLE produtos ADD COLUMN IF NOT EXISTS servico ENUM('ABASTECIMENTO', 'COZINHA', 'PASTELARIA', 'BAR') NULL;",
+        
+        # Atualizar registros existentes de produtos
+        "UPDATE produtos SET servico = 'ABASTECIMENTO' WHERE tipo IN ('Consumivel', 'CONSUMIVEL');",
+        "UPDATE produtos SET servico = 'BAR' WHERE tipo IN ('Revenda', 'REVENDA');",
     ]
     
     print("[MIGRATION] Iniciando verificação e aplicação de colunas no BD...")

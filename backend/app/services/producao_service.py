@@ -38,17 +38,22 @@ class ProducaoService:
         return ficha, None
 
     # --- Criação Automática de Ordem ---
-    def gerar_ordens_por_pedido(self, pedido_id, user_id):
+    def gerar_ordens_por_pedido(self, pedido_id, user_id=None):
         pedido = db.session.query(Pedido).filter_by(id=pedido_id).first()
         if not pedido: return False, "Pedido não encontrado"
         
-        # Determine if it's scheduled future production
+        # Verificar se já existem ordens de produção para este pedido
+        ordens_existentes = db.session.query(OrdemProducao).filter_by(pedido_id=pedido.id).all()
+        if ordens_existentes:
+            return True, None
+
         hoje = datetime.utcnow().date()
-        producao_futura = pedido.data_entrega and pedido.data_entrega > hoje
+        producao_futura = bool(pedido.data_entrega and pedido.data_entrega > hoje)
         
         itens_por_setor = {
             SectorProducao.COZINHA: [],
-            SectorProducao.PASTELARIA: []
+            SectorProducao.PASTELARIA: [],
+            SectorProducao.BAR: []
         }
         ordens_criadas = []
         
@@ -56,12 +61,39 @@ class ProducaoService:
             if not item.produto_id:
                 continue
 
-            ficha = db.session.query(FichaTecnica).filter_by(produto_acabado_id=item.produto_id, ativo=True).first()
-            if not ficha:
+            produto = db.session.query(Produto).filter_by(id=item.produto_id).first()
+            if not produto:
                 continue
-                
-            setor = SectorProducao.COZINHA if ficha.tipo == TipoFicha.COZINHA.value else SectorProducao.PASTELARIA
-            itens_por_setor[setor].append((item, ficha))
+
+            setor = None
+            if produto.servico:
+                servico_str = produto.servico.value if hasattr(produto.servico, 'value') else str(produto.servico)
+                if servico_str == 'COZINHA':
+                    setor = SectorProducao.COZINHA
+                elif servico_str == 'PASTELARIA':
+                    setor = SectorProducao.PASTELARIA
+                elif servico_str == 'BAR':
+                    setor = SectorProducao.BAR
+            
+            if not setor:
+                ficha = db.session.query(FichaTecnica).filter_by(produto_acabado_id=item.produto_id, ativo=True).first()
+                if ficha:
+                    setor = SectorProducao.COZINHA if (ficha.tipo.value if hasattr(ficha.tipo, 'value') else str(ficha.tipo)) == TipoFicha.COZINHA.value else SectorProducao.PASTELARIA
+                else:
+                    cat_or_name = f"{produto.categoria or ''} {produto.nome or ''}".lower()
+                    pastelaria_keywords = ['bolo', 'doce', 'pastel', 'pão', 'pao', 'tarte', 'croissant', 'queque', 'pastelaria', 'sobremesa', 'mousse', 'torta']
+                    bar_keywords = ['bebida', 'sumo', 'cerveja', 'água', 'agua', 'refrigerante', 'café', 'cafe', 'chá', 'cha', 'cocktail', 'licor', 'vinho']
+                    if any(kw in cat_or_name for kw in bar_keywords):
+                        setor = SectorProducao.BAR
+                    elif any(kw in cat_or_name for kw in pastelaria_keywords):
+                        setor = SectorProducao.PASTELARIA
+                    else:
+                        setor = SectorProducao.COZINHA
+            else:
+                ficha = db.session.query(FichaTecnica).filter_by(produto_acabado_id=item.produto_id, ativo=True).first()
+            
+            if setor in itens_por_setor:
+                itens_por_setor[setor].append((item, ficha))
             
         for setor, items in itens_por_setor.items():
             if not items:
@@ -74,49 +106,107 @@ class ProducaoService:
                 sector=setor,
                 prioridade=PrioridadeProducao.MEDIA,
                 data_producao=pedido.data_entrega if producao_futura else hoje,
-                estado=EstadoProducao.PENDENTE,
+                estado=EstadoProducao.PENDENTE if producao_futura else EstadoProducao.EM_PRODUCAO,
                 created_by=user_id
             )
+            if not producao_futura:
+                ordem.hora_inicio = datetime.utcnow()
+
             db.session.add(ordem)
             db.session.flush() # Para gerar o ID da ordem
             ordens_criadas.append(ordem)
             
             for item, ficha in items:
-                # Cria o item na ordem de producao
                 op_item = OrdemProducaoItem(
                     ordem_producao_id=ordem.id,
                     produto_id=item.produto_id,
                     quantidade=item.quantidade,
-                    observacoes=item.observacoes
+                    observacoes=getattr(item, 'observacoes', None)
                 )
                 db.session.add(op_item)
                 
-                # Consumos previstos e reservas
-                for req in ficha.itens:
-                    qtd_total_prevista = float(req.quantidade) * float(item.quantidade)
-                    
-                    consumo = ConsumoIngrediente(
-                        ordem_producao_id=ordem.id,
-                        ingrediente_id=req.ingrediente_id,
-                        quantidade_prevista=qtd_total_prevista
-                    )
-                    db.session.add(consumo)
-                    
-                    # Se for agendado para o futuro, criar reserva
-                    if producao_futura:
-                        reserva = ReservaIngrediente(
+                if ficha:
+                    for req in ficha.itens:
+                        qtd_total_prevista = float(req.quantidade) * float(item.quantidade)
+                        
+                        consumo = ConsumoIngrediente(
+                            ordem_producao_id=ordem.id,
                             ingrediente_id=req.ingrediente_id,
-                            pedido_id=pedido.id,
-                            quantidade=qtd_total_prevista
+                            quantidade_prevista=qtd_total_prevista
                         )
-                        db.session.add(reserva)
+                        db.session.add(consumo)
+                        
+                        if producao_futura:
+                            reserva = ReservaIngrediente(
+                                ingrediente_id=req.ingrediente_id,
+                                pedido_id=pedido.id,
+                                quantidade=qtd_total_prevista
+                            )
+                            db.session.add(reserva)
         
         db.session.commit()
         for ordem in ordens_criadas:
-            AuditService.log_action(user_id, "CREATE", "ordens_producao", ordem.id)
+            if user_id:
+                AuditService.log_action(user_id, "CREATE", "ordens_producao", ordem.id)
             
-        socketio.emit('nova_ordem_producao', {'pedido_id': pedido.id})
+        socketio.emit('nova_ordem_producao', {'pedido_id': pedido.id, 'numero': pedido.numero})
         return True, None
+
+    # --- Processamento Automático de Pedidos Agendados ---
+    def processar_pedidos_agendados(self):
+        """
+        Verifica pedidos agendados para a data atual (ou anteriores) e os coloca
+        automaticamente em produção, notificando o pessoal da cozinha e pastelaria.
+        """
+        hoje = datetime.utcnow().date()
+        
+        pedidos_agendados = db.session.query(Pedido).filter(
+            Pedido.estado.in_([
+                EstadoPedido.AGENDADO.value, EstadoPedido.AGENDADO,
+                EstadoPedido.CONFIRMADO.value, EstadoPedido.CONFIRMADO,
+                EstadoPedido.PENDENTE.value, EstadoPedido.PENDENTE
+            ]),
+            (Pedido.data_entrega <= hoje) | (Pedido.data_entrega.is_(None))
+        ).all()
+        
+        processados = []
+        for pedido in pedidos_agendados:
+            estado_str = pedido.estado.value if hasattr(pedido.estado, 'value') else str(pedido.estado)
+            # Se estiver Pendente e sem data de entrega definida nem sinal pago, ignora
+            if estado_str in ['Pendente', 'PENDENTE'] and not (pedido.valor_pago and float(pedido.valor_pago) > 0) and pedido.data_entrega != hoje:
+                continue
+
+            ordens_existentes = db.session.query(OrdemProducao).filter_by(pedido_id=pedido.id).all()
+            if not ordens_existentes:
+                self.gerar_ordens_por_pedido(pedido.id)
+                ordens_existentes = db.session.query(OrdemProducao).filter_by(pedido_id=pedido.id).all()
+
+            if estado_str in ['Agendado', 'AGENDADO', 'Confirmado', 'CONFIRMADO', 'Pendente', 'PENDENTE']:
+                pedido.estado = EstadoPedido.EM_PRODUCAO
+            
+            for ordem in ordens_existentes:
+                ordem_est = ordem.estado.value if hasattr(ordem.estado, 'value') else str(ordem.estado)
+                if ordem_est in ['Pendente', 'PENDENTE']:
+                    ordem.estado = EstadoProducao.EM_PRODUCAO
+                    if not ordem.hora_inicio:
+                        ordem.hora_inicio = datetime.utcnow()
+            
+            processados.append(pedido)
+
+        if processados:
+            db.session.commit()
+            for p in processados:
+                socketio.emit('pedido_atualizado', {
+                    'numero': p.numero,
+                    'antigo_estado': 'Agendado',
+                    'novo_estado': EstadoPedido.EM_PRODUCAO.value
+                })
+                socketio.emit('nova_ordem_producao', {'pedido_id': p.id, 'numero': p.numero})
+                socketio.emit('alerta_producao', {
+                    'msg': f'O Pedido #{p.numero} agendado para hoje entrou automaticamente em produção!'
+                })
+
+        return len(processados)
 
     # --- Controle de Ordem ---
     def alterar_estado_ordem(self, ordem_id, estado_novo, user_id):
@@ -128,38 +218,50 @@ class ProducaoService:
         
         if estado_novo == EstadoProducao.EM_PRODUCAO.value:
             ordem.hora_inicio = datetime.utcnow()
+            
+            # --- Gerar Requisição Automática para o Armazém ---
+            if ordem.consumos:
+                from app.models.requisicao import Requisicao, RequisicaoItem, TipoRequisicao, SectorRequisicao, TipoItemRequisicao
+                req_numero = f"REQ-AUTO-{datetime.utcnow().strftime('%Y%m')}-{ordem.numero[-4:]}"
+                
+                sector_map = {
+                    'Cozinha': SectorRequisicao.COZINHA,
+                    'Pastelaria': SectorRequisicao.PASTELARIA,
+                    'Bar': SectorRequisicao.BAR
+                }
+                
+                nova_req = Requisicao(
+                    numero=req_numero,
+                    tipo=TipoRequisicao.INICIAL,
+                    sector=sector_map.get(ordem.sector.value if hasattr(ordem.sector, 'value') else str(ordem.sector), SectorRequisicao.COZINHA),
+                    responsavel_id=user_id if user_id else 1,
+                    motivo=f"Requisição Automática para Ordem {ordem.numero}"
+                )
+                
+                for consumo in ordem.consumos:
+                    if float(consumo.quantidade_prevista) > 0:
+                        req_item = RequisicaoItem(
+                            tipo_item=TipoItemRequisicao.INGREDIENTE,
+                            item_id=consumo.ingrediente_id,
+                            quantidade_solicitada=consumo.quantidade_prevista
+                        )
+                        nova_req.itens.append(req_item)
+                
+                if nova_req.itens:
+                    db.session.add(nova_req)
+                    socketio.emit('nova_requisicao', {'numero': nova_req.numero})
+            # ---------------------------------------------------
+
             socketio.emit('producao_iniciada', {'ordem_numero': ordem.numero})
             
         elif estado_novo == EstadoProducao.PRONTO.value:
             ordem.hora_fim = datetime.utcnow()
             
-            # Consumir ingredientes
+            # Consumir ingredientes na ordem (stock é descontado via Entrega de Requisição no armazém)
             for consumo in ordem.consumos:
-                # Assume que consumiu o previsto, por defeito.
                 consumo.quantidade_consumida = consumo.quantidade_prevista
-                    
                 consumo.data_consumo = datetime.utcnow()
                 
-                # Atualizar stock
-                ing = db.session.query(Ingrediente).filter_by(id=consumo.ingrediente_id).first()
-                if ing:
-                    if float(ing.stock_atual) < float(consumo.quantidade_consumida):
-                        socketio.emit('alerta_stock', {'ingrediente': ing.nome, 'msg': 'Stock insuficiente após consumo!'})
-                    
-                    ing.stock_atual = float(ing.stock_atual) - float(consumo.quantidade_consumida)
-                    
-                    # Movimentação
-                    mov = MovimentoStock(
-                        tipo=TipoMovimento.SAIDA,
-                        origem=OrigemMovimento.ARMAZEM,
-                        entidade_tipo=EntidadeMovimento.INGREDIENTE,
-                        referencia_id=ing.id,
-                        quantidade=consumo.quantidade_consumida,
-                        justificacao=f"Consumo ordem produção {ordem.numero}",
-                        created_by=user_id
-                    )
-                    db.session.add(mov)
-
             # Check if reservations exist for this, mark utilized
             reservas = db.session.query(ReservaIngrediente).filter_by(pedido_id=ordem.pedido_id, estado=EstadoReserva.ATIVA.value).all()
             for r in reservas:

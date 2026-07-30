@@ -32,16 +32,16 @@ class OrdemProducao(BaseModel):
     pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=False)
     produto_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=True) # Keeping for backward compat
     quantidade = db.Column(db.Numeric(10, 2), nullable=True) # Keeping for backward compat
-    sector = db.Column(db.Enum(SectorProducao), nullable=False)
-    turno = db.Column(db.Enum(TurnoProducao), nullable=True)
+    sector = db.Column(db.Enum(SectorProducao, values_callable=lambda x: [e.value for e in x]), nullable=False)
+    turno = db.Column(db.Enum(TurnoProducao, values_callable=lambda x: [e.value for e in x]), nullable=True)
     responsavel_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     
     data_producao = db.Column(db.Date, nullable=True)
     hora_inicio = db.Column(db.DateTime, nullable=True)
     hora_fim = db.Column(db.DateTime, nullable=True)
     
-    prioridade = db.Column(db.Enum(PrioridadeProducao), default=PrioridadeProducao.MEDIA)
-    estado = db.Column(db.Enum(EstadoProducao), default=EstadoProducao.PENDENTE)
+    prioridade = db.Column(db.Enum(PrioridadeProducao, values_callable=lambda x: [e.value for e in x]), default=PrioridadeProducao.MEDIA)
+    estado = db.Column(db.Enum(EstadoProducao, values_callable=lambda x: [e.value for e in x]), default=EstadoProducao.PENDENTE)
     observacoes = db.Column(db.Text, nullable=True)
 
     pedido = db.relationship('Pedido', backref='ordens_producao')

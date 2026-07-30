@@ -154,7 +154,22 @@ export default function Requisicoes() {
     {
       accessorKey: "numero",
       header: "Número",
-      cell: ({ row }) => <span className="font-mono font-black text-sm text-gray-900 dark:text-white uppercase tracking-tight">{row.original.numero || `#REQ-${row.original.id}`}</span>
+      cell: ({ row }) => {
+        const num = row.original.numero || `#REQ-${row.original.id}`;
+        const isAuto = num.toUpperCase().includes("AUTO") || row.original.is_auto || String(row.original.tipo_requisicao || "").toUpperCase().includes("AUTO");
+        return (
+          <div className="flex flex-col gap-1">
+            <span className="font-mono font-black text-sm text-gray-900 dark:text-white uppercase tracking-tight">
+              {num}
+            </span>
+            {isAuto && (
+              <span className="inline-flex self-start items-center gap-1 text-[9px] font-extrabold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/40 px-1.5 py-0.5 rounded border border-indigo-200/50 dark:border-indigo-900/40 uppercase tracking-wider">
+                ⚡ REQ-AUTO (Alta Prioridade)
+              </span>
+            )}
+          </div>
+        );
+      }
     },
     {
       accessorKey: "sector",

@@ -6,6 +6,8 @@ interface Product {
   categoria?: string;
   name?: string;
   nome?: string;
+  servico?: string;
+  tipo?: string;
   salePrice?: number;
   preco_venda?: number;
   preco_venda_com_iva?: number;
@@ -52,13 +54,24 @@ const ProductGrid: React.FC<ProductGridProps> = ({
               onClick={() => handleAddToCart(p)}
               className="bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-800 rounded-lg p-3 text-left hover:border-primary/50 hover:shadow-lg transition-all flex flex-col justify-between gap-3"
             >
-              {/* Categoria + Nome */}
+              {/* Categoria + Serviço + Nome */}
               <div>
-                {category && (
-                  <span className="inline-block text-[11px] font-medium px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
-                    {category}
-                  </span>
-                )}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {category && (
+                    <span className="inline-block text-[11px] font-medium px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
+                      {category}
+                    </span>
+                  )}
+                  {(() => {
+                    const serv = p.servico || (p.tipo === "Revenda" ? "BAR" : p.tipo === "Acabado" ? "COZINHA" : p.tipo === "Consumivel" ? "ABASTECIMENTO" : "");
+                    if (!serv) return null;
+                    return (
+                      <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400 border border-amber-500/20">
+                        {serv}
+                      </span>
+                    );
+                  })()}
+                </div>
                 <h3 className="mt-2 text-sm font-semibold text-gray-900 dark:text-white line-clamp-2">
                   {name}
                 </h3>
@@ -90,15 +103,17 @@ const ProductGrid: React.FC<ProductGridProps> = ({
                 <p className="text-xs font-medium text-success">
                   
                 </p>
-                <span
-                    className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
-                        quantity
-                        ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
-                        : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300"
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span
+                    className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                      quantity > 0
+                        ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300"
+                        : "bg-red-100 text-red-800 dark:bg-red-950/50 dark:text-red-300 border border-red-200 dark:border-red-900"
                     }`}
                   >
-                   Stock: {quantity} {unit}
+                    {quantity > 0 ? `Stock: ${quantity} ${unit || "un"}` : "Sem Stock (Venda p/ Pedido)"}
                   </span>
+                </div>
               </div>
             </button>
           );

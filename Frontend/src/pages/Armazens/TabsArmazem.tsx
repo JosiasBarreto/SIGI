@@ -16,6 +16,7 @@ import { useAuth } from "../../components/AuthContext";
 import { toast } from "react-toastify";
 import Swal from "sweetalert2";
 import Modal from "../../components/Common/Modal";
+import { productService, materialService } from "../../services";
 
 interface Armazem {
   id: string | number;
@@ -53,18 +54,26 @@ const TabsArmazem: React.FC<TabsArmazemProps> = ({ armazens, warehouseService })
   const [busca, setBusca] = useState("");
   const [categoria, setCategoria] = useState("");
   const [subTipo, setSubTipo] = useState<string>("all");
+  const [servicoFilter, setServicoFilter] = useState<string>("all");
+  const [activeItemType, setActiveItemType] = useState<"Todos" | "Produto" | "Material" | "Consumivel">("Todos");
 
-  // Query para buscar stock do armazém ativo
+  // Query para buscar stock do armazém ativo do backend endpoint
   const { data: stockData, isLoading: isLoadingStock } = useQuery({
-    queryKey: ["armazem-stock", activeTab, busca, categoria, subTipo],
-    queryFn: () => {
-      const params: any = {};
-      if (busca) params.busca = busca;
-      if (categoria) params.categoria = categoria;
-      if (subTipo && subTipo !== "all") params.tipo = subTipo;
-      return warehouseService.getStock(activeTab!, params);
-    },
+    queryKey: ["armazem-stock", activeTab],
+    queryFn: () => warehouseService.getStock(activeTab!),
     enabled: !!activeTab,
+  });
+
+  // Query de apoio para todos os produtos (Acabados, Revenda, Consumíveis)
+  const { data: allProductsData, isLoading: isLoadingProducts } = useQuery({
+    queryKey: ["all-products-inventory"],
+    queryFn: () => productService.getAll({ per_page: 1000 }),
+  });
+
+  // Query de apoio para todos os materiais
+  const { data: allMaterialsData, isLoading: isLoadingMaterials } = useQuery({
+    queryKey: ["all-materials-inventory"],
+    queryFn: () => materialService.getAll({ per_page: 1000 }),
   });
 
   // Mutações de Armazém
@@ -170,49 +179,155 @@ const TabsArmazem: React.FC<TabsArmazemProps> = ({ armazens, warehouseService })
     });
   };
 
-  // Normalizar dados: produtos + ingredientes + materiais
-  const normalizeStock = (data: any) => {
-    if (!data) return [];
-  
-    const produtos = (data.produtos || []).map((p: any) => ({
-      tipo: "Produto",
-      sub_tipo: p.tipo || "Acabado",
-      codigo: p.produto_codigo || p.codigo || "-",
-      nome: p.produto_nome || p.nome || "-",
-      stock_atual: Number(p.stock_atual ?? 0),
-      stock_minimo: Number(p.stock_minimo ?? 0),
-      unidade_medida_sigla: p.unidade_medida || p.unidade_medida_sigla || "un",
-      preco_compra: p.preco_compra ?? null,
-      preco_venda: p.preco_venda ?? null,
-      preco_com_iva: p.preco_com_iva ?? null,
-      categoria: p.categoria || "Geral",
-      estado: p.estado || "Ativo",
-    }));
+  // Normalizar dados: unificar stockData do endpoint com lista global de produtos e materiais
+  const normalizeStock = () => {
+    const currentArmazem = armazens.find(a => a.id === activeTab);
+    const rawStock = stockData?.data || stockData || {};
+    const productsList = allProductsData?.items || (Array.isArray(allProductsData) ? allProductsData : []);
+    const materialsList = allMaterialsData?.items || (Array.isArray(allMaterialsData) ? allMaterialsData : []);
 
-    const materiais = (data.materiais || []).map((m: any) => ({
+    let stockProdutos: any[] = [];
+    let stockMateriais: any[] = [];
+    let genericStockItems: any[] = [];
+
+    if (Array.isArray(rawStock)) {
+      genericStockItems = rawStock;
+    } else if (rawStock.items && Array.isArray(rawStock.items)) {
+      genericStockItems = rawStock.items;
+    } else {
+      if (Array.isArray(rawStock.produtos)) stockProdutos = rawStock.produtos;
+      if (Array.isArray(rawStock.materiais)) stockMateriais = rawStock.materiais;
+      if (Array.isArray(rawStock.ingredientes)) stockMateriais = [...stockMateriais, ...rawStock.ingredientes];
+      if (Array.isArray(rawStock.itens)) genericStockItems = rawStock.itens;
+    }
+
+    const combinedProductsMap = new Map<string, any>();
+
+    stockProdutos.forEach((p: any) => {
+      const key = String(p.id || p.codigo || p.produto_codigo || p.nome);
+      combinedProductsMap.set(key, p);
+    });
+
+    genericStockItems.forEach((item: any) => {
+      if (item.tipo !== "Material" && !item.material_codigo) {
+        const key = String(item.id || item.codigo || item.produto_codigo || item.nome);
+        if (!combinedProductsMap.has(key)) {
+          combinedProductsMap.set(key, item);
+        }
+      }
+    });
+
+    productsList.forEach((p: any) => {
+      const matchArmazem = !p.armazem_id || String(p.armazem_id) === String(activeTab) || currentArmazem?.principal;
+      if (matchArmazem) {
+        const key = String(p.id || p.codigo || p.nome);
+        if (!combinedProductsMap.has(key)) {
+          combinedProductsMap.set(key, p);
+        }
+      }
+    });
+
+    const normalizedProdutos = Array.from(combinedProductsMap.values()).map((p: any) => {
+      const tipo = p.tipo || "Acabado";
+      let servico = p.servico;
+      if (!servico) {
+        if (tipo === "Revenda") {
+          servico = "BAR";
+        } else if (tipo === "Consumivel") {
+          servico = "ABASTECIMENTO";
+        } else {
+          const cat = String(p.categoria || p.categoria_nome || "").toLowerCase();
+          const nome = String(p.nome || p.produto_nome || "").toLowerCase();
+          if (cat.includes("pastelaria") || nome.includes("pastelaria") || nome.includes("bolo") || nome.includes("pão") || nome.includes("croissant") || nome.includes("doce")) {
+            servico = "PASTELARIA";
+          } else {
+            servico = "COZINHA";
+          }
+        }
+      }
+
+      return {
+        id: p.id,
+        tipo: tipo === "Consumivel" ? "Consumível" : "Produto",
+        sub_tipo: tipo,
+        servico: servico,
+        codigo: p.produto_codigo || p.codigo || "-",
+        nome: p.produto_nome || p.nome || "-",
+        stock_atual: Number(p.stock_atual ?? p.quantidade_atual ?? p.quantidade_disponivel ?? p.quantidade ?? 0),
+        stock_minimo: Number(p.stock_minimo ?? 0),
+        unidade_medida_sigla: p.unidade_medida || p.unidade_medida_sigla || "un",
+        preco_compra: p.preco_compra ?? null,
+        preco_venda: p.preco_venda ?? null,
+        preco_com_iva: p.preco_com_iva ?? null,
+        categoria: p.categoria || p.categoria_nome || "Geral",
+        estado: p.estado || (p.ativo === false ? "Inativo" : "Ativo"),
+      };
+    });
+
+    const combinedMaterialsMap = new Map<string, any>();
+
+    stockMateriais.forEach((m: any) => {
+      const key = String(m.id || m.codigo || m.material_codigo || m.nome);
+      combinedMaterialsMap.set(key, m);
+    });
+
+    genericStockItems.forEach((item: any) => {
+      if (item.tipo === "Material" || item.material_codigo) {
+        const key = String(item.id || item.codigo || item.material_codigo || item.nome);
+        if (!combinedMaterialsMap.has(key)) {
+          combinedMaterialsMap.set(key, item);
+        }
+      }
+    });
+
+    materialsList.forEach((m: any) => {
+      const matchArmazem = !m.armazem_id || String(m.armazem_id) === String(activeTab) || currentArmazem?.principal;
+      if (matchArmazem) {
+        const key = String(m.id || m.codigo || m.nome);
+        if (!combinedMaterialsMap.has(key)) {
+          combinedMaterialsMap.set(key, m);
+        }
+      }
+    });
+
+    const normalizedMateriais = Array.from(combinedMaterialsMap.values()).map((m: any) => ({
+      id: m.id,
       tipo: "Material",
       sub_tipo: m.tipo || "Reutilizavel",
+      servico: "ABASTECIMENTO",
       codigo: m.material_codigo || m.codigo || "-",
       nome: m.material_nome || m.nome || "-",
-      stock_atual: Number(m.stock_atual ?? 0),
+      stock_atual: Number(m.stock_atual ?? m.quantidade_disponivel ?? m.quantidade_total ?? m.quantidade ?? 0),
       stock_minimo: Number(m.stock_minimo ?? 0),
       unidade_medida_sigla: m.unidade_medida || m.unidade_medida_sigla || "un",
       preco_compra: m.preco_compra ?? null,
       preco_venda: m.preco_venda ?? 0.0,
       preco_com_iva: m.preco_com_iva ?? 0.0,
-      categoria: m.categoria || "Geral",
+      categoria: m.categoria || m.categoria_nome || "Geral",
       estado: m.estado || "Disponivel",
     }));
- 
-    return [...produtos, ...materiais];
+
+    return [...normalizedProdutos, ...normalizedMateriais];
   };
 
-  const [activeItemType, setActiveItemType] = useState<"Todos" | "Produto" | "Material">("Todos");
-  
-  const allItems = normalizeStock(stockData);
-  const items = activeItemType === "Todos" 
-    ? allItems 
-    : allItems.filter((i) => i.tipo === activeItemType);
+  const allItems = normalizeStock();
+  const items = allItems.filter((i: any) => {
+    let matchType = true;
+    if (activeItemType === "Produto") {
+      matchType = i.tipo === "Produto" && i.sub_tipo !== "Consumivel";
+    } else if (activeItemType === "Material") {
+      matchType = i.tipo === "Material";
+    } else if (activeItemType === "Consumivel") {
+      matchType = i.sub_tipo === "Consumivel" || i.tipo === "Consumível";
+    }
+
+    const matchServico = servicoFilter === "all" || i.servico === servicoFilter;
+    const matchSubTipo = subTipo === "all" || i.sub_tipo === subTipo;
+    const matchCategoria = !categoria || String(i.categoria || "").toLowerCase().includes(categoria.toLowerCase());
+    const matchBusca = !busca || String(i.nome || "").toLowerCase().includes(busca.toLowerCase()) || String(i.codigo || "").toLowerCase().includes(busca.toLowerCase());
+
+    return matchType && matchServico && matchSubTipo && matchCategoria && matchBusca;
+  });
 
   // Colunas no formato esperado pelo DataTable
   const tableColumns = [
@@ -260,6 +375,19 @@ const TabsArmazem: React.FC<TabsArmazemProps> = ({ armazens, warehouseService })
           {row.original.categoria}
         </span>
       ),
+    },
+    {
+      accessorKey: "servico",
+      header: "Serviço (Setor)",
+      cell: ({ row }: any) => {
+        const serv = row.original.servico;
+        if (!serv) return <span className="text-gray-400 text-xs">-</span>;
+        return (
+          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400 border border-amber-500/20">
+            {serv}
+          </span>
+        );
+      },
     },
     {
       accessorKey: "stock_atual",
@@ -465,34 +593,39 @@ const TabsArmazem: React.FC<TabsArmazemProps> = ({ armazens, warehouseService })
 
       {/* Conteúdo da Tab ativa: tabela */}
       <div className="mt-4 p-6 bg-white dark:bg-surface-dark rounded-2xl border border-gray-250 dark:border-gray-800 shadow-sm">
-        {isLoadingStock ? (
+        {isLoadingStock || isLoadingProducts || isLoadingMaterials ? (
           <div className="py-20 text-center text-gray-400 font-bold uppercase tracking-widest text-xs">
-            A carregar stock...
+            A carregar stock do armazém...
           </div>
         ) : (
           <>
             <div className="mb-4 flex flex-wrap gap-2">
-              {["Todos", "Produto", "Material"].map((type) => (
+              {[
+                { id: "Todos", label: "Todos os Itens" },
+                { id: "Produto", label: "Produtos Finais" },
+                { id: "Material", label: "Materiais / Utensílios" },
+                { id: "Consumivel", label: "Consumíveis" }
+              ].map((item) => (
                 <button
-                  key={type}
-                  onClick={() => setActiveItemType(type as any)}
+                  key={item.id}
+                  onClick={() => setActiveItemType(item.id as any)}
                   className={`px-4 py-2 rounded-lg text-xs font-bold transition-all border ${
-                    activeItemType === type 
+                    activeItemType === item.id 
                       ? "bg-primary text-white border-primary" 
                       : "bg-gray-50 text-gray-600 hover:bg-gray-100 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 dark:border-gray-700"
                   }`}
                 >
-                  {type === "Todos" ? "Todos os Itens" : type === "Produto" ? "Produtos Finais" : "Materiais / Utensílios"}
+                  {item.label}
                 </button>
               ))}
             </div>
             
             <DataTable
               key={activeTab}
-              storageKey={`stock_${activeTab}_v3`}
+              storageKey={`stock_${activeTab}_v4`}
               data={items}
               columns={tableColumns}
-              isLoading={isLoadingStock}
+              isLoading={isLoadingStock || isLoadingProducts || isLoadingMaterials}
               searchPlaceholder="Pesquisar por nome ou código..."
               manualPagination={false}
               searchValue={busca}
@@ -501,10 +634,22 @@ const TabsArmazem: React.FC<TabsArmazemProps> = ({ armazens, warehouseService })
                 setBusca("");
                 setCategoria("");
                 setSubTipo("all");
+                setServicoFilter("all");
                 setActiveItemType("Todos");
               }}
               renderFilters={() => (
                 <div className="flex flex-wrap items-center gap-2">
+                  <select
+                    value={servicoFilter}
+                    onChange={(e) => setServicoFilter(e.target.value)}
+                    className="bg-gray-50 border border-gray-200 dark:bg-gray-800 dark:border-gray-750 px-3 py-1.5 rounded-lg text-xs outline-none focus:border-primary transition-all font-bold dark:text-white"
+                  >
+                    <option value="all">Serviço / Setor (Todos)</option>
+                    <option value="COZINHA">Cozinha (COZINHA)</option>
+                    <option value="PASTELARIA">Pastelaria (PASTELARIA)</option>
+                    <option value="BAR">Bar (BAR)</option>
+                    <option value="ABASTECIMENTO">Abastecimento (ABASTECIMENTO)</option>
+                  </select>
                   <input
                     type="text"
                     placeholder="Filtrar por Categoria..."

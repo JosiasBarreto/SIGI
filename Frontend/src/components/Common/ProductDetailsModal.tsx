@@ -56,6 +56,9 @@ export function ProductDetailsModal({ isOpen, onClose, product }: ProductDetails
                 <span className={`px-2.5 py-1 text-xs font-bold rounded-lg uppercase tracking-wider ${tipoBadgeStyles[product.tipo] || 'bg-gray-100 text-gray-800'}`}>
                   {product.tipo}
                 </span>
+                <span className="px-2.5 py-1 text-xs font-bold rounded-lg uppercase tracking-wider bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400 border border-amber-500/20">
+                  {product.servico || (product.tipo === 'Consumivel' ? 'ABASTECIMENTO' : product.tipo === 'Revenda' ? 'BAR' : 'COZINHA')}
+                </span>
                 <span className={`px-2.5 py-1 text-xs font-bold rounded-lg uppercase tracking-wider ${statusStyle}`}>
                   {product.ativo ? 'Ativo' : 'Inativo'}
                 </span>
@@ -87,6 +90,12 @@ export function ProductDetailsModal({ isOpen, onClose, product }: ProductDetails
               <div className="flex justify-between items-center pb-2 border-b border-gray-50 dark:border-gray-800/50">
                 <span className="text-xs font-medium text-gray-500 flex items-center gap-1.5"><Scale size={14}/> Tipo</span>
                 <span className="text-sm font-bold text-gray-900 dark:text-white">{product.tipo}</span>
+              </div>
+              <div className="flex justify-between items-center pb-2 border-b border-gray-50 dark:border-gray-800/50">
+                <span className="text-xs font-medium text-gray-500 flex items-center gap-1.5"><Tag size={14}/> Serviço (Setor)</span>
+                <span className="text-sm font-bold text-amber-600 dark:text-amber-400">
+                  {product.servico || (product.tipo === 'Consumivel' ? 'ABASTECIMENTO' : product.tipo === 'Revenda' ? 'BAR' : 'COZINHA')}
+                </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-xs font-medium text-gray-500 flex items-center gap-1.5"><Activity size={14}/> Estado</span>

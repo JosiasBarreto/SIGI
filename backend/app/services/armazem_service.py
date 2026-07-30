@@ -94,22 +94,36 @@ class ArmazemService:
         armazem_id = data.pop('armazem_id', None)
         
         tipo = data.get('tipo')
+        servico = data.get('servico')
+        servico_str = servico.value if hasattr(servico, 'value') else (str(servico) if servico is not None else None)
+
         if tipo == 'Consumivel':
             if not data.get('nome') or not data.get('categoria_id') or not data.get('unidade_medida_id') or data.get('preco_compra') is None or data.get('stock_minimo') is None:
                 return None, "Campos obrigatórios para Consumível: nome, categoria_id, unidade_medida_id, preco_compra, stock_minimo."
             if 'tempo_producao' in data and data['tempo_producao'] is not None:
                 return None, "Consumível não pode ter tempo de produção."
+            if servico_str and servico_str != 'ABASTECIMENTO':
+                return None, "Serviço inválido para Consumível. Apenas ABASTECIMENTO é permitido."
+            data['servico'] = 'ABASTECIMENTO'
             data['preco_venda'] = 0
             
         elif tipo == 'Acabado':
             if not data.get('nome') or not data.get('categoria_id') or not data.get('unidade_medida_id') or data.get('preco_venda') is None or data.get('tempo_producao') is None:
                 return None, "Campos obrigatórios para Produto Acabado: nome, categoria_id, unidade_medida_id, preco_venda, tempo_producao."
+            if not servico_str:
+                return None, "Campo serviço é obrigatório para Produto Acabado."
+            if servico_str not in ['COZINHA', 'PASTELARIA']:
+                return None, "Serviço inválido para Produto Acabado. Apenas COZINHA ou PASTELARIA são permitidos."
+            data['servico'] = servico_str
             # preco_compra cannot be set manually (will be calc'd by recipe later)
             data['preco_compra'] = 0
 
         elif tipo == 'Revenda':
             if not data.get('nome') or not data.get('categoria_id') or not data.get('unidade_medida_id') or data.get('preco_compra') is None or data.get('preco_venda') is None:
                 return None, "Campos obrigatórios para Revenda: nome, categoria_id, unidade_medida_id, preco_compra, preco_venda."
+            if servico_str and servico_str != 'BAR':
+                return None, "Serviço inválido para Revenda. Apenas BAR é permitido."
+            data['servico'] = 'BAR'
                 
         data['codigo'] = self.generate_codigo_produto(tipo)
         data['stock_atual'] = 0 # Forced
@@ -145,14 +159,28 @@ class ArmazemService:
             
         # Validation by type
         tipo = produto.tipo
+        servico = data.get('servico')
+        servico_str = servico.value if hasattr(servico, 'value') else (str(servico) if servico is not None else None)
+
         if tipo == 'Consumivel':
             if 'tempo_producao' in data and data['tempo_producao'] is not None:
                 return None, "Consumível não pode ter tempo de produção."
+            if 'servico' in data and servico_str != 'ABASTECIMENTO':
+                return None, "Serviço inválido para Consumível. Apenas ABASTECIMENTO é permitido."
             data['preco_venda'] = 0
             
         elif tipo == 'Acabado':
             if 'preco_compra' in data:
                 data.pop('preco_compra') # Cannot be updated manually
+            if 'servico' in data:
+                if not servico_str:
+                    return None, "Campo serviço é obrigatório para Produto Acabado."
+                if servico_str not in ['COZINHA', 'PASTELARIA']:
+                    return None, "Serviço inválido para Produto Acabado. Apenas COZINHA ou PASTELARIA são permitidos."
+
+        elif tipo == 'Revenda':
+            if 'servico' in data and servico_str != 'BAR':
+                return None, "Serviço inválido para Revenda. Apenas BAR é permitido."
 
         if 'preco_compra' in data and produto.tipo == 'Consumivel' and float(data['preco_compra']) != float(produto.preco_compra):
             price_changed = True
@@ -728,3 +756,5 @@ class ArmazemService:
         db.session.commit()
         AuditService.log_action(user_id, "TRANSFER_STOCK", "armazens", origem_id, new_values=data)
         return {"msg": "Transferência realizada com sucesso!"}, None
+
+armazem_service = ArmazemService()

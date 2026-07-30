@@ -95,6 +95,18 @@ export const schemas: Record<string, ModuleSchema> = {
       { key: "armazem_nome", label: "Armazém" },
       { key: "categoria_nome", label: "Categoria" },
       {
+        key: "servico",
+        label: "Serviço",
+        render: (val, item) => {
+          const s = val || (item.tipo === "Consumivel" ? "ABASTECIMENTO" : item.tipo === "Revenda" ? "BAR" : "COZINHA");
+          return (
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+              {s}
+            </span>
+          );
+        },
+      },
+      {
         key: "ativo",
         label: "Estado",
         render: (val: boolean) => (
@@ -118,6 +130,12 @@ export const schemas: Record<string, ModuleSchema> = {
         type: "select",
         options: ["Consumivel", "Acabado", "Revenda"],
         required: true,
+      },
+      {
+        name: "servico",
+        label: "Serviço (Setor)",
+        type: "select",
+        options: ["COZINHA", "PASTELARIA", "BAR", "ABASTECIMENTO"],
       },
       { name: "categoria_id", label: "Categoria", type: "select" },
       { name: "unidade_medida_id", label: "Unidade de Medida", type: "select" },

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { productionService, productService } from "../services";
+import { productionService, productService, requestService } from "../services";
 import { Play, CheckCircle, Clock, ChefHat, Timer, AlertCircle, Undo2, Utensils, Cake, Wine, CheckCheck, User, Filter } from "lucide-react";
 import { cn } from "../lib/utils";
 import { toast } from "react-toastify";
@@ -32,8 +32,23 @@ export default function Producao() {
     queryFn: () => productService.getAll({ per_page: 5000 }),
   });
 
+  const { data: requisitionsResponse } = useQuery({
+    queryKey: ["requisitions-all"],
+    queryFn: () => requestService.getAll({ per_page: 500 }).catch(() => ({ items: [] })),
+    refetchInterval: 10000,
+  });
+
   const orders = ordersResponse?.items || [];
   const products = productsResponse?.items || [];
+  const requisitionsList = requisitionsResponse?.items || [];
+
+  const requisitionsMap = React.useMemo(() => {
+    const map: Record<string | number, any> = {};
+    requisitionsList.forEach((r: any) => {
+      map[r.id] = r;
+    });
+    return map;
+  }, [requisitionsList]);
 
   const updateStatusMutation = useMutation({
     mutationFn: ({ id, estado }: { id: string | number; estado: string }) =>
@@ -169,6 +184,21 @@ export default function Producao() {
               );
             })}
           </div>
+
+          {(() => {
+            const reqId = order.requisicao_id || order.requisicaoId;
+            const matched = reqId ? requisitionsMap[reqId] : null;
+            const reqStatusText = matched ? matched.estado : (order.requisicao_status || order.requisicao_estado || 'Pendente');
+            if (!reqId) return null;
+            return (
+              <div className="mt-4 p-2.5 bg-indigo-50/50 dark:bg-indigo-950/10 rounded-lg border border-indigo-100/50 dark:border-indigo-900/20 flex justify-between items-center text-[11px] font-medium">
+                <span className="text-gray-500">Requisição associada:</span>
+                <span className="font-bold text-indigo-600 dark:text-indigo-400">
+                  REQ-{reqId} ({reqStatusText})
+                </span>
+              </div>
+            );
+          })()}
         </div>
 
         <div className="mt-5 pt-4 border-t border-gray-100 dark:border-gray-800">
@@ -181,15 +211,39 @@ export default function Producao() {
               <Play size={18} /> Iniciar Preparação
             </button>
           )}
-          {type === 'producao' && (
-            <button 
-              onClick={() => handleUpdateStatus(order.id, "Pronto")}
-              disabled={updateStatusMutation.isPending}
-              className="w-full flex justify-center items-center gap-2 bg-warning hover:bg-warning-hover text-white py-3 rounded-xl font-bold transition-all shadow-lg shadow-warning/30 active:scale-95 disabled:opacity-50"
-            >
-              <CheckCircle size={18} /> Marcar como Pronto
-            </button>
-          )}
+          {type === 'producao' && (() => {
+            const reqId = order.requisicao_id || order.requisicaoId;
+            const matched = reqId ? requisitionsMap[reqId] : null;
+            const reqStatus = (matched ? matched.estado : (order.requisicao_status || order.requisicao_estado || order.estado_requisicao || "")).toString().toLowerCase().trim();
+            const hasPendingRequisition = reqId && reqStatus && !["em uso", "entregue", "devolvido", "finalizado", "concluido", "fechado"].includes(reqStatus);
+            
+            if (hasPendingRequisition) {
+              return (
+                <div className="space-y-2">
+                  <div className="flex items-start gap-2 p-2.5 bg-amber-50 dark:bg-amber-950/10 text-amber-700 dark:text-amber-400 border border-amber-200/50 dark:border-amber-900/30 rounded-xl text-xs font-semibold leading-relaxed">
+                    <AlertCircle size={16} className="shrink-0 text-amber-500 mt-0.5" />
+                    <span>Botão bloqueado: Aguardando entrega dos ingredientes do armazém (REQ-{reqId}).</span>
+                  </div>
+                  <button 
+                    disabled
+                    className="w-full flex justify-center items-center gap-2 bg-gray-100 dark:bg-gray-800/50 text-gray-400 dark:text-gray-600 py-3 rounded-xl font-bold cursor-not-allowed text-xs border border-dashed border-gray-250 dark:border-gray-700"
+                  >
+                    <CheckCircle size={18} /> Marcar como Pronto (Bloqueado)
+                  </button>
+                </div>
+              );
+            }
+
+            return (
+              <button 
+                onClick={() => handleUpdateStatus(order.id, "Pronto")}
+                disabled={updateStatusMutation.isPending}
+                className="w-full flex justify-center items-center gap-2 bg-warning hover:bg-warning-hover text-white py-3 rounded-xl font-bold transition-all shadow-lg shadow-warning/30 active:scale-95 disabled:opacity-50"
+              >
+                <CheckCircle size={18} /> Marcar como Pronto
+              </button>
+            );
+          })()}
           {type === 'pronto' && (
             <div className="space-y-2">
               <button 

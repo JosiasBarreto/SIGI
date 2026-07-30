@@ -1,5 +1,5 @@
 
-import { TipoProduto, TipoMovimento, OrigemMovimento } from '../../enums';
+import { TipoProduto, TipoMovimento, OrigemMovimento, ServicoEnum } from '../../enums';
 export interface FornecedorDTO {
   id: number;
   codigo?: string;
@@ -32,6 +32,7 @@ export interface ProdutoDTO {
   codigo?: string;
   nome: string;
   tipo: TipoProduto | string;
+  servico?: ServicoEnum | string;
   categoria?: string;
   tempo_producao?: number;
   preco_venda: string | number;

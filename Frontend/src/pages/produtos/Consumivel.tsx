@@ -112,14 +112,18 @@ export default function Consumivel() {
   }, [moduleName, ivaResponse, categoriasResponse, unidadesResponse]);
 
   const { data: paginatedResponse, isLoading } = useQuery({
-    queryKey: [moduleName, page, perPage, searchTerm, activeTab],
-    queryFn: () =>
-      apiAccessor.getAll({
+    queryKey: [moduleName, page, perPage, searchTerm, activeTab, statusFilter],
+    queryFn: () => {
+      const params: any = {
         page,
         per_page: perPage,
         search: searchTerm,
         tipo: activeTab,
-      }),
+      };
+      if (statusFilter === 'active') params.ativo = true;
+      if (statusFilter === 'inactive') params.ativo = false;
+      return apiAccessor.getAll(params);
+    },
     placeholderData: keepPreviousData,
   });
 
@@ -336,7 +340,7 @@ export default function Consumivel() {
     const cols: ColumnDef<any>[] = [];
     
     // Consumiveis should only show: Código, Nome, Quantidade Atual, Preço de Compra, Categoria, Estado (Status), Ações
-    const ocultas = ["preco_venda", "taxa_iva", "precoliquido", "armazem_nome", "tipo"];
+    const ocultas = ["preco_venda", "taxa_iva", "precoliquido", "armazem_nome", "tipo", "servico"];
 
     if (schema) {
       schema.columns

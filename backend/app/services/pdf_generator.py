@@ -8,6 +8,24 @@ from app.models.user import User
 from app.models.cliente import Cliente
 from app.models.produto import Produto
 
+def format_qtd(val):
+    try:
+        val_f = float(val)
+        if val_f.is_integer():
+            return str(int(val_f))
+        return f"{val_f:.3f}".rstrip('0').rstrip('.')
+    except (ValueError, TypeError):
+        return str(val)
+
+def format_percentagem(val):
+    try:
+        val_f = float(val)
+        if val_f.is_integer():
+            return f"{int(val_f)}%"
+        return f"{val_f:.2f}".rstrip('0').rstrip('.') + "%"
+    except (ValueError, TypeError):
+        return f"{val}%"
+
 def _get_empresa_info():
     empresa = Empresa.query.first()
     if empresa:
@@ -53,8 +71,9 @@ def get_venda_receipt_data(venda):
 
     # Operador / User
     operador_nome = "Sistema / Atendimento"
-    if getattr(venda, 'criado_por', None):
-        u = User.query.get(venda.criado_por)
+    operador_id = getattr(venda, 'criado_por', None) or getattr(venda, 'created_by', None)
+    if operador_id:
+        u = User.query.get(operador_id)
         if u:
             operador_nome = u.name
 
@@ -63,12 +82,15 @@ def get_venda_receipt_data(venda):
     cliente_nif = "Consumidor Final"
     if venda.pedido and venda.pedido.cliente:
         cliente_nome = venda.pedido.cliente.nome or "Consumidor Final"
-        cliente_nif = venda.pedido.cliente.nif or "Consumidor Final"
+        cliente_nif = venda.pedido.cliente.nif or ""
     elif getattr(venda, 'cliente_id', None):
         c = Cliente.query.get(venda.cliente_id)
         if c:
             cliente_nome = c.nome or "Consumidor Final"
-            cliente_nif = c.nif or "Consumidor Final"
+            cliente_nif = c.nif or ""
+
+    if not cliente_nif and cliente_nome == "Consumidor Final":
+        cliente_nif = "Consumidor Final"
 
     # Data e Hora de Operacao
     dt_op = venda.created_at.strftime("%d/%m/%Y %H:%M") if venda.created_at else "N/A"
@@ -86,7 +108,13 @@ def get_venda_receipt_data(venda):
     if venda.pedido and venda.pedido.forma_pagamento:
         forma_pagamento = venda.pedido.forma_pagamento.value if hasattr(venda.pedido.forma_pagamento, 'value') else str(venda.pedido.forma_pagamento)
     elif venda.pagamentos:
-        formas = [p.forma_pagamento for p in venda.pagamentos if hasattr(p, 'forma_pagamento') and p.forma_pagamento]
+        from app.models.financeiro import FormaPagamento as FinFormaPagamento
+        formas = []
+        for p in venda.pagamentos:
+            if getattr(p, 'forma_pagamento_id', None):
+                fp = FinFormaPagamento.query.get(p.forma_pagamento_id)
+                if fp:
+                    formas.append(fp.nome)
         if formas:
             forma_pagamento = ", ".join(set(formas))
 
@@ -166,8 +194,14 @@ def get_pedido_receipt_data(pedido):
         if u:
             operador_nome = u.name
 
-    cliente_nome = pedido.cliente.nome if pedido.cliente else "Consumidor Final"
-    cliente_nif = pedido.cliente.nif if pedido.cliente and pedido.cliente.nif else "Consumidor Final"
+    cliente_nome = "Consumidor Final"
+    cliente_nif = "Consumidor Final"
+    if pedido.cliente:
+        cliente_nome = pedido.cliente.nome or "Consumidor Final"
+        cliente_nif = pedido.cliente.nif or ""
+
+    if not cliente_nif and cliente_nome == "Consumidor Final":
+        cliente_nif = "Consumidor Final"
 
     dt_op = pedido.data_pedido.strftime("%d/%m/%Y %H:%M") if pedido.data_pedido else "N/A"
     
@@ -309,13 +343,14 @@ def _build_a4_pdf(rec_data):
     table_data = [["Descrição", "Qtd", f"P. Unit ({moeda})", "Desc", "IVA %", f"Subtotal ({moeda})", f"Total IVA ({moeda})", f"Total ({moeda})"]]
     
     for item in rec_data["itens"]:
-        qtd_str = f"{item['quantidade']} {item['unidade']}"
+        qtd_formatted = format_qtd(item['quantidade'])
+        qtd_str = f"{qtd_formatted} {item['unidade']}"
         table_data.append([
             item["descricao"],
             qtd_str,
             f"{item['preco_unitario']:.2f}",
             f"{item['desconto']:.2f}",
-            f"{item['taxa_iva']:.1f}%",
+            format_percentagem(item['taxa_iva']),
             f"{item['subtotal']:.2f}",
             f"{item['valor_iva']:.2f}",
             f"{item['total']:.2f}"
@@ -467,13 +502,15 @@ def _build_thermal_receipt_pdf(rec_data):
         if len(desc) > 22:
             desc = desc[:20] + ".."
             
-        qtd_str = f"{item['quantidade']}{item['unidade']}"
+        qtd_formatted = format_qtd(item['quantidade'])
+        qtd_str = f"{qtd_formatted}{item['unidade']}"
         c.drawString(10, y, f"{qtd_str} {desc}")
         c.drawRightString(width - 10, y, f"{item['total']:.2f}")
         y -= 10
         
         # Line detail for price/IVA
-        detalhe = f"   P.U: {item['preco_unitario']:.2f} | IVA: {item['taxa_iva']:.0f}%"
+        iva_str = format_percentagem(item['taxa_iva'])
+        detalhe = f"   P.U: {item['preco_unitario']:.2f} | IVA: {iva_str}"
         if item['desconto'] > 0:
             detalhe += f" | Desc: {item['desconto']:.2f}"
         c.setFont("Helvetica-Oblique", 7)

@@ -19,6 +19,8 @@ import {
   Lock,
   Printer,
   Download,
+  AlertTriangle,
+  Clock,
 } from "lucide-react";
 import { formatCurrency, cn } from "../lib/utils";
 import Swal from "sweetalert2";
@@ -28,6 +30,9 @@ import CartList from "./CaixaPOS/CartList";
 import { useCaixaCart } from "./CaixaPOS/useCaixaCart";
 import { useCaixaSession } from "./CaixaPOS/useCaixaSession";
 import CaixaSessionModals from "../components/CaixaSessionModals";
+import StockWarningModal from "../components/POS/StockWarningModal";
+import FlexiblePaymentForm, { PaymentFormState } from "../components/POS/FlexiblePaymentForm";
+import OrderReceiptModal from "../components/POS/OrderReceiptModal";
 
 export default function CaixaPOS() {
   const { createVenda, checkoutPedido, enviarFatura } = useComercial();
@@ -77,6 +82,13 @@ export default function CaixaPOS() {
   const [sendContact, setSendContact] = useState("");
   const [invoiceSent, setInvoiceSent] = useState(false);
 
+  // Stock warning & Receipt Modal states
+  const [stockWarningOpen, setStockWarningOpen] = useState(false);
+  const [stockWarningItems, setStockWarningItems] = useState<any[]>([]);
+  const [paymentFormState, setPaymentFormState] = useState<PaymentFormState | null>(null);
+  const [receiptModalOpen, setReceiptModalOpen] = useState(false);
+  const [receiptDocData, setReceiptDocData] = useState<any>(null);
+
   const products = productsResponse?.items || [];
   const clients = clientsResponse?.items || [];
   const selectedClientObj = clients.find(
@@ -89,6 +101,8 @@ export default function CaixaPOS() {
     cart,
     searchTerm,
     setSearchTerm,
+    selectedServico,
+    setSelectedServico,
     displayProducts,
     subtotal,
     totalComIva,
@@ -97,8 +111,11 @@ export default function CaixaPOS() {
     descontoManual,
     setDescontoManual,
     total,
+    isOnlyRevendaCart,
+    hasZeroStockItem,
     addToCart: handleAddToCart,
     updateQty,
+    updateItemDiscount,
     removeItem,
     clearCart,
   } = useCaixaCart(products, descontoClientePercent);
@@ -116,11 +133,74 @@ export default function CaixaPOS() {
     "abrir" | "fechar" | "sangria" | "reforco" | null
   >(null);
 
+  const handleAddToCartWrapper = (product: any) => {
+    const stock = Number(product.stock_atual ?? product.stock ?? product.quantidade_atual ?? 0);
+    const tipoUpper = String(product.tipo || product.type || "").toUpperCase();
+    const isRevenda = tipoUpper === "REVENDA" || tipoUpper === "PRODUTO_REVENDA" || product.is_revenda === true;
+
+    if (stock <= 0) {
+      if (isRevenda && (cart.length === 0 || cart.every(it => String(it.tipo || it.type || "").toUpperCase() === "REVENDA"))) {
+        toast.error(`O produto de revenda "${product.name || product.nome}" está sem stock e não pode ser encomendado.`);
+        return;
+      }
+
+      setTipoPedido("Agendado");
+      if (!dataEntrega) {
+        const future = new Date(Date.now() + 3 * 3600 * 1000);
+        const tzOffset = future.getTimezoneOffset() * 60000;
+        const localISOTime = new Date(future.getTime() - tzOffset).toISOString().slice(0, 16);
+        setDataEntrega(localISOTime);
+      }
+
+      if (!selectedClient) {
+        toast.warn(`Produto "${product.name || product.nome}" sem stock selecionado. É OBRIGATÓRIO selecionar um Cliente no topo do carrinho!`, { autoClose: 6000 });
+      } else {
+        toast.info(`Produto "${product.name || product.nome}" sem stock adicionado como Pedido de Produção (Agendado).`);
+      }
+    }
+
+    handleAddToCart(product);
+  };
+
   const handleCheckout = () => {
     if (cart.length === 0) {
       toast.error("Adicione produtos para continuar.");
       return;
     }
+
+    // Rule: Standalone Revenda items cannot be ordered if out of stock
+    if (isOnlyRevendaCart && hasZeroStockItem) {
+      toast.error("Produtos de revenda solteiros sem stock não podem ser encomendados. Reduza a quantidade ou adicione um produto de fabrico.");
+      return;
+    }
+
+    // Rule: Zero-stock items convert sale to Pedido de Produção and REQUIRE a client
+    if (hasZeroStockItem) {
+      if (tipoPedido !== "Agendado") {
+        setTipoPedido("Agendado");
+        if (!dataEntrega) {
+          const future = new Date(Date.now() + 3 * 3600 * 1000);
+          const tzOffset = future.getTimezoneOffset() * 60000;
+          const localISOTime = new Date(future.getTime() - tzOffset).toISOString().slice(0, 16);
+          setDataEntrega(localISOTime);
+        }
+      }
+
+      if (!selectedClient) {
+        toast.error("Para produtos sem stock (Pedido de Produção), é OBRIGATÓRIO selecionar um Cliente antes de avançar!");
+        return;
+      }
+    }
+
+    setStep(2);
+  };
+
+  const handleConvertToOrderFromModal = () => {
+    setTipoPedido("Agendado");
+    const future = new Date(Date.now() + 3 * 3600 * 1000);
+    const tzOffset = future.getTimezoneOffset() * 60000;
+    const localISOTime = new Date(future.getTime() - tzOffset).toISOString().slice(0, 16);
+    setDataEntrega(localISOTime);
     setStep(2);
   };
 
@@ -183,10 +263,27 @@ export default function CaixaPOS() {
           const preco = Number(i.preco_venda_com_iva || i.salePrice || i.preco_venda || 0);
           const itemId = Number(i.id);
           const quantidade = quantidadesDisponiveis?.[itemId] ?? Number(i.qty);
-          let descontoItem = descontoClientePercent > 0 ? (preco * quantidade * descontoClientePercent) / 100 : 0;
+          const grossItemTotal = preco * quantidade;
+
+          // Item specific discount
+          const descValor = Number(i.desconto_valor || 0);
+          const descTipo = i.desconto_tipo || "percentual";
+          let itemSpecificDiscount = 0;
+          if (descValor > 0) {
+            if (descTipo === "percentual") {
+              itemSpecificDiscount = grossItemTotal * (Math.min(100, Math.max(0, descValor)) / 100);
+            } else {
+              itemSpecificDiscount = Math.min(grossItemTotal, descValor);
+            }
+          }
+
+          let totalDescontoItem = itemSpecificDiscount;
+          if (descontoClientePercent > 0) {
+            totalDescontoItem += ((grossItemTotal - itemSpecificDiscount) * descontoClientePercent) / 100;
+          }
           if (descontoManual > 0 && cartTotalValue > 0) {
-             const proportionalRatio = (preco * quantidade) / cartTotalValue;
-             descontoItem += (descontoManual * proportionalRatio);
+             const proportionalRatio = grossItemTotal / cartTotalValue;
+             totalDescontoItem += (descontoManual * proportionalRatio);
           }
           return {
             item_id: itemId,
@@ -194,7 +291,7 @@ export default function CaixaPOS() {
             descricao: i.name || i.nome || "Item de Venda",
             preco_unitario: preco,
             quantidade,
-            desconto: descontoItem,
+            desconto: totalDescontoItem,
           };
         });
       };
@@ -242,28 +339,44 @@ export default function CaixaPOS() {
         itens: (() => {
           const cartTotalValue = cart.reduce((acc, it) => acc + Number(it.preco_venda_com_iva || it.salePrice || it.preco_venda || 0) * Number(it.qty), 0);
           return cart.map((i) => {
-          const preco = Number(i.preco_venda_com_iva || i.salePrice || i.preco_venda || 0);
-          const quantidade = Number(i.qty);
-          let descontoItem = descontoClientePercent > 0 ? (preco * quantidade * descontoClientePercent) / 100 : 0;
-          if (descontoManual > 0 && cartTotalValue > 0) {
-             const proportionalRatio = (preco * quantidade) / cartTotalValue;
-             descontoItem += (descontoManual * proportionalRatio);
-          }
-          let tipoItem = "Produto";
-          const cat = String(i.category || i.categoria || "").toLowerCase();
-          if (cat.includes("servi") || cat.includes("servic")) {
-            tipoItem = "Servico";
-          }
-          const produtoId = isNaN(Number(i.id)) ? undefined : Number(i.id);
-          return {
-            tipo_item: tipoItem,
-            produto_id: produtoId,
-            descricao: i.name || i.nome || "Item de Venda",
-            quantidade: Number(i.qty),
-            preco_unitario: preco,
-            desconto: descontoItem,
-          };
-        })
+            const preco = Number(i.preco_venda_com_iva || i.salePrice || i.preco_venda || 0);
+            const quantidade = Number(i.qty);
+            const grossItemTotal = preco * quantidade;
+
+            const descValor = Number(i.desconto_valor || 0);
+            const descTipo = i.desconto_tipo || "percentual";
+            let itemSpecificDiscount = 0;
+            if (descValor > 0) {
+              if (descTipo === "percentual") {
+                itemSpecificDiscount = grossItemTotal * (Math.min(100, Math.max(0, descValor)) / 100);
+              } else {
+                itemSpecificDiscount = Math.min(grossItemTotal, descValor);
+              }
+            }
+
+            let totalDescontoItem = itemSpecificDiscount;
+            if (descontoClientePercent > 0) {
+              totalDescontoItem += ((grossItemTotal - itemSpecificDiscount) * descontoClientePercent) / 100;
+            }
+            if (descontoManual > 0 && cartTotalValue > 0) {
+               const proportionalRatio = grossItemTotal / cartTotalValue;
+               totalDescontoItem += (descontoManual * proportionalRatio);
+            }
+            let tipoItem = "Produto";
+            const cat = String(i.category || i.categoria || "").toLowerCase();
+            if (cat.includes("servi") || cat.includes("servic")) {
+              tipoItem = "Servico";
+            }
+            const produtoId = isNaN(Number(i.id)) ? undefined : Number(i.id);
+            return {
+              tipo_item: tipoItem,
+              produto_id: produtoId,
+              descricao: i.name || i.nome || "Item de Venda",
+              quantidade: Number(i.qty),
+              preco_unitario: preco,
+              desconto: totalDescontoItem,
+            };
+          });
         })(),
       };
 
@@ -344,9 +457,20 @@ export default function CaixaPOS() {
       toast.error("Documento não encontrado para impressão.");
       return;
     }
-    documentService.imprimirReciboVenda(venda.id).catch((err) => {
-      toast.error(err?.message || "Erro ao gerar recibo térmico no backend.");
-    });
+    const targetId = venda.pedido_id || venda.id;
+    if (venda.pedido_id || tipoPedido === "Agendado") {
+      documentService.imprimirReciboPedido(targetId).catch(() => {
+        documentService.imprimirReciboVenda(venda.id).catch((err) => {
+          toast.error(err?.message || "Erro ao gerar recibo térmico.");
+        });
+      });
+    } else {
+      documentService.imprimirReciboVenda(venda.id).catch(() => {
+        documentService.imprimirReciboPedido(venda.id).catch((err) => {
+          toast.error(err?.message || "Erro ao gerar recibo térmico no backend.");
+        });
+      });
+    }
   };
 
   if (!isCaixaAberta) {
@@ -392,7 +516,7 @@ export default function CaixaPOS() {
               <Calculator size={20} className="text-primary" />
               Produtos
             </h2>
-            <div className="relative w-64 ml-4">
+            <div className="relative w-56 ml-2">
               <input
                 type="text"
                 placeholder="Pesquisar produto..."
@@ -405,6 +529,17 @@ export default function CaixaPOS() {
                 className="absolute left-3 top-2.5 text-gray-400"
               />
             </div>
+            <select
+              value={selectedServico}
+              onChange={(e) => setSelectedServico(e.target.value)}
+              className="bg-gray-50 border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm font-semibold focus:border-primary outline-none"
+            >
+              <option value="all">Todos os Serviços</option>
+              <option value="COZINHA">Cozinha (COZINHA)</option>
+              <option value="PASTELARIA">Pastelaria (PASTELARIA)</option>
+              <option value="BAR">Bar (BAR)</option>
+              <option value="ABASTECIMENTO">Abastecimento (ABASTECIMENTO)</option>
+            </select>
           </div>
           <div className="flex gap-2">
             <button
@@ -455,7 +590,7 @@ export default function CaixaPOS() {
         <ProductGrid
           displayProductslist={displayProducts}
           showPriceWithIva={true}
-          handleAddToCart={handleAddToCart}
+          handleAddToCart={handleAddToCartWrapper}
           formatCurrency={(val) =>
             new Intl.NumberFormat("pt-PT", {
               style: "currency",
@@ -475,20 +610,35 @@ export default function CaixaPOS() {
               </h2>
             </div>
 
-            <div className="p-4 border-b border-gray-200 dark:border-border-dark shrink-0">
-              <label className="block text-xs font-medium text-gray-500 mb-1">
-                Cliente (Opcional)
-              </label>
+            <div className={`p-4 border-b shrink-0 transition-all ${
+              (hasZeroStockItem && !selectedClient)
+                ? "bg-amber-50 dark:bg-amber-950/30 border-amber-300 dark:border-amber-800 ring-2 ring-amber-400/50"
+                : "border-gray-200 dark:border-border-dark"
+            }`}>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300">
+                  Cliente {hasZeroStockItem ? "(OBRIGATÓRIO p/ Pedido Produção)" : "(Opcional)"}
+                </label>
+                {hasZeroStockItem && !selectedClient && (
+                  <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 flex items-center gap-1 animate-pulse">
+                    <AlertTriangle size={12} /> Requerido
+                  </span>
+                )}
+              </div>
               
               <select
                 value={selectedClient}
                 onChange={(e) => setSelectedClient(e.target.value)}
-                className="w-full bg-white border border-gray-200 dark:border-gray-700 dark:bg-gray-800 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary"
+                className={`w-full bg-white dark:bg-gray-800 rounded-lg px-3 py-2 text-sm outline-none font-semibold ${
+                  (hasZeroStockItem && !selectedClient)
+                    ? "border-2 border-amber-500 text-amber-900 dark:text-amber-200"
+                    : "border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white focus:border-primary"
+                }`}
               >
-                <option value="">Cliente ao Balcão</option>
+                <option value="">-- {hasZeroStockItem ? "Selecionar Cliente (Obrigatório)" : "Cliente ao Balcão"} --</option>
                 {clients.map((c: any) => (
                   <option key={c.id} value={c.id}>
-                    {c.name || c.nome}
+                    {c.name || c.nome} {c.nif ? `(${c.nif})` : ""}
                   </option>
                 ))}
               </select>
@@ -497,6 +647,7 @@ export default function CaixaPOS() {
             <CartList
               cart={cart}
               showPriceWithIva={true}
+              currencySymbol={config.moeda}
               formatCurrency={(val) =>
                 new Intl.NumberFormat("pt-PT", {
                   style: "currency",
@@ -505,6 +656,7 @@ export default function CaixaPOS() {
               }
               removeItem={removeItem}
               updateQty={updateQty}
+              updateItemDiscount={updateItemDiscount}
             />
 
             <div className="p-4 border-t border-gray-200 dark:border-border-dark shrink-0 bg-gray-50 dark:bg-gray-800/30">
@@ -546,19 +698,13 @@ export default function CaixaPOS() {
                   <span>{formatCurrency(Iva)}</span>
                 </div>
 
-                {/* IVA */}
-                <div className="flex justify-between text-gray-600 dark:text-gray-400">
-                  <span>{showPriceWithIva ? "IVA incluído" : "IVA"}</span>
-                  <span>{formatCurrency(totalComIva)}</span>
-                </div>
-
                 <div className="border-t border-dashed border-gray-300 dark:border-gray-700 pt-2 flex justify-between items-center">
                   <span className="font-semibold tracking-wide text-gray-700 dark:text-gray-300">
                     TOTAL A PAGAR
                   </span>
 
                   <span className="text-2xl font-bold text-primary">
-                    {formatCurrency(totalComIva)}
+                    {formatCurrency(total)}
                   </span>
                 </div>
               </div>
@@ -614,10 +760,13 @@ export default function CaixaPOS() {
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
-                    onClick={() => setTipoPedido("Imediato")}
+                    disabled={hasZeroStockItem}
+                    onClick={() => !hasZeroStockItem && setTipoPedido("Imediato")}
                     className={cn(
                       "py-2 rounded-lg text-xs font-bold border transition-all",
-                      tipoPedido === "Imediato"
+                      hasZeroStockItem
+                        ? "opacity-50 cursor-not-allowed bg-gray-100 text-gray-400 dark:bg-gray-800"
+                        : tipoPedido === "Imediato"
                         ? "bg-primary text-white border-primary shadow-sm"
                         : "bg-white text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 hover:bg-gray-50"
                     )}
@@ -626,7 +775,15 @@ export default function CaixaPOS() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setTipoPedido("Agendado")}
+                    onClick={() => {
+                      setTipoPedido("Agendado");
+                      if (!dataEntrega) {
+                        const future = new Date(Date.now() + 3 * 3600 * 1000);
+                        const tzOffset = future.getTimezoneOffset() * 60000;
+                        const localISOTime = new Date(future.getTime() - tzOffset).toISOString().slice(0, 16);
+                        setDataEntrega(localISOTime);
+                      }
+                    }}
                     className={cn(
                       "py-2 rounded-lg text-xs font-bold border transition-all",
                       tipoPedido === "Agendado"
@@ -634,20 +791,20 @@ export default function CaixaPOS() {
                         : "bg-white text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 hover:bg-gray-50"
                     )}
                   >
-                    Agendar para Futuro
+                    Pedido de Produção (Agendado)
                   </button>
                 </div>
               </div>
 
               {/* Conditional Scheduled fields */}
               {tipoPedido === "Agendado" && (
-                <div className="p-3 bg-gray-50 dark:bg-gray-850 rounded-xl border border-gray-100 dark:border-gray-800 space-y-3">
-                  <h3 className="text-xs font-bold text-primary uppercase">
-                    Configurações de Agendamento
+                <div className="p-3 bg-blue-50/70 dark:bg-blue-950/20 rounded-xl border border-blue-200 dark:border-blue-900/30 space-y-3">
+                  <h3 className="text-xs font-bold text-primary uppercase flex items-center gap-1.5">
+                    <Clock size={16} /> Configurações do Pedido de Produção
                   </h3>
                   <div>
                     <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">
-                      Data e Hora de Entrega *
+                      Data e Hora da Entrega *
                     </label>
                     <input
                       type="datetime-local"
@@ -656,143 +813,30 @@ export default function CaixaPOS() {
                       className="w-full text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-2 font-medium text-gray-800 dark:text-gray-100 outline-none"
                     />
                   </div>
-                  <div>
-                    <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">
-                      Valor do Sinal / Depósito ({config.moeda})
-                    </label>
-                    <input
-                      type="number"
-                      placeholder="Ex: 50000 (Vazio para total)"
-                      value={valorPago}
-                      onChange={(e) => setValorPago(e.target.value)}
-                      className="w-full text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-2 font-bold text-gray-800 dark:text-gray-100 outline-none"
-                    />
-                  </div>
                 </div>
               )}
 
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
-                Resumo de Custo
-              </p>
-              <div className="flex justify-between items-baseline">
-                <span className="text-sm font-semibold text-gray-500">
-                  Valor total a faturar:
-                </span>
-                <span className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">
-                  {formatCurrency(
-                    tipoPedido === "Agendado" && valorPago !== ""
-                      ? parseFloat(valorPago)
-                      : total
-                  )}
-                </span>
-              </div>
-
-              <div className="space-y-2">
-                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase">
-                  Método de Cobrança
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    onClick={() => setPaymentMethod("Dinheiro")}
-                    className={cn(
-                      "py-2.5 rounded-lg border text-xs flex flex-col items-center gap-1 transition-all font-semibold",
-                      paymentMethod === "Dinheiro"
-                        ? "bg-primary/10 border-primary text-primary"
-                        : "border-gray-200 text-gray-600 dark:border-gray-700 dark:text-gray-300 hover:bg-gray-50"
-                    )}
-                  >
-                    <Banknote size={18} /> Dinheiro
-                  </button>
-                  <button
-                    onClick={() => setPaymentMethod("TPA / POS")}
-                    className={cn(
-                      "py-2.5 rounded-lg border text-xs flex flex-col items-center gap-1 transition-all font-semibold",
-                      paymentMethod === "TPA / POS"
-                        ? "bg-primary/10 border-primary text-primary"
-                        : "border-gray-200 text-gray-600 dark:border-gray-700 dark:text-gray-300 hover:bg-gray-50"
-                    )}
-                  >
-                    <CreditCard size={18} /> TPA / POS
-                  </button>
-                  <button
-                    onClick={() => setPaymentMethod("Transferência")}
-                    className={cn(
-                      "py-2.5 rounded-lg border text-xs flex flex-col items-center gap-1 transition-all font-semibold col-span-2",
-                      paymentMethod === "Transferência"
-                        ? "bg-primary/10 border-primary text-primary"
-                        : "border-gray-200 text-gray-600 dark:border-gray-700 dark:text-gray-300 hover:bg-gray-50"
-                    )}
-                  >
-                    <FileText size={18} /> Transferência Bancária
-                  </button>
-                </div>
-              </div>
-
-              {/* Conditional Transferencia & POS fields */}
-              {(paymentMethod === "Transferência" ||
-                paymentMethod === "TPA / POS") && (
-                <div className="p-3 bg-amber-50/50 dark:bg-amber-950/20 rounded-xl border border-amber-100 dark:border-amber-900/30 space-y-3">
-                  <h4 className="text-xs font-bold text-amber-800 dark:text-amber-400 uppercase">
-                    Dados da Transação
-                  </h4>
-                  <div>
-                    <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">
-                      Código de Confirmação / Comprovativo *
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Ex: TRX12345678"
-                      value={codigoTransferencia}
-                      onChange={(e) => setCodigoTransferencia(e.target.value)}
-                      className="w-full text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-2 font-medium text-gray-800 dark:text-gray-100 outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">
-                      Emissor / Titular da Conta / Banco *
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Ex: Manuel Silva (BCP)"
-                      value={emissor}
-                      onChange={(e) => setEmissor(e.target.value)}
-                      className="w-full text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-2 font-medium text-gray-800 dark:text-gray-100 outline-none"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {paymentMethod === "Dinheiro" && (
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
-                    Valor Recebido ({config.moeda})
-                  </label>
-                  <input
-                    type="number"
-                    value={amountReceived || ""}
-                    onChange={(e) => setAmountReceived(Number(e.target.value))}
-                    className="w-full text-lg bg-gray-50 border border-gray-300 dark:border-gray-700 dark:bg-gray-800 rounded-xl px-4 py-2.5 outline-none focus:border-primary font-bold text-gray-800 dark:text-white"
-                  />
-                  {amountReceived >
-                    (tipoPedido === "Agendado" && valorPago !== ""
-                      ? parseFloat(valorPago)
-                      : total) && (
-                    <div className="mt-3 p-3 bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-900/30 rounded-xl flex justify-between items-baseline">
-                      <span className="font-bold text-xs text-orange-800 dark:text-orange-400">
-                        Troco a devolver:
-                      </span>
-                      <span className="font-bold text-base text-orange-600 dark:text-orange-300">
-                        {formatCurrency(
-                          amountReceived -
-                            (tipoPedido === "Agendado" && valorPago !== ""
-                              ? parseFloat(valorPago)
-                              : total)
-                        )}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              )}
+              {/* Flexible Multi-Method Payment Form */}
+              <FlexiblePaymentForm
+                total={total}
+                currencySymbol={config.moeda}
+                isAgendado={tipoPedido === "Agendado"}
+                disableDeferredAndInstallments={isOnlyRevendaCart}
+                onPaymentStateChange={(state) => {
+                  setPaymentFormState(state);
+                  setPaymentMethod(state.method);
+                  setCodigoTransferencia(state.codigoTransferencia);
+                  setEmissor(state.emissor);
+                  setAmountReceived(state.amountReceived);
+                  if (state.settlementMode === "deferido") {
+                    setValorPago("0");
+                  } else if (state.settlementMode === "parcelas") {
+                    setValorPago(String(state.valorPago));
+                  } else {
+                    setValorPago(String(total));
+                  }
+                }}
+              />
             </div>
 
             <div className="p-4 border-t border-gray-200 dark:border-border-dark shrink-0">
@@ -834,26 +878,44 @@ export default function CaixaPOS() {
                   </button>
                   <button
                     type="button"
-                    onClick={() =>
-                      documentService
-                        .vendaPdf(createdVenda.id)
-                        .catch((err) =>
-                          toast.error(err.message || "Erro ao abrir PDF.")
-                        )
-                    }
+                    onClick={() => {
+                      const docId = createdVenda.pedido_id || createdVenda.id;
+                      if (createdVenda.pedido_id || tipoPedido === "Agendado") {
+                        documentService.pedidoPdf(docId).catch(() => {
+                          documentService.vendaPdf(createdVenda.id).catch((err) =>
+                            toast.error(err.message || "Erro ao abrir PDF.")
+                          );
+                        });
+                      } else {
+                        documentService.vendaPdf(createdVenda.id).catch(() => {
+                          documentService.pedidoPdf(docId).catch((err) =>
+                            toast.error(err.message || "Erro ao abrir PDF.")
+                          );
+                        });
+                      }
+                    }}
                     className="px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors flex items-center justify-center gap-1.5"
                   >
                     <FileText size={14} /> Fatura A4
                   </button>
                   <button
                     type="button"
-                    onClick={() =>
-                      documentService
-                        .vendaRecibo(createdVenda.id)
-                        .catch((err) =>
-                          toast.error(err.message || "Erro ao descarregar recibo.")
-                        )
-                    }
+                    onClick={() => {
+                      const docId = createdVenda.pedido_id || createdVenda.id;
+                      if (createdVenda.pedido_id || tipoPedido === "Agendado") {
+                        documentService.pedidoRecibo(docId).catch(() => {
+                          documentService.vendaRecibo(createdVenda.id).catch((err) =>
+                            toast.error(err.message || "Erro ao descarregar recibo.")
+                          );
+                        });
+                      } else {
+                        documentService.vendaRecibo(createdVenda.id).catch(() => {
+                          documentService.pedidoRecibo(docId).catch((err) =>
+                            toast.error(err.message || "Erro ao descarregar recibo.")
+                          );
+                        });
+                      }
+                    }}
                     className="px-3 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-white text-xs font-bold transition-colors flex items-center justify-center gap-1.5"
                   >
                     <Download size={14} /> Descarregar PDF
@@ -980,6 +1042,13 @@ export default function CaixaPOS() {
       abrirMutation={abrirMutation}
       fecharMutation={fecharMutation}
       movimentoMutation={movimentoMutation}
+    />
+
+    {/* Order & Sales Receipt / PDF Modal */}
+    <OrderReceiptModal
+      isOpen={receiptModalOpen}
+      onClose={() => setReceiptModalOpen(false)}
+      documentData={receiptDocData}
     />
   </>
   );

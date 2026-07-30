@@ -19,22 +19,31 @@ def _serialize_venda_dict(venda):
     
     if venda.pedido and venda.pedido.cliente:
         cliente_nome = venda.pedido.cliente.nome or "Consumidor Final"
-        cliente_nif = venda.pedido.cliente.nif or "Consumidor Final"
+        cliente_nif = venda.pedido.cliente.nif or ""
         cliente_email = venda.pedido.cliente.email or ""
         cliente_telefone = venda.pedido.cliente.telefone or ""
     elif getattr(venda, 'cliente_id', None):
         c = Cliente.query.get(venda.cliente_id)
         if c:
             cliente_nome = c.nome or "Consumidor Final"
-            cliente_nif = c.nif or "Consumidor Final"
+            cliente_nif = c.nif or ""
             cliente_email = c.email or ""
             cliente_telefone = c.telefone or ""
+
+    if not cliente_nif and cliente_nome == "Consumidor Final":
+        cliente_nif = "Consumidor Final"
 
     forma_pagamento = "Dinheiro"
     if venda.pedido and venda.pedido.forma_pagamento:
         forma_pagamento = venda.pedido.forma_pagamento.value if hasattr(venda.pedido.forma_pagamento, 'value') else str(venda.pedido.forma_pagamento)
     elif venda.pagamentos:
-        formas = [p.forma_pagamento for p in venda.pagamentos if hasattr(p, 'forma_pagamento') and p.forma_pagamento]
+        from app.models.financeiro import FormaPagamento as FinFormaPagamento
+        formas = []
+        for p in venda.pagamentos:
+            if getattr(p, 'forma_pagamento_id', None):
+                fp = FinFormaPagamento.query.get(p.forma_pagamento_id)
+                if fp:
+                    formas.append(fp.nome)
         if formas:
             forma_pagamento = ", ".join(set(formas))
 

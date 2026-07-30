@@ -7,12 +7,19 @@ class TipoProduto(str, Enum):
     REVENDA = 'Revenda'
     CONSUMIVEL = 'Consumivel'
 
+class ServicoEnum(str, Enum):
+    ABASTECIMENTO = 'ABASTECIMENTO'
+    COZINHA = 'COZINHA'
+    PASTELARIA = 'PASTELARIA'
+    BAR = 'BAR'
+
 class Produto(BaseModel):
     __tablename__ = 'produtos'
 
     codigo = db.Column(db.String(50), unique=True, nullable=True)
     nome = db.Column(db.String(100), nullable=False)
     tipo = db.Column(db.Enum(TipoProduto), nullable=False)
+    servico = db.Column(db.Enum(ServicoEnum), nullable=True)
     categoria = db.Column(db.String(100), nullable=True)
     categoria_id = db.Column(db.Integer, db.ForeignKey('categorias_produto.id'), nullable=True)
     unidade_medida_id = db.Column(db.Integer, db.ForeignKey('unidades_medida.id'), nullable=True)

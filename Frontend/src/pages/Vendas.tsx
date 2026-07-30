@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { vendaService, clientService, documentService } from '../services';
+import { vendaService, clientService, documentService, productService } from '../services';
 import { useComercial } from '../hooks';
-import { Filter, Eye, Printer, FileText, Ban, DollarSign, RefreshCw, Save, Send } from 'lucide-react';
+import { Filter, Eye, Printer, FileText, Ban, DollarSign, RefreshCw, Save, Send, Download } from 'lucide-react';
 import { formatCurrency, cn } from '../lib/utils';
 import { toast } from 'react-toastify';
 import Swal from 'sweetalert2';
@@ -70,7 +70,22 @@ export default function Vendas() {
     queryFn: () => clientService.getAll({ per_page: 500 })
   });
 
+  // Fetch Products to resolve names in table
+  const { data: productsResponse } = useQuery({
+    queryKey: ['products-vendas'],
+    queryFn: () => productService.getAll({ per_page: 1000 }).catch(() => ({ items: [] }))
+  });
+
   const clients = clientsResponse?.items || [];
+  const productsList = productsResponse?.items || [];
+  
+  const productsMap = useMemo(() => {
+    const map: Record<string | number, any> = {};
+    productsList.forEach((p: any) => {
+      map[p.id] = p;
+    });
+    return map;
+  }, [productsList]);
   const vendasRaw = (vendasResponse as any)?.items || [];
   const normalizeVenda = (venda: any) => ({
     ...venda,
@@ -416,6 +431,32 @@ export default function Vendas() {
         }
       },
       {
+        id: 'origem',
+        header: 'Origem',
+        cell: (info) => {
+          const row = info.row.original;
+          if (row.pedido_id) {
+            return (
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/20 px-2 py-0.5 rounded border border-indigo-100 dark:border-indigo-900/30">
+                Pedido #PED-{row.pedido_id}
+              </span>
+            );
+          }
+          if (row.evento_id) {
+            return (
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/20 px-2 py-0.5 rounded border border-purple-100 dark:border-purple-900/30">
+                Evento #{row.evento_id}
+              </span>
+            );
+          }
+          return (
+            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-gray-500 bg-gray-50 dark:bg-gray-800 px-2 py-0.5 rounded border border-gray-150 dark:border-gray-700/50">
+              Venda Direta / POS
+            </span>
+          );
+        }
+      },
+      {
         accessorKey: 'subtotal',
         header: 'Subtotal',
         cell: (info) => <span className="font-mono text-xs">{formatCurrency(info.getValue<number>())}</span>
@@ -478,16 +519,16 @@ export default function Vendas() {
                 <Eye size={15} />
               </button>
               <button 
-                onClick={() => handlePrint(venda)} 
-                className="p-1.5 text-gray-500 hover:text-green-600 rounded hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
-                title="Imprimir"
+                onClick={() => handlePrintThermal(venda)} 
+                className="p-1.5 text-gray-500 hover:text-emerald-600 rounded hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors"
+                title="Imprimir Recibo Térmico (80mm)"
               >
                 <Printer size={15} />
               </button>
               <button 
                 onClick={() => handleOfficialPdf(venda)} 
                 className="p-1.5 text-gray-500 hover:text-blue-500 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-                title="Ficha Oficial PDF"
+                title="Fatura A4 (PDF)"
               >
                 <FileText size={15} />
               </button>
@@ -530,7 +571,11 @@ export default function Vendas() {
     {
       accessorKey: "produto_nome",
       header: "Descrição",
-      cell: ({ row }) => <span className="font-semibold">{row.original.produto_nome}</span>
+      cell: ({ row }) => {
+        const item = row.original;
+        const resolvedName = item.produto_nome || item.nome || item.descricao || productsMap[item.produto_id || item.item_id]?.nome || `Produto #${item.produto_id || item.item_id || 'Desconhecido'}`;
+        return <span className="font-semibold text-gray-900 dark:text-gray-100">{resolvedName}</span>;
+      }
     },
     {
       accessorKey: "quantidade",
@@ -567,7 +612,7 @@ export default function Vendas() {
         </div>
       )
     }
-  ], []);
+  ], [productsMap]);
 
   return (
     <div className="space-y-6 animate-fade-in pb-12">
@@ -671,15 +716,21 @@ export default function Vendas() {
             <div className="flex gap-2">
               <button 
                 onClick={() => handlePrintThermal(selectedVenda)} 
-                className="bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 px-4 py-2 rounded-lg font-bold text-xs flex items-center gap-1"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1 transition-colors"
               >
-                <Printer size={14} /> Recibo Térmico
+                <Printer size={14} /> Recibo Térmico (80mm)
+              </button>
+              <button
+                onClick={() => handleDownloadThermal(selectedVenda)}
+                className="bg-gray-800 hover:bg-gray-700 text-white px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1 transition-colors"
+              >
+                <Download size={14} /> Baixar Recibo
               </button>
               <button
                 onClick={() => handleOfficialPdf(selectedVenda)}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-bold text-xs flex items-center gap-1"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1 transition-colors"
               >
-                <FileText size={14} /> PDF Oficial
+                <FileText size={14} /> Fatura A4
               </button>
               {selectedVenda && selectedVenda.estado !== 'Cancelado' && (
                 <button 
@@ -743,8 +794,18 @@ export default function Vendas() {
                     {selectedVenda.tipo_documento}
                   </span>
                 </div>
-                <div className="text-xs text-gray-500 mt-1.5 font-mono">
-                  Série: {selectedVenda.serie_documental || 'SERIE-2026'}
+                <div className="text-xs text-gray-500 mt-1.5 font-mono flex flex-col gap-0.5">
+                  <div>Série: {selectedVenda.serie_documental || 'SERIE-2026'}</div>
+                  {selectedVenda.pedido_id && (
+                    <div className="text-[11px] text-indigo-600 dark:text-indigo-400 font-bold mt-1">
+                      Oriunda do Pedido #PED-{selectedVenda.pedido_id}
+                    </div>
+                  )}
+                  {selectedVenda.evento_id && (
+                    <div className="text-[11px] text-purple-600 dark:text-purple-400 font-bold mt-1">
+                      Oriunda do Evento #{selectedVenda.evento_id}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -1018,6 +1079,74 @@ export default function Vendas() {
               />
             </div>
           </form>
+        )}
+      </Modal>
+
+      {/* Item Details Modal */}
+      <Modal
+        isOpen={!!viewItemDetails}
+        onClose={() => setViewItemDetails(null)}
+        title="Detalhes do Item da Fatura"
+        footer={
+          <button 
+            type="button" 
+            onClick={() => setViewItemDetails(null)} 
+            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-xs font-bold transition-all"
+          >
+            Fechar Detalhes
+          </button>
+        }
+      >
+        {viewItemDetails && (
+          <div className="space-y-5 text-sm">
+            <div className="p-4 bg-gray-50 dark:bg-gray-900/40 border border-gray-150 dark:border-gray-800 rounded-xl">
+              <div className="text-[10px] font-extrabold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mb-1">
+                Nome do Produto / Descrição
+              </div>
+              <h3 className="text-base font-extrabold text-gray-900 dark:text-white leading-snug">
+                {viewItemDetails.produto_nome || viewItemDetails.nome || viewItemDetails.descricao || productsMap[viewItemDetails.produto_id || viewItemDetails.item_id]?.nome || `Produto #${viewItemDetails.produto_id || viewItemDetails.item_id || 'Desconhecido'}`}
+              </h3>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-3 border border-gray-100 dark:border-gray-800/60 rounded-xl bg-white dark:bg-surface-dark/40">
+                <div className="text-[10px] font-bold text-gray-400 uppercase">Quantidade</div>
+                <div className="text-sm font-black text-gray-800 dark:text-gray-200 mt-1 font-mono">
+                  {viewItemDetails.quantidade} {viewItemDetails.unidade || "un"}
+                </div>
+              </div>
+              <div className="p-3 border border-gray-100 dark:border-gray-800/60 rounded-xl bg-white dark:bg-surface-dark/40">
+                <div className="text-[10px] font-bold text-gray-400 uppercase">Preço Unitário</div>
+                <div className="text-sm font-black text-gray-800 dark:text-gray-200 mt-1 font-mono">
+                  {formatCurrency(viewItemDetails.preco_unitario)}
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-3 border border-gray-100 dark:border-gray-800/60 rounded-xl bg-white dark:bg-surface-dark/40">
+                <div className="text-[10px] font-bold text-gray-400 uppercase">Imposto (IVA)</div>
+                <div className="text-sm font-black text-gray-800 dark:text-gray-200 mt-1 font-mono">
+                  {viewItemDetails.iva_taxa || 14}%
+                </div>
+              </div>
+              <div className="p-3 border border-gray-100 dark:border-gray-800/60 rounded-xl bg-indigo-50/20 dark:bg-indigo-950/10 border-indigo-100/50 dark:border-indigo-900/30">
+                <div className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase">Total Líquido</div>
+                <div className="text-sm font-black text-indigo-700 dark:text-indigo-300 mt-1 font-mono">
+                  {formatCurrency(viewItemDetails.total)}
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 bg-indigo-50/40 dark:bg-indigo-950/10 border border-indigo-100/40 dark:border-indigo-900/20 rounded-xl space-y-2">
+              <h4 className="text-xs font-bold text-indigo-950 dark:text-indigo-300 uppercase tracking-wider">
+                Fluxo de Rastreabilidade Comercial:
+              </h4>
+              <p className="text-[11px] text-indigo-900/80 dark:text-indigo-300/80 leading-relaxed">
+                Este item faz parte da venda faturada. Na nova arquitetura integrada do SIGI, se este produto for um artigo transformado (Cozinha/Pastelaria/Bar), o seu início de produção gerou automaticamente uma <strong>Requisição de Material ao Armazém</strong>, garantindo o abatimento rigoroso dos stocks apenas na entrega física dos ingredientes.
+              </p>
+            </div>
+          </div>
         )}
       </Modal>
 

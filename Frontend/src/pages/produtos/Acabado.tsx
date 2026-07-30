@@ -33,6 +33,7 @@ export default function Acabado() {
     "Entrada"
   );
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('active');
+  const [servicoFilter, setServicoFilter] = useState<string>('all');
   const [currentRecord, setCurrentRecord] = useState<any>(null);
   const [selectedTipo, setSelectedTipo] = useState<string>("");
   const activeTab = "Acabado";
@@ -112,14 +113,19 @@ export default function Acabado() {
   }, [moduleName, ivaResponse, categoriasResponse, unidadesResponse]);
 
   const { data: paginatedResponse, isLoading } = useQuery({
-    queryKey: [moduleName, page, perPage, searchTerm, activeTab],
-    queryFn: () =>
-      apiAccessor.getAll({
+    queryKey: [moduleName, page, perPage, searchTerm, activeTab, statusFilter, servicoFilter],
+    queryFn: () => {
+      const params: any = {
         page,
         per_page: perPage,
         search: searchTerm,
         tipo: activeTab,
-      }),
+      };
+      if (statusFilter === 'active') params.ativo = true;
+      if (statusFilter === 'inactive') params.ativo = false;
+      if (servicoFilter !== 'all') params.servico = servicoFilter;
+      return apiAccessor.getAll(params);
+    },
     placeholderData: keepPreviousData,
   });
 
@@ -321,7 +327,14 @@ export default function Acabado() {
     }
   };
 
-  const data = paginatedResponse?.items || [];
+  let rawData = paginatedResponse?.items || (Array.isArray(paginatedResponse) ? paginatedResponse : []);
+  if (servicoFilter !== 'all') {
+    rawData = rawData.filter((item: any) => {
+      const s = item.servico || (item.tipo === "Acabado" ? "COZINHA" : "");
+      return s === servicoFilter;
+    });
+  }
+  const data = rawData;
   const pagination = paginatedResponse || {
     page: page,
     total: 0,
@@ -498,8 +511,26 @@ export default function Acabado() {
         onClearFilters={() => {
             setSearchTerm('');
             setStatusFilter('all');
+            setServicoFilter('all');
             setPage(1);
         }}
+        renderFilters={() => (
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-gray-500 uppercase">Serviço:</span>
+            <select
+              value={servicoFilter}
+              onChange={(e) => {
+                setServicoFilter(e.target.value);
+                setPage(1);
+              }}
+              className="px-3 py-1.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-xs font-bold text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/50"
+            >
+              <option value="all">Todos os Serviços (Cozinha & Pastelaria)</option>
+              <option value="COZINHA">Cozinha (COZINHA)</option>
+              <option value="PASTELARIA">Pastelaria (PASTELARIA)</option>
+            </select>
+          </div>
+        )}
         addFunction={handleNew}
         
         statusFilter={statusFilter}
@@ -611,7 +642,21 @@ export default function Acabado() {
                   className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/50"
                 />
               </div>
-              <div className=" grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className=" grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">
+                    Serviço / Setor <span className="text-error">*</span>
+                  </label>
+                  <select
+                    name="servico"
+                    defaultValue={currentRecord?.servico || "COZINHA"}
+                    required
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  >
+                    <option value="COZINHA">COZINHA</option>
+                    <option value="PASTELARIA">PASTELARIA</option>
+                  </select>
+                </div>
                 <div>
                   <label className="text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">
                     Categoria <span className="text-error">*</span>

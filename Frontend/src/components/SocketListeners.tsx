@@ -77,6 +77,13 @@ export function SocketListeners() {
       addNotification({ title: 'Ocorrência Logística', message: msg, type: 'warning' });
     };
 
+    const handleNovaRequisicao = (payload: any) => {
+      queryClient.invalidateQueries({ queryKey: ['requests'] });
+      const msg = payload?.codigo ? `Nova requisição de material criada: ${payload.codigo}` : 'Nova requisição de material recebida!';
+      toast.info(msg);
+      addNotification({ title: 'Armazém / Logística', message: msg, type: 'info' });
+    };
+
     const handleNovoEvento = (payload: any) => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
       queryClient.invalidateQueries({ queryKey: ['events-cal'] });
@@ -94,6 +101,7 @@ export function SocketListeners() {
     on('pedido_pronto', handlePedidoPronto);
     on('pedido_atualizado', handlePedidoAtualizado);
     on('logistica_ocorrencia', handleLogisticaOcorrencia);
+    on('nova_requisicao', handleNovaRequisicao);
 
     return () => {
       off('novo_pedido', handleNovoPedido);
@@ -105,6 +113,7 @@ export function SocketListeners() {
       off('pedido_pronto', handlePedidoPronto);
       off('pedido_atualizado', handlePedidoAtualizado);
       off('logistica_ocorrencia', handleLogisticaOcorrencia);
+      off('nova_requisicao', handleNovaRequisicao);
     };
   }, [on, off, queryClient, addNotification]);
 
