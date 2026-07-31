@@ -297,6 +297,126 @@ class ArmazemService:
         AuditService.log_action(user_id, "ENTRADA_STOCK", "produtos", produto.id, new_values={'quantidade': quantidade, 'novo_stock': float(produto.stock_atual)})
         return produto, None
 
+    def entrada_stock_lote(self, data, user_id):
+        """
+        Regista entrada de stock em lote para múltiplos produtos (ex: compra de mercadorias / receção de fatura).
+        """
+        itens = data.get('itens') or []
+        if not itens or not isinstance(itens, list):
+            return None, "A lista de itens para entrada em lote não pode estar vazia."
+
+        fornecedor_id = data.get('fornecedor_id')
+        numero_fatura = data.get('numero_fatura')
+        global_observacao = data.get('observacao')
+        armazem_id = data.get('armazem_id')
+
+        processed_results = []
+        errors = []
+
+        try:
+            from app.models.stock_movement import StockMovement, TipoMovimentoStock
+            from app.models.receita import ReceitaItem
+
+            armazem = self._get_target_armazem(armazem_id)
+
+            for idx, item in enumerate(itens):
+                prod_id = item.get('produto_id') or item.get('id')
+                quantidade = item.get('quantidade')
+
+                if not prod_id:
+                    errors.append(f"Item #{idx + 1}: ID do produto não especificado.")
+                    continue
+
+                if quantidade is None or float(quantidade) <= 0:
+                    errors.append(f"Item #{idx + 1} (ID {prod_id}): Quantidade inválida ({quantidade}).")
+                    continue
+
+                produto = self.produto_repo.get_by_id(prod_id)
+                if not produto:
+                    errors.append(f"Item #{idx + 1}: Produto com ID {prod_id} não encontrado.")
+                    continue
+
+                # Atualização no armazém específico
+                stock_relation = db.session.query(ProdutoStockArmazem).filter_by(produto_id=produto.id, armazem_id=armazem.id).first()
+                if stock_relation:
+                    stock_relation.stock_atual = float(stock_relation.stock_atual) + float(quantidade)
+                else:
+                    stock_relation = ProdutoStockArmazem(
+                        produto_id=produto.id,
+                        armazem_id=armazem.id,
+                        stock_atual=float(quantidade),
+                        stock_minimo=float(produto.stock_minimo or 0)
+                    )
+                    db.session.add(stock_relation)
+
+                # Atualizar produto principal
+                stock_anterior = produto.stock_atual
+                produto.stock_atual = float(produto.stock_atual) + float(quantidade)
+
+                # Atualizar preço de compra se fornecido
+                preco_compra = item.get('preco_compra')
+                price_changed = False
+                if preco_compra is not None and produto.tipo in ['Revenda', 'Consumivel']:
+                    if float(preco_compra) != float(produto.preco_compra or 0):
+                        price_changed = True
+                    produto.preco_compra = preco_compra
+
+                self.produto_repo.update(produto)
+
+                if price_changed and produto.tipo == 'Consumivel':
+                    receita_itens = ReceitaItem.query.filter_by(produto_consumivel_id=produto.id).all()
+                    for r_item in receita_itens:
+                        r_item.receita.recalcular_custos()
+
+                obs_item = item.get('observacao') or global_observacao
+
+                # Registar movimento de stock
+                movimento = StockMovement(
+                    produto_id=produto.id,
+                    tipo_movimento=TipoMovimentoStock.ENTRADA,
+                    quantidade=quantidade,
+                    stock_anterior=stock_anterior,
+                    stock_atual=produto.stock_atual,
+                    numero_fatura=numero_fatura,
+                    fornecedor_id=fornecedor_id,
+                    observacao=obs_item,
+                    utilizador_id=user_id,
+                    created_by=user_id
+                )
+                db.session.add(movimento)
+
+                AuditService.log_action(
+                    user_id,
+                    "ENTRADA_STOCK_LOTE",
+                    "produtos",
+                    produto.id,
+                    new_values={'quantidade': quantidade, 'novo_stock': float(produto.stock_atual), 'numero_fatura': numero_fatura}
+                )
+
+                processed_results.append({
+                    "produto_id": produto.id,
+                    "nome": produto.nome,
+                    "quantidade_adicionada": float(quantidade),
+                    "novo_stock": float(produto.stock_atual),
+                    "preco_compra": float(preco_compra) if preco_compra is not None else float(produto.preco_compra or 0)
+                })
+
+            if errors:
+                db.session.rollback()
+                return None, f"Erros ao processar lote: {'; '.join(errors)}"
+
+            db.session.commit()
+            return {
+                "total_itens": len(processed_results),
+                "numero_fatura": numero_fatura,
+                "armazem_id": armazem.id,
+                "itens_processados": processed_results
+            }, None
+
+        except Exception as e:
+            db.session.rollback()
+            return None, f"Erro ao registar entrada de stock em lote: {str(e)}"
+
     def saida_stock(self, id, data, user_id):
         produto = self.produto_repo.get_by_id(id)
         if not produto:

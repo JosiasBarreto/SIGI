@@ -4170,6 +4170,14 @@
         "documentation": {}
     },
     {
+        "label": "ServicoEnum",
+        "importPath": "app.models.produto",
+        "description": "app.models.produto",
+        "isExtraImport": true,
+        "detail": "app.models.produto",
+        "documentation": {}
+    },
+    {
         "label": "Produto",
         "importPath": "app.models.produto",
         "description": "app.models.produto",
@@ -7924,7 +7932,16 @@
         "kind": 2,
         "importPath": "backend.app.api.v1.armazem_controller",
         "description": "backend.app.api.v1.armazem_controller",
-        "peekOfCode": "def entrada_stock(id):\n    user_id = get_jwt_identity()\n    data = request.get_json()\n    produto, error = armazem_service.entrada_stock(id, data, user_id)\n    if error:\n        status_code = 404 if error == \"Produto não encontrado\" else 400\n        return jsonify({\"msg\": error}), status_code\n    return jsonify({\"msg\": \"Entrada de stock registada com sucesso.\"}), 200\n@armazem_bp.route('/produtos/<int:id>/saida-stock', methods=['POST'])\n@jwt_required()",
+        "peekOfCode": "def entrada_stock(id):\n    user_id = get_jwt_identity()\n    data = request.get_json()\n    produto, error = armazem_service.entrada_stock(id, data, user_id)\n    if error:\n        status_code = 404 if error == \"Produto não encontrado\" else 400\n        return jsonify({\"msg\": error}), status_code\n    return jsonify({\"msg\": \"Entrada de stock registada com sucesso.\"}), 200\n@armazem_bp.route('/produtos/entrada-stock-lote', methods=['POST'])\n@jwt_required()",
+        "detail": "backend.app.api.v1.armazem_controller",
+        "documentation": {}
+    },
+    {
+        "label": "entrada_stock_lote",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.armazem_controller",
+        "description": "backend.app.api.v1.armazem_controller",
+        "peekOfCode": "def entrada_stock_lote():\n    user_id = get_jwt_identity()\n    data = request.get_json() or {}\n    result, error = armazem_service.entrada_stock_lote(data, user_id)\n    if error:\n        return jsonify({\"msg\": error}), 400\n    return jsonify({\"msg\": \"Entrada em lote de stock registada com sucesso.\", \"dados\": result}), 200\n@armazem_bp.route('/produtos/<int:id>/saida-stock', methods=['POST'])\n@jwt_required()\n@requires_roles('Administrador', 'Armazém')",
         "detail": "backend.app.api.v1.armazem_controller",
         "documentation": {}
     },
@@ -8383,7 +8400,7 @@
         "kind": 5,
         "importPath": "backend.app.api.v1.comercial_controller",
         "description": "backend.app.api.v1.comercial_controller",
-        "peekOfCode": "comercial_service = ComercialService()\ndef _serialize_venda_dict(venda):\n    cliente_nome = \"Consumidor Final\"\n    cliente_nif = \"Consumidor Final\"\n    cliente_email = \"\"\n    cliente_telefone = \"\"\n    if venda.pedido and venda.pedido.cliente:\n        cliente_nome = venda.pedido.cliente.nome or \"Consumidor Final\"\n        cliente_nif = venda.pedido.cliente.nif or \"Consumidor Final\"\n        cliente_email = venda.pedido.cliente.email or \"\"",
+        "peekOfCode": "comercial_service = ComercialService()\ndef _serialize_venda_dict(venda):\n    cliente_nome = \"Consumidor Final\"\n    cliente_nif = \"Consumidor Final\"\n    cliente_email = \"\"\n    cliente_telefone = \"\"\n    if venda.pedido and venda.pedido.cliente:\n        cliente_nome = venda.pedido.cliente.nome or \"Consumidor Final\"\n        cliente_nif = venda.pedido.cliente.nif or \"\"\n        cliente_email = venda.pedido.cliente.email or \"\"",
         "detail": "backend.app.api.v1.comercial_controller",
         "documentation": {}
     },
@@ -10480,7 +10497,7 @@
         "kind": 6,
         "importPath": "backend.app.models.ordem_producao",
         "description": "backend.app.models.ordem_producao",
-        "peekOfCode": "class OrdemProducao(BaseModel):\n    __tablename__ = 'ordens_producao'\n    numero = db.Column(db.String(50), unique=True, nullable=False)\n    pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=False)\n    produto_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=True) # Keeping for backward compat\n    quantidade = db.Column(db.Numeric(10, 2), nullable=True) # Keeping for backward compat\n    sector = db.Column(db.Enum(SectorProducao), nullable=False)\n    turno = db.Column(db.Enum(TurnoProducao), nullable=True)\n    responsavel_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)\n    data_producao = db.Column(db.Date, nullable=True)",
+        "peekOfCode": "class OrdemProducao(BaseModel):\n    __tablename__ = 'ordens_producao'\n    numero = db.Column(db.String(50), unique=True, nullable=False)\n    pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=False)\n    produto_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=True) # Keeping for backward compat\n    quantidade = db.Column(db.Numeric(10, 2), nullable=True) # Keeping for backward compat\n    sector = db.Column(db.Enum(SectorProducao, values_callable=lambda x: [e.value for e in x]), nullable=False)\n    turno = db.Column(db.Enum(TurnoProducao, values_callable=lambda x: [e.value for e in x]), nullable=True)\n    responsavel_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)\n    data_producao = db.Column(db.Date, nullable=True)",
         "detail": "backend.app.models.ordem_producao",
         "documentation": {}
     },
@@ -10588,7 +10605,16 @@
         "kind": 6,
         "importPath": "backend.app.models.produto",
         "description": "backend.app.models.produto",
-        "peekOfCode": "class TipoProduto(str, Enum):\n    ACABADO = 'Acabado'\n    REVENDA = 'Revenda'\n    CONSUMIVEL = 'Consumivel'\nclass Produto(BaseModel):\n    __tablename__ = 'produtos'\n    codigo = db.Column(db.String(50), unique=True, nullable=True)\n    nome = db.Column(db.String(100), nullable=False)\n    tipo = db.Column(db.Enum(TipoProduto), nullable=False)\n    categoria = db.Column(db.String(100), nullable=True)",
+        "peekOfCode": "class TipoProduto(str, Enum):\n    ACABADO = 'Acabado'\n    REVENDA = 'Revenda'\n    CONSUMIVEL = 'Consumivel'\nclass ServicoEnum(str, Enum):\n    ABASTECIMENTO = 'ABASTECIMENTO'\n    COZINHA = 'COZINHA'\n    PASTELARIA = 'PASTELARIA'\n    BAR = 'BAR'\nclass Produto(BaseModel):",
+        "detail": "backend.app.models.produto",
+        "documentation": {}
+    },
+    {
+        "label": "ServicoEnum",
+        "kind": 6,
+        "importPath": "backend.app.models.produto",
+        "description": "backend.app.models.produto",
+        "peekOfCode": "class ServicoEnum(str, Enum):\n    ABASTECIMENTO = 'ABASTECIMENTO'\n    COZINHA = 'COZINHA'\n    PASTELARIA = 'PASTELARIA'\n    BAR = 'BAR'\nclass Produto(BaseModel):\n    __tablename__ = 'produtos'\n    codigo = db.Column(db.String(50), unique=True, nullable=True)\n    nome = db.Column(db.String(100), nullable=False)\n    tipo = db.Column(db.Enum(TipoProduto), nullable=False)",
         "detail": "backend.app.models.produto",
         "documentation": {}
     },
@@ -10597,7 +10623,7 @@
         "kind": 6,
         "importPath": "backend.app.models.produto",
         "description": "backend.app.models.produto",
-        "peekOfCode": "class Produto(BaseModel):\n    __tablename__ = 'produtos'\n    codigo = db.Column(db.String(50), unique=True, nullable=True)\n    nome = db.Column(db.String(100), nullable=False)\n    tipo = db.Column(db.Enum(TipoProduto), nullable=False)\n    categoria = db.Column(db.String(100), nullable=True)\n    categoria_id = db.Column(db.Integer, db.ForeignKey('categorias_produto.id'), nullable=True)\n    unidade_medida_id = db.Column(db.Integer, db.ForeignKey('unidades_medida.id'), nullable=True)\n    tempo_producao = db.Column(db.Integer, nullable=True) # in minutes\n    preco_venda = db.Column(db.Numeric(10, 2), nullable=False, default=0)",
+        "peekOfCode": "class Produto(BaseModel):\n    __tablename__ = 'produtos'\n    codigo = db.Column(db.String(50), unique=True, nullable=True)\n    nome = db.Column(db.String(100), nullable=False)\n    tipo = db.Column(db.Enum(TipoProduto), nullable=False)\n    servico = db.Column(db.Enum(ServicoEnum), nullable=True)\n    categoria = db.Column(db.String(100), nullable=True)\n    categoria_id = db.Column(db.Integer, db.ForeignKey('categorias_produto.id'), nullable=True)\n    unidade_medida_id = db.Column(db.Integer, db.ForeignKey('unidades_medida.id'), nullable=True)\n    tempo_producao = db.Column(db.Integer, nullable=True) # in minutes",
         "detail": "backend.app.models.produto",
         "documentation": {}
     },
@@ -11200,7 +11226,7 @@
         "kind": 6,
         "importPath": "backend.app.schemas.armazem_schema",
         "description": "backend.app.schemas.armazem_schema",
-        "peekOfCode": "class ProdutoSchema(Schema):\n    id = fields.Int(dump_only=True)\n    codigo = fields.Str(dump_only=True)\n    nome = fields.Str(required=True, validate=validate.Length(min=2))\n    tipo = fields.Enum(TipoProduto, by_value=True, required=True)\n    categoria = fields.Str(required=False) # Mantido por compatibilidade\n    categoria_id = fields.Int(required=False, allow_none=True)\n    unidade_medida_id = fields.Int(required=False, allow_none=True)\n    tempo_producao = fields.Int(required=False, allow_none=True)\n    preco_venda = fields.Decimal(required=False, allow_none=True)",
+        "peekOfCode": "class ProdutoSchema(Schema):\n    id = fields.Int(dump_only=True)\n    codigo = fields.Str(dump_only=True)\n    nome = fields.Str(required=True, validate=validate.Length(min=2))\n    tipo = fields.Enum(TipoProduto, by_value=True, required=True)\n    servico = fields.Enum(ServicoEnum, by_value=True, required=False, allow_none=True)\n    categoria = fields.Str(required=False) # Mantido por compatibilidade\n    categoria_id = fields.Int(required=False, allow_none=True)\n    unidade_medida_id = fields.Int(required=False, allow_none=True)\n    tempo_producao = fields.Int(required=False, allow_none=True)",
         "detail": "backend.app.schemas.armazem_schema",
         "documentation": {}
     },
@@ -11700,6 +11726,15 @@
         "documentation": {}
     },
     {
+        "label": "armazem_service",
+        "kind": 5,
+        "importPath": "backend.app.services.armazem_service",
+        "description": "backend.app.services.armazem_service",
+        "peekOfCode": "armazem_service = ArmazemService()",
+        "detail": "backend.app.services.armazem_service",
+        "documentation": {}
+    },
+    {
         "label": "AuditService",
         "kind": 6,
         "importPath": "backend.app.services.audit_service",
@@ -11790,11 +11825,29 @@
         "documentation": {}
     },
     {
+        "label": "format_qtd",
+        "kind": 2,
+        "importPath": "backend.app.services.pdf_generator",
+        "description": "backend.app.services.pdf_generator",
+        "peekOfCode": "def format_qtd(val):\n    try:\n        val_f = float(val)\n        if val_f.is_integer():\n            return str(int(val_f))\n        return f\"{val_f:.3f}\".rstrip('0').rstrip('.')\n    except (ValueError, TypeError):\n        return str(val)\ndef format_percentagem(val):\n    try:",
+        "detail": "backend.app.services.pdf_generator",
+        "documentation": {}
+    },
+    {
+        "label": "format_percentagem",
+        "kind": 2,
+        "importPath": "backend.app.services.pdf_generator",
+        "description": "backend.app.services.pdf_generator",
+        "peekOfCode": "def format_percentagem(val):\n    try:\n        val_f = float(val)\n        if val_f.is_integer():\n            return f\"{int(val_f)}%\"\n        return f\"{val_f:.2f}\".rstrip('0').rstrip('.') + \"%\"\n    except (ValueError, TypeError):\n        return f\"{val}%\"\ndef _get_empresa_info():\n    empresa = Empresa.query.first()",
+        "detail": "backend.app.services.pdf_generator",
+        "documentation": {}
+    },
+    {
         "label": "get_venda_receipt_data",
         "kind": 2,
         "importPath": "backend.app.services.pdf_generator",
         "description": "backend.app.services.pdf_generator",
-        "peekOfCode": "def get_venda_receipt_data(venda):\n    empresa = _get_empresa_info()\n    moeda = empresa[\"moeda\"]\n    # Operador / User\n    operador_nome = \"Sistema / Atendimento\"\n    if getattr(venda, 'criado_por', None):\n        u = User.query.get(venda.criado_por)\n        if u:\n            operador_nome = u.name\n    # Cliente",
+        "peekOfCode": "def get_venda_receipt_data(venda):\n    empresa = _get_empresa_info()\n    moeda = empresa[\"moeda\"]\n    # Operador / User\n    operador_nome = \"Sistema / Atendimento\"\n    operador_id = getattr(venda, 'criado_por', None) or getattr(venda, 'created_by', None)\n    if operador_id:\n        u = User.query.get(operador_id)\n        if u:\n            operador_nome = u.name",
         "detail": "backend.app.services.pdf_generator",
         "documentation": {}
     },
@@ -11803,7 +11856,7 @@
         "kind": 2,
         "importPath": "backend.app.services.pdf_generator",
         "description": "backend.app.services.pdf_generator",
-        "peekOfCode": "def get_pedido_receipt_data(pedido):\n    empresa = _get_empresa_info()\n    moeda = empresa[\"moeda\"]\n    operador_nome = \"Atendimento\"\n    if getattr(pedido, 'created_by', None):\n        u = User.query.get(pedido.created_by)\n        if u:\n            operador_nome = u.name\n    cliente_nome = pedido.cliente.nome if pedido.cliente else \"Consumidor Final\"\n    cliente_nif = pedido.cliente.nif if pedido.cliente and pedido.cliente.nif else \"Consumidor Final\"",
+        "peekOfCode": "def get_pedido_receipt_data(pedido):\n    empresa = _get_empresa_info()\n    moeda = empresa[\"moeda\"]\n    operador_nome = \"Atendimento\"\n    if getattr(pedido, 'created_by', None):\n        u = User.query.get(pedido.created_by)\n        if u:\n            operador_nome = u.name\n    cliente_nome = \"Consumidor Final\"\n    cliente_nif = \"Consumidor Final\"",
         "detail": "backend.app.services.pdf_generator",
         "documentation": {}
     },

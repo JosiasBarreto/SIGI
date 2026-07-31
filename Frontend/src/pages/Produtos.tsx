@@ -3,23 +3,22 @@ import Consumivel from "./produtos/Consumivel";
 import Acabado from "./produtos/Acabado";
 import Revenda from "./produtos/Revenda";
 import { useQuery } from "@tanstack/react-query";
-import { productService } from "../services";
+import { productService, warehouseService } from "../services";
+import ControleStockLote from "./Armazens/ControleStockLote";
+import { PackagePlus } from "lucide-react";
 
 export default function Produtos() {
-  const [activeTab, setActiveTab] = useState<"Consumivel" | "Acabado" | "Revenda">("Consumivel");
+  const [activeTab, setActiveTab] = useState<"Consumivel" | "Acabado" | "Revenda" | "ControleStock">("Consumivel");
 
-  const { data: paginatedResponse } = useQuery({
-    queryKey: ["products", 1, 1, "", activeTab],
-    queryFn: () =>
-      productService.getAll({
-        page: 1,
-        per_page: 1,
-        tipo: activeTab,
-      }),
+  const { data: armazensResponse } = useQuery({
+    queryKey: ["armazens"],
+    queryFn: () => warehouseService.getAll({ per_page: 1000 }).catch(() => ({ items: [] })),
   });
 
+  const armazens = armazensResponse?.items || [];
+
   return (
-    <div className="space-y-2 animate-fade-in">
+    <div className="space-y-4 animate-fade-in pb-12">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
           Produtos
@@ -27,7 +26,7 @@ export default function Produtos() {
       </div>
 
       {/* Tabs */}
-      <div className="flex flex-wrap gap-2 bg-gray-100 dark:bg-gray-800/40 p-1 rounded-xl w-fit">
+      <div className="flex flex-wrap gap-2 bg-gray-100 dark:bg-gray-800/40 p-1.5 rounded-xl w-fit">
         <button
           onClick={() => setActiveTab("Consumivel")}
           className={`px-4 py-2 text-sm font-bold rounded-lg transition-colors ${
@@ -58,12 +57,24 @@ export default function Produtos() {
         >
           Produtos de Revenda
         </button>
+        <button
+          onClick={() => setActiveTab("ControleStock")}
+          className={`px-4 py-2 text-sm font-bold rounded-lg transition-colors flex items-center gap-2 ${
+            activeTab === "ControleStock"
+              ? "bg-white dark:bg-surface-dark text-emerald-600 dark:text-emerald-400 shadow"
+              : "text-gray-500 hover:text-gray-950 dark:text-gray-400 dark:hover:text-gray-100"
+          }`}
+        >
+          <PackagePlus size={16} />
+          Controle de Stock
+        </button>
       </div>
 
       <div className="mt-4">
         {activeTab === "Consumivel" && <Consumivel />}
         {activeTab === "Acabado" && <Acabado />}
         {activeTab === "Revenda" && <Revenda />}
+        {activeTab === "ControleStock" && <ControleStockLote armazens={armazens} defaultItemTypeFilter="Produto" />}
       </div>
     </div>
   );

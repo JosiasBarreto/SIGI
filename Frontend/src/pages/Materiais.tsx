@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as allServices from '../services';
-import { Plus, Edit2, Trash2, Eye, Wrench, CheckCircle, ArrowRightLeft, PackageOpen, Activity, Info, Power } from 'lucide-react';
+import { Plus, Edit2, Trash2, Eye, Wrench, CheckCircle, ArrowRightLeft, PackageOpen, Activity, Info, Power, PackagePlus } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { toast } from 'react-toastify';
 import { schemas } from '../data/schemas';
@@ -10,6 +10,7 @@ import { DataTable } from '../components/Common/DataTable';
 import { ColumnDef } from '@tanstack/react-table';
 import { useAuth } from '../components/AuthContext';
 import { MaterialDetailsModal } from '../components/Common/MaterialDetailsModal';
+import ControleStockLote from './Armazens/ControleStockLote';
 
 export default function Materiais() {
   const title = "Materiais";
@@ -18,6 +19,7 @@ export default function Materiais() {
   const { user } = useAuth();
   const isAdmin = ["Administrador"].includes(user?.role || "");
 
+  const [mainTab, setMainTab] = useState<'lista' | 'lote'>('lista');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('active');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -357,16 +359,45 @@ export default function Materiais() {
   }, [currentRecord]);
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in pb-12">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{schema?.title || title}</h1>
-        {schema && (
+        {mainTab === 'lista' && schema && (
           <button onClick={() => handleOpenForm()} className="bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors">
             <Plus size={18} /> Novo Registo
           </button>
         )}
       </div>
 
+      {/* Main Tabs */}
+      <div className="flex flex-wrap gap-2 bg-gray-100 dark:bg-gray-800/40 p-1.5 rounded-xl w-fit">
+        <button
+          onClick={() => setMainTab('lista')}
+          className={`px-4 py-2 text-sm font-bold rounded-lg transition-colors ${
+            mainTab === 'lista'
+              ? "bg-white dark:bg-surface-dark text-primary shadow"
+              : "text-gray-500 hover:text-gray-950 dark:text-gray-400 dark:hover:text-gray-100"
+          }`}
+        >
+          Catálogo de Materiais
+        </button>
+        <button
+          onClick={() => setMainTab('lote')}
+          className={`px-4 py-2 text-sm font-bold rounded-lg transition-colors flex items-center gap-2 ${
+            mainTab === 'lote'
+              ? "bg-white dark:bg-surface-dark text-emerald-600 dark:text-emerald-400 shadow"
+              : "text-gray-500 hover:text-gray-950 dark:text-gray-400 dark:hover:text-gray-100"
+          }`}
+        >
+          <PackagePlus size={16} />
+          Movimentação em Lote
+        </button>
+      </div>
+
+      {mainTab === 'lote' ? (
+        <ControleStockLote armazens={armazens} defaultItemTypeFilter="Material" />
+      ) : (
+        <>
       <DataTable
         data={data}
         columns={tableColumns}
@@ -399,6 +430,8 @@ export default function Materiais() {
           setPage(1);
         }}
       />
+      </>
+      )}
 
       <Modal
         isOpen={isModalOpen}

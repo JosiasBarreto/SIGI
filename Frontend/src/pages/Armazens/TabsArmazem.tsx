@@ -7,7 +7,8 @@ import {
   Power, 
   AlertTriangle,
   CheckCircle,
-  Package
+  Package,
+  PackagePlus
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatCurrency } from "../../lib/utils";
@@ -17,6 +18,8 @@ import { toast } from "react-toastify";
 import Swal from "sweetalert2";
 import Modal from "../../components/Common/Modal";
 import { productService, materialService } from "../../services";
+import ControleStockLote from "./ControleStockLote";
+
 
 interface Armazem {
   id: string | number;
@@ -515,9 +518,44 @@ const TabsArmazem: React.FC<TabsArmazemProps> = ({ armazens, warehouseService })
             </button>
           );
         })}
+
+        {/* Tab dedicada: Controlo de Stock (Entrada em Lote) */}
+        <button
+          onClick={() => setActiveTab('controle_stock')}
+          className={`flex items-center gap-3 px-4 py-3 text-left transition-colors relative min-w-[220px] shrink-0
+            ${
+              activeTab === 'controle_stock'
+                ? "border-b-2 border-primary text-primary bg-gray-50/50 dark:bg-gray-850/50 font-bold"
+                : "text-gray-600 hover:text-primary hover:bg-gray-50/30 dark:hover:bg-gray-800/20"
+            }`}
+        >
+          <div className="w-10 h-10 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+            <PackagePlus size={20} />
+          </div>
+          <div className="flex flex-col max-w-[130px]">
+            <span className="text-xs font-black uppercase truncate">
+              Controlo de Stock
+            </span>
+            <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">
+              Entrada em Lote
+            </span>
+          </div>
+          <div className="absolute right-3 top-3">
+            <span className="bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider">
+              Entrada Lote
+            </span>
+          </div>
+        </button>
       </div>
 
-      {/* Detalhes do Armazém Selecionado */}
+      {/* Render quando Tab de Controlo de Stock está ativa */}
+      {activeTab === 'controle_stock' ? (
+        <div className="mt-4">
+          <ControleStockLote armazens={armazens} defaultArmazemId={armazens[0]?.id} />
+        </div>
+      ) : (
+        <>
+          {/* Detalhes do Armazém Selecionado */}
       {currentArmazem && (
         <div className="mt-4 p-5 bg-white dark:bg-surface-dark border border-gray-100 dark:border-gray-800 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-sm">
           <div className="space-y-1.5">
@@ -682,6 +720,8 @@ const TabsArmazem: React.FC<TabsArmazemProps> = ({ armazens, warehouseService })
           </>
         )}
       </div>
+      </>
+      )}
 
       {/* Edit Warehouse Modal */}
       <Modal

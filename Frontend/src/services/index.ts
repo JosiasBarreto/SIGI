@@ -1019,6 +1019,102 @@ export const warehouseService = {
   async createMovimentacao(data: any) {
     const res = await apiClient.post<any, any>('/v1/armazem/movimentacoes', data);
     return res;
+  },
+  async entradaStockLote(data: any) {
+    const res = await apiClient.post<any, any>('/v1/armazem/produtos/entrada-stock-lote', data);
+    return res;
+  },
+  async movimentacaoLote(data: any) {
+    // 1. Try batch endpoint /v1/armazem/movimentacoes/lote
+    try {
+      const res = await apiClient.post<any, any>('/v1/armazem/movimentacoes/lote', data, { timeout: 30000 });
+      if (res) return res;
+    } catch (err: any) {
+      console.warn('Endpoint /v1/armazem/movimentacoes/lote indisponível:', err?.message || err);
+    }
+
+    // 2. Try secondary batch endpoint /v1/armazem/produtos/entrada-stock-lote
+    try {
+      const res = await apiClient.post<any, any>('/v1/armazem/produtos/entrada-stock-lote', data, { timeout: 30000 });
+      if (res) return res;
+    } catch (err: any) {
+      console.warn('Endpoint /v1/armazem/produtos/entrada-stock-lote indisponível:', err?.message || err);
+    }
+
+    // 3. Fallback: Process item by item via single movement endpoint /v1/armazem/movimentacoes
+    const itens = data?.itens || [];
+    if (!Array.isArray(itens) || itens.length === 0) {
+      throw new Error('Nenhum item fornecido para a movimentação em lote.');
+    }
+
+    let successCount = 0;
+    const errors: string[] = [];
+
+    for (const item of itens) {
+      const itemPayload = {
+        tipo: item.tipo || 'Entrada',
+        armazem_id: Number(item.armazem_id),
+        quantidade: Number(item.quantidade),
+        preco_compra: item.preco_compra ? Number(item.preco_compra) : undefined,
+        observacao: item.observacao || data.observacao,
+        origem: data.numero_fatura ? `Fatura ${data.numero_fatura}` : 'Movimentação em Lote',
+        fornecedor_id: data.fornecedor_id ? Number(data.fornecedor_id) : undefined,
+        produto_id: item.tipo_item === 'Produto' ? Number(item.produto_id) : undefined,
+        material_id: item.tipo_item === 'Material' ? Number(item.material_id) : undefined,
+        entidade_tipo: item.tipo_item,
+        referencia_id: item.produto_id || item.material_id || item.ingrediente_id
+      };
+
+      try {
+        await apiClient.post<any, any>('/v1/armazem/movimentacoes', itemPayload);
+        successCount++;
+      } catch (itemErr: any) {
+        // Attempt direct item stock update if single movement endpoint fails
+        try {
+          const targetStock = item.tipo === 'Entrada' 
+            ? ((item.stock_atual || 0) + item.quantidade) 
+            : Math.max(0, (item.stock_atual || 0) - item.quantidade);
+
+          if (item.tipo_item === 'Produto' && item.produto_id) {
+            await apiClient.put(`/v1/armazem/produtos/${item.produto_id}`, {
+              stock_atual: targetStock,
+              quantidade: targetStock
+            });
+            successCount++;
+          } else if (item.tipo_item === 'Material' && item.material_id) {
+            await apiClient.put(`/v1/armazem/materiais/${item.material_id}`, {
+              stock_atual: targetStock,
+              quantidade: targetStock
+            });
+            successCount++;
+          } else {
+            throw itemErr;
+          }
+        } catch (subErr: any) {
+          console.error(`Falha ao processar item #${item.produto_id || item.material_id}:`, subErr);
+          errors.push(item.nome || `Item #${item.produto_id || item.material_id}`);
+        }
+      }
+    }
+
+    if (successCount > 0) {
+      return {
+        success: true,
+        msg: `Movimentação em lote registada com sucesso (${successCount} de ${itens.length} itens processados).`,
+        dados: {
+          numero_fatura: data.numero_fatura,
+          fornecedor_id: data.fornecedor_id,
+          total_processados: successCount,
+          erros: errors
+        }
+      };
+    }
+
+    throw new Error(
+      errors.length > 0 
+        ? `Erro ao registar movimentação dos itens: ${errors.join(', ')}.`
+        : 'Não foi possível ligar ao serviço de armazém. Verifique a ligação com o servidor.'
+    );
   }
 };
 

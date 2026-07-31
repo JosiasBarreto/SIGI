@@ -500,6 +500,17 @@ def entrada_stock(id):
         return jsonify({"msg": error}), status_code
     return jsonify({"msg": "Entrada de stock registada com sucesso."}), 200
 
+@armazem_bp.route('/produtos/entrada-stock-lote', methods=['POST'])
+@jwt_required()
+@requires_roles('Administrador', 'Armazém')
+def entrada_stock_lote():
+    user_id = get_jwt_identity()
+    data = request.get_json() or {}
+    result, error = armazem_service.entrada_stock_lote(data, user_id)
+    if error:
+        return jsonify({"msg": error}), 400
+    return jsonify({"msg": "Entrada em lote de stock registada com sucesso.", "dados": result}), 200
+
 @armazem_bp.route('/produtos/<int:id>/saida-stock', methods=['POST'])
 @jwt_required()
 @requires_roles('Administrador', 'Armazém')
