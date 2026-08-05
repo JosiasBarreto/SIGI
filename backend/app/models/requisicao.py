@@ -30,14 +30,14 @@ class Requisicao(BaseModel):
     __tablename__ = 'requisicoes'
 
     numero = db.Column(db.String(50), unique=True, nullable=False)
-    tipo = db.Column(db.Enum(TipoRequisicao), nullable=False)
-    sector = db.Column(db.Enum(SectorRequisicao), nullable=False)
+    tipo = db.Column(db.String(50), nullable=False)
+    sector = db.Column(db.String(50), nullable=False)
     turno_id = db.Column(db.Integer, db.ForeignKey('turnos.id'), nullable=True) 
     responsavel_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=True)
     
     data_requisicao = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    estado = db.Column(db.Enum(EstadoRequisicao), default=EstadoRequisicao.PENDENTE)
+    estado = db.Column(db.String(50), default='Pendente')
     motivo = db.Column(db.Text, nullable=True)
     observacoes = db.Column(db.Text, nullable=True)
     
@@ -58,7 +58,7 @@ class RequisicaoItem(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     requisicao_id = db.Column(db.Integer, db.ForeignKey('requisicoes.id'), nullable=False)
-    tipo_item = db.Column(db.Enum(TipoItemRequisicao), nullable=False)
+    tipo_item = db.Column(db.String(50), nullable=False)
     item_id = db.Column(db.Integer, nullable=False)
     
     quantidade_solicitada = db.Column(db.Numeric(10, 3), nullable=False)
@@ -111,12 +111,12 @@ class OcorrenciaMaterial(BaseModel):
     numero = db.Column(db.String(50), unique=True, nullable=False)
     material_id = db.Column(db.Integer, db.ForeignKey('materiais.id'), nullable=False)
     responsavel_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    tipo = db.Column(db.Enum(TipoOcorrencia), nullable=False)
+    tipo = db.Column(db.Enum(TipoOcorrencia, values_callable=lambda x: [e.value for e in x]), nullable=False)
     quantidade = db.Column(db.Numeric(10, 3), nullable=False)
     valor_estimado = db.Column(db.Numeric(10, 2), default=0)
     justificacao = db.Column(db.Text, nullable=False)
     data_ocorrencia = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    estado = db.Column(db.Enum(EstadoOcorrencia), default=EstadoOcorrencia.ABERTA)
+    estado = db.Column(db.Enum(EstadoOcorrencia, values_callable=lambda x: [e.value for e in x]), default=EstadoOcorrencia.ABERTA)
 
     material = db.relationship('Material', foreign_keys=[material_id])
     responsavel = db.relationship('User', foreign_keys=[responsavel_id])

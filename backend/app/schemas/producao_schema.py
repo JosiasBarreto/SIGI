@@ -16,7 +16,7 @@ class FichaTecnicaSchema(Schema):
     codigo = fields.Str(required=False)
     nome = fields.Str(required=True, validate=validate.Length(min=2))
     descricao = fields.Str(required=False)
-    tipo = fields.Enum(TipoFicha, by_value=True, required=True)
+    tipo = fields.Str(required=False, allow_none=True, load_default='FichaTecnica')
     produto_acabado_id = fields.Int(required=True)
     tempo_producao_minutos = fields.Int(required=False, allow_none=True)
     rendimento = fields.Decimal(required=False, allow_none=True)
@@ -68,12 +68,12 @@ class OrdemProducaoSchema(Schema):
     observacoes_pedido = fields.Method("get_observacoes_pedido")
     produto_id = fields.Int(required=False, allow_none=True) # backward compat
     quantidade = fields.Decimal(required=False, allow_none=True) # backward compat
-    sector = fields.Enum(SectorProducao, by_value=True, required=True)
+    sector = fields.Str(required=False, allow_none=True, load_default='Cozinha')
     data_producao = fields.Date(required=False, allow_none=True)
     hora_inicio = fields.DateTime(required=False, allow_none=True)
     hora_fim = fields.DateTime(required=False, allow_none=True)
-    prioridade = fields.Enum(PrioridadeProducao, by_value=True, required=False)
-    estado = fields.Enum(EstadoProducao, by_value=True, required=False)
+    prioridade = fields.Str(required=False, allow_none=True, load_default='Normal')
+    estado = fields.Str(required=False, allow_none=True, load_default='Pendente')
     observacoes = fields.Str(required=False)
     created_at = fields.DateTime(dump_only=True)
     
@@ -107,7 +107,7 @@ class ReservaIngredienteSchema(Schema):
     pedido_id = fields.Int(required=True)
     quantidade = fields.Decimal(required=True)
     data_reserva = fields.DateTime(dump_only=True)
-    estado = fields.Enum(EstadoReserva, by_value=True, dump_only=True)
+    estado = fields.Str(dump_only=True)
 
 class AlterarEstadoOrdemSchema(Schema):
-    estado = fields.Enum(EstadoProducao, by_value=True, required=True)
+    estado = fields.Raw(required=True)

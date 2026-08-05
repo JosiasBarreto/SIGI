@@ -41,10 +41,17 @@ class ComercialService:
         
         numero_documento = self.generate_numero_documento(tipo_documento.value)
         
+        cliente_id = data.get('cliente_id')
+        if not cliente_id and data.get('pedido_id'):
+            from app.models.pedido import Pedido
+            p = Pedido.query.get(data.get('pedido_id'))
+            if p and p.cliente_id:
+                cliente_id = p.cliente_id
+
         venda = Venda(
             numero_documento=numero_documento,
             tipo_documento=tipo_documento,
-            cliente_id=data.get('cliente_id'),
+            cliente_id=cliente_id,
             pedido_id=data.get('pedido_id'),
             estado=EstadoVenda.PENDENTE,
             observacoes=data.get('observacoes'),
@@ -213,33 +220,53 @@ class ComercialService:
         db.session.add(venda)
         db.session.flush()
         
-        # Add itens based on event services
-        for servico in evento.servicos:
-            v_item = VendaItem(
-                venda_id=venda.id,
-                item_tipo='Servico',
-                item_id=servico.id,
-                descricao=f"Serviço de Evento: {servico.descricao or servico.tipo_servico}",
-                quantidade=1,
-                preco_unitario=servico.valor,
-                subtotal=servico.valor,
-                total=servico.valor
-            )
-            db.session.add(v_item)
-            
-        # Add items based on equipment/material
-        for res in evento.reservas_material:
-            v_item = VendaItem(
-                venda_id=venda.id,
-                item_tipo='Material',
-                item_id=res.material_id,
-                descricao=f"Reserva de Material: {res.material.nome if res.material else 'Material'}",
-                quantidade=res.quantidade,
-                preco_unitario=0, # If we want to charge, we'd need its price, but usually it's in the event total
-                subtotal=0,
-                total=0
-            )
-            db.session.add(v_item)
+        # Add items based on EventoItem if available
+        if evento.itens and len(evento.itens) > 0:
+            for it in evento.itens:
+                q = float(it.quantidade or 1)
+                pu = float(it.preco_unitario or 0)
+                sub = float(it.subtotal or (q * pu))
+                tot = float(it.total or sub)
+                
+                v_item = VendaItem(
+                    venda_id=venda.id,
+                    item_tipo=it.tipo_item.value if hasattr(it.tipo_item, 'value') else str(it.tipo_item),
+                    item_id=it.referencia_id or it.produto_id or it.id,
+                    descricao=it.descricao,
+                    quantidade=q,
+                    preco_unitario=pu,
+                    desconto=float(it.valor_desconto or 0),
+                    subtotal=sub,
+                    total=tot
+                )
+                db.session.add(v_item)
+        else:
+            # Fallback to legacy collections if itens is empty
+            for servico in (evento.servicos or []):
+                v_item = VendaItem(
+                    venda_id=venda.id,
+                    item_tipo='Servico',
+                    item_id=servico.id,
+                    descricao=f"Serviço de Evento: {servico.descricao or servico.tipo}",
+                    quantidade=float(servico.quantidade or 1),
+                    preco_unitario=float(servico.valor_unitario or 0),
+                    subtotal=float(servico.subtotal or 0),
+                    total=float(servico.subtotal or 0)
+                )
+                db.session.add(v_item)
+                
+            for res in (evento.reservas_material or []):
+                v_item = VendaItem(
+                    venda_id=venda.id,
+                    item_tipo='Material',
+                    item_id=res.material_id,
+                    descricao=f"Reserva de Material: {res.material.nome if hasattr(res, 'material') and res.material else 'Material'}",
+                    quantidade=float(res.quantidade or 1),
+                    preco_unitario=float(res.valor_unitario or 0),
+                    subtotal=float(res.subtotal or 0),
+                    total=float(res.subtotal or 0)
+                )
+                db.session.add(v_item)
             
         pagamento = Pagamento(
             venda_id=venda.id,

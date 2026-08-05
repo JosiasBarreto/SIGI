@@ -77,6 +77,17 @@ class AuthService:
         user.password_hash = generate_password_hash(temp_pwd)
         db.session.commit()
         
+        # Enviar email de recuperação de senha via SMTP
+        try:
+            from app.services.notification_service import NotificationService
+            NotificationService.send_password_recovery_async(
+                user_name=user.name,
+                user_email=user.email,
+                temp_password=temp_pwd
+            )
+        except Exception as e:
+            print("⚠ Erro ao disparar email de recuperação de senha:", e)
+
         AuditService.log_action(user.id, "PASSWORD_RECOVERY", "users", user.id)
         return True, None, temp_pwd
 

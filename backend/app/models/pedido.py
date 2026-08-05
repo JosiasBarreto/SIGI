@@ -40,14 +40,14 @@ class Pedido(BaseModel):
     numero = db.Column(db.String(50), unique=True, nullable=False)
     cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id'), nullable=True)
     evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=True)
-    tipo = db.Column(db.Enum(TipoPedido), nullable=False)
-    origem = db.Column(db.Enum(OrigemPedido), nullable=False)
+    tipo = db.Column(db.Enum(TipoPedido, values_callable=lambda x: [e.value for e in x]), nullable=False)
+    origem = db.Column(db.Enum(OrigemPedido, values_callable=lambda x: [e.value for e in x]), nullable=False)
     
     data_pedido = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     data_entrega = db.Column(db.Date, nullable=True)
     hora_entrega = db.Column(db.Time, nullable=True)
     
-    estado = db.Column(db.Enum(EstadoPedido), default=EstadoPedido.PENDENTE)
+    estado = db.Column(db.Enum(EstadoPedido, values_callable=lambda x: [e.value for e in x]), default=EstadoPedido.PENDENTE)
     observacoes = db.Column(db.Text, nullable=True)
     justificativa_cancelamento = db.Column(db.Text, nullable=True)
     
@@ -55,8 +55,34 @@ class Pedido(BaseModel):
     valor_total = db.Column(db.Numeric(10, 2), default=0)
     valor_pago = db.Column(db.Numeric(10, 2), default=0)
     saldo = db.Column(db.Numeric(10, 2), default=0)
-    forma_pagamento = db.Column(db.Enum(FormaPagamento), nullable=True)
-    estado_pagamento = db.Column(db.Enum(EstadoPagamento), default=EstadoPagamento.PENDENTE)
+    forma_pagamento = db.Column(db.Enum(FormaPagamento, values_callable=lambda x: [e.value for e in x]), nullable=True)
+    estado_pagamento = db.Column(db.Enum(EstadoPagamento, values_callable=lambda x: [e.value for e in x]), default=EstadoPagamento.PENDENTE)
     
     itens = db.relationship('ItemPedido', backref='pedido', lazy='selectin', cascade="all, delete-orphan")
     evento = db.relationship('Evento', foreign_keys=[evento_id], post_update=True, lazy='selectin')
+
+    @property
+    def subtotal(self):
+        if self.itens:
+            return sum(float(i.subtotal or 0) for i in self.itens)
+        return float(self.valor_total or 0)
+
+    @property
+    def desconto_total(self):
+        if self.itens:
+            return sum(float(i.desconto or 0) for i in self.itens)
+        return 0.0
+
+    @property
+    def base_tributavel(self):
+        if self.itens:
+            return sum(float(i.subtotal or 0) for i in self.itens)
+        return float(self.valor_total or 0)
+
+    @property
+    def total_iva(self):
+        if self.itens:
+            return sum(float(getattr(i, 'valor_iva', 0) or 0) for i in self.itens)
+        return 0.0
+
+

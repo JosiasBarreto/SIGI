@@ -35,6 +35,9 @@ class TipoItemEvento(str, Enum):
     ESPACO = 'Espaco'
     MATERIAL = 'Material'
     PRODUTO = 'Produto'
+    PRODUTO_COZINHA = 'ProdutoCozinha'
+    PRODUTO_PASTELARIA = 'ProdutoPastelaria'
+    PRODUTO_REVENDA = 'ProdutoRevenda'
     DESLOCACAO = 'Deslocacao'
     MAO_DE_OBRA = 'MaoDeObra'
     OUTRO = 'Outro'
@@ -123,13 +126,13 @@ class PoliticaComercialEvento(BaseModel):
 class PoliticaComercialRegra(BaseModel):
     __tablename__ = 'politica_comercial_regras'
     politica_id = db.Column(db.Integer, db.ForeignKey('politicas_comerciais_eventos.id'), nullable=False)
-    tipo_item = db.Column(db.Enum(TipoItemEvento), nullable=False)
+    tipo_item = db.Column(db.String(50), nullable=False)
     referencia_id = db.Column(db.Integer, nullable=True)
     nome_item = db.Column(db.String(255), nullable=True)
     min_participantes = db.Column(db.Integer, default=1)
     max_participantes = db.Column(db.Integer, default=99999)
     valor_sugerido = db.Column(db.Numeric(10, 2), nullable=False)
-    tipo_calculo = db.Column(db.Enum(TipoCalculoPolitica), default=TipoCalculoPolitica.FIXO)
+    tipo_calculo = db.Column(db.Enum(TipoCalculoPolitica, values_callable=lambda x: [e.value for e in x]), default=TipoCalculoPolitica.FIXO)
     prioridade = db.Column(db.Integer, default=1)
     mensagem_sugestao = db.Column(db.String(255), nullable=True)
 
@@ -140,7 +143,7 @@ class Espaco(BaseModel):
     localizacao = db.Column(db.String(255), nullable=True)
     descricao = db.Column(db.Text, nullable=True)
     preco_aluguer = db.Column(db.Numeric(10, 2), default=0.0)
-    estado = db.Column(db.Enum(EstadoEspaco), default=EstadoEspaco.ATIVO)
+    estado = db.Column(db.Enum(EstadoEspaco, values_callable=lambda x: [e.value for e in x]), default=EstadoEspaco.ATIVO)
 
 class Evento(BaseModel):
     __tablename__ = 'eventos'
@@ -323,7 +326,7 @@ class EventoItem(db.Model):
     __tablename__ = 'eventos_itens'
     id = db.Column(db.Integer, primary_key=True)
     evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=False)
-    tipo_item = db.Column(db.Enum(TipoItemEvento), nullable=False)
+    tipo_item = db.Column(db.String(50), nullable=False)
     referencia_id = db.Column(db.Integer, nullable=True) # Referência ao cadastro base (serviço, espaço, material)
     produto_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=True) # Se for produto (Acabado, Revenda, Consumível)
     
@@ -348,7 +351,7 @@ class EventoServico(db.Model):
     __tablename__ = 'eventos_servicos'
     id = db.Column(db.Integer, primary_key=True)
     evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=False)
-    tipo = db.Column(db.Enum(TipoServicoEvento), nullable=False)
+    tipo = db.Column(db.Enum(TipoServicoEvento, values_callable=lambda x: [e.value for e in x]), nullable=False)
     descricao = db.Column(db.String(255), nullable=True)
     quantidade = db.Column(db.Numeric(10, 2), nullable=False)
     valor_unitario = db.Column(db.Numeric(10, 2), nullable=False)
@@ -364,7 +367,7 @@ class ReservaEspaco(db.Model):
     data_inicio = db.Column(db.DateTime, nullable=False)
     data_fim = db.Column(db.DateTime, nullable=False)
     valor_aluguer = db.Column(db.Numeric(10, 2), default=0.0)
-    estado = db.Column(db.Enum(EstadoReservaEspaco), default=EstadoReservaEspaco.RESERVADO)
+    estado = db.Column(db.Enum(EstadoReservaEspaco, values_callable=lambda x: [e.value for e in x]), default=EstadoReservaEspaco.RESERVADO)
 
 class ReservaMaterial(db.Model):
     __tablename__ = 'reservas_materiais'
@@ -383,6 +386,6 @@ class EventoEquipa(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=False)
     utilizador_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    funcao = db.Column(db.Enum(FuncaoEquipa), nullable=False)
+    funcao = db.Column(db.Enum(FuncaoEquipa, values_callable=lambda x: [e.value for e in x]), nullable=False)
     estado = db.Column(db.String(50), default='Alocado')
 

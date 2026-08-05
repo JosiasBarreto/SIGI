@@ -100,6 +100,47 @@ with app.app_context():
         db.session.rollback()
         print("[WARN] Could not update enum column 'tipo' on table 'produtos' (might not be MySQL or column already updated):", e)
 
+    # Ensure tipo_item in 'eventos_itens' and 'politica_comercial_regras' supports new item types like 'ProdutoCozinha'
+    try:
+        db.session.execute(text("ALTER TABLE eventos_itens MODIFY COLUMN tipo_item VARCHAR(50) NOT NULL;"))
+        db.session.commit()
+        print("[OK] Updated column 'tipo_item' on table 'eventos_itens' to VARCHAR(50).")
+    except Exception as e:
+        db.session.rollback()
+
+    try:
+        db.session.execute(text("ALTER TABLE itens_pedido MODIFY COLUMN tipo_item VARCHAR(50) NOT NULL;"))
+        db.session.commit()
+        print("[OK] Updated column 'tipo_item' on table 'itens_pedido' to VARCHAR(50).")
+    except Exception as e:
+        db.session.rollback()
+
+    try:
+        db.session.execute(text("ALTER TABLE politica_comercial_regras MODIFY COLUMN tipo_item VARCHAR(50) NOT NULL;"))
+        db.session.commit()
+        print("[OK] Updated column 'tipo_item' on table 'politica_comercial_regras' to VARCHAR(50).")
+    except Exception as e:
+        db.session.rollback()
+
+    try:
+        db.session.execute(text("ALTER TABLE ordens_producao MODIFY COLUMN sector VARCHAR(50) NOT NULL;"))
+        db.session.execute(text("ALTER TABLE ordens_producao MODIFY COLUMN prioridade VARCHAR(50) NULL;"))
+        db.session.execute(text("ALTER TABLE ordens_producao MODIFY COLUMN estado VARCHAR(50) NULL;"))
+        db.session.commit()
+        print("[OK] Updated columns on table 'ordens_producao' to VARCHAR(50).")
+    except Exception as e:
+        db.session.rollback()
+
+    try:
+        db.session.execute(text("ALTER TABLE requisicoes MODIFY COLUMN sector VARCHAR(50) NOT NULL;"))
+        db.session.execute(text("ALTER TABLE requisicoes MODIFY COLUMN tipo VARCHAR(50) NOT NULL;"))
+        db.session.execute(text("ALTER TABLE requisicoes MODIFY COLUMN estado VARCHAR(50) NULL;"))
+        db.session.execute(text("ALTER TABLE requisicoes_itens MODIFY COLUMN tipo_item VARCHAR(50) NOT NULL;"))
+        db.session.commit()
+        print("[OK] Updated columns on tables 'requisicoes' and 'requisicoes_itens' to VARCHAR(50).")
+    except Exception as e:
+        db.session.rollback()
+
     # Ensure columns taxa_iva_id and unidade_medida_id exist in 'produtos' table
     try:
         db.session.execute(text("ALTER TABLE produtos ADD COLUMN taxa_iva_id INT NULL;"))

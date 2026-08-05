@@ -83,6 +83,7 @@ def create_app(config_class=Config):
     app.register_blueprint(auth_bp, url_prefix='/api/v1/auth')
     app.register_blueprint(user_bp, url_prefix='/api/v1/users')
     app.register_blueprint(comercial_bp, url_prefix='/api/v1/vendas')
+    app.register_blueprint(comercial_bp, url_prefix='/api/v1/comercial', name='comercial_alt')
     app.register_blueprint(fiscal_bp, url_prefix='/api/v1/fiscal')
     app.register_blueprint(armazem_bp, url_prefix='/api/v1/armazem')
     app.register_blueprint(pedido_bp, url_prefix='/api/v1/pedidos')

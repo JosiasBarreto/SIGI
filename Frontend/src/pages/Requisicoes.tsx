@@ -80,8 +80,8 @@ export default function Requisicoes() {
     }
   });
 
-  const requisitions = requisitionsResponse?.items || [];
-  const occurrences = occurrencesResponse?.items || [];
+  const requisitions = requisitionsResponse?.items || (requisitionsResponse as any)?.data || (Array.isArray(requisitionsResponse) ? requisitionsResponse : []);
+  const occurrences = occurrencesResponse?.items || (occurrencesResponse as any)?.data || (Array.isArray(occurrencesResponse) ? occurrencesResponse : []);
   const canCreate = ["Administrador", "Cozinha", "Pastelaria"].includes(user?.role || "");
 
   const tabConfigs = [

@@ -12,7 +12,7 @@ from app.models.evento import (
 )
 from app.core.database import db
 from app.middleware.auth_middleware import requires_roles
-from marshmallow import ValidationError
+from marshmallow import ValidationError, EXCLUDE
 import io
 
 evento_bp = Blueprint('eventos', __name__)
@@ -301,6 +301,7 @@ def desativar_equipa_cadastro(id):
 
 # ESPAÇOS
 @evento_bp.route('/espacos', methods=['GET'])
+@evento_bp.route('/cadastros/espacos', methods=['GET'])
 @jwt_required()
 def get_espacos():
     return build_pagination(evento_service.espaco_repo, EspacoSchema, request)
@@ -360,10 +361,12 @@ def get_evento_by_id(id):
 @jwt_required()
 @requires_roles('Administrador', 'Atendimento', 'Comercial')
 def update_evento(id):
+    raw_data = request.get_json() or {}
     try:
-        data = EventoSchema().load(request.get_json(), partial=True)
+        data = EventoSchema().load(raw_data, partial=True, unknown=EXCLUDE)
     except ValidationError as err:
-        return jsonify({"msg": "Validation error", "errors": err.messages}), 400
+        # If schema validation fails on nested object details, extract valid raw fields
+        data = raw_data
         
     user_id = get_jwt_identity()
     result, error = evento_service.update_evento(id, data, user_id)

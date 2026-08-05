@@ -317,6 +317,74 @@ export const clientService = {
   }
 };
 
+const cleanEnumString = (val: any): string => {
+  if (!val || typeof val !== 'string') return '';
+  let str = val.trim();
+  if (str.includes('.')) {
+    str = str.split('.').pop() || str;
+  }
+  return str;
+};
+
+const normalizeOrderFromBackend = (order: any): any => {
+  if (!order || typeof order !== 'object') return order;
+
+  const rawEstado = cleanEnumString(order.estado || order.status).toUpperCase();
+  let estado = 'Pendente';
+  if (rawEstado === 'PENDENTE') estado = 'Pendente';
+  else if (rawEstado === 'AGENDADO') estado = 'Agendado';
+  else if (rawEstado === 'CONFIRMADO') estado = 'Confirmado';
+  else if (rawEstado === 'EM_PRODUCAO' || rawEstado === 'EM_PRODUÇÃO' || rawEstado === 'EM_PREPARACAO' || rawEstado === 'EM_PREPARAÇÃO' || rawEstado === 'EM_EXECUCAO') estado = 'Em Producao';
+  else if (rawEstado === 'PRONTO') estado = 'Pronto';
+  else if (rawEstado === 'EM_ENTREGA') estado = 'Em Entrega';
+  else if (rawEstado === 'ENTREGUE') estado = 'Entregue';
+  else if (rawEstado === 'CONCLUIDO' || rawEstado === 'CONCLUÍDO') estado = 'Concluido';
+  else if (rawEstado === 'CANCELADO') estado = 'Cancelado';
+  else if (order.estado || order.status) {
+    const raw = cleanEnumString(order.estado || order.status);
+    estado = raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase();
+  }
+
+  const rawPag = cleanEnumString(order.estado_pagamento).toUpperCase();
+  let estado_pagamento = 'Pendente';
+  if (rawPag === 'PAGO') estado_pagamento = 'Pago';
+  else if (rawPag === 'PARCIAL') estado_pagamento = 'Parcial';
+  else if (rawPag === 'PENDENTE') estado_pagamento = 'Pendente';
+  else if (rawPag === 'CANCELADO') estado_pagamento = 'Cancelado';
+  else if (order.estado_pagamento) {
+    estado_pagamento = cleanEnumString(order.estado_pagamento);
+  }
+
+  const rawForma = cleanEnumString(order.forma_pagamento).toUpperCase();
+  let forma_pagamento = cleanEnumString(order.forma_pagamento);
+  if (rawForma === 'DINHEIRO') forma_pagamento = 'Dinheiro';
+  else if (rawForma === 'MULTIBANCO') forma_pagamento = 'Multibanco';
+  else if (rawForma === 'TRANSFERENCIA') forma_pagamento = 'Transferência';
+
+  const rawOrigem = cleanEnumString(order.origem).toUpperCase();
+  let origem = cleanEnumString(order.origem);
+  if (rawOrigem === 'BALCAO') origem = 'Balcão';
+  else if (rawOrigem === 'EVENTO') origem = 'Evento';
+
+  const rawTipo = cleanEnumString(order.tipo).toUpperCase();
+  let tipo = cleanEnumString(order.tipo);
+  if (rawTipo === 'SIMPLES') tipo = 'Simples';
+  else if (rawTipo === 'COMPOSTO') tipo = 'Composto';
+
+  return {
+    ...order,
+    estado,
+    status: estado,
+    estado_pagamento,
+    forma_pagamento: forma_pagamento || order.forma_pagamento,
+    origem: origem || order.origem,
+    tipo: tipo || order.tipo,
+    valor_total: typeof order.valor_total === 'string' ? parseFloat(order.valor_total) : (order.valor_total ?? order.total ?? 0),
+    valor_pago: typeof order.valor_pago === 'string' ? parseFloat(order.valor_pago) : (order.valor_pago ?? 0),
+    saldo: typeof order.saldo === 'string' ? parseFloat(order.saldo) : (order.saldo ?? 0)
+  };
+};
+
 const normalizePedidoEstado = (estado: string): string => {
   if (!estado) return "Agendado";
   const e = estado.trim();
@@ -356,19 +424,57 @@ const baseOrderService = createService<PedidoDTO>('/v1/pedidos', 'orders');
 
 export const orderService = {
   ...baseOrderService,
+  async getAll(params?: BaseServiceParams): Promise<PaginatedData<PedidoDTO>> {
+    const res = await baseOrderService.getAll(params);
+    if (res && Array.isArray(res.items)) {
+      return {
+        ...res,
+        items: res.items.map(normalizeOrderFromBackend)
+      };
+    }
+    return res;
+  },
+  async getById(id: string | number): Promise<PedidoDTO> {
+    const res = await baseOrderService.getById(String(id));
+    return normalizeOrderFromBackend(res);
+  },
   async create(data: Partial<PedidoDTO>): Promise<PedidoDTO> {
-    const payload = { ...data };
+    const payload: any = { ...data };
     if (payload.estado) {
       payload.estado = normalizePedidoEstado(payload.estado);
     } else {
       payload.estado = "Agendado";
     }
+    if (Array.isArray(payload.itens)) {
+      payload.itens = payload.itens.map((it: any) => {
+        let normalizedTipo = it.tipo_item || 'Produto';
+        if (['ProdutoCozinha', 'ProdutoPastelaria', 'ProdutoRevenda', 'PRODUTO'].includes(it.tipo_item) || (typeof it.tipo_item === 'string' && it.tipo_item.startsWith('Produto'))) {
+          normalizedTipo = 'Produto';
+        }
+        return {
+          ...it,
+          tipo_item: normalizedTipo
+        };
+      });
+    }
     return baseOrderService.create(payload);
   },
   async update(id: string | number, data: Partial<PedidoDTO>): Promise<PedidoDTO> {
-    const payload = { ...data };
+    const payload: any = { ...data };
     if (payload.estado) {
       payload.estado = normalizePedidoEstado(payload.estado);
+    }
+    if (Array.isArray(payload.itens)) {
+      payload.itens = payload.itens.map((it: any) => {
+        let normalizedTipo = it.tipo_item || 'Produto';
+        if (['ProdutoCozinha', 'ProdutoPastelaria', 'ProdutoRevenda', 'PRODUTO'].includes(it.tipo_item) || (typeof it.tipo_item === 'string' && it.tipo_item.startsWith('Produto'))) {
+          normalizedTipo = 'Produto';
+        }
+        return {
+          ...it,
+          tipo_item: normalizedTipo
+        };
+      });
     }
     return baseOrderService.update(String(id), payload);
   },
@@ -892,16 +998,65 @@ export const documentService = {
 
 const baseEventService = createService<EventoDTO>('/v1/eventos', 'events');
 
+const normalizeEspacoPayload = (data: any) => {
+  if (!data || typeof data !== 'object') return data;
+  const payload = { ...data };
+
+  let raw = payload.estado || payload.estado_espaco || payload.status;
+  let estadoVal = 'Ativo';
+
+  if (typeof raw === 'string') {
+    const trimmed = raw.trim().toUpperCase();
+    if (trimmed === 'INATIVO' || trimmed === 'INACTIVE' || trimmed === 'FALSE' || trimmed === '0') {
+      estadoVal = 'Inativo';
+    } else {
+      estadoVal = 'Ativo';
+    }
+  } else if (typeof raw === 'boolean') {
+    estadoVal = raw ? 'Ativo' : 'Inativo';
+  }
+
+  payload.estado = estadoVal;
+  payload.estado_espaco = estadoVal;
+  payload.is_active = estadoVal === 'Ativo';
+
+  return payload;
+};
+
 export const eventService = {
   ...baseEventService,
   async create(data: Partial<EventoDTO>): Promise<EventoDTO> {
     const payload: any = { ...data };
     delete payload.espaco_id;
+    if (Array.isArray(payload.itens)) {
+      payload.itens = payload.itens.map((it: any) => {
+        let normalizedTipo = it.tipo_item || 'Servico';
+        if (['ProdutoCozinha', 'ProdutoPastelaria', 'ProdutoRevenda', 'PRODUTO'].includes(it.tipo_item) || (typeof it.tipo_item === 'string' && it.tipo_item.startsWith('Produto'))) {
+          normalizedTipo = 'Produto';
+        }
+        return {
+          ...it,
+          tipo_item: normalizedTipo
+        };
+      });
+    }
     return baseEventService.create(payload);
   },
   async update(id: string | number, data: Partial<EventoDTO>): Promise<EventoDTO> {
     const payload: any = { ...data };
     delete payload.espaco_id;
+    if (Array.isArray(payload.itens)) {
+      payload.itens = payload.itens.map((it: any) => {
+        let normalizedTipo = it.tipo_item || 'Servico';
+        if (['ProdutoCozinha', 'ProdutoPastelaria', 'ProdutoRevenda', 'PRODUTO'].includes(it.tipo_item) || (typeof it.tipo_item === 'string' && it.tipo_item.startsWith('Produto'))) {
+          normalizedTipo = 'Produto';
+        }
+        return {
+          ...it,
+          tipo_item: normalizedTipo
+        };
+      });
+    }
     return baseEventService.update(String(id), payload);
   },
   faturar: async (id: string | number, pagamento?: { valor: number; forma_pagamento_id: number; codigo_transferencia?: string | null; emissor?: string | null; observacoes?: string }): Promise<any> => {
@@ -961,16 +1116,42 @@ export const eventService = {
   },
   espacos: {
     async listar(params?: any): Promise<any> {
-      return apiClient.get<any, any>('/v1/eventos/espacos', { params });
+      try {
+        return await apiClient.get<any, any>('/v1/eventos/cadastros/espacos', { params });
+      } catch {
+        try {
+          return await apiClient.get<any, any>('/v1/eventos/espacos', { params });
+        } catch {
+          return await apiClient.get<any, any>('/v1/espacos', { params });
+        }
+      }
     },
     async criar(data: any): Promise<any> {
-      return apiClient.post<any, any>('/v1/eventos/espacos', data);
+      const payload = normalizeEspacoPayload(data);
+      try {
+        return await apiClient.post<any, any>('/v1/eventos/cadastros/espacos', payload);
+      } catch {
+        return await apiClient.post<any, any>('/v1/eventos/espacos', payload);
+      }
     },
     async atualizar(id: string | number, data: any): Promise<any> {
-      return apiClient.put<any, any>(`/v1/eventos/espacos/${id}`, data);
+      const payload = normalizeEspacoPayload(data);
+      try {
+        return await apiClient.put<any, any>(`/v1/eventos/cadastros/espacos/${id}`, payload);
+      } catch {
+        return await apiClient.put<any, any>(`/v1/eventos/espacos/${id}`, payload);
+      }
     },
     async desativar(id: string | number): Promise<any> {
-      return apiClient.patch<any, any>(`/v1/eventos/espacos/${id}/desativar`);
+      try {
+        return await apiClient.patch<any, any>(`/v1/eventos/cadastros/espacos/${id}/desativar`);
+      } catch {
+        try {
+          return await apiClient.patch<any, any>(`/v1/eventos/espacos/${id}/desativar`);
+        } catch {
+          return await apiClient.put<any, any>(`/v1/eventos/cadastros/espacos/${id}`, { estado: 'Inativo', estado_espaco: 'Inativo' });
+        }
+      }
     }
   },
   politicasComerciais: {

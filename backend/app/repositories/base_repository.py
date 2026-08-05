@@ -29,9 +29,14 @@ class BaseRepository(Generic[T]):
             query = query.filter_by(is_active=True)
         
         if filters:
+            from sqlalchemy import func
             for k, v in filters.items():
                 if hasattr(self.model_class, k) and v is not None and v != "":
-                    query = query.filter(getattr(self.model_class, k) == v)
+                    col = getattr(self.model_class, k)
+                    if isinstance(v, str):
+                        query = query.filter(func.lower(col) == v.lower())
+                    else:
+                        query = query.filter(col == v)
                     
         if search and search_fields:
             search_filters = [getattr(self.model_class, field).ilike(f"%{search}%") for field in search_fields if hasattr(self.model_class, field)]

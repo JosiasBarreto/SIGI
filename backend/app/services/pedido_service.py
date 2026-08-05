@@ -22,6 +22,20 @@ class PedidoService:
         cliente = Cliente(**data, created_by=user_id)
         self.cliente_repo.create(cliente)
         AuditService.log_action(user_id, "CREATE", "clientes", cliente.id, new_values=data)
+        
+        # Disparar notificação de boas-vindas ao cliente (Email / SMS / WhatsApp)
+        try:
+            from app.services.notification_service import NotificationService
+            if cliente.email or cliente.telefone or cliente.whatsapp:
+                NotificationService.send_cliente_welcome_async(
+                    cliente_nome=cliente.nome,
+                    cliente_email=cliente.email,
+                    cliente_telefone=cliente.telefone or cliente.whatsapp,
+                    method="both"
+                )
+        except Exception as e:
+            print("⚠ Erro ao enviar boas-vindas ao cliente:", e)
+
         return cliente, None
 
 
@@ -152,12 +166,9 @@ class PedidoService:
             )
             db.session.add(i_pedido)
 
-        pedido.subtotal = subtotal_pedido
-        pedido.desconto_total = total_desconto
-        pedido.base_tributavel = base_tributavel
-        pedido.total_iva = total_iva
         pedido.valor_total = total
         pedido.saldo = total - valor_pago
+
 
         
         if pedido.saldo <= 0 and pedido.valor_total > 0:
@@ -206,7 +217,16 @@ class PedidoService:
         # SocketIO Notification
         socketio.emit('novo_pedido', {'numero': pedido.numero, 'estado': pedido.estado.value if hasattr(pedido.estado, 'value') else pedido.estado})
 
-        
+        # Disparar notificação por Email / WhatsApp ao cliente
+        try:
+            from app.services.notification_service import NotificationService
+            if pedido.cliente and (pedido.cliente.email or pedido.cliente.telefone):
+                contact = pedido.cliente.email if pedido.cliente.email else pedido.cliente.telefone
+                method = "email" if pedido.cliente.email else "whatsapp"
+                NotificationService.send_pedido_async(pedido.id, contact, method=method, trigger="creation")
+        except Exception as e:
+            print("⚠ Erro ao disparar notificação do pedido:", e)
+
         return pedido, None
 
     def add_pagamento(self, pedido_id, data, user_id):
@@ -324,6 +344,16 @@ class PedidoService:
                 'novo_estado': novo_estado
             })
             
+            # Disparar notificação ao cliente
+            try:
+                from app.services.notification_service import NotificationService
+                if pedido.cliente and (pedido.cliente.email or pedido.cliente.telefone):
+                    contact = pedido.cliente.email if pedido.cliente.email else pedido.cliente.telefone
+                    method = "email" if pedido.cliente.email else "whatsapp"
+                    NotificationService.send_pedido_async(pedido.id, contact, method=method, trigger="status_update")
+            except Exception as e:
+                print("⚠ Erro ao notificar alteração de estado:", e)
+
             return pedido, None
         except Exception as e:
             db.session.rollback()

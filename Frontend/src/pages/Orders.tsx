@@ -378,12 +378,12 @@ export default function Orders() {
 
 
   const estadoMap: Record<string, string[]> = {
-    "Agendados": ["Pendente", "Agendado"],
-    "Confirmados": ["Confirmado"],
-    "Produção": ["Em Producao"],
-    "Prontos": ["Pronto"],
-    "Concluídos": ["Em Entrega", "Entregue", "Concluido", "Concluído"],
-    "Cancelados": ["Cancelado"],
+    "Agendados": ["Pendente", "Agendado", "PENDENTE", "AGENDADO"],
+    "Confirmados": ["Confirmado", "CONFIRMADO"],
+    "Produção": ["Em Producao", "Em Produção", "EM_PRODUCAO", "EM_PREPARACAO"],
+    "Prontos": ["Pronto", "PRONTO"],
+    "Concluídos": ["Em Entrega", "Entregue", "Concluido", "Concluído", "CONCLUIDO", "ENTREGUE"],
+    "Cancelados": ["Cancelado", "CANCELADO"],
   };
 
   const visibleOrders = orders?.filter((o: any) => {
@@ -391,7 +391,13 @@ export default function Orders() {
         String(o.numero || o.id).toLowerCase().includes(searchTerm.toLowerCase());
     
     const mappedStatuses = estadoMap[activeTab] || [];
-    const matchesStatus = mappedStatuses.includes(o.estado || o.status);
+    const rawState = String(o.estado || o.status || '');
+    const cleanState = rawState.includes('.') ? (rawState.split('.').pop() || '') : rawState;
+    const matchesStatus = mappedStatuses.some(st => 
+      st.toLowerCase() === cleanState.toLowerCase() ||
+      cleanState.toLowerCase().includes(st.toLowerCase()) ||
+      rawState.toLowerCase().includes(st.toLowerCase())
+    );
     
     return matchesSearch && matchesStatus;
   }) || [];

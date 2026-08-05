@@ -13,7 +13,7 @@ const formatMoeda = (val: number) => formatCurrency(Number(val || 0));
 
 interface EventoItemForm {
   id?: number;
-  tipo_item: 'Servico' | 'Espaco' | 'Material' | 'MaoDeObra' | 'Produto' | 'Outro';
+  tipo_item: 'Servico' | 'Espaco' | 'Material' | 'MaoDeObra' | 'Produto' | 'ProdutoCozinha' | 'ProdutoPastelaria' | 'ProdutoRevenda' | 'Outro';
   referencia_id?: number | null;
   produto_id?: number | null;
   descricao: string;
@@ -206,14 +206,41 @@ export default function EventoFormPage() {
   };
 
   // Add Item Line
-  const handleAddItem = (tipo: 'Servico' | 'Espaco' | 'Material' | 'MaoDeObra' | 'Produto' | 'Outro' = 'Servico') => {
+  const handleAddItem = (tipo: EventoItemForm['tipo_item'] = 'Servico') => {
+    let desc = 'Item do Evento';
+    let qtd = 1;
+    let unid = 'Unidade';
+
+    if (tipo === 'Servico') {
+      desc = 'Serviço de Cozinha e Catering';
+      qtd = numeroConvidados;
+      unid = 'Pessoa';
+    } else if (tipo === 'Espaco') {
+      desc = 'Aluguer de Salão / Recinto';
+    } else if (tipo === 'Material') {
+      desc = 'Aluguer de Louças / Equipamentos';
+      qtd = numeroConvidados;
+    } else if (tipo === 'MaoDeObra') {
+      desc = 'Mão de Obra / Garçons';
+      unid = 'Hora';
+    } else if (tipo === 'ProdutoCozinha') {
+      desc = 'Menu Cozinha (Ordem Produção)';
+      qtd = numeroConvidados;
+      unid = 'Pessoa';
+    } else if (tipo === 'ProdutoPastelaria') {
+      desc = 'Bolo / Pastelaria (Ordem Produção)';
+    } else if (tipo === 'ProdutoRevenda') {
+      desc = 'Bebidas / Revenda Direta';
+      unid = 'Garrafa';
+    }
+
     const newItem: EventoItemForm = {
       tipo_item: tipo,
       referencia_id: null,
       produto_id: null,
-      descricao: tipo === 'Servico' ? 'Serviço de Cozinha e Catering' : tipo === 'Espaco' ? 'Aluguer de Salão Nobre' : 'Item do Evento',
-      quantidade: tipo === 'Servico' ? numeroConvidados : 1,
-      unidade: tipo === 'Servico' ? 'Pessoa' : 'Unidade',
+      descricao: desc,
+      quantidade: qtd,
+      unidade: unid,
       preco_unitario: 0,
       taxa_iva: taxaIvaServicos,
       observacoes: ''
@@ -251,12 +278,13 @@ export default function EventoFormPage() {
             item.descricao = `Aluguer ${found.nome}`;
             item.preco_unitario = Number(found.preco_aluguer || 0);
           }
-        } else if (item.tipo_item === 'Produto') {
+        } else if (['Produto', 'ProdutoCozinha', 'ProdutoPastelaria', 'ProdutoRevenda'].includes(item.tipo_item)) {
           const found = produtos.find((p: any) => p.id === Number(value));
           if (found) {
             item.descricao = found.nome;
             item.produto_id = found.id;
             item.preco_unitario = Number(found.preco || 0);
+            if (found.unidade_medida) item.unidade = found.unidade_medida;
           }
         } else if (item.tipo_item === 'Material') {
           const found = materiais.find((m: any) => m.id === Number(value));
@@ -275,6 +303,8 @@ export default function EventoFormPage() {
   // Real-time Financial Calculations
   const calculatedResumo = React.useMemo(() => {
     let subtotalProdutos = 0;
+    let subtotalCozinhaPastelaria = 0;
+    let subtotalRevenda = 0;
     let subtotalServicos = 0;
     let subtotalAlugueres = 0;
     let totalIvaProdutos = 0;
@@ -286,8 +316,13 @@ export default function EventoFormPage() {
       const liquid = Math.max(0, sub - desc);
       const iva = cobrarIvaServicos ? (liquid * (Number(it.taxa_iva || 15) / 100)) : 0;
 
-      if (it.tipo_item === 'Produto') {
+      if (['Produto', 'ProdutoCozinha', 'ProdutoPastelaria'].includes(it.tipo_item)) {
         subtotalProdutos += liquid;
+        subtotalCozinhaPastelaria += liquid;
+        totalIvaProdutos += iva;
+      } else if (it.tipo_item === 'ProdutoRevenda') {
+        subtotalProdutos += liquid;
+        subtotalRevenda += liquid;
         totalIvaProdutos += iva;
       } else if (it.tipo_item === 'Espaco' || it.tipo_item === 'Material') {
         subtotalAlugueres += liquid;
@@ -304,6 +339,8 @@ export default function EventoFormPage() {
 
     return {
       subtotalProdutos,
+      subtotalCozinhaPastelaria,
+      subtotalRevenda,
       subtotalServicos,
       subtotalAlugueres,
       subtotalGeral,
@@ -558,38 +595,63 @@ export default function EventoFormPage() {
                   <Calculator className="text-primary" size={18} /> 2. Itens do Orçamento Comercial (`eventos_itens`)
                 </h2>
                 <p className="text-xs text-gray-400 mt-0.5">
-                  Adicione serviços, salões, materiais, mão de obra ou produtos com sugestão automática de preços.
+                  Adicione menus da cozinha, pastelaria, produtos de revenda, serviços, salões ou equipamentos.
                 </p>
               </div>
 
-              <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => handleAddItem('ProdutoCozinha')}
+                  className="px-2.5 py-1.5 bg-amber-500/10 text-amber-700 hover:bg-amber-500/20 dark:text-amber-300 text-xs font-bold rounded-lg flex items-center gap-1"
+                  title="Gera Ordem de Produção Cozinha"
+                >
+                  🍳 Cozinha
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleAddItem('ProdutoPastelaria')}
+                  className="px-2.5 py-1.5 bg-pink-500/10 text-pink-700 hover:bg-pink-500/20 dark:text-pink-300 text-xs font-bold rounded-lg flex items-center gap-1"
+                  title="Gera Ordem de Produção Pastelaria"
+                >
+                  🥐 Pastelaria
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleAddItem('ProdutoRevenda')}
+                  className="px-2.5 py-1.5 bg-purple-500/10 text-purple-700 hover:bg-purple-500/20 dark:text-purple-300 text-xs font-bold rounded-lg flex items-center gap-1"
+                  title="Produtos de Revenda (Bebidas, Snacks - Sem Produção)"
+                >
+                  🍾 Revenda
+                </button>
                 <button
                   type="button"
                   onClick={() => handleAddItem('Servico')}
-                  className="px-3 py-1.5 bg-primary/10 text-primary hover:bg-primary/20 text-xs font-bold rounded-lg flex items-center gap-1"
+                  className="px-2.5 py-1.5 bg-primary/10 text-primary hover:bg-primary/20 text-xs font-bold rounded-lg flex items-center gap-1"
                 >
                   <Plus size={14} /> Serviço
                 </button>
                 <button
                   type="button"
                   onClick={() => handleAddItem('Espaco')}
-                  className="px-3 py-1.5 bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 text-xs font-bold rounded-lg flex items-center gap-1"
+                  className="px-2.5 py-1.5 bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 text-xs font-bold rounded-lg flex items-center gap-1"
                 >
                   <Plus size={14} /> Espaço
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleAddItem('MaoDeObra')}
-                  className="px-3 py-1.5 bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 text-xs font-bold rounded-lg flex items-center gap-1"
+                  onClick={() => handleAddItem('Material')}
+                  className="px-2.5 py-1.5 bg-cyan-500/10 text-cyan-600 hover:bg-cyan-500/20 text-xs font-bold rounded-lg flex items-center gap-1"
+                  title="Gera Requisição Interna Logística"
                 >
-                  <Plus size={14} /> Equipas
+                  🚚 Material
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleAddItem('Produto')}
-                  className="px-3 py-1.5 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 text-xs font-bold rounded-lg flex items-center gap-1"
+                  onClick={() => handleAddItem('MaoDeObra')}
+                  className="px-2.5 py-1.5 bg-slate-500/10 text-slate-700 hover:bg-slate-500/20 dark:text-slate-300 text-xs font-bold rounded-lg flex items-center gap-1"
                 >
-                  <Plus size={14} /> Produto
+                  <Plus size={14} /> Equipa
                 </button>
               </div>
             </div>
@@ -598,205 +660,256 @@ export default function EventoFormPage() {
               <div className="p-8 text-center border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-2xl bg-gray-50/50 dark:bg-gray-800/30 space-y-3">
                 <Sparkles className="mx-auto text-primary animate-bounce" size={32} />
                 <p className="text-xs font-bold text-gray-700 dark:text-gray-300">
-                  Nenhum item adicionado ao orçamento.
+                  Nenhum item adicionado ao orçamento do evento.
                 </p>
-                <p className="text-[11px] text-gray-400 max-w-md mx-auto">
-                  Clique nos botões acima para incluir serviços de catering, alugueres de espaço ou mão de obra com integração dinâmica de motor de preços.
+                <p className="text-[11px] text-gray-400 max-w-md mx-auto leading-relaxed">
+                  Utilize os botões acima para incluir menus de Cozinha & Pastelaria (geram Ordens de Produção), Produtos de Revenda (bebidas, snacks com stock direto), Serviços ou Equipamentos.
                 </p>
-                <button
-                  type="button"
-                  onClick={() => handleAddItem('Servico')}
-                  className="px-4 py-2 bg-primary text-white font-bold text-xs rounded-xl shadow hover:bg-primary-hover transition-all"
-                >
-                  + Adicionar Serviço Sugerido
-                </button>
+                <div className="flex items-center justify-center gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => handleAddItem('ProdutoCozinha')}
+                    className="px-3.5 py-2 bg-amber-500 text-white font-bold text-xs rounded-xl shadow hover:bg-amber-600 transition-all flex items-center gap-1"
+                  >
+                    🍳 + Menu Cozinha
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleAddItem('ProdutoRevenda')}
+                    className="px-3.5 py-2 bg-purple-600 text-white font-bold text-xs rounded-xl shadow hover:bg-purple-700 transition-all flex items-center gap-1"
+                  >
+                    🍾 + Bebidas / Revenda
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleAddItem('Servico')}
+                    className="px-3.5 py-2 bg-primary text-white font-bold text-xs rounded-xl shadow hover:bg-primary-hover transition-all flex items-center gap-1"
+                  >
+                    💼 + Serviço
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="space-y-4">
-                {itens.map((item, index) => (
-                  <div key={index} className="p-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-800/40 space-y-3 relative group">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className={`px-2 py-0.5 text-[10px] font-black rounded uppercase tracking-wider ${
-                          item.tipo_item === 'Servico' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/40' :
-                          item.tipo_item === 'Espaco' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40' :
-                          item.tipo_item === 'MaoDeObra' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/40' :
-                          item.tipo_item === 'Produto' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40' : 'bg-gray-200 text-gray-800'
-                        }`}>
-                          Linha #{index + 1} - {item.tipo_item}
-                        </span>
+                {itens.map((item, index) => {
+                  const getDestinationBadge = () => {
+                    if (item.tipo_item === 'ProdutoCozinha') return { label: '🍳 Setor Cozinha → Ordem de Produção', color: 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300' };
+                    if (item.tipo_item === 'ProdutoPastelaria') return { label: '🥐 Setor Pastelaria → Ordem de Produção', color: 'bg-pink-100 text-pink-800 dark:bg-pink-950 dark:text-pink-300' };
+                    if (item.tipo_item === 'ProdutoRevenda') return { label: '🍾 Revenda Direta → Abate Stock & Faturação (Sem Produção)', color: 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300' };
+                    if (item.tipo_item === 'Material') return { label: '🚚 Logística → Requisição de Equipamentos', color: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-950 dark:text-cyan-300' };
+                    if (item.tipo_item === 'Espaco') return { label: '🏛️ Reserva Recinto → Agenda Anti-conflito', color: 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300' };
+                    if (item.tipo_item === 'MaoDeObra') return { label: '👥 Recursos Humanos → Afetação Equipa', color: 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300' };
+                    if (item.tipo_item === 'Produto') return { label: '📦 Produto Geral', color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' };
+                    return { label: '💼 Serviço Contratado', color: 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300' };
+                  };
 
-                        {item.sugestao_origem && (
-                          <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded flex items-center gap-1 border border-emerald-200/50">
-                            <Sparkles size={10} /> {item.sugestao_origem}
+                  const badge = getDestinationBadge();
+
+                  return (
+                    <div key={index} className="p-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-800/40 space-y-3 relative group">
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className={`px-2.5 py-0.5 text-[10px] font-black rounded uppercase tracking-wider ${badge.color}`}>
+                            Linha #{index + 1} • {badge.label}
                           </span>
-                        )}
+
+                          {item.sugestao_origem && (
+                            <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded flex items-center gap-1 border border-emerald-200/50">
+                              <Sparkles size={10} /> {item.sugestao_origem}
+                            </span>
+                          )}
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveItem(index)}
+                          className="text-gray-400 hover:text-rose-500 p-1 rounded hover:bg-rose-50 transition-colors"
+                          title="Remover Item"
+                        >
+                          <Trash2 size={16} />
+                        </button>
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveItem(index)}
-                        className="text-gray-400 hover:text-rose-500 p-1 rounded hover:bg-rose-50 transition-colors"
-                        title="Remover Item"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
+                      <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
+                        {/* TIPO E REFERÊNCIA */}
+                        <div className="md:col-span-3 space-y-1">
+                          <label className="text-[10px] font-bold text-gray-500 uppercase">Seleção de Catálogo</label>
+                          {item.tipo_item === 'Servico' ? (
+                            <select
+                              value={item.referencia_id || ''}
+                              onChange={e => {
+                                const val = e.target.value ? Number(e.target.value) : null;
+                                handleItemChange(index, 'referencia_id', val);
+                                if (val) handleConsultarSugestao(index, 'Servico', val);
+                              }}
+                              className="w-full p-2 bg-white dark:bg-gray-900 border rounded-lg text-xs"
+                            >
+                              <option value="">Serviço Livre...</option>
+                              {servicosCadastro.map((s: any) => (
+                                <option key={s.id} value={s.id}>{s.nome}</option>
+                              ))}
+                            </select>
+                          ) : item.tipo_item === 'Espaco' ? (
+                            <select
+                              value={item.referencia_id || ''}
+                              onChange={e => {
+                                const val = e.target.value ? Number(e.target.value) : null;
+                                handleItemChange(index, 'referencia_id', val);
+                                if (val) handleConsultarSugestao(index, 'Espaco', val);
+                              }}
+                              className="w-full p-2 bg-white dark:bg-gray-900 border rounded-lg text-xs"
+                            >
+                              <option value="">Espaço Livre...</option>
+                              {espacos.map((es: any) => (
+                                <option key={es.id} value={es.id}>{es.nome}</option>
+                              ))}
+                            </select>
+                          ) : item.tipo_item === 'MaoDeObra' ? (
+                            <select
+                              value={item.referencia_id || ''}
+                              onChange={e => {
+                                const val = e.target.value ? Number(e.target.value) : null;
+                                handleItemChange(index, 'referencia_id', val);
+                                if (val) handleConsultarSugestao(index, 'MaoDeObra', val);
+                              }}
+                              className="w-full p-2 bg-white dark:bg-gray-900 border rounded-lg text-xs"
+                            >
+                              <option value="">Cargo Livre...</option>
+                              {equipasCadastro.map((eq: any) => (
+                                <option key={eq.id} value={eq.id}>{eq.nome}</option>
+                              ))}
+                            </select>
+                          ) : ['Produto', 'ProdutoCozinha', 'ProdutoPastelaria', 'ProdutoRevenda'].includes(item.tipo_item) ? (
+                            <select
+                              value={item.produto_id || ''}
+                              onChange={e => {
+                                const val = e.target.value ? Number(e.target.value) : null;
+                                handleItemChange(index, 'produto_id', val);
+                              }}
+                              className="w-full p-2 bg-white dark:bg-gray-900 border rounded-lg text-xs"
+                            >
+                              <option value="">
+                                {item.tipo_item === 'ProdutoRevenda' ? 'Selecione Produto de Revenda...' : 'Selecione Produto...'}
+                              </option>
+                              {produtos
+                                .filter((p: any) => {
+                                  if (item.tipo_item === 'ProdutoRevenda') return p.tipo === 'Revenda' || p.servico === 'BAR' || p.categoria === 'Revenda';
+                                  if (item.tipo_item === 'ProdutoCozinha') return p.servico === 'COZINHA' || p.tipo === 'Acabado';
+                                  if (item.tipo_item === 'ProdutoPastelaria') return p.servico === 'PASTELARIA' || p.tipo === 'Acabado';
+                                  return true;
+                                })
+                                .map((p: any) => (
+                                  <option key={p.id} value={p.id}>{p.nome} ({p.tipo || p.servico || 'Produto'})</option>
+                                ))}
+                            </select>
+                          ) : item.tipo_item === 'Material' ? (
+                            <select
+                              value={item.referencia_id || ''}
+                              onChange={e => {
+                                const val = e.target.value ? Number(e.target.value) : null;
+                                handleItemChange(index, 'referencia_id', val);
+                              }}
+                              className="w-full p-2 bg-white dark:bg-gray-900 border rounded-lg text-xs"
+                            >
+                              <option value="">Material / Equipamento...</option>
+                              {materiais.map((m: any) => (
+                                <option key={m.id} value={m.id}>{m.nome}</option>
+                              ))}
+                            </select>
+                          ) : (
+                            <input
+                              type="text"
+                              placeholder="Nome / Descrição livre..."
+                              value={item.descricao}
+                              onChange={e => handleItemChange(index, 'descricao', e.target.value)}
+                              className="w-full p-2 bg-white dark:bg-gray-900 border rounded-lg text-xs"
+                            />
+                          )}
+                        </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
-                      {/* TIPO E REFERÊNCIA */}
-                      <div className="md:col-span-3 space-y-1">
-                        <label className="text-[10px] font-bold text-gray-500 uppercase">Seleção de Referência</label>
-                        {item.tipo_item === 'Servico' ? (
-                          <select
-                            value={item.referencia_id || ''}
-                            onChange={e => {
-                              const val = e.target.value ? Number(e.target.value) : null;
-                              handleItemChange(index, 'referencia_id', val);
-                              if (val) handleConsultarSugestao(index, 'Servico', val);
-                            }}
-                            className="w-full p-2 bg-white dark:bg-gray-900 border rounded-lg text-xs"
-                          >
-                            <option value="">Serviço Livre...</option>
-                            {servicosCadastro.map((s: any) => (
-                              <option key={s.id} value={s.id}>{s.nome}</option>
-                            ))}
-                          </select>
-                        ) : item.tipo_item === 'Espaco' ? (
-                          <select
-                            value={item.referencia_id || ''}
-                            onChange={e => {
-                              const val = e.target.value ? Number(e.target.value) : null;
-                              handleItemChange(index, 'referencia_id', val);
-                              if (val) handleConsultarSugestao(index, 'Espaco', val);
-                            }}
-                            className="w-full p-2 bg-white dark:bg-gray-900 border rounded-lg text-xs"
-                          >
-                            <option value="">Espaço Livre...</option>
-                            {espacos.map((es: any) => (
-                              <option key={es.id} value={es.id}>{es.nome}</option>
-                            ))}
-                          </select>
-                        ) : item.tipo_item === 'MaoDeObra' ? (
-                          <select
-                            value={item.referencia_id || ''}
-                            onChange={e => {
-                              const val = e.target.value ? Number(e.target.value) : null;
-                              handleItemChange(index, 'referencia_id', val);
-                              if (val) handleConsultarSugestao(index, 'MaoDeObra', val);
-                            }}
-                            className="w-full p-2 bg-white dark:bg-gray-900 border rounded-lg text-xs"
-                          >
-                            <option value="">Cargo Livre...</option>
-                            {equipasCadastro.map((eq: any) => (
-                              <option key={eq.id} value={eq.id}>{eq.nome}</option>
-                            ))}
-                          </select>
-                        ) : item.tipo_item === 'Produto' ? (
-                          <select
-                            value={item.produto_id || ''}
-                            onChange={e => {
-                              const val = e.target.value ? Number(e.target.value) : null;
-                              handleItemChange(index, 'produto_id', val);
-                            }}
-                            className="w-full p-2 bg-white dark:bg-gray-900 border rounded-lg text-xs"
-                          >
-                            <option value="">Produto Livre...</option>
-                            {produtos.map((p: any) => (
-                              <option key={p.id} value={p.id}>{p.nome}</option>
-                            ))}
-                          </select>
-                        ) : (
+                        {/* DESCRIÇÃO COMPLETA */}
+                        <div className="md:col-span-4 space-y-1">
+                          <label className="text-[10px] font-bold text-gray-500 uppercase">Descrição da Linha Comercial</label>
                           <input
                             type="text"
-                            placeholder="Nome / Descrição livre..."
                             value={item.descricao}
                             onChange={e => handleItemChange(index, 'descricao', e.target.value)}
-                            className="w-full p-2 bg-white dark:bg-gray-900 border rounded-lg text-xs"
+                            className="w-full p-2 bg-white dark:bg-gray-900 border rounded-lg text-xs font-semibold"
                           />
-                        )}
-                      </div>
+                        </div>
 
-                      {/* DESCRIÇÃO COMPLETA */}
-                      <div className="md:col-span-4 space-y-1">
-                        <label className="text-[10px] font-bold text-gray-500 uppercase">Descrição da Linha Comercial</label>
-                        <input
-                          type="text"
-                          value={item.descricao}
-                          onChange={e => handleItemChange(index, 'descricao', e.target.value)}
-                          className="w-full p-2 bg-white dark:bg-gray-900 border rounded-lg text-xs font-semibold"
-                        />
-                      </div>
+                        {/* QTD & UNIDADE */}
+                        <div className="md:col-span-2 space-y-1">
+                          <label className="text-[10px] font-bold text-gray-500 uppercase">Qtd / Unidade</label>
+                          <div className="flex gap-1">
+                            <input
+                              type="number"
+                              min={1}
+                              value={item.quantidade}
+                              onChange={e => handleItemChange(index, 'quantidade', Number(e.target.value))}
+                              className="w-16 p-2 bg-white dark:bg-gray-900 border rounded-lg text-xs font-bold text-center"
+                            />
+                            <select
+                              value={item.unidade}
+                              onChange={e => handleItemChange(index, 'unidade', e.target.value)}
+                              className="flex-1 p-2 bg-white dark:bg-gray-900 border rounded-lg text-[11px]"
+                            >
+                              <option value="Pessoa">Pessoa</option>
+                              <option value="Unidade">Unidade</option>
+                              <option value="Garrafa">Garrafa</option>
+                              <option value="Caixa">Caixa</option>
+                              <option value="Hora">Hora</option>
+                              <option value="Dia">Dia</option>
+                              {unidadesMedida.map((u: any) => (
+                                <option key={u.id} value={u.sigla || u.nome}>{u.nome}</option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
 
-                      {/* QTD & UNIDADE */}
-                      <div className="md:col-span-2 space-y-1">
-                        <label className="text-[10px] font-bold text-gray-500 uppercase">Qtd / Unidade</label>
-                        <div className="flex gap-1">
+                        {/* PREÇO UNITÁRIO & SUGESTÃO */}
+                        <div className="md:col-span-3 space-y-1">
+                          <div className="flex items-center justify-between">
+                            <label className="text-[10px] font-bold text-gray-500 uppercase">Preço Unitário</label>
+                            <button
+                              type="button"
+                              onClick={() => handleConsultarSugestao(index)}
+                              className="text-[10px] text-primary font-bold hover:underline flex items-center gap-0.5"
+                            >
+                              <Sparkles size={10} /> Sugerir
+                            </button>
+                          </div>
                           <input
                             type="number"
-                            min={1}
-                            value={item.quantidade}
-                            onChange={e => handleItemChange(index, 'quantidade', Number(e.target.value))}
-                            className="w-16 p-2 bg-white dark:bg-gray-900 border rounded-lg text-xs font-bold text-center"
+                            step="0.01"
+                            value={item.preco_unitario}
+                            onChange={e => handleItemChange(index, 'preco_unitario', Number(e.target.value))}
+                            className="w-full p-2 bg-white dark:bg-gray-900 border rounded-lg text-xs font-bold text-primary"
                           />
-                          <select
-                            value={item.unidade}
-                            onChange={e => handleItemChange(index, 'unidade', e.target.value)}
-                            className="flex-1 p-2 bg-white dark:bg-gray-900 border rounded-lg text-[11px]"
-                          >
-                            <option value="Pessoa">Pessoa</option>
-                            <option value="Unidade">Unidade</option>
-                            <option value="Hora">Hora</option>
-                            <option value="Dia">Dia</option>
-                            {unidadesMedida.map((u: any) => (
-                              <option key={u.id} value={u.sigla || u.nome}>{u.nome}</option>
-                            ))}
-                          </select>
                         </div>
                       </div>
 
-                      {/* PREÇO UNITÁRIO & SUGESTÃO */}
-                      <div className="md:col-span-3 space-y-1">
-                        <div className="flex items-center justify-between">
-                          <label className="text-[10px] font-bold text-gray-500 uppercase">Preço Unitário</label>
-                          <button
-                            type="button"
-                            onClick={() => handleConsultarSugestao(index)}
-                            className="text-[10px] text-primary font-bold hover:underline flex items-center gap-0.5"
-                          >
-                            <Sparkles size={10} /> Sugerir
-                          </button>
+                      <div className="flex items-center justify-between text-xs pt-2 border-t border-gray-200/50 dark:border-gray-800">
+                        <span className="text-[11px] text-gray-400">
+                          Subtotal da Linha: <strong className="text-gray-700 dark:text-gray-200">{formatMoeda(item.quantidade * item.preco_unitario)}</strong>
+                        </span>
+
+                        <div className="flex items-center gap-3">
+                          <label className="flex items-center gap-1.5 text-[11px] text-gray-500">
+                            <span>Taxa IVA:</span>
+                            <input
+                              type="number"
+                              value={item.taxa_iva || 15}
+                              onChange={e => handleItemChange(index, 'taxa_iva', Number(e.target.value))}
+                              className="w-12 p-1 text-center bg-white dark:bg-gray-900 border rounded"
+                            />
+                            %
+                          </label>
                         </div>
-                        <input
-                          type="number"
-                          step="0.01"
-                          value={item.preco_unitario}
-                          onChange={e => handleItemChange(index, 'preco_unitario', Number(e.target.value))}
-                          className="w-full p-2 bg-white dark:bg-gray-900 border rounded-lg text-xs font-bold text-primary"
-                        />
                       </div>
                     </div>
-
-                    <div className="flex items-center justify-between text-xs pt-2 border-t border-gray-200/50 dark:border-gray-800">
-                      <span className="text-[11px] text-gray-400">
-                        Subtotal da Linha: <strong className="text-gray-700 dark:text-gray-200">{formatMoeda(item.quantidade * item.preco_unitario)}</strong>
-                      </span>
-
-                      <div className="flex items-center gap-3">
-                        <label className="flex items-center gap-1.5 text-[11px] text-gray-500">
-                          <span>Taxa IVA:</span>
-                          <input
-                            type="number"
-                            value={item.taxa_iva || 15}
-                            onChange={e => handleItemChange(index, 'taxa_iva', Number(e.target.value))}
-                            className="w-12 p-1 text-center bg-white dark:bg-gray-900 border rounded"
-                          />
-                          %
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -819,6 +932,16 @@ export default function EventoFormPage() {
               <div className="flex justify-between text-gray-600 dark:text-gray-400">
                 <span>Subtotal Espaços & Alugueres:</span>
                 <span className="font-bold">{formatMoeda(calculatedResumo.subtotalAlugueres)}</span>
+              </div>
+
+              <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                <span>Subtotal Cozinha & Pastelaria:</span>
+                <span className="font-bold text-amber-600 dark:text-amber-400">{formatMoeda(calculatedResumo.subtotalCozinhaPastelaria)}</span>
+              </div>
+
+              <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                <span>Subtotal Produtos Revenda:</span>
+                <span className="font-bold text-purple-600 dark:text-purple-400">{formatMoeda(calculatedResumo.subtotalRevenda)}</span>
               </div>
 
               <div className="flex justify-between text-gray-600 dark:text-gray-400">

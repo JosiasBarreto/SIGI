@@ -42,38 +42,14 @@ export function CreateRequisitionForm({
   }, [user]);
 
   // Fetch lists to populate options
-  const { data: consumiveisResp } = useQuery({
-    queryKey: ["products-consumivel"],
-    queryFn: () =>
-      productService.getAll({
-        page: 1,
-        per_page: 1000,
-        tipo: "Consumivel",
-        ativo: true,
-        have_stock: true,
-      }),
-  });
-
-  const { data: revendaResp } = useQuery({
-    queryKey: ["products-revenda"],
-    queryFn: () =>
-      productService.getAll({
-        page: 1,
-        per_page: 1000,
-        tipo: "Revenda",
-        ativo: true,
-        have_stock: true,
-      }),
+  const { data: allProductsResp } = useQuery({
+    queryKey: ["products-for-requisitions"],
+    queryFn: () => productService.getAll({ per_page: 5000 }),
   });
 
   const { data: materialsResp } = useQuery({
-    queryKey: ["materials"],
-    queryFn: () =>
-      materialService.getAll({
-        per_page: 1000,
-        is_active: "true",
-        have_stock: "true",
-      }),
+    queryKey: ["materials-for-requisitions"],
+    queryFn: () => materialService.getAll({ per_page: 5000 }),
   });
 
   const { data: shiftsResponse } = useQuery({
@@ -81,10 +57,25 @@ export function CreateRequisitionForm({
     queryFn: () => shiftService.getAll({ per_page: 100 }),
   });
 
-  const consumiveisList = consumiveisResp?.items || [];
-  const revendaList = revendaResp?.items || [];
-  const materialsList = materialsResp?.items || [];
+  const allProdsList = allProductsResp?.items || (Array.isArray(allProductsResp) ? allProductsResp : []);
+  const materialsList = materialsResp?.items || (Array.isArray(materialsResp) ? materialsResp : []);
   const shifts = shiftsResponse?.items || [];
+
+  const consumiveisList = React.useMemo(() => {
+    const filtered = allProdsList.filter((p: any) => {
+      const t = String(p.tipo || p.tipo_produto || '').toLowerCase();
+      return t.includes("consum") || t.includes("ingrediente") || p.servico === "ABASTECIMENTO" || !p.tipo;
+    });
+    return filtered.length > 0 ? filtered : allProdsList;
+  }, [allProdsList]);
+
+  const revendaList = React.useMemo(() => {
+    const filtered = allProdsList.filter((p: any) => {
+      const t = String(p.tipo || p.tipo_produto || '').toLowerCase();
+      return t.includes("revenda") || p.servico === "BAR";
+    });
+    return filtered.length > 0 ? filtered : allProdsList;
+  }, [allProdsList]);
 
   const handleSuggest = async () => {
     try {
@@ -170,7 +161,7 @@ export function CreateRequisitionForm({
       turno_id: turnoId === "" ? null : Number(turnoId),
       observacoes,
       itens: items.map((item) => ({
-        tipo_item: item.tipo_ui === "Material" ? "Material" : "Consumivel",
+        tipo_item: item.tipo_ui === "Material" ? "Material" : item.tipo_ui === "Revenda" ? "Revenda" : "Consumivel",
         item_id: Number(item.item_id),
         quantidade_solicitada: Number(item.quantidade_solicitada),
         observacao: item.observacao || "",
@@ -343,24 +334,17 @@ export function CreateRequisitionForm({
                 (o) => Number(o.id) === Number(item.item_id)
               );
 
-              const optionsMapped = options
-                .filter(
-                  (opt) =>
-                    opt.tipo === "Reutilizavel" ||
-                    opt.tipo === "Consumivel" ||
-                    opt.tipo === "Revenda"
-                )
-                .map((opt) => {
-                  const stock = opt.stock_atual ?? opt.quantidade_total ?? 0;
-                  const unidade = opt.unidade_medida_sigla
-                    ? ` ${opt.unidade_medida_sigla}`
-                    : "";
+              const optionsMapped = options.map((opt) => {
+                const stock = opt.stock_atual ?? opt.quantidade ?? opt.quantidade_total ?? 0;
+                const sigla = opt.unidade_medida_sigla || opt.unidade_medida;
+                const unidade = sigla ? ` ${sigla}` : "";
+                const nomeItem = opt.nome || opt.descricao || `Item #${opt.id}`;
 
-                  return {
-                    id: opt.id,
-                    label: `${opt.nome} - Qtd: ${Number(stock)}${unidade}`,
-                  };
-                });
+                return {
+                  id: opt.id,
+                  label: `${nomeItem} - Stock: ${Number(stock)}${unidade}`,
+                };
+              });
 
               return (
                 <div

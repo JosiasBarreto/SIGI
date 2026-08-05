@@ -16,19 +16,24 @@ def _serialize_venda_dict(venda):
     cliente_nif = "Consumidor Final"
     cliente_email = ""
     cliente_telefone = ""
+    cliente_empresa = ""
+    cliente_morada = ""
     
+    c = None
     if venda.pedido and venda.pedido.cliente:
-        cliente_nome = venda.pedido.cliente.nome or "Consumidor Final"
-        cliente_nif = venda.pedido.cliente.nif or ""
-        cliente_email = venda.pedido.cliente.email or ""
-        cliente_telefone = venda.pedido.cliente.telefone or ""
+        c = venda.pedido.cliente
     elif getattr(venda, 'cliente_id', None):
         c = Cliente.query.get(venda.cliente_id)
-        if c:
-            cliente_nome = c.nome or "Consumidor Final"
-            cliente_nif = c.nif or ""
-            cliente_email = c.email or ""
-            cliente_telefone = c.telefone or ""
+    elif venda.pedido and getattr(venda.pedido, 'cliente_id', None):
+        c = Cliente.query.get(venda.pedido.cliente_id)
+
+    if c:
+        cliente_nome = c.nome or "Consumidor Final"
+        cliente_nif = c.nif or ""
+        cliente_email = c.email or ""
+        cliente_telefone = c.telefone or c.whatsapp or ""
+        cliente_empresa = c.empresa or ""
+        cliente_morada = c.morada or ""
 
     if not cliente_nif and cliente_nome == "Consumidor Final":
         cliente_nif = "Consumidor Final"
@@ -72,15 +77,17 @@ def _serialize_venda_dict(venda):
         'saldo': saldo,
         'troco': troco,
         
-        'cliente_id': venda.cliente_id,
+        'cliente_id': c.id if c else venda.cliente_id,
         'cliente_nome': cliente_nome,
         'cliente_nif': cliente_nif,
         'cliente': {
-            'id': venda.cliente_id,
+            'id': c.id if c else venda.cliente_id,
             'nome': cliente_nome,
             'nif': cliente_nif,
             'email': cliente_email,
-            'telefone': cliente_telefone
+            'telefone': cliente_telefone,
+            'empresa': cliente_empresa,
+            'morada': cliente_morada
         },
         
         'pedido_id': venda.pedido_id,
@@ -150,6 +157,19 @@ def create_venda():
     data = request.json
     try:
         venda = comercial_service.create_venda(data, user_id)
+        # Disparar envio de fatura se cliente possuir contacto
+        try:
+            from app.services.notification_service import NotificationService
+            v_dict = _serialize_venda_dict(venda)
+            c_email = v_dict.get('cliente', {}).get('email')
+            c_phone = v_dict.get('cliente', {}).get('telefone')
+            if c_email:
+                NotificationService.send_invoice_async(venda.id, c_email, method='email')
+            elif c_phone:
+                NotificationService.send_invoice_async(venda.id, c_phone, method='whatsapp')
+        except Exception as e:
+            print('⚠ Erro ao disparar fatura automática:', e)
+
         return jsonify(_serialize_venda_dict(venda)), 201
     except Exception as e:
         return jsonify({'error': str(e)}), 400
@@ -275,5 +295,19 @@ def checkout_pedido(pedido_id):
     venda, error = comercial_service.converter_pedido_em_venda(pedido_id, data, user_id)
     if error:
         return jsonify({'error': error}), 400
+
+    # Disparar envio de fatura automática do checkout do pedido
+    try:
+        from app.services.notification_service import NotificationService
+        v_dict = _serialize_venda_dict(venda)
+        c_email = v_dict.get('cliente', {}).get('email')
+        c_phone = v_dict.get('cliente', {}).get('telefone')
+        if c_email:
+            NotificationService.send_invoice_async(venda.id, c_email, method='email')
+        elif c_phone:
+            NotificationService.send_invoice_async(venda.id, c_phone, method='whatsapp')
+    except Exception as e:
+        print('⚠ Erro ao disparar fatura automática no checkout:', e)
+
     return jsonify(_serialize_venda_dict(venda)), 200
 

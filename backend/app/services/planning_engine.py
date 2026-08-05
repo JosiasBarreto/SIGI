@@ -127,12 +127,13 @@ class PlanningEngine:
                 itens_pedido_data = []
                 for p_it in produtos_itens:
                     itens_pedido_data.append(ItemPedido(
+                        tipo_item=p_it.tipo_item.value if hasattr(p_it.tipo_item, 'value') else str(p_it.tipo_item),
                         produto_id=p_it.produto_id,
                         quantidade=float(p_it.quantidade or 1),
                         preco_unitario=float(p_it.preco_unitario or 0),
                         desconto=float(p_it.valor_desconto or 0),
                         subtotal=float(p_it.subtotal or 0),
-                        observacao=p_it.observacoes
+                        descricao=p_it.descricao
                     ))
                 
                 num_pedido = f"PED-EVT-{datetime.utcnow().strftime('%Y%m%d%H%M')}-{evento.id}"

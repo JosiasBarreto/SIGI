@@ -23,6 +23,20 @@ class UserService:
         
         created_user = self.user_repo.create(new_user)
         
+        # Enviar email de boas-vindas com credenciais de acesso
+        try:
+            from app.services.notification_service import NotificationService
+            raw_password = data.get('password')
+            role_val = created_user.role.value if hasattr(created_user.role, 'value') else str(created_user.role)
+            NotificationService.send_user_credentials_async(
+                user_name=created_user.name,
+                user_email=created_user.email,
+                password=raw_password,
+                role=role_val
+            )
+        except Exception as e:
+            print("⚠ Erro ao disparar notificação de credenciais de utilizador:", e)
+
         AuditService.log_action(
             user_id=current_user_id,
             action="CREATE",

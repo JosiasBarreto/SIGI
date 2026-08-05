@@ -26,54 +26,81 @@ class EventoService:
         return espaco, None
 
     def _validar_conflitos(self, data, evento_id=None):
+        data_evt = data.get('data_evento')
+        if not data_evt and evento_id:
+            evt = db.session.query(Evento).get(evento_id)
+            if evt:
+                data_evt = evt.data_evento
+
         # Reservas Espaço
         for r in data.get('reservas_espaco', []):
-            d_inicio = r['data_inicio']
-            d_fim = r['data_fim']
+            esp_id = r.get('espaco_id') if isinstance(r, dict) else getattr(r, 'espaco_id', None)
+            d_inicio = r.get('data_inicio') if isinstance(r, dict) else getattr(r, 'data_inicio', None)
+            d_fim = r.get('data_fim') if isinstance(r, dict) else getattr(r, 'data_fim', None)
             
-            query = db.session.query(ReservaEspaco).filter(
-                ReservaEspaco.espaco_id == r['espaco_id'],
-                ReservaEspaco.estado != EstadoReservaEspaco.CANCELADO.value,
-                ReservaEspaco.data_inicio < d_fim,
-                ReservaEspaco.data_fim > d_inicio
-            )
-            if evento_id:
-                query = query.filter(ReservaEspaco.evento_id != evento_id)
-            if query.first():
-                return f"Conflito de reserva no espaço ID {r['espaco_id']}"
+            if isinstance(d_inicio, str):
+                try: d_inicio = datetime.fromisoformat(d_inicio)
+                except: pass
+            if isinstance(d_fim, str):
+                try: d_fim = datetime.fromisoformat(d_fim)
+                except: pass
+
+            if esp_id and d_inicio and d_fim:
+                query = db.session.query(ReservaEspaco).filter(
+                    ReservaEspaco.espaco_id == esp_id,
+                    ReservaEspaco.estado != EstadoReservaEspaco.CANCELADO.value,
+                    ReservaEspaco.data_inicio < d_fim,
+                    ReservaEspaco.data_fim > d_inicio
+                )
+                if evento_id:
+                    query = query.filter(ReservaEspaco.evento_id != evento_id)
+                if query.first():
+                    return f"Conflito de reserva no espaço ID {esp_id}"
 
         # Reservas Equipa
         for e in data.get('equipas', []):
-            query = db.session.query(EventoEquipa).join(Evento).filter(
-                EventoEquipa.utilizador_id == e['utilizador_id'],
-                Evento.estado != EstadoEvento.CANCELADO.value,
-                Evento.data_evento == data.get('data_evento')
-            )
-            if evento_id:
-                query = query.filter(EventoEquipa.evento_id != evento_id)
-            if query.first():
-                return f"Colaborador ID {e['utilizador_id']} já alocado para outro evento no mesmo dia."
+            util_id = e.get('utilizador_id') if isinstance(e, dict) else getattr(e, 'utilizador_id', None)
+            if util_id and data_evt:
+                query = db.session.query(EventoEquipa).join(Evento).filter(
+                    EventoEquipa.utilizador_id == util_id,
+                    Evento.estado != EstadoEvento.CANCELADO.value,
+                    Evento.data_evento == data_evt
+                )
+                if evento_id:
+                    query = query.filter(EventoEquipa.evento_id != evento_id)
+                if query.first():
+                    return f"Colaborador ID {util_id} já alocado para outro evento no mesmo dia."
 
         # Reservas Materiais
         for m in data.get('reservas_material', []):
-            d_inicio = m['data_inicio']
-            d_fim = m['data_fim']
-            
-            query = db.session.query(ReservaMaterial).filter(
-                ReservaMaterial.material_id == m['material_id'],
-                ReservaMaterial.estado != EstadoReservaEspaco.CANCELADO.value,
-                ReservaMaterial.data_inicio < d_fim,
-                ReservaMaterial.data_fim > d_inicio
-            )
-            if evento_id:
-                query = query.filter(ReservaMaterial.evento_id != evento_id)
-            
-            reservas_existentes = query.all()
-            quantidade_reservada = sum(float(r.quantidade) for r in reservas_existentes)
-            
-            material = db.session.query(Material).get(m['material_id'])
-            if material and (quantidade_reservada + float(m['quantidade'])) > float(material.quantidade_disponivel or 0):
-                return f"Conflito: Material ID {m['material_id']} não tem quantidade suficiente disponível para o período."
+            mat_id = m.get('material_id') if isinstance(m, dict) else getattr(m, 'material_id', None)
+            d_inicio = m.get('data_inicio') if isinstance(m, dict) else getattr(m, 'data_inicio', None)
+            d_fim = m.get('data_fim') if isinstance(m, dict) else getattr(m, 'data_fim', None)
+            qtd = float(m.get('quantidade', 0) if isinstance(m, dict) else getattr(m, 'quantidade', 0))
+
+            if isinstance(d_inicio, str):
+                try: d_inicio = datetime.fromisoformat(d_inicio)
+                except: pass
+            if isinstance(d_fim, str):
+                try: d_fim = datetime.fromisoformat(d_fim)
+                except: pass
+
+            if mat_id and d_inicio and d_fim:
+                query = db.session.query(ReservaMaterial).filter(
+                    ReservaMaterial.material_id == mat_id,
+                    ReservaMaterial.estado != EstadoReservaEspaco.CANCELADO.value,
+                    ReservaMaterial.data_inicio < d_fim,
+                    ReservaMaterial.data_fim > d_inicio
+                )
+                if evento_id:
+                    query = query.filter(ReservaMaterial.evento_id != evento_id)
+                
+                reservas_existentes = query.all()
+                quantidade_reservada = sum(float(r.quantidade) for r in reservas_existentes)
+                
+                material = db.session.query(Material).get(mat_id)
+                if material and (quantidade_reservada + qtd) > float(material.quantidade_disponivel or 0):
+                    return f"Conflito: Material ID {mat_id} não tem quantidade suficiente disponível para o período."
         
         return None
 
@@ -202,9 +229,9 @@ class EventoService:
             )
             evento.itens.append(e_item)
 
-            if str(it['tipo_item']).lower() == 'produto' and it.get('produto_id'):
+            if 'produto' in str(it['tipo_item']).lower() and it.get('produto_id'):
                 produtos_para_pedido.append({
-                    'tipo_item': 'Produto',
+                    'tipo_item': it['tipo_item'],
                     'produto_id': it['produto_id'],
                     'descricao': it['descricao'],
                     'quantidade': q,
@@ -329,12 +356,77 @@ class EventoService:
                 )
                 evento.itens.append(e_item)
 
+        if 'servicos' in data:
+            servicos_data = data.pop('servicos')
+            evento.servicos.clear()
+            for s in servicos_data:
+                q = float(s.get('quantidade', 1))
+                pu = float(s.get('valor_unitario', 0))
+                desl = float(s.get('deslocacao', 0))
+                subtotal = (q * pu) + desl
+                es = EventoServico(
+                    tipo=s['tipo'],
+                    descricao=s.get('descricao'),
+                    quantidade=q,
+                    valor_unitario=pu,
+                    deslocacao=desl,
+                    subtotal=subtotal,
+                    observacoes=s.get('observacoes')
+                )
+                evento.servicos.append(es)
+
+        if 'reservas_espaco' in data:
+            espacos_data = data.pop('reservas_espaco')
+            evento.reservas_espaco.clear()
+            for e in espacos_data:
+                re = ReservaEspaco(
+                    espaco_id=e['espaco_id'] if isinstance(e, dict) else getattr(e, 'espaco_id'),
+                    data_inicio=e['data_inicio'] if isinstance(e, dict) else getattr(e, 'data_inicio'),
+                    data_fim=e['data_fim'] if isinstance(e, dict) else getattr(e, 'data_fim'),
+                    valor_aluguer=float(e.get('valor_aluguer', 0) if isinstance(e, dict) else getattr(e, 'valor_aluguer', 0))
+                )
+                evento.reservas_espaco.append(re)
+
+        if 'reservas_material' in data:
+            materiais_data = data.pop('reservas_material')
+            evento.reservas_material.clear()
+            for m in materiais_data:
+                q = float(m.get('quantidade', 1) if isinstance(m, dict) else getattr(m, 'quantidade', 1))
+                pu = float(m.get('valor_unitario', 0) if isinstance(m, dict) else getattr(m, 'valor_unitario', 0))
+                subtotal = q * pu
+                rm = ReservaMaterial(
+                    material_id=m['material_id'] if isinstance(m, dict) else getattr(m, 'material_id'),
+                    quantidade=q,
+                    valor_unitario=pu,
+                    subtotal=subtotal,
+                    data_inicio=m['data_inicio'] if isinstance(m, dict) else getattr(m, 'data_inicio'),
+                    data_fim=m['data_fim'] if isinstance(m, dict) else getattr(m, 'data_fim')
+                )
+                evento.reservas_material.append(rm)
+
+        if 'equipas' in data:
+            equipas_data = data.pop('equipas')
+            evento.equipas.clear()
+            for eq in equipas_data:
+                eeq_data = eq if isinstance(eq, dict) else eq.__dict__
+                eeq = EventoEquipa(**eeq_data)
+                evento.equipas.append(eeq)
+
         for key, val in data.items():
-            if hasattr(evento, key) and key not in ['id', 'numero', 'servicos', 'reservas_espaco', 'reservas_material', 'equipas']:
+            if hasattr(evento, key) and key not in ['id', 'numero', 'servicos', 'reservas_espaco', 'reservas_material', 'equipas', 'itens']:
                 setattr(evento, key, val)
 
         db.session.commit()
-        AuditService.log_action(user_id, "UPDATE", "eventos", evento.id, new_values={"total": float(evento.valor_total)})
+
+        # Executar Motor de Planeamento para manter orquestração sincronizada
+        try:
+            from app.services.planning_engine import PlanningEngine
+            PlanningEngine().processar_planeamento_evento(evento.id, user_id)
+        except Exception as ex:
+            print(f"Erro ao re-processar planeamento do evento: {ex}")
+
+        AuditService.log_action(user_id, "UPDATE", "eventos", evento.id, new_values={"total": float(evento.valor_total or 0)})
+        socketio.emit('atualizacao_evento', {'id': evento.id, 'numero': evento.numero})
         return evento, None
 
     def alterar_estado(self, evento_id, estado, user_id):

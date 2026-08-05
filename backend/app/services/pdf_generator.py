@@ -77,17 +77,29 @@ def get_venda_receipt_data(venda):
         if u:
             operador_nome = u.name
 
-    # Cliente
+    # Cliente / Comprador
     cliente_nome = "Consumidor Final"
     cliente_nif = "Consumidor Final"
+    cliente_telefone = ""
+    cliente_email = ""
+    cliente_empresa = ""
+    cliente_morada = ""
+
+    c = None
     if venda.pedido and venda.pedido.cliente:
-        cliente_nome = venda.pedido.cliente.nome or "Consumidor Final"
-        cliente_nif = venda.pedido.cliente.nif or ""
+        c = venda.pedido.cliente
     elif getattr(venda, 'cliente_id', None):
         c = Cliente.query.get(venda.cliente_id)
-        if c:
-            cliente_nome = c.nome or "Consumidor Final"
-            cliente_nif = c.nif or ""
+    elif venda.pedido and getattr(venda.pedido, 'cliente_id', None):
+        c = Cliente.query.get(venda.pedido.cliente_id)
+
+    if c:
+        cliente_nome = c.nome or "Consumidor Final"
+        cliente_nif = c.nif or ""
+        cliente_telefone = c.telefone or c.whatsapp or ""
+        cliente_email = c.email or ""
+        cliente_empresa = c.empresa or ""
+        cliente_morada = c.morada or ""
 
     if not cliente_nif and cliente_nome == "Consumidor Final":
         cliente_nif = "Consumidor Final"
@@ -169,7 +181,11 @@ def get_venda_receipt_data(venda):
         },
         "cliente": {
             "nome": cliente_nome,
-            "nif": cliente_nif
+            "nif": cliente_nif,
+            "telefone": cliente_telefone,
+            "email": cliente_email,
+            "empresa": cliente_empresa,
+            "morada": cliente_morada
         },
         "itens": itens_data,
         "totais": {
@@ -196,9 +212,24 @@ def get_pedido_receipt_data(pedido):
 
     cliente_nome = "Consumidor Final"
     cliente_nif = "Consumidor Final"
+    cliente_telefone = ""
+    cliente_email = ""
+    cliente_empresa = ""
+    cliente_morada = ""
+
+    c = None
     if pedido.cliente:
-        cliente_nome = pedido.cliente.nome or "Consumidor Final"
-        cliente_nif = pedido.cliente.nif or ""
+        c = pedido.cliente
+    elif getattr(pedido, 'cliente_id', None):
+        c = Cliente.query.get(pedido.cliente_id)
+
+    if c:
+        cliente_nome = c.nome or "Consumidor Final"
+        cliente_nif = c.nif or ""
+        cliente_telefone = c.telefone or c.whatsapp or ""
+        cliente_email = c.email or ""
+        cliente_empresa = c.empresa or ""
+        cliente_morada = c.morada or ""
 
     if not cliente_nif and cliente_nome == "Consumidor Final":
         cliente_nif = "Consumidor Final"
@@ -263,7 +294,11 @@ def get_pedido_receipt_data(pedido):
         },
         "cliente": {
             "nome": cliente_nome,
-            "nif": cliente_nif
+            "nif": cliente_nif,
+            "telefone": cliente_telefone,
+            "email": cliente_email,
+            "empresa": cliente_empresa,
+            "morada": cliente_morada
         },
         "itens": itens_data,
         "totais": {
@@ -333,11 +368,26 @@ def _build_a4_pdf(rec_data):
 
     # Box Dados do Cliente
     c.setStrokeColor(colors.lightgrey)
-    c.rect(40, height - 150, width - 80, 40, fill=0)
+    has_contacts = bool(cliente.get('telefone') or cliente.get('email') or cliente.get('morada'))
+    box_height = 45 if has_contacts else 35
+    box_top = height - 110
+    c.rect(40, box_top - box_height, width - 80, box_height, fill=0)
     c.setFont("Helvetica-Bold", 9)
-    c.drawString(50, height - 123, "DADOS DO CLIENTE:")
-    c.setFont("Helvetica", 9)
-    c.drawString(50, height - 138, f"Cliente: {cliente['nome']}   |   NIF Cliente: {cliente['nif']}")
+    c.drawString(50, box_top - 12, "DADOS DO COMPRADOR / CLIENTE:")
+    c.setFont("Helvetica", 8)
+    
+    nome_str = f"Nome: {cliente['nome']}"
+    if cliente.get('empresa'):
+        nome_str += f" ({cliente['empresa']})"
+    nome_str += f"   |   NIF: {cliente['nif']}"
+    c.drawString(50, box_top - 25, nome_str)
+    
+    if has_contacts:
+        contacts = []
+        if cliente.get('telefone'): contacts.append(f"Tel: {cliente['telefone']}")
+        if cliente.get('email'): contacts.append(f"Email: {cliente['email']}")
+        if cliente.get('morada'): contacts.append(f"Morada: {cliente['morada']}")
+        c.drawString(50, box_top - 37, "   |   ".join(contacts))
 
     # Table of Items
     table_data = [["Descrição", "Qtd", f"P. Unit ({moeda})", "Desc", "IVA %", f"Subtotal ({moeda})", f"Total IVA ({moeda})", f"Total ({moeda})"]]
@@ -357,7 +407,7 @@ def _build_a4_pdf(rec_data):
         ])
 
     table_x = 40
-    table_y = height - 170
+    table_y = box_top - box_height - 15
     
     col_widths = [145, 45, 65, 45, 40, 60, 60, 55]
     t = Table(table_data, colWidths=col_widths)
@@ -482,10 +532,25 @@ def _build_thermal_receipt_pdf(rec_data):
     y -= 12
 
     # Cliente Info
-    c.drawString(10, y, f"Cliente: {cliente['nome']}")
+    c.setFont("Helvetica-Bold", 8)
+    c.drawString(10, y, "COMPRADOR / CLIENTE:")
     y -= 10
-    c.drawString(10, y, f"NIF Cliente: {cliente['nif']}")
-    y -= 12
+    c.setFont("Helvetica", 8)
+    c.drawString(10, y, f"Nome: {cliente['nome']}")
+    y -= 10
+    if cliente.get('empresa'):
+        c.drawString(10, y, f"Empresa: {cliente['empresa']}")
+        y -= 10
+    if cliente.get('nif'):
+        c.drawString(10, y, f"NIF: {cliente['nif']}")
+        y -= 10
+    if cliente.get('telefone'):
+        c.drawString(10, y, f"Tel: {cliente['telefone']}")
+        y -= 10
+    if cliente.get('email'):
+        c.drawString(10, y, f"Email: {cliente['email']}")
+        y -= 10
+    y -= 2
 
     c.line(8, y, width - 8, y)
     y -= 12

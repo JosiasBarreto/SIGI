@@ -216,45 +216,27 @@ class ProducaoService:
         estado_antigo = ordem.estado
         ordem.estado = estado_novo
         
-        if estado_novo == EstadoProducao.EM_PRODUCAO.value:
+        estado_novo_str = estado_novo.value if hasattr(estado_novo, 'value') else str(estado_novo)
+
+        if estado_novo_str in [EstadoProducao.EM_PRODUCAO.value, 'Em Producao', 'EM_PRODUCAO']:
             ordem.hora_inicio = datetime.utcnow()
             
-            # --- Gerar Requisição Automática para o Armazém ---
-            if ordem.consumos:
-                from app.models.requisicao import Requisicao, RequisicaoItem, TipoRequisicao, SectorRequisicao, TipoItemRequisicao
-                req_numero = f"REQ-AUTO-{datetime.utcnow().strftime('%Y%m')}-{ordem.numero[-4:]}"
-                
-                sector_map = {
-                    'Cozinha': SectorRequisicao.COZINHA,
-                    'Pastelaria': SectorRequisicao.PASTELARIA,
-                    'Bar': SectorRequisicao.BAR
-                }
-                
-                nova_req = Requisicao(
-                    numero=req_numero,
-                    tipo=TipoRequisicao.INICIAL,
-                    sector=sector_map.get(ordem.sector.value if hasattr(ordem.sector, 'value') else str(ordem.sector), SectorRequisicao.COZINHA),
-                    responsavel_id=user_id if user_id else 1,
-                    motivo=f"Requisição Automática para Ordem {ordem.numero}"
-                )
-                
-                for consumo in ordem.consumos:
-                    if float(consumo.quantidade_prevista) > 0:
-                        req_item = RequisicaoItem(
-                            tipo_item=TipoItemRequisicao.INGREDIENTE,
-                            item_id=consumo.ingrediente_id,
-                            quantidade_solicitada=consumo.quantidade_prevista
-                        )
-                        nova_req.itens.append(req_item)
-                
-                if nova_req.itens:
-                    db.session.add(nova_req)
-                    socketio.emit('nova_requisicao', {'numero': nova_req.numero})
-            # ---------------------------------------------------
+            # Atualizar estado do Pedido associado se necessário
+            if ordem.pedido_id:
+                pedido = db.session.query(Pedido).get(ordem.pedido_id)
+                if pedido:
+                    ped_est = pedido.estado.value if hasattr(pedido.estado, 'value') else str(pedido.estado)
+                    if ped_est in ['Pendente', 'PENDENTE', 'Agendado', 'AGENDADO', 'Confirmado', 'CONFIRMADO']:
+                        pedido.estado = EstadoPedido.EM_PRODUCAO.value if hasattr(EstadoPedido.EM_PRODUCAO, 'value') else 'Em Producao'
+                        socketio.emit('pedido_atualizado', {
+                            'numero': pedido.numero,
+                            'antigo_estado': ped_est,
+                            'novo_estado': 'Em Producao'
+                        })
 
             socketio.emit('producao_iniciada', {'ordem_numero': ordem.numero})
             
-        elif estado_novo == EstadoProducao.PRONTO.value:
+        elif estado_novo_str in [EstadoProducao.PRONTO.value, 'Pronto', 'PRONTO']:
             ordem.hora_fim = datetime.utcnow()
             
             # Consumir ingredientes na ordem (stock é descontado via Entrega de Requisição no armazém)
@@ -266,6 +248,30 @@ class ProducaoService:
             reservas = db.session.query(ReservaIngrediente).filter_by(pedido_id=ordem.pedido_id, estado=EstadoReserva.ATIVA.value).all()
             for r in reservas:
                 r.estado = EstadoReserva.UTILIZADA.value
+
+            # Atualizar estado do Pedido se TODAS as Ordens de Produção do Pedido estiverem PRONTO
+            if ordem.pedido_id:
+                todas_ordens = db.session.query(OrdemProducao).filter_by(pedido_id=ordem.pedido_id).all()
+                todas_prontas = True
+                for o in todas_ordens:
+                    o_est = o.estado.value if hasattr(o.estado, 'value') else str(o.estado)
+                    if o.id == ordem.id:
+                        o_est = 'Pronto'
+                    if o_est not in ['Pronto', 'PRONTO', 'Concluido', 'CONCLUIDO', 'Cancelado', 'CANCELADO']:
+                        todas_prontas = False
+                        break
+                
+                if todas_prontas:
+                    pedido = db.session.query(Pedido).get(ordem.pedido_id)
+                    if pedido:
+                        ped_est = pedido.estado.value if hasattr(pedido.estado, 'value') else str(pedido.estado)
+                        if ped_est != 'Pronto':
+                            pedido.estado = EstadoPedido.PRONTO.value if hasattr(EstadoPedido.PRONTO, 'value') else 'Pronto'
+                            socketio.emit('pedido_atualizado', {
+                                'numero': pedido.numero,
+                                'antigo_estado': ped_est,
+                                'novo_estado': 'Pronto'
+                            })
             
             socketio.emit('producao_concluida', {'ordem_numero': ordem.numero})
             

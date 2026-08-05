@@ -464,6 +464,14 @@
         "documentation": {}
     },
     {
+        "label": "current_app",
+        "importPath": "flask",
+        "description": "flask",
+        "isExtraImport": true,
+        "detail": "flask",
+        "documentation": {}
+    },
+    {
         "label": "request",
         "importPath": "flask",
         "description": "flask",
@@ -977,6 +985,14 @@
     },
     {
         "label": "ValidationError",
+        "importPath": "marshmallow",
+        "description": "marshmallow",
+        "isExtraImport": true,
+        "detail": "marshmallow",
+        "documentation": {}
+    },
+    {
+        "label": "EXCLUDE",
         "importPath": "marshmallow",
         "description": "marshmallow",
         "isExtraImport": true,
@@ -7334,6 +7350,56 @@
         "documentation": {}
     },
     {
+        "label": "smtplib",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "smtplib",
+        "description": "smtplib",
+        "detail": "smtplib",
+        "documentation": {}
+    },
+    {
+        "label": "logging",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "logging",
+        "description": "logging",
+        "detail": "logging",
+        "documentation": {}
+    },
+    {
+        "label": "MIMEText",
+        "importPath": "email.mime.text",
+        "description": "email.mime.text",
+        "isExtraImport": true,
+        "detail": "email.mime.text",
+        "documentation": {}
+    },
+    {
+        "label": "MIMEMultipart",
+        "importPath": "email.mime.multipart",
+        "description": "email.mime.multipart",
+        "isExtraImport": true,
+        "detail": "email.mime.multipart",
+        "documentation": {}
+    },
+    {
+        "label": "MIMEApplication",
+        "importPath": "email.mime.application",
+        "description": "email.mime.application",
+        "isExtraImport": true,
+        "detail": "email.mime.application",
+        "documentation": {}
+    },
+    {
+        "label": "Config",
+        "importPath": "app.config.settings",
+        "description": "app.config.settings",
+        "isExtraImport": true,
+        "detail": "app.config.settings",
+        "documentation": {}
+    },
+    {
         "label": "A4",
         "importPath": "reportlab.lib.pagesizes",
         "description": "reportlab.lib.pagesizes",
@@ -8283,7 +8349,7 @@
         "kind": 2,
         "importPath": "backend.app.api.v1.comercial_controller",
         "description": "backend.app.api.v1.comercial_controller",
-        "peekOfCode": "def create_venda():\n    from flask_jwt_extended import get_jwt_identity\n    user_id = get_jwt_identity()\n    data = request.json\n    try:\n        venda = comercial_service.create_venda(data, user_id)\n        return jsonify(_serialize_venda_dict(venda)), 201\n    except Exception as e:\n        return jsonify({'error': str(e)}), 400\n@comercial_bp.route('', methods=['GET'])",
+        "peekOfCode": "def create_venda():\n    from flask_jwt_extended import get_jwt_identity\n    user_id = get_jwt_identity()\n    data = request.json\n    try:\n        venda = comercial_service.create_venda(data, user_id)\n        # Disparar envio de fatura se cliente possuir contacto\n        try:\n            from app.services.notification_service import NotificationService\n            v_dict = _serialize_venda_dict(venda)",
         "detail": "backend.app.api.v1.comercial_controller",
         "documentation": {}
     },
@@ -8373,7 +8439,7 @@
         "kind": 2,
         "importPath": "backend.app.api.v1.comercial_controller",
         "description": "backend.app.api.v1.comercial_controller",
-        "peekOfCode": "def checkout_pedido(pedido_id):\n    from flask_jwt_extended import get_jwt_identity\n    user_id = get_jwt_identity()\n    data = request.json or {}\n    venda, error = comercial_service.converter_pedido_em_venda(pedido_id, data, user_id)\n    if error:\n        return jsonify({'error': error}), 400\n    return jsonify(_serialize_venda_dict(venda)), 200",
+        "peekOfCode": "def checkout_pedido(pedido_id):\n    from flask_jwt_extended import get_jwt_identity\n    user_id = get_jwt_identity()\n    data = request.json or {}\n    venda, error = comercial_service.converter_pedido_em_venda(pedido_id, data, user_id)\n    if error:\n        return jsonify({'error': error}), 400\n    # Disparar envio de fatura automática do checkout do pedido\n    try:\n        from app.services.notification_service import NotificationService",
         "detail": "backend.app.api.v1.comercial_controller",
         "documentation": {}
     },
@@ -8400,7 +8466,7 @@
         "kind": 5,
         "importPath": "backend.app.api.v1.comercial_controller",
         "description": "backend.app.api.v1.comercial_controller",
-        "peekOfCode": "comercial_service = ComercialService()\ndef _serialize_venda_dict(venda):\n    cliente_nome = \"Consumidor Final\"\n    cliente_nif = \"Consumidor Final\"\n    cliente_email = \"\"\n    cliente_telefone = \"\"\n    if venda.pedido and venda.pedido.cliente:\n        cliente_nome = venda.pedido.cliente.nome or \"Consumidor Final\"\n        cliente_nif = venda.pedido.cliente.nif or \"\"\n        cliente_email = venda.pedido.cliente.email or \"\"",
+        "peekOfCode": "comercial_service = ComercialService()\ndef _serialize_venda_dict(venda):\n    cliente_nome = \"Consumidor Final\"\n    cliente_nif = \"Consumidor Final\"\n    cliente_email = \"\"\n    cliente_telefone = \"\"\n    cliente_empresa = \"\"\n    cliente_morada = \"\"\n    c = None\n    if venda.pedido and venda.pedido.cliente:",
         "detail": "backend.app.api.v1.comercial_controller",
         "documentation": {}
     },
@@ -8589,7 +8655,7 @@
         "kind": 2,
         "importPath": "backend.app.api.v1.evento_controller",
         "description": "backend.app.api.v1.evento_controller",
-        "peekOfCode": "def desativar_equipa_cadastro(id):\n    eq = EquipaCadastro.query.get(id)\n    if not eq: return jsonify({\"msg\": \"Equipa não encontrada\"}), 404\n    eq.ativo = False\n    db.session.commit()\n    return jsonify({\"msg\": f\"Equipa '{eq.nome}' desativada com sucesso.\"}), 200\n# ESPAÇOS\n@evento_bp.route('/espacos', methods=['GET'])\n@jwt_required()\ndef get_espacos():",
+        "peekOfCode": "def desativar_equipa_cadastro(id):\n    eq = EquipaCadastro.query.get(id)\n    if not eq: return jsonify({\"msg\": \"Equipa não encontrada\"}), 404\n    eq.ativo = False\n    db.session.commit()\n    return jsonify({\"msg\": f\"Equipa '{eq.nome}' desativada com sucesso.\"}), 200\n# ESPAÇOS\n@evento_bp.route('/espacos', methods=['GET'])\n@evento_bp.route('/cadastros/espacos', methods=['GET'])\n@jwt_required()",
         "detail": "backend.app.api.v1.evento_controller",
         "documentation": {}
     },
@@ -8643,7 +8709,7 @@
         "kind": 2,
         "importPath": "backend.app.api.v1.evento_controller",
         "description": "backend.app.api.v1.evento_controller",
-        "peekOfCode": "def get_evento_by_id(id):\n    evento = evento_service.evento_repo.get_by_id(id)\n    if not evento:\n        return jsonify({\"msg\": \"Evento não encontrado\"}), 404\n    return jsonify(EventoSchema().dump(evento)), 200\n@evento_bp.route('/<int:id>', methods=['PUT'])\n@jwt_required()\n@requires_roles('Administrador', 'Atendimento', 'Comercial')\ndef update_evento(id):\n    try:",
+        "peekOfCode": "def get_evento_by_id(id):\n    evento = evento_service.evento_repo.get_by_id(id)\n    if not evento:\n        return jsonify({\"msg\": \"Evento não encontrado\"}), 404\n    return jsonify(EventoSchema().dump(evento)), 200\n@evento_bp.route('/<int:id>', methods=['PUT'])\n@jwt_required()\n@requires_roles('Administrador', 'Atendimento', 'Comercial')\ndef update_evento(id):\n    raw_data = request.get_json() or {}",
         "detail": "backend.app.api.v1.evento_controller",
         "documentation": {}
     },
@@ -8652,7 +8718,7 @@
         "kind": 2,
         "importPath": "backend.app.api.v1.evento_controller",
         "description": "backend.app.api.v1.evento_controller",
-        "peekOfCode": "def update_evento(id):\n    try:\n        data = EventoSchema().load(request.get_json(), partial=True)\n    except ValidationError as err:\n        return jsonify({\"msg\": \"Validation error\", \"errors\": err.messages}), 400\n    user_id = get_jwt_identity()\n    result, error = evento_service.update_evento(id, data, user_id)\n    if error: return jsonify({\"msg\": error}), 400\n    return jsonify(EventoSchema().dump(result)), 200\n@evento_bp.route('/<int:id>/faturar', methods=['POST'])",
+        "peekOfCode": "def update_evento(id):\n    raw_data = request.get_json() or {}\n    try:\n        data = EventoSchema().load(raw_data, partial=True, unknown=EXCLUDE)\n    except ValidationError as err:\n        # If schema validation fails on nested object details, extract valid raw fields\n        data = raw_data\n    user_id = get_jwt_identity()\n    result, error = evento_service.update_evento(id, data, user_id)\n    if error: return jsonify({\"msg\": error}), 400",
         "detail": "backend.app.api.v1.evento_controller",
         "documentation": {}
     },
@@ -9921,7 +9987,7 @@
         "kind": 6,
         "importPath": "backend.app.models.evento",
         "description": "backend.app.models.evento",
-        "peekOfCode": "class TipoItemEvento(str, Enum):\n    SERVICO = 'Servico'\n    ESPACO = 'Espaco'\n    MATERIAL = 'Material'\n    PRODUTO = 'Produto'\n    DESLOCACAO = 'Deslocacao'\n    MAO_DE_OBRA = 'MaoDeObra'\n    OUTRO = 'Outro'\nclass TipoCalculoPolitica(str, Enum):\n    FIXO = 'Fixo'",
+        "peekOfCode": "class TipoItemEvento(str, Enum):\n    SERVICO = 'Servico'\n    ESPACO = 'Espaco'\n    MATERIAL = 'Material'\n    PRODUTO = 'Produto'\n    PRODUTO_COZINHA = 'ProdutoCozinha'\n    PRODUTO_PASTELARIA = 'ProdutoPastelaria'\n    PRODUTO_REVENDA = 'ProdutoRevenda'\n    DESLOCACAO = 'Deslocacao'\n    MAO_DE_OBRA = 'MaoDeObra'",
         "detail": "backend.app.models.evento",
         "documentation": {}
     },
@@ -10011,7 +10077,7 @@
         "kind": 6,
         "importPath": "backend.app.models.evento",
         "description": "backend.app.models.evento",
-        "peekOfCode": "class PoliticaComercialRegra(BaseModel):\n    __tablename__ = 'politica_comercial_regras'\n    politica_id = db.Column(db.Integer, db.ForeignKey('politicas_comerciais_eventos.id'), nullable=False)\n    tipo_item = db.Column(db.Enum(TipoItemEvento), nullable=False)\n    referencia_id = db.Column(db.Integer, nullable=True)\n    nome_item = db.Column(db.String(255), nullable=True)\n    min_participantes = db.Column(db.Integer, default=1)\n    max_participantes = db.Column(db.Integer, default=99999)\n    valor_sugerido = db.Column(db.Numeric(10, 2), nullable=False)\n    tipo_calculo = db.Column(db.Enum(TipoCalculoPolitica), default=TipoCalculoPolitica.FIXO)",
+        "peekOfCode": "class PoliticaComercialRegra(BaseModel):\n    __tablename__ = 'politica_comercial_regras'\n    politica_id = db.Column(db.Integer, db.ForeignKey('politicas_comerciais_eventos.id'), nullable=False)\n    tipo_item = db.Column(db.String(50), nullable=False)\n    referencia_id = db.Column(db.Integer, nullable=True)\n    nome_item = db.Column(db.String(255), nullable=True)\n    min_participantes = db.Column(db.Integer, default=1)\n    max_participantes = db.Column(db.Integer, default=99999)\n    valor_sugerido = db.Column(db.Numeric(10, 2), nullable=False)\n    tipo_calculo = db.Column(db.Enum(TipoCalculoPolitica, values_callable=lambda x: [e.value for e in x]), default=TipoCalculoPolitica.FIXO)",
         "detail": "backend.app.models.evento",
         "documentation": {}
     },
@@ -10020,7 +10086,7 @@
         "kind": 6,
         "importPath": "backend.app.models.evento",
         "description": "backend.app.models.evento",
-        "peekOfCode": "class Espaco(BaseModel):\n    __tablename__ = 'espacos'\n    nome = db.Column(db.String(100), nullable=False)\n    capacidade = db.Column(db.Integer, nullable=False)\n    localizacao = db.Column(db.String(255), nullable=True)\n    descricao = db.Column(db.Text, nullable=True)\n    preco_aluguer = db.Column(db.Numeric(10, 2), default=0.0)\n    estado = db.Column(db.Enum(EstadoEspaco), default=EstadoEspaco.ATIVO)\nclass Evento(BaseModel):\n    __tablename__ = 'eventos'",
+        "peekOfCode": "class Espaco(BaseModel):\n    __tablename__ = 'espacos'\n    nome = db.Column(db.String(100), nullable=False)\n    capacidade = db.Column(db.Integer, nullable=False)\n    localizacao = db.Column(db.String(255), nullable=True)\n    descricao = db.Column(db.Text, nullable=True)\n    preco_aluguer = db.Column(db.Numeric(10, 2), default=0.0)\n    estado = db.Column(db.Enum(EstadoEspaco, values_callable=lambda x: [e.value for e in x]), default=EstadoEspaco.ATIVO)\nclass Evento(BaseModel):\n    __tablename__ = 'eventos'",
         "detail": "backend.app.models.evento",
         "documentation": {}
     },
@@ -10038,7 +10104,7 @@
         "kind": 6,
         "importPath": "backend.app.models.evento",
         "description": "backend.app.models.evento",
-        "peekOfCode": "class EventoItem(db.Model):\n    __tablename__ = 'eventos_itens'\n    id = db.Column(db.Integer, primary_key=True)\n    evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=False)\n    tipo_item = db.Column(db.Enum(TipoItemEvento), nullable=False)\n    referencia_id = db.Column(db.Integer, nullable=True) # Referência ao cadastro base (serviço, espaço, material)\n    produto_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=True) # Se for produto (Acabado, Revenda, Consumível)\n    descricao = db.Column(db.String(255), nullable=False)\n    quantidade = db.Column(db.Numeric(10, 2), nullable=False, default=1.0)\n    unidade = db.Column(db.String(50), default='Unidade')",
+        "peekOfCode": "class EventoItem(db.Model):\n    __tablename__ = 'eventos_itens'\n    id = db.Column(db.Integer, primary_key=True)\n    evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=False)\n    tipo_item = db.Column(db.String(50), nullable=False)\n    referencia_id = db.Column(db.Integer, nullable=True) # Referência ao cadastro base (serviço, espaço, material)\n    produto_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=True) # Se for produto (Acabado, Revenda, Consumível)\n    descricao = db.Column(db.String(255), nullable=False)\n    quantidade = db.Column(db.Numeric(10, 2), nullable=False, default=1.0)\n    unidade = db.Column(db.String(50), default='Unidade')",
         "detail": "backend.app.models.evento",
         "documentation": {}
     },
@@ -10047,7 +10113,7 @@
         "kind": 6,
         "importPath": "backend.app.models.evento",
         "description": "backend.app.models.evento",
-        "peekOfCode": "class EventoServico(db.Model):\n    __tablename__ = 'eventos_servicos'\n    id = db.Column(db.Integer, primary_key=True)\n    evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=False)\n    tipo = db.Column(db.Enum(TipoServicoEvento), nullable=False)\n    descricao = db.Column(db.String(255), nullable=True)\n    quantidade = db.Column(db.Numeric(10, 2), nullable=False)\n    valor_unitario = db.Column(db.Numeric(10, 2), nullable=False)\n    deslocacao = db.Column(db.Numeric(10, 2), default=0.0)\n    subtotal = db.Column(db.Numeric(10, 2), nullable=False)",
+        "peekOfCode": "class EventoServico(db.Model):\n    __tablename__ = 'eventos_servicos'\n    id = db.Column(db.Integer, primary_key=True)\n    evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=False)\n    tipo = db.Column(db.Enum(TipoServicoEvento, values_callable=lambda x: [e.value for e in x]), nullable=False)\n    descricao = db.Column(db.String(255), nullable=True)\n    quantidade = db.Column(db.Numeric(10, 2), nullable=False)\n    valor_unitario = db.Column(db.Numeric(10, 2), nullable=False)\n    deslocacao = db.Column(db.Numeric(10, 2), default=0.0)\n    subtotal = db.Column(db.Numeric(10, 2), nullable=False)",
         "detail": "backend.app.models.evento",
         "documentation": {}
     },
@@ -10056,7 +10122,7 @@
         "kind": 6,
         "importPath": "backend.app.models.evento",
         "description": "backend.app.models.evento",
-        "peekOfCode": "class ReservaEspaco(db.Model):\n    __tablename__ = 'reservas_espacos'\n    id = db.Column(db.Integer, primary_key=True)\n    evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=False)\n    espaco_id = db.Column(db.Integer, db.ForeignKey('espacos.id'), nullable=False)\n    data_inicio = db.Column(db.DateTime, nullable=False)\n    data_fim = db.Column(db.DateTime, nullable=False)\n    valor_aluguer = db.Column(db.Numeric(10, 2), default=0.0)\n    estado = db.Column(db.Enum(EstadoReservaEspaco), default=EstadoReservaEspaco.RESERVADO)\nclass ReservaMaterial(db.Model):",
+        "peekOfCode": "class ReservaEspaco(db.Model):\n    __tablename__ = 'reservas_espacos'\n    id = db.Column(db.Integer, primary_key=True)\n    evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=False)\n    espaco_id = db.Column(db.Integer, db.ForeignKey('espacos.id'), nullable=False)\n    data_inicio = db.Column(db.DateTime, nullable=False)\n    data_fim = db.Column(db.DateTime, nullable=False)\n    valor_aluguer = db.Column(db.Numeric(10, 2), default=0.0)\n    estado = db.Column(db.Enum(EstadoReservaEspaco, values_callable=lambda x: [e.value for e in x]), default=EstadoReservaEspaco.RESERVADO)\nclass ReservaMaterial(db.Model):",
         "detail": "backend.app.models.evento",
         "documentation": {}
     },
@@ -10074,7 +10140,7 @@
         "kind": 6,
         "importPath": "backend.app.models.evento",
         "description": "backend.app.models.evento",
-        "peekOfCode": "class EventoEquipa(db.Model):\n    __tablename__ = 'eventos_equipas'\n    id = db.Column(db.Integer, primary_key=True)\n    evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=False)\n    utilizador_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)\n    funcao = db.Column(db.Enum(FuncaoEquipa), nullable=False)\n    estado = db.Column(db.String(50), default='Alocado')",
+        "peekOfCode": "class EventoEquipa(db.Model):\n    __tablename__ = 'eventos_equipas'\n    id = db.Column(db.Integer, primary_key=True)\n    evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=False)\n    utilizador_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)\n    funcao = db.Column(db.Enum(FuncaoEquipa, values_callable=lambda x: [e.value for e in x]), nullable=False)\n    estado = db.Column(db.String(50), default='Alocado')",
         "detail": "backend.app.models.evento",
         "documentation": {}
     },
@@ -10290,7 +10356,7 @@
         "kind": 6,
         "importPath": "backend.app.models.item_pedido",
         "description": "backend.app.models.item_pedido",
-        "peekOfCode": "class TipoItem(str, Enum):\n    PRODUTO = 'Produto'\n    PRODUTO_ACABADO = 'Produto Acabado'\n    PRODUTO_REVENDA = 'Produto Revenda'\n    SERVICO = 'Servico'\n    ALUGUER = 'Aluguer'\nclass ItemPedido(BaseModel):\n    __tablename__ = 'itens_pedido'\n    pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=False)\n    tipo_item = db.Column(db.Enum(TipoItem), nullable=False)",
+        "peekOfCode": "class TipoItem(str, Enum):\n    PRODUTO = 'Produto'\n    PRODUTO_ACABADO = 'Produto Acabado'\n    PRODUTO_REVENDA = 'Produto Revenda'\n    SERVICO = 'Servico'\n    ALUGUER = 'Aluguer'\nclass ItemPedido(BaseModel):\n    __tablename__ = 'itens_pedido'\n    pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=False)\n    tipo_item = db.Column(db.String(50), nullable=False)",
         "detail": "backend.app.models.item_pedido",
         "documentation": {}
     },
@@ -10299,7 +10365,7 @@
         "kind": 6,
         "importPath": "backend.app.models.item_pedido",
         "description": "backend.app.models.item_pedido",
-        "peekOfCode": "class ItemPedido(BaseModel):\n    __tablename__ = 'itens_pedido'\n    pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=False)\n    tipo_item = db.Column(db.Enum(TipoItem), nullable=False)\n    # Can be null if it's purely a service or aluguer without a matching product record\n    produto_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=True)\n    # Used if it's a custom service/aluguer\n    descricao = db.Column(db.String(255), nullable=True)\n    quantidade = db.Column(db.Numeric(10, 2), nullable=False)\n    preco_unitario = db.Column(db.Numeric(10, 2), nullable=False)",
+        "peekOfCode": "class ItemPedido(BaseModel):\n    __tablename__ = 'itens_pedido'\n    pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=False)\n    tipo_item = db.Column(db.String(50), nullable=False)\n    # Can be null if it's purely a service or aluguer without a matching product record\n    produto_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=True)\n    produto = db.relationship('Produto', lazy='joined')\n    # Used if it's a custom service/aluguer\n    descricao = db.Column(db.String(255), nullable=True)\n    quantidade = db.Column(db.Numeric(10, 2), nullable=False)",
         "detail": "backend.app.models.item_pedido",
         "documentation": {}
     },
@@ -10497,7 +10563,7 @@
         "kind": 6,
         "importPath": "backend.app.models.ordem_producao",
         "description": "backend.app.models.ordem_producao",
-        "peekOfCode": "class OrdemProducao(BaseModel):\n    __tablename__ = 'ordens_producao'\n    numero = db.Column(db.String(50), unique=True, nullable=False)\n    pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=False)\n    produto_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=True) # Keeping for backward compat\n    quantidade = db.Column(db.Numeric(10, 2), nullable=True) # Keeping for backward compat\n    sector = db.Column(db.Enum(SectorProducao, values_callable=lambda x: [e.value for e in x]), nullable=False)\n    turno = db.Column(db.Enum(TurnoProducao, values_callable=lambda x: [e.value for e in x]), nullable=True)\n    responsavel_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)\n    data_producao = db.Column(db.Date, nullable=True)",
+        "peekOfCode": "class OrdemProducao(BaseModel):\n    __tablename__ = 'ordens_producao'\n    numero = db.Column(db.String(50), unique=True, nullable=False)\n    pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=False)\n    produto_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=True) # Keeping for backward compat\n    quantidade = db.Column(db.Numeric(10, 2), nullable=True) # Keeping for backward compat\n    sector = db.Column(db.String(50), nullable=False)\n    turno = db.Column(db.String(50), nullable=True)\n    responsavel_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)\n    data_producao = db.Column(db.Date, nullable=True)",
         "detail": "backend.app.models.ordem_producao",
         "documentation": {}
     },
@@ -10560,7 +10626,7 @@
         "kind": 6,
         "importPath": "backend.app.models.pedido",
         "description": "backend.app.models.pedido",
-        "peekOfCode": "class EstadoPagamento(str, Enum):\n    PENDENTE = 'Pendente'\n    PARCIAL = 'Parcial'\n    PAGO = 'Pago'\nclass Pedido(BaseModel):\n    __tablename__ = 'pedidos'\n    numero = db.Column(db.String(50), unique=True, nullable=False)\n    cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id'), nullable=True)\n    evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=True)\n    tipo = db.Column(db.Enum(TipoPedido), nullable=False)",
+        "peekOfCode": "class EstadoPagamento(str, Enum):\n    PENDENTE = 'Pendente'\n    PARCIAL = 'Parcial'\n    PAGO = 'Pago'\nclass Pedido(BaseModel):\n    __tablename__ = 'pedidos'\n    numero = db.Column(db.String(50), unique=True, nullable=False)\n    cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id'), nullable=True)\n    evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=True)\n    tipo = db.Column(db.Enum(TipoPedido, values_callable=lambda x: [e.value for e in x]), nullable=False)",
         "detail": "backend.app.models.pedido",
         "documentation": {}
     },
@@ -10569,7 +10635,7 @@
         "kind": 6,
         "importPath": "backend.app.models.pedido",
         "description": "backend.app.models.pedido",
-        "peekOfCode": "class Pedido(BaseModel):\n    __tablename__ = 'pedidos'\n    numero = db.Column(db.String(50), unique=True, nullable=False)\n    cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id'), nullable=True)\n    evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=True)\n    tipo = db.Column(db.Enum(TipoPedido), nullable=False)\n    origem = db.Column(db.Enum(OrigemPedido), nullable=False)\n    data_pedido = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)\n    data_entrega = db.Column(db.Date, nullable=True)\n    hora_entrega = db.Column(db.Time, nullable=True)",
+        "peekOfCode": "class Pedido(BaseModel):\n    __tablename__ = 'pedidos'\n    numero = db.Column(db.String(50), unique=True, nullable=False)\n    cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id'), nullable=True)\n    evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=True)\n    tipo = db.Column(db.Enum(TipoPedido, values_callable=lambda x: [e.value for e in x]), nullable=False)\n    origem = db.Column(db.Enum(OrigemPedido, values_callable=lambda x: [e.value for e in x]), nullable=False)\n    data_pedido = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)\n    data_entrega = db.Column(db.Date, nullable=True)\n    hora_entrega = db.Column(db.Time, nullable=True)",
         "detail": "backend.app.models.pedido",
         "documentation": {}
     },
@@ -10677,7 +10743,7 @@
         "kind": 6,
         "importPath": "backend.app.models.requisicao",
         "description": "backend.app.models.requisicao",
-        "peekOfCode": "class Requisicao(BaseModel):\n    __tablename__ = 'requisicoes'\n    numero = db.Column(db.String(50), unique=True, nullable=False)\n    tipo = db.Column(db.Enum(TipoRequisicao), nullable=False)\n    sector = db.Column(db.Enum(SectorRequisicao), nullable=False)\n    turno_id = db.Column(db.Integer, db.ForeignKey('turnos.id'), nullable=True) \n    responsavel_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)\n    evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=True)\n    data_requisicao = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)\n    estado = db.Column(db.Enum(EstadoRequisicao), default=EstadoRequisicao.PENDENTE)",
+        "peekOfCode": "class Requisicao(BaseModel):\n    __tablename__ = 'requisicoes'\n    numero = db.Column(db.String(50), unique=True, nullable=False)\n    tipo = db.Column(db.String(50), nullable=False)\n    sector = db.Column(db.String(50), nullable=False)\n    turno_id = db.Column(db.Integer, db.ForeignKey('turnos.id'), nullable=True) \n    responsavel_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)\n    evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=True)\n    data_requisicao = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)\n    estado = db.Column(db.String(50), default='Pendente')",
         "detail": "backend.app.models.requisicao",
         "documentation": {}
     },
@@ -10686,7 +10752,7 @@
         "kind": 6,
         "importPath": "backend.app.models.requisicao",
         "description": "backend.app.models.requisicao",
-        "peekOfCode": "class TipoItemRequisicao(str, Enum):\n    INGREDIENTE = 'Ingrediente'\n    MATERIAL = 'Material'\n    CONSUMIVEL = 'Consumivel'\nclass RequisicaoItem(db.Model):\n    __tablename__ = 'requisicoes_itens'\n    id = db.Column(db.Integer, primary_key=True)\n    requisicao_id = db.Column(db.Integer, db.ForeignKey('requisicoes.id'), nullable=False)\n    tipo_item = db.Column(db.Enum(TipoItemRequisicao), nullable=False)\n    item_id = db.Column(db.Integer, nullable=False)",
+        "peekOfCode": "class TipoItemRequisicao(str, Enum):\n    INGREDIENTE = 'Ingrediente'\n    MATERIAL = 'Material'\n    CONSUMIVEL = 'Consumivel'\nclass RequisicaoItem(db.Model):\n    __tablename__ = 'requisicoes_itens'\n    id = db.Column(db.Integer, primary_key=True)\n    requisicao_id = db.Column(db.Integer, db.ForeignKey('requisicoes.id'), nullable=False)\n    tipo_item = db.Column(db.String(50), nullable=False)\n    item_id = db.Column(db.Integer, nullable=False)",
         "detail": "backend.app.models.requisicao",
         "documentation": {}
     },
@@ -10695,7 +10761,7 @@
         "kind": 6,
         "importPath": "backend.app.models.requisicao",
         "description": "backend.app.models.requisicao",
-        "peekOfCode": "class RequisicaoItem(db.Model):\n    __tablename__ = 'requisicoes_itens'\n    id = db.Column(db.Integer, primary_key=True)\n    requisicao_id = db.Column(db.Integer, db.ForeignKey('requisicoes.id'), nullable=False)\n    tipo_item = db.Column(db.Enum(TipoItemRequisicao), nullable=False)\n    item_id = db.Column(db.Integer, nullable=False)\n    quantidade_solicitada = db.Column(db.Numeric(10, 3), nullable=False)\n    quantidade_aprovada = db.Column(db.Numeric(10, 3), default=0)\n    quantidade_entregue = db.Column(db.Numeric(10, 3), default=0)\n    quantidade_devolvida = db.Column(db.Numeric(10, 3), default=0)",
+        "peekOfCode": "class RequisicaoItem(db.Model):\n    __tablename__ = 'requisicoes_itens'\n    id = db.Column(db.Integer, primary_key=True)\n    requisicao_id = db.Column(db.Integer, db.ForeignKey('requisicoes.id'), nullable=False)\n    tipo_item = db.Column(db.String(50), nullable=False)\n    item_id = db.Column(db.Integer, nullable=False)\n    quantidade_solicitada = db.Column(db.Numeric(10, 3), nullable=False)\n    quantidade_aprovada = db.Column(db.Numeric(10, 3), default=0)\n    quantidade_entregue = db.Column(db.Numeric(10, 3), default=0)\n    quantidade_devolvida = db.Column(db.Numeric(10, 3), default=0)",
         "detail": "backend.app.models.requisicao",
         "documentation": {}
     },
@@ -10731,7 +10797,7 @@
         "kind": 6,
         "importPath": "backend.app.models.requisicao",
         "description": "backend.app.models.requisicao",
-        "peekOfCode": "class EstadoOcorrencia(str, Enum):\n    ABERTA = 'Aberta'\n    ANALISE = 'Analise'\n    RESOLVIDA = 'Resolvida'\nclass OcorrenciaMaterial(BaseModel):\n    __tablename__ = 'ocorrencias_materiais'\n    numero = db.Column(db.String(50), unique=True, nullable=False)\n    material_id = db.Column(db.Integer, db.ForeignKey('materiais.id'), nullable=False)\n    responsavel_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)\n    tipo = db.Column(db.Enum(TipoOcorrencia), nullable=False)",
+        "peekOfCode": "class EstadoOcorrencia(str, Enum):\n    ABERTA = 'Aberta'\n    ANALISE = 'Analise'\n    RESOLVIDA = 'Resolvida'\nclass OcorrenciaMaterial(BaseModel):\n    __tablename__ = 'ocorrencias_materiais'\n    numero = db.Column(db.String(50), unique=True, nullable=False)\n    material_id = db.Column(db.Integer, db.ForeignKey('materiais.id'), nullable=False)\n    responsavel_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)\n    tipo = db.Column(db.Enum(TipoOcorrencia, values_callable=lambda x: [e.value for e in x]), nullable=False)",
         "detail": "backend.app.models.requisicao",
         "documentation": {}
     },
@@ -10740,7 +10806,7 @@
         "kind": 6,
         "importPath": "backend.app.models.requisicao",
         "description": "backend.app.models.requisicao",
-        "peekOfCode": "class OcorrenciaMaterial(BaseModel):\n    __tablename__ = 'ocorrencias_materiais'\n    numero = db.Column(db.String(50), unique=True, nullable=False)\n    material_id = db.Column(db.Integer, db.ForeignKey('materiais.id'), nullable=False)\n    responsavel_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)\n    tipo = db.Column(db.Enum(TipoOcorrencia), nullable=False)\n    quantidade = db.Column(db.Numeric(10, 3), nullable=False)\n    valor_estimado = db.Column(db.Numeric(10, 2), default=0)\n    justificacao = db.Column(db.Text, nullable=False)\n    data_ocorrencia = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)",
+        "peekOfCode": "class OcorrenciaMaterial(BaseModel):\n    __tablename__ = 'ocorrencias_materiais'\n    numero = db.Column(db.String(50), unique=True, nullable=False)\n    material_id = db.Column(db.Integer, db.ForeignKey('materiais.id'), nullable=False)\n    responsavel_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)\n    tipo = db.Column(db.Enum(TipoOcorrencia, values_callable=lambda x: [e.value for e in x]), nullable=False)\n    quantidade = db.Column(db.Numeric(10, 3), nullable=False)\n    valor_estimado = db.Column(db.Numeric(10, 2), default=0)\n    justificacao = db.Column(db.Text, nullable=False)\n    data_ocorrencia = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)",
         "detail": "backend.app.models.requisicao",
         "documentation": {}
     },
@@ -11226,7 +11292,7 @@
         "kind": 6,
         "importPath": "backend.app.schemas.armazem_schema",
         "description": "backend.app.schemas.armazem_schema",
-        "peekOfCode": "class ProdutoSchema(Schema):\n    id = fields.Int(dump_only=True)\n    codigo = fields.Str(dump_only=True)\n    nome = fields.Str(required=True, validate=validate.Length(min=2))\n    tipo = fields.Enum(TipoProduto, by_value=True, required=True)\n    servico = fields.Enum(ServicoEnum, by_value=True, required=False, allow_none=True)\n    categoria = fields.Str(required=False) # Mantido por compatibilidade\n    categoria_id = fields.Int(required=False, allow_none=True)\n    unidade_medida_id = fields.Int(required=False, allow_none=True)\n    tempo_producao = fields.Int(required=False, allow_none=True)",
+        "peekOfCode": "class ProdutoSchema(Schema):\n    id = fields.Int(dump_only=True)\n    codigo = fields.Str(dump_only=True)\n    nome = fields.Str(required=True, validate=validate.Length(min=2))\n    tipo = fields.Str(required=False, allow_none=True, load_default='Acabado')\n    servico = fields.Str(required=False, allow_none=True)\n    categoria = fields.Str(required=False) # Mantido por compatibilidade\n    categoria_id = fields.Int(required=False, allow_none=True)\n    unidade_medida_id = fields.Int(required=False, allow_none=True)\n    tempo_producao = fields.Int(required=False, allow_none=True)",
         "detail": "backend.app.schemas.armazem_schema",
         "documentation": {}
     },
@@ -11235,7 +11301,7 @@
         "kind": 6,
         "importPath": "backend.app.schemas.armazem_schema",
         "description": "backend.app.schemas.armazem_schema",
-        "peekOfCode": "class MaterialSchema(Schema):\n    id = fields.Int(dump_only=True)\n    codigo = fields.Str(required=False)\n    nome = fields.Str(required=True)\n    categoria = fields.Str(required=False)\n    tipo = fields.Enum(TipoMaterial, by_value=True, required=True)\n    quantidade_total = fields.Decimal(dump_only=True)\n    quantidade_disponivel = fields.Decimal(dump_only=True)\n    quantidade_reservada = fields.Decimal(dump_only=True)\n    estado = fields.Enum(EstadoMaterial, by_value=True, dump_only=True)",
+        "peekOfCode": "class MaterialSchema(Schema):\n    id = fields.Int(dump_only=True)\n    codigo = fields.Str(required=False)\n    nome = fields.Str(required=True)\n    categoria = fields.Str(required=False)\n    tipo = fields.Str(required=False, allow_none=True, load_default='Material')\n    quantidade_total = fields.Decimal(dump_only=True)\n    quantidade_disponivel = fields.Decimal(dump_only=True)\n    quantidade_reservada = fields.Decimal(dump_only=True)\n    estado = fields.Str(dump_only=True)",
         "detail": "backend.app.schemas.armazem_schema",
         "documentation": {}
     },
@@ -11244,7 +11310,7 @@
         "kind": 6,
         "importPath": "backend.app.schemas.armazem_schema",
         "description": "backend.app.schemas.armazem_schema",
-        "peekOfCode": "class MovimentoStockSchema(Schema):\n    id = fields.Int(dump_only=True)\n    tipo = fields.Enum(TipoMovimento, by_value=True, required=True)\n    origem = fields.Enum(OrigemMovimento, by_value=True, required=True)\n    entidade_tipo = fields.Enum(EntidadeMovimento, by_value=True, required=True)\n    referencia_id = fields.Int(required=True)\n    entidade_nome = fields.Method(\"get_entidade_nome\")\n    quantidade_antes = fields.Decimal(dump_only=True)\n    quantidade = fields.Decimal(required=True)\n    quantidade_depois = fields.Decimal(dump_only=True)",
+        "peekOfCode": "class MovimentoStockSchema(Schema):\n    id = fields.Int(dump_only=True)\n    tipo = fields.Str(required=False, allow_none=True, load_default='Entrada')\n    origem = fields.Str(required=False, allow_none=True, load_default='Ajuste')\n    entidade_tipo = fields.Str(required=False, allow_none=True, load_default='Produto')\n    referencia_id = fields.Int(required=True)\n    entidade_nome = fields.Method(\"get_entidade_nome\")\n    quantidade_antes = fields.Decimal(dump_only=True)\n    quantidade = fields.Decimal(required=True)\n    quantidade_depois = fields.Decimal(dump_only=True)",
         "detail": "backend.app.schemas.armazem_schema",
         "documentation": {}
     },
@@ -11541,7 +11607,7 @@
         "kind": 6,
         "importPath": "backend.app.schemas.pedido_schema",
         "description": "backend.app.schemas.pedido_schema",
-        "peekOfCode": "class ItemPedidoSchema(Schema):\n    id = fields.Int(dump_only=True)\n    pedido_id = fields.Int(dump_only=True)\n    tipo_item = fields.Enum(TipoItem, by_value=True, required=True)\n    produto_id = fields.Int(required=False, allow_none=True)\n    descricao = fields.Str(required=False, allow_none=True)\n    quantidade = fields.Decimal(required=True)\n    preco_unitario = fields.Decimal(required=True)\n    subtotal = fields.Decimal(dump_only=True)\n    desconto = fields.Decimal(required=False, allow_none=True, load_default=0)",
+        "peekOfCode": "class ItemPedidoSchema(Schema):\n    id = fields.Int(dump_only=True)\n    pedido_id = fields.Int(dump_only=True)\n    tipo_item = fields.Str(required=False, allow_none=True, load_default='Produto')\n    produto_id = fields.Int(required=False, allow_none=True)\n    descricao = fields.Str(required=False, allow_none=True)\n    quantidade = fields.Decimal(required=True)\n    preco_unitario = fields.Decimal(required=True)\n    subtotal = fields.Decimal(dump_only=True)\n    desconto = fields.Decimal(required=False, allow_none=True, load_default=0)",
         "detail": "backend.app.schemas.pedido_schema",
         "documentation": {}
     },
@@ -11550,7 +11616,7 @@
         "kind": 6,
         "importPath": "backend.app.schemas.pedido_schema",
         "description": "backend.app.schemas.pedido_schema",
-        "peekOfCode": "class PedidoSchema(Schema):\n    id = fields.Int(dump_only=True)\n    numero = fields.Str(dump_only=True)\n    cliente_id = fields.Int(required=False, allow_none=True)\n    tipo = fields.Enum(TipoPedido, by_value=True, required=True)\n    origem = fields.Enum(OrigemPedido, by_value=True, required=True)\n    data_pedido = fields.DateTime(dump_only=True)\n    data_entrega = fields.Date(required=False, allow_none=True)\n    hora_entrega = fields.Time(required=False, allow_none=True)\n    estado = fields.Enum(EstadoPedido, by_value=True, required=False)",
+        "peekOfCode": "class PedidoSchema(Schema):\n    id = fields.Int(dump_only=True)\n    numero = fields.Str(dump_only=True)\n    cliente_id = fields.Int(required=False, allow_none=True)\n    tipo = fields.Str(required=False, allow_none=True, load_default='Simples')\n    origem = fields.Str(required=False, allow_none=True, load_default='Balcao')\n    data_pedido = fields.DateTime(dump_only=True)\n    data_entrega = fields.Date(required=False, allow_none=True)\n    hora_entrega = fields.Time(required=False, allow_none=True)\n    estado = fields.Str(required=False, allow_none=True, load_default='Pendente')",
         "detail": "backend.app.schemas.pedido_schema",
         "documentation": {}
     },
@@ -11577,7 +11643,7 @@
         "kind": 6,
         "importPath": "backend.app.schemas.producao_schema",
         "description": "backend.app.schemas.producao_schema",
-        "peekOfCode": "class FichaTecnicaSchema(Schema):\n    id = fields.Int(dump_only=True)\n    codigo = fields.Str(required=False)\n    nome = fields.Str(required=True, validate=validate.Length(min=2))\n    descricao = fields.Str(required=False)\n    tipo = fields.Enum(TipoFicha, by_value=True, required=True)\n    produto_acabado_id = fields.Int(required=True)\n    tempo_producao_minutos = fields.Int(required=False, allow_none=True)\n    rendimento = fields.Decimal(required=False, allow_none=True)\n    ativo = fields.Bool(required=False)",
+        "peekOfCode": "class FichaTecnicaSchema(Schema):\n    id = fields.Int(dump_only=True)\n    codigo = fields.Str(required=False)\n    nome = fields.Str(required=True, validate=validate.Length(min=2))\n    descricao = fields.Str(required=False)\n    tipo = fields.Str(required=False, allow_none=True, load_default='FichaTecnica')\n    produto_acabado_id = fields.Int(required=True)\n    tempo_producao_minutos = fields.Int(required=False, allow_none=True)\n    rendimento = fields.Decimal(required=False, allow_none=True)\n    ativo = fields.Bool(required=False)",
         "detail": "backend.app.schemas.producao_schema",
         "documentation": {}
     },
@@ -11613,7 +11679,7 @@
         "kind": 6,
         "importPath": "backend.app.schemas.producao_schema",
         "description": "backend.app.schemas.producao_schema",
-        "peekOfCode": "class ReservaIngredienteSchema(Schema):\n    id = fields.Int(dump_only=True)\n    ingrediente_id = fields.Int(required=True)\n    pedido_id = fields.Int(required=True)\n    quantidade = fields.Decimal(required=True)\n    data_reserva = fields.DateTime(dump_only=True)\n    estado = fields.Enum(EstadoReserva, by_value=True, dump_only=True)\nclass AlterarEstadoOrdemSchema(Schema):\n    estado = fields.Enum(EstadoProducao, by_value=True, required=True)",
+        "peekOfCode": "class ReservaIngredienteSchema(Schema):\n    id = fields.Int(dump_only=True)\n    ingrediente_id = fields.Int(required=True)\n    pedido_id = fields.Int(required=True)\n    quantidade = fields.Decimal(required=True)\n    data_reserva = fields.DateTime(dump_only=True)\n    estado = fields.Str(dump_only=True)\nclass AlterarEstadoOrdemSchema(Schema):\n    estado = fields.Raw(required=True)",
         "detail": "backend.app.schemas.producao_schema",
         "documentation": {}
     },
@@ -11622,7 +11688,7 @@
         "kind": 6,
         "importPath": "backend.app.schemas.producao_schema",
         "description": "backend.app.schemas.producao_schema",
-        "peekOfCode": "class AlterarEstadoOrdemSchema(Schema):\n    estado = fields.Enum(EstadoProducao, by_value=True, required=True)",
+        "peekOfCode": "class AlterarEstadoOrdemSchema(Schema):\n    estado = fields.Raw(required=True)",
         "detail": "backend.app.schemas.producao_schema",
         "documentation": {}
     },
@@ -11631,7 +11697,7 @@
         "kind": 6,
         "importPath": "backend.app.schemas.requisicao_schema",
         "description": "backend.app.schemas.requisicao_schema",
-        "peekOfCode": "class RequisicaoItemSchema(Schema):\n    id = fields.Int(dump_only=True)\n    tipo_item = fields.Enum(TipoItemRequisicao, by_value=True, required=True)\n    item_id = fields.Int(required=True)\n    nome = fields.Method(\"get_item_nome\", dump_only=True)\n    codigo = fields.Method(\"get_item_codigo\", dump_only=True)\n    unidade_medida = fields.Method(\"get_item_unidade\", dump_only=True)\n    quantidade_solicitada = fields.Decimal(required=True)\n    quantidade_aprovada = fields.Decimal(required=False)\n    quantidade_entregue = fields.Decimal(required=False)",
+        "peekOfCode": "class RequisicaoItemSchema(Schema):\n    id = fields.Int(dump_only=True)\n    tipo_item = fields.Str(required=False, allow_none=True, load_default='Ingrediente')\n    item_id = fields.Int(required=True)\n    nome = fields.Method(\"get_item_nome\", dump_only=True)\n    codigo = fields.Method(\"get_item_codigo\", dump_only=True)\n    unidade_medida = fields.Method(\"get_item_unidade\", dump_only=True)\n    quantidade_solicitada = fields.Decimal(required=True)\n    quantidade_aprovada = fields.Decimal(required=False)\n    quantidade_entregue = fields.Decimal(required=False)",
         "detail": "backend.app.schemas.requisicao_schema",
         "documentation": {}
     },
@@ -11640,7 +11706,7 @@
         "kind": 6,
         "importPath": "backend.app.schemas.requisicao_schema",
         "description": "backend.app.schemas.requisicao_schema",
-        "peekOfCode": "class RequisicaoSchema(Schema):\n    id = fields.Int(dump_only=True)\n    numero = fields.Str(dump_only=True)\n    tipo = fields.Enum(TipoRequisicao, by_value=True, required=True)\n    sector = fields.Enum(SectorRequisicao, by_value=True, required=True)\n    turno_id = fields.Int(required=False, allow_none=True)\n    turno_nome = fields.Function(lambda obj: obj.turno.nome if obj.turno else None, dump_only=True)\n    responsavel_id = fields.Int(dump_only=True)\n    responsavel_nome = fields.Function(lambda obj: obj.responsavel.name if obj.responsavel else None, dump_only=True)\n    data_requisicao = fields.DateTime(dump_only=True)",
+        "peekOfCode": "class RequisicaoSchema(Schema):\n    id = fields.Int(dump_only=True)\n    numero = fields.Str(dump_only=True)\n    tipo = fields.Str(required=False, allow_none=True, load_default='Interna')\n    sector = fields.Str(required=False, allow_none=True, load_default='Cozinha')\n    turno_id = fields.Int(required=False, allow_none=True)\n    turno_nome = fields.Function(lambda obj: obj.turno.nome if obj.turno else None, dump_only=True)\n    responsavel_id = fields.Int(dump_only=True)\n    responsavel_nome = fields.Function(lambda obj: obj.responsavel.name if obj.responsavel else None, dump_only=True)\n    data_requisicao = fields.DateTime(dump_only=True)",
         "detail": "backend.app.schemas.requisicao_schema",
         "documentation": {}
     },
@@ -11676,7 +11742,7 @@
         "kind": 6,
         "importPath": "backend.app.schemas.requisicao_schema",
         "description": "backend.app.schemas.requisicao_schema",
-        "peekOfCode": "class OcorrenciaMaterialSchema(Schema):\n    id = fields.Int(dump_only=True)\n    numero = fields.Str(dump_only=True)\n    material_id = fields.Int(required=True)\n    material_nome = fields.Function(lambda obj: obj.material.nome if obj.material else None, dump_only=True)\n    material_codigo = fields.Function(lambda obj: obj.material.codigo if obj.material else None, dump_only=True)\n    responsavel_id = fields.Int(dump_only=True)\n    responsavel_nome = fields.Function(lambda obj: obj.responsavel.name if obj.responsavel else None, dump_only=True)\n    tipo = fields.Enum(TipoOcorrencia, by_value=True, required=True)\n    quantidade = fields.Decimal(required=True)",
+        "peekOfCode": "class OcorrenciaMaterialSchema(Schema):\n    id = fields.Int(dump_only=True)\n    numero = fields.Str(dump_only=True)\n    material_id = fields.Int(required=True)\n    material_nome = fields.Function(lambda obj: obj.material.nome if obj.material else None, dump_only=True)\n    material_codigo = fields.Function(lambda obj: obj.material.codigo if obj.material else None, dump_only=True)\n    responsavel_id = fields.Int(dump_only=True)\n    responsavel_nome = fields.Function(lambda obj: obj.responsavel.name if obj.responsavel else None, dump_only=True)\n    tipo = fields.Str(required=False, allow_none=True, load_default='Danificado')\n    quantidade = fields.Decimal(required=True)",
         "detail": "backend.app.schemas.requisicao_schema",
         "documentation": {}
     },
@@ -11820,7 +11886,16 @@
         "kind": 6,
         "importPath": "backend.app.services.notification_service",
         "description": "backend.app.services.notification_service",
-        "peekOfCode": "class NotificationService:\n    \"\"\"\n    Camada de integração desacoplada para envio de notificações e documentos\n    (Email, WhatsApp, etc). Preparado para Celery ou Async workers no futuro.\n    \"\"\"\n    @staticmethod\n    def send_invoice_async(venda_id, client_contact, method=\"email\"):\n        \"\"\"\n        Envia fatura de forma assíncrona.\n        No futuro, isso pode ser um task.delay(venda_id, ...) usando Celery.",
+        "peekOfCode": "class NotificationService:\n    \"\"\"\n    Serviço centralizado de envio de notificações e comunicações\n    (Email SMTP, SMS e WhatsApp). Operações executadas de forma assíncrona.\n    \"\"\"\n    @staticmethod\n    def _get_app():\n        try:\n            return current_app._get_current_object()\n        except Exception:",
+        "detail": "backend.app.services.notification_service",
+        "documentation": {}
+    },
+    {
+        "label": "logger",
+        "kind": 5,
+        "importPath": "backend.app.services.notification_service",
+        "description": "backend.app.services.notification_service",
+        "peekOfCode": "logger = logging.getLogger(__name__)\nclass NotificationService:\n    \"\"\"\n    Serviço centralizado de envio de notificações e comunicações\n    (Email SMTP, SMS e WhatsApp). Operações executadas de forma assíncrona.\n    \"\"\"\n    @staticmethod\n    def _get_app():\n        try:\n            return current_app._get_current_object()",
         "detail": "backend.app.services.notification_service",
         "documentation": {}
     },

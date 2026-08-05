@@ -3,7 +3,7 @@ from app.models.requisicao import TipoRequisicao, SectorRequisicao, EstadoRequis
 
 class RequisicaoItemSchema(Schema):
     id = fields.Int(dump_only=True)
-    tipo_item = fields.Enum(TipoItemRequisicao, by_value=True, required=True)
+    tipo_item = fields.Str(required=False, allow_none=True, load_default='Ingrediente')
     item_id = fields.Int(required=True)
     nome = fields.Method("get_item_nome", dump_only=True)
     codigo = fields.Method("get_item_codigo", dump_only=True)
@@ -70,14 +70,14 @@ class RequisicaoItemSchema(Schema):
 class RequisicaoSchema(Schema):
     id = fields.Int(dump_only=True)
     numero = fields.Str(dump_only=True)
-    tipo = fields.Enum(TipoRequisicao, by_value=True, required=True)
-    sector = fields.Enum(SectorRequisicao, by_value=True, required=True)
+    tipo = fields.Str(required=False, allow_none=True, load_default='Interna')
+    sector = fields.Str(required=False, allow_none=True, load_default='Cozinha')
     turno_id = fields.Int(required=False, allow_none=True)
     turno_nome = fields.Function(lambda obj: obj.turno.nome if obj.turno else None, dump_only=True)
     responsavel_id = fields.Int(dump_only=True)
     responsavel_nome = fields.Function(lambda obj: obj.responsavel.name if obj.responsavel else None, dump_only=True)
     data_requisicao = fields.DateTime(dump_only=True)
-    estado = fields.Enum(EstadoRequisicao, by_value=True, dump_only=True)
+    estado = fields.Str(dump_only=True)
     observacoes = fields.Str(required=False, allow_none=True)
     
     itens = fields.List(fields.Nested(RequisicaoItemSchema), required=False)
@@ -104,9 +104,9 @@ class OcorrenciaMaterialSchema(Schema):
     material_codigo = fields.Function(lambda obj: obj.material.codigo if obj.material else None, dump_only=True)
     responsavel_id = fields.Int(dump_only=True)
     responsavel_nome = fields.Function(lambda obj: obj.responsavel.name if obj.responsavel else None, dump_only=True)
-    tipo = fields.Enum(TipoOcorrencia, by_value=True, required=True)
+    tipo = fields.Str(required=False, allow_none=True, load_default='Danificado')
     quantidade = fields.Decimal(required=True)
     valor_estimado = fields.Decimal(required=False)
     justificacao = fields.Str(required=True)
     data_ocorrencia = fields.DateTime(dump_only=True)
-    estado = fields.Enum(EstadoOcorrencia, by_value=True, dump_only=True)
+    estado = fields.Str(dump_only=True)

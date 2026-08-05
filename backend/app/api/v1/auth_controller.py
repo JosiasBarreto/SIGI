@@ -111,12 +111,15 @@ def change_password():
       400:
         description: Invalid request
     """
-    data = request.get_json()
-    if not data or not data.get('old_password') or not data.get('new_password'):
+    data = request.get_json() or {}
+    old_password = data.get('old_password') or data.get('oldPassword') or data.get('currentPassword') or data.get('current_password')
+    new_password = data.get('new_password') or data.get('newPassword')
+
+    if not old_password or not new_password:
         return jsonify({"msg": "Dados inválidos"}), 400
         
     user_id = get_jwt_identity()
-    success, error = auth_service.change_password(user_id, data['old_password'], data['new_password'])
+    success, error = auth_service.change_password(user_id, old_password, new_password)
     
     if error:
         return jsonify({"msg": error}), 400
