@@ -12,7 +12,7 @@ class FichaTecnica(BaseModel):
     codigo = db.Column(db.String(50), unique=True, nullable=True)
     nome = db.Column(db.String(100), nullable=False)
     descricao = db.Column(db.Text, nullable=True)
-    tipo = db.Column(db.Enum(TipoFicha, values_callable=lambda x: [e.value for e in x]), nullable=False)
+    tipo = db.Column(db.Enum(TipoFicha), nullable=False)
     produto_acabado_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=False)
     tempo_producao_minutos = db.Column(db.Integer, nullable=True)
     rendimento = db.Column(db.Numeric(10, 2), nullable=True)

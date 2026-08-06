@@ -19,13 +19,13 @@ class Material(BaseModel):
     codigo = db.Column(db.String(50), unique=True, nullable=True)
     nome = db.Column(db.String(100), nullable=False)
     categoria = db.Column(db.String(100), nullable=True)
-    tipo = db.Column(db.Enum(TipoMaterial, values_callable=lambda x: [e.value for e in x]), nullable=False)
+    tipo = db.Column(db.Enum(TipoMaterial), nullable=False)
     
     quantidade_total = db.Column(db.Numeric(10, 2), default=0)
     quantidade_disponivel = db.Column(db.Numeric(10, 2), default=0)
     quantidade_reservada = db.Column(db.Numeric(10, 2), default=0)
     
-    estado = db.Column(db.Enum(EstadoMaterial, values_callable=lambda x: [e.value for e in x]), default=EstadoMaterial.DISPONIVEL)
+    estado = db.Column(db.Enum(EstadoMaterial), default=EstadoMaterial.DISPONIVEL)
     ativo = db.Column(db.Boolean, default=True)
     valor_unitario = db.Column(db.Numeric(10, 2), default=0)
     unidade_medida_id = db.Column(db.Integer, db.ForeignKey('unidades_medida.id'), nullable=True)

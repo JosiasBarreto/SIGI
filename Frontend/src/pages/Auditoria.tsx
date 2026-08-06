@@ -1,13 +1,19 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Shield, Filter, Search, Download, Calendar, Users, RefreshCw, Eye, FileJson, AlertCircle, LogIn, Activity } from 'lucide-react';
+import { Shield, Filter, Search, Download, Calendar, Users, RefreshCw, Eye, FileJson, AlertCircle, LogIn, Activity, XCircle, CheckCircle2, Lock } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import apiClient from '../api/client';
 import Modal from '../components/Common/Modal';
 import { DataTable } from '../components/Common/DataTable';
 import { ColumnDef, PaginationState } from '@tanstack/react-table';
+import { useAuth } from '../components/AuthContext';
+import { formatCurrency } from '../lib/utils';
+import { auditService, financialService } from '../services';
 
 export default function Auditoria() {
-  const [activeTab, setActiveTab] = useState<'auditoria' | 'acesso' | 'erro'>('auditoria');
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'Administrador' || user?.role?.toLowerCase().includes('admin');
+  
+  const [activeTab, setActiveTab] = useState<'auditoria' | 'acesso' | 'erro' | 'caixas'>('auditoria');
   
   // Pagination State
   const [{ pageIndex, pageSize }, setPagination] = useState<PaginationState>({
@@ -40,6 +46,12 @@ export default function Auditoria() {
     queryKey: ['auditLogs', activeTab, pageIndex, pageSize, dataInicio, dataFim, searchUser, searchModule],
     queryFn: async () => {
        try {
+           if (activeTab === 'caixas') {
+             const res = await financialService.getAll({ page: pageIndex + 1, per_page: pageSize });
+             setTotalPages(res.pages || 1);
+             return res.items || (Array.isArray(res) ? res : []);
+           }
+
            const params = new URLSearchParams();
            params.append('tipo', activeTab);
            params.append('page', String(pageIndex + 1));
@@ -153,7 +165,8 @@ export default function Auditoria() {
       cell: (info) => {
         const isSuccess = info.getValue() as boolean;
         return (
-          <span className={`px-2 py-1 rounded text-[10px] font-bold ${isSuccess ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300' : 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300'}`}>
+          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold ${isSuccess ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300' : 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300'}`} title={isSuccess ? 'Login efetuado com sucesso' : 'Tentativa de login falhada'}>
+            {isSuccess ? <CheckCircle2 className="w-3.5 h-3.5" /> : <XCircle className="w-3.5 h-3.5" />}
             {isSuccess ? 'Sucesso' : 'Falhou'}
           </span>
         );
@@ -189,11 +202,68 @@ export default function Auditoria() {
     },
   ], []);
 
+  const columnsCaixas = useMemo<ColumnDef<any>[]>(() => [
+    {
+      accessorKey: 'numero',
+      header: 'CAIXA REF',
+      cell: (info) => <span className="font-bold text-gray-900 dark:text-white uppercase">#{info.getValue() as string || info.row.original.id}</span>,
+    },
+    {
+      accessorKey: 'data_abertura',
+      header: 'ABERTURA',
+      cell: (info) => <span className="font-mono text-[11px] text-gray-500">{info.getValue() ? new Date(info.getValue() as string).toLocaleString() : '-'}</span>,
+    },
+    {
+      accessorKey: 'data_fecho',
+      header: 'FECHO',
+      cell: (info) => <span className="font-mono text-[11px] text-gray-500">{info.getValue() ? new Date(info.getValue() as string).toLocaleString() : <span className="text-primary font-bold">Aberto</span>}</span>,
+    },
+    {
+      accessorKey: 'valor_inicial',
+      header: 'FUNDO MANEIO',
+      cell: (info) => <span className="font-mono text-xs">{formatCurrency(parseFloat((info.getValue() as string) || "0"))}</span>,
+    },
+    {
+      accessorKey: 'estado',
+      header: 'ESTADO',
+      cell: (info) => {
+        const val = info.getValue() as string;
+        const color = val === 'Aberto' ? 'bg-primary/10 text-primary' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400';
+        return <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${color}`}>{val}</span>;
+      },
+    },
+    {
+      id: 'divergencias',
+      header: 'DIVERGÊNCIAS',
+      cell: (info) => {
+        const row = info.row.original;
+        const difTotal = parseFloat(row.diferenca_dinheiro || "0") + parseFloat(row.diferenca_pos || "0") + parseFloat(row.diferenca_transferencia || "0");
+        if (row.estado === "Aberto") return <span className="text-gray-400 text-[10px]">-</span>;
+        
+        const hasJustification = !!row.explicacao_divergencia;
+        
+        return (
+          <div className="flex flex-col gap-1">
+            <span className={`font-mono text-[11px] font-bold ${difTotal < 0 ? 'text-red-500' : difTotal > 0 ? 'text-green-500' : 'text-gray-500'}`}>
+              {difTotal > 0 ? '+' : ''}{formatCurrency(difTotal)}
+            </span>
+            {(difTotal !== 0 || hasJustification) && (
+              <span className="text-[9px] text-gray-400 uppercase truncate max-w-[120px]" title={row.explicacao_divergencia}>
+                {hasJustification ? row.explicacao_divergencia : 'Sem justificação'}
+              </span>
+            )}
+          </div>
+        );
+      }
+    }
+  ], []);
+
   const getColumns = () => {
     switch (activeTab) {
       case 'auditoria': return columnsAuditoria;
       case 'acesso': return columnsAcesso;
       case 'erro': return columnsErro;
+      case 'caixas': return columnsCaixas;
       default: return columnsAuditoria;
     }
   };
@@ -267,24 +337,39 @@ export default function Auditoria() {
           <Activity className="w-4 h-4 mr-2" />
           Logs de Operações
         </button>
-        <button
-          onClick={() => setActiveTab('acesso')}
-          className={`flex items-center px-4 py-2 text-sm font-semibold rounded-t-lg border-b-2 transition-colors ${
-            activeTab === 'acesso' ? 'border-primary text-primary bg-primary/5' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
-          }`}
-        >
-          <LogIn className="w-4 h-4 mr-2" />
-          Histórico de Logins
-        </button>
-        <button
-          onClick={() => setActiveTab('erro')}
-          className={`flex items-center px-4 py-2 text-sm font-semibold rounded-t-lg border-b-2 transition-colors ${
-            activeTab === 'erro' ? 'border-error text-error bg-error/5' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
-          }`}
-        >
-          <AlertCircle className="w-4 h-4 mr-2" />
-          Erros do Sistema
-        </button>
+        {isAdmin && (
+          <button
+            onClick={() => setActiveTab('acesso')}
+            className={`flex items-center px-4 py-2 text-sm font-semibold rounded-t-lg border-b-2 transition-colors ${
+              activeTab === 'acesso' ? 'border-primary text-primary bg-primary/5' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
+            }`}
+          >
+            <LogIn className="w-4 h-4 mr-2" />
+            Histórico de Logins
+          </button>
+        )}
+        {isAdmin && (
+          <button
+            onClick={() => setActiveTab('erro')}
+            className={`flex items-center px-4 py-2 text-sm font-semibold rounded-t-lg border-b-2 transition-colors ${
+              activeTab === 'erro' ? 'border-error text-error bg-error/5' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
+            }`}
+          >
+            <AlertCircle className="w-4 h-4 mr-2" />
+            Erros do Sistema
+          </button>
+        )}
+        {isAdmin && (
+          <button
+            onClick={() => setActiveTab('caixas')}
+            className={`flex items-center px-4 py-2 text-sm font-semibold rounded-t-lg border-b-2 transition-colors ${
+              activeTab === 'caixas' ? 'border-primary text-primary bg-primary/5' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
+            }`}
+          >
+            <Lock className="w-4 h-4 mr-2" />
+            Histórico de Caixas
+          </button>
+        )}
       </div>
 
       {/* Main Table Card */}

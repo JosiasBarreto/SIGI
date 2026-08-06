@@ -24,14 +24,14 @@ class TaxaIVA(BaseModel):
 
 class SerieDocumento(BaseModel):
     __tablename__ = 'series_documento'
-    tipo_documento = db.Column(db.Enum(TipoDocumento, values_callable=lambda x: [e.value for e in x]), nullable=False)
+    tipo_documento = db.Column(db.Enum(TipoDocumento), nullable=False)
     ano = db.Column(db.Integer, nullable=False)
     ultimo_numero = db.Column(db.Integer, default=0)
 
 class Venda(BaseModel):
     __tablename__ = 'vendas'
     numero_documento = db.Column(db.String(50), unique=True, nullable=False)
-    tipo_documento = db.Column(db.Enum(TipoDocumento, values_callable=lambda x: [e.value for e in x]), nullable=False)
+    tipo_documento = db.Column(db.Enum(TipoDocumento), nullable=False)
     _cliente_id = db.Column('cliente_id', db.Integer, db.ForeignKey('clientes.id'), nullable=True)
     pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=True)
     
@@ -44,7 +44,7 @@ class Venda(BaseModel):
     _valor_pago = db.Column('valor_pago', db.Numeric(12, 2), default=0, nullable=True)
     _saldo = db.Column('saldo', db.Numeric(12, 2), default=0, nullable=True)
     
-    estado = db.Column(db.Enum(EstadoVenda, values_callable=lambda x: [e.value for e in x]), default=EstadoVenda.PENDENTE)
+    estado = db.Column(db.Enum(EstadoVenda), default=EstadoVenda.PENDENTE)
     observacoes = db.Column(db.Text, nullable=True)
     criado_por = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     

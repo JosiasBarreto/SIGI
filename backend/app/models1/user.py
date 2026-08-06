@@ -18,7 +18,7 @@ class User(BaseModel):
     name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(255), nullable=False)
-    role = db.Column(db.Enum(RoleEnum, values_callable=lambda x: [e.value for e in x]), nullable=False, default=RoleEnum.ATENDIMENTO)
+    role = db.Column(db.Enum(RoleEnum), nullable=False, default=RoleEnum.ATENDIMENTO)
     
     def __repr__(self):
         return f"<User {self.email} ({self.role})>"

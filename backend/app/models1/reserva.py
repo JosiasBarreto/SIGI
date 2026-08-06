@@ -15,7 +15,7 @@ class ReservaIngrediente(db.Model):
     pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=False)
     quantidade = db.Column(db.Numeric(10, 3), nullable=False)
     data_reserva = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    estado = db.Column(db.Enum(EstadoReserva, values_callable=lambda x: [e.value for e in x]), default=EstadoReserva.ATIVA)
+    estado = db.Column(db.Enum(EstadoReserva), default=EstadoReserva.ATIVA)
 
     ingrediente = db.relationship('Ingrediente')
     pedido = db.relationship('Pedido')

@@ -33,7 +33,7 @@ class Motorista(BaseModel):
     telefone = db.Column(db.String(20), nullable=True)
     carta_conducao = db.Column(db.String(50), nullable=True)
     validade_carta = db.Column(db.Date, nullable=True)
-    estado = db.Column(db.Enum(EstadoMotorista, values_callable=lambda x: [e.value for e in x]), default=EstadoMotorista.ATIVO)
+    estado = db.Column(db.Enum(EstadoMotorista), default=EstadoMotorista.ATIVO)
 
 class Viatura(BaseModel):
     __tablename__ = 'viaturas'
@@ -43,7 +43,7 @@ class Viatura(BaseModel):
     ano = db.Column(db.Integer, nullable=True)
     capacidade = db.Column(db.Numeric(10, 2), nullable=True)
     quilometragem = db.Column(db.Numeric(10, 2), default=0)
-    estado = db.Column(db.Enum(EstadoViatura, values_callable=lambda x: [e.value for e in x]), default=EstadoViatura.DISPONIVEL)
+    estado = db.Column(db.Enum(EstadoViatura), default=EstadoViatura.DISPONIVEL)
 
 class Entrega(BaseModel):
     __tablename__ = 'entregas'
@@ -58,7 +58,7 @@ class Entrega(BaseModel):
     data_entrega = db.Column(db.Date, nullable=True)
     hora_entrega = db.Column(db.Time, nullable=True)
     
-    estado = db.Column(db.Enum(EstadoEntrega, values_callable=lambda x: [e.value for e in x]), default=EstadoEntrega.AGENDADA)
+    estado = db.Column(db.Enum(EstadoEntrega), default=EstadoEntrega.AGENDADA)
     
     ocorrencias = db.relationship('OcorrenciaLogistica', backref='entrega', lazy=True)
     checklists = db.relationship('ChecklistEntrega', backref='entrega', lazy=True)
@@ -77,7 +77,7 @@ class OcorrenciaLogistica(db.Model):
     __tablename__ = 'ocorrencias_logisticas'
     id = db.Column(db.Integer, primary_key=True)
     entrega_id = db.Column(db.Integer, db.ForeignKey('entregas.id'), nullable=False)
-    tipo = db.Column(db.Enum(TipoOcorrenciaLogistica, values_callable=lambda x: [e.value for e in x]), nullable=False)
+    tipo = db.Column(db.Enum(TipoOcorrenciaLogistica), nullable=False)
     justificacao = db.Column(db.Text, nullable=False)
     data_ocorrencia = db.Column(db.DateTime, default=datetime.utcnow)
 

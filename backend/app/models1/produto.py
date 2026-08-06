@@ -18,8 +18,8 @@ class Produto(BaseModel):
 
     codigo = db.Column(db.String(50), unique=True, nullable=True)
     nome = db.Column(db.String(100), nullable=False)
-    tipo = db.Column(db.Enum(TipoProduto, values_callable=lambda x: [e.value for e in x]), nullable=False)
-    servico = db.Column(db.Enum(ServicoEnum, values_callable=lambda x: [e.value for e in x]), nullable=True)
+    tipo = db.Column(db.Enum(TipoProduto), nullable=False)
+    servico = db.Column(db.Enum(ServicoEnum), nullable=True)
     categoria = db.Column(db.String(100), nullable=True)
     categoria_id = db.Column(db.Integer, db.ForeignKey('categorias_produto.id'), nullable=True)
     unidade_medida_id = db.Column(db.Integer, db.ForeignKey('unidades_medida.id'), nullable=True)

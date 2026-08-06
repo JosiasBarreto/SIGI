@@ -19,7 +19,7 @@ class StockMovement(BaseModel):
     __tablename__ = 'movimentos_stock'
 
     produto_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=False)
-    tipo_movimento = db.Column(db.Enum(TipoMovimentoStock, values_callable=lambda x: [e.value for e in x]), nullable=False)
+    tipo_movimento = db.Column(db.Enum(TipoMovimentoStock), nullable=False)
     quantidade = db.Column(db.Numeric(10, 3), nullable=False)
     
     stock_anterior = db.Column(db.Numeric(10, 3), nullable=False)
