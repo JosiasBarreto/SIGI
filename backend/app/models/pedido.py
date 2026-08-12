@@ -40,14 +40,16 @@ class Pedido(BaseModel):
     numero = db.Column(db.String(50), unique=True, nullable=False)
     cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id'), nullable=True)
     evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=True)
-    tipo = db.Column(db.Enum(TipoPedido, values_callable=lambda x: [e.value for e in x]), nullable=False)
-    origem = db.Column(db.Enum(OrigemPedido, values_callable=lambda x: [e.value for e in x]), nullable=False)
+    # Instalações anteriores guardavam ENUMs em maiúsculas (ex.: SIMPLES).
+    # VARCHAR evita que dados legados interrompam a leitura pelo ORM.
+    tipo = db.Column(db.String(50), nullable=False)
+    origem = db.Column(db.String(50), nullable=False)
     
     data_pedido = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     data_entrega = db.Column(db.Date, nullable=True)
     hora_entrega = db.Column(db.Time, nullable=True)
     
-    estado = db.Column(db.Enum(EstadoPedido, values_callable=lambda x: [e.value for e in x]), default=EstadoPedido.PENDENTE)
+    estado = db.Column(db.String(50), default=EstadoPedido.PENDENTE.value)
     observacoes = db.Column(db.Text, nullable=True)
     justificativa_cancelamento = db.Column(db.Text, nullable=True)
     
@@ -55,8 +57,8 @@ class Pedido(BaseModel):
     valor_total = db.Column(db.Numeric(10, 2), default=0)
     valor_pago = db.Column(db.Numeric(10, 2), default=0)
     saldo = db.Column(db.Numeric(10, 2), default=0)
-    forma_pagamento = db.Column(db.Enum(FormaPagamento, values_callable=lambda x: [e.value for e in x]), nullable=True)
-    estado_pagamento = db.Column(db.Enum(EstadoPagamento, values_callable=lambda x: [e.value for e in x]), default=EstadoPagamento.PENDENTE)
+    forma_pagamento = db.Column(db.String(50), nullable=True)
+    estado_pagamento = db.Column(db.String(50), default=EstadoPagamento.PENDENTE.value)
     
     itens = db.relationship('ItemPedido', backref='pedido', lazy='selectin', cascade="all, delete-orphan")
     evento = db.relationship('Evento', foreign_keys=[evento_id], post_update=True, lazy='selectin')
@@ -84,5 +86,4 @@ class Pedido(BaseModel):
         if self.itens:
             return sum(float(getattr(i, 'valor_iva', 0) or 0) for i in self.itens)
         return 0.0
-
 

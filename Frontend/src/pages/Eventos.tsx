@@ -450,12 +450,20 @@ export default function Eventos() {
             </div>
 
             <div className="flex items-center gap-2">
+              {(() => {
+                const resumo = currentRecord?.resumo_financeiro;
+                const saldo = Number(resumo?.saldo ?? currentRecord?.saldo ?? 0);
+                const faturado = String(currentRecord?.estado || '').toUpperCase() === 'FATURADO';
+                if (faturado || saldo <= 0.01) return null;
+                return (
               <button 
                 onClick={handleFaturarEvento} 
                 className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 shadow transition-all active:scale-95"
               >
                 <Receipt size={14} /> Faturar / Converter em Venda
               </button>
+                );
+              })()}
               <button onClick={() => setIsViewOpen(false)} className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 text-xs font-bold rounded-xl">
                 Fechar
               </button>

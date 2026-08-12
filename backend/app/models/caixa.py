@@ -26,7 +26,7 @@ class Caixa(BaseModel):
     valor_final = db.Column(db.Numeric(12, 2), default=0)
     utilizador_abertura_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     utilizador_fecho_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
-    estado = db.Column(db.Enum(EstadoCaixa, values_callable=lambda x: [e.value for e in x]), default=EstadoCaixa.ABERTO)
+    estado = db.Column(db.Enum(EstadoCaixa), default=EstadoCaixa.ABERTO)
     
     # Detailed closing fields
     valor_declarado_dinheiro = db.Column(db.Numeric(12, 2), nullable=True)
@@ -47,7 +47,7 @@ class MovimentoCaixa(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     caixa_id = db.Column(db.Integer, db.ForeignKey('caixas.id'), nullable=False)
-    tipo = db.Column(db.Enum(TipoMovimentoCaixa, values_callable=lambda x: [e.value for e in x]), nullable=False)
+    tipo = db.Column(db.Enum(TipoMovimentoCaixa), nullable=False)
     valor = db.Column(db.Numeric(12, 2), nullable=False)
     descricao = db.Column(db.String(255), nullable=True)
     data_movimento = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)

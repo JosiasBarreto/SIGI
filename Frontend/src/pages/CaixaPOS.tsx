@@ -334,8 +334,10 @@ export default function CaixaPOS() {
           : current_time,
         estado: "Agendado",
         observacoes: `Pedido ${tipoPedido}. Caixa: #${caixaId}`,
-        valor_pago: valorPagoNum,
-        forma_pagamento: strFormaPagamento,
+        // O pedido não movimenta caixa. O checkout abaixo regista o pagamento
+        // e gera a venda/recibo numa única transação.
+        valor_pago: 0,
+        forma_pagamento: "Dinheiro",
         itens: (() => {
           const cartTotalValue = cart.reduce((acc, it) => acc + Number(it.preco_venda_com_iva || it.salePrice || it.preco_venda || 0) * Number(it.qty), 0);
           return cart.map((i) => {
@@ -508,15 +510,15 @@ export default function CaixaPOS() {
 
   return (
     <>
-      <div className="h-[calc(100vh-8rem)] flex gap-6 overflow-hidden animate-fade-in">
-      <div className="flex-1 bg-surface dark:bg-surface-dark border border-gray-200 dark:border-border-dark rounded-xl flex flex-col overflow-hidden shadow-sm">
-        <div className="p-4 border-b border-gray-200 dark:border-border-dark flex items-center justify-between bg-white dark:bg-surface-dark z-10 shrink-0">
-          <div className="flex items-center gap-4">
+      <div className="min-h-[calc(100vh-8rem)] xl:h-[calc(100vh-8rem)] flex flex-col xl:flex-row gap-4 xl:gap-6 overflow-auto xl:overflow-hidden animate-fade-in">
+      <div className="flex-1 min-h-[32rem] bg-surface dark:bg-surface-dark border border-gray-200 dark:border-border-dark rounded-xl flex flex-col overflow-hidden shadow-sm">
+        <div className="p-3 sm:p-4 border-b border-gray-200 dark:border-border-dark flex flex-col 2xl:flex-row 2xl:items-center 2xl:justify-between gap-3 bg-white dark:bg-surface-dark z-10 shrink-0">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-4">
             <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
               <Calculator size={20} className="text-primary" />
               Produtos
             </h2>
-            <div className="relative w-56 ml-2">
+            <div className="relative w-full sm:w-56 sm:ml-2">
               <input
                 type="text"
                 placeholder="Pesquisar produto..."
@@ -541,7 +543,7 @@ export default function CaixaPOS() {
               <option value="ABASTECIMENTO">Abastecimento (ABASTECIMENTO)</option>
             </select>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setActiveSessionModal("sangria")}
               className="text-sm font-medium px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-200 rounded-lg transition-colors border border-gray-200 dark:border-gray-700 flex items-center gap-2"
@@ -600,7 +602,7 @@ export default function CaixaPOS() {
         />
       </div>
 
-      <div className="w-96 bg-surface dark:bg-surface-dark border border-gray-200 dark:border-border-dark rounded-xl flex flex-col shrink-0 shadow-sm overflow-hidden">
+      <div className="w-full xl:w-96 xl:max-w-96 min-h-[28rem] xl:min-h-0 xl:h-full bg-surface dark:bg-surface-dark border border-gray-200 dark:border-border-dark rounded-xl flex flex-col shrink-0 shadow-sm overflow-hidden">
         {step === 1 && (
           <>
             <div className="p-4 border-b border-gray-200 dark:border-border-dark shrink-0">

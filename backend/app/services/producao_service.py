@@ -7,6 +7,9 @@ from app.models.pedido import Pedido, EstadoPedido
 from app.models.item_pedido import ItemPedido, TipoItem
 from app.models.produto import Produto
 from app.models.ingrediente import Ingrediente
+from app.models.receita import ReceitaProducao
+from app.models.requisicao import Requisicao, RequisicaoItem, TipoRequisicao, EstadoRequisicao, TipoItemRequisicao
+from app.models.turno import Turno
 from app.models.movimento_stock import MovimentoStock, TipoMovimento, OrigemMovimento, EntidadeMovimento
 from app.repositories.producao_repos import FichaTecnicaRepository, OrdemProducaoRepository
 from app.services.audit_service import AuditService
@@ -18,6 +21,56 @@ class ProducaoService:
     def __init__(self):
         self.ficha_repo = FichaTecnicaRepository()
         self.ordem_repo = OrdemProducaoRepository()
+
+    @staticmethod
+    def _turno_atual():
+        """Devolve o turno ativo correspondente à hora atual, incluindo turnos noturnos."""
+        agora = datetime.now().time()
+        for turno in Turno.query.filter_by(ativo=True).all():
+            if not turno.hora_inicio or not turno.hora_fim:
+                continue
+            if turno.hora_inicio <= turno.hora_fim:
+                corresponde = turno.hora_inicio <= agora < turno.hora_fim
+            else:
+                corresponde = agora >= turno.hora_inicio or agora < turno.hora_fim
+            if corresponde:
+                return turno
+        return None
+
+    def _atualizar_requisicao_diaria(self, setor, necessidades, responsavel_id):
+        """Agrupa consumíveis das OPs numa única requisição pendente por setor e turno."""
+        if not necessidades or not responsavel_id:
+            return
+        turno = self._turno_atual()
+        hoje = datetime.utcnow().date()
+        req = Requisicao.query.filter(
+            Requisicao.sector == setor.value,
+            Requisicao.turno_id == (turno.id if turno else None),
+            db.func.date(Requisicao.data_requisicao) == hoje,
+            Requisicao.estado == EstadoRequisicao.PENDENTE.value,
+        ).first()
+        if not req:
+            numero = f"REQ-{datetime.utcnow().strftime('%Y%m%d')}-{str(uuid.uuid4())[:6].upper()}"
+            req = Requisicao(
+                numero=numero, tipo=TipoRequisicao.INICIAL.value, sector=setor.value,
+                turno_id=turno.id if turno else None, responsavel_id=responsavel_id,
+                estado=EstadoRequisicao.PENDENTE.value,
+                observacoes="Gerada automaticamente pelas ordens de produção do turno.",
+            )
+            db.session.add(req)
+            db.session.flush()
+
+        existentes = {item.item_id: item for item in req.itens if item.tipo_item == TipoItemRequisicao.CONSUMIVEL.value}
+        for produto_id, quantidade in necessidades.items():
+            item = existentes.get(produto_id)
+            if item:
+                item.quantidade_solicitada = float(item.quantidade_solicitada) + quantidade
+            else:
+                db.session.add(RequisicaoItem(
+                    requisicao_id=req.id, tipo_item=TipoItemRequisicao.CONSUMIVEL.value,
+                    item_id=produto_id, quantidade_solicitada=quantidade,
+                    observacao="Calculado a partir das receitas dos produtos acabados.",
+                ))
 
     # --- Fichas Técnicas ---
     def create_ficha(self, data, user_id):
@@ -75,6 +128,10 @@ class ProducaoService:
                 elif servico_str == 'BAR':
                     setor = SectorProducao.BAR
             
+            receita = db.session.query(ReceitaProducao).filter_by(produto_acabado_id=item.produto_id, ativo=True).first()
+            if not setor and receita and receita.setor:
+                setor = next((s for s in SectorProducao if s.value == receita.setor), None)
+
             if not setor:
                 ficha = db.session.query(FichaTecnica).filter_by(produto_acabado_id=item.produto_id, ativo=True).first()
                 if ficha:
@@ -93,7 +150,7 @@ class ProducaoService:
                 ficha = db.session.query(FichaTecnica).filter_by(produto_acabado_id=item.produto_id, ativo=True).first()
             
             if setor in itens_por_setor:
-                itens_por_setor[setor].append((item, ficha))
+                itens_por_setor[setor].append((item, ficha, receita))
             
         for setor, items in itens_por_setor.items():
             if not items:
@@ -116,7 +173,8 @@ class ProducaoService:
             db.session.flush() # Para gerar o ID da ordem
             ordens_criadas.append(ordem)
             
-            for item, ficha in items:
+            necessidades_consumiveis = {}
+            for item, ficha, receita in items:
                 op_item = OrdemProducaoItem(
                     ordem_producao_id=ordem.id,
                     produto_id=item.produto_id,
@@ -143,6 +201,20 @@ class ProducaoService:
                                 quantidade=qtd_total_prevista
                             )
                             db.session.add(reserva)
+
+                if receita:
+                    for receita_item in receita.itens:
+                        qtd_total_prevista = float(receita_item.quantidade) * float(item.quantidade)
+                        db.session.add(ConsumoIngrediente(
+                            ordem_producao_id=ordem.id,
+                            produto_consumivel_id=receita_item.produto_consumivel_id,
+                            quantidade_prevista=qtd_total_prevista,
+                        ))
+                        necessidades_consumiveis[receita_item.produto_consumivel_id] = (
+                            necessidades_consumiveis.get(receita_item.produto_consumivel_id, 0) + qtd_total_prevista
+                        )
+
+            self._atualizar_requisicao_diaria(setor, necessidades_consumiveis, user_id or pedido.created_by)
         
         db.session.commit()
         for ordem in ordens_criadas:

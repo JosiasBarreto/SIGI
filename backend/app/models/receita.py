@@ -9,6 +9,11 @@ class ReceitaProducao(BaseModel):
     descricao = db.Column(db.Text, nullable=True)
     tempo_preparacao = db.Column(db.Integer, nullable=True) # em minutos
     rendimento_unidades = db.Column(db.Numeric(10, 2), default=1)
+    setor = db.Column(db.String(50), default='Cozinha', nullable=False)
+    custo_gas = db.Column(db.Numeric(10, 2), default=0)
+    custo_energia = db.Column(db.Numeric(10, 2), default=0)
+    custo_pessoal = db.Column(db.Numeric(10, 2), default=0)
+    custo_outros = db.Column(db.Numeric(10, 2), default=0)
     
     # Valores calculados
     custo_total = db.Column(db.Numeric(10, 2), default=0)
@@ -29,11 +34,14 @@ class ReceitaProducao(BaseModel):
             item.custo_calculado = custo_item
             custo += custo_item
             
-        self.custo_total = custo
+        custos_indiretos = sum(float(valor or 0) for valor in (
+            self.custo_gas, self.custo_energia, self.custo_pessoal, self.custo_outros
+        ))
+        self.custo_total = custo + custos_indiretos
         rendimento = float(self.rendimento_unidades or 1)
         if rendimento <= 0:
             rendimento = 1
-        self.custo_unitario = custo / rendimento
+        self.custo_unitario = float(self.custo_total) / rendimento
         
         produto = self.produto_acabado
         if produto and float(produto.preco_venda or 0) > 0:

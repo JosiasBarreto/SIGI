@@ -3,6 +3,7 @@ from flask_jwt_extended import jwt_required
 from app.core.database import db
 from app.models.pedido import Pedido
 from app.models.evento import Evento
+from app.models.comercial import Venda, EstadoVenda
 from sqlalchemy import func
 import io
 
@@ -11,9 +12,9 @@ relatorios_bp = Blueprint('relatorios', __name__)
 @relatorios_bp.route('/dashboard', methods=['GET'])
 @jwt_required()
 def get_dashboard():
-    vendas = db.session.query(func.count(Pedido.id)).scalar() or 0
+    vendas = db.session.query(func.count(Venda.id)).filter(Venda.estado != EstadoVenda.CANCELADO).scalar() or 0
     eventos = db.session.query(func.count(Evento.id)).scalar() or 0
-    receita_total = db.session.query(func.sum(Pedido.valor_total)).scalar() or 0
+    receita_total = db.session.query(func.sum(Venda.total)).filter(Venda.estado != EstadoVenda.CANCELADO).scalar() or 0
     
     # Example: group by real month, assuming SQLite or MySQL works. In MySQL: func.month(Pedido.data_pedido).
     # Since we want it compatible, we can just fetch all and group in Python for safety, or use func.strftime('%m', Pedido.data_pedido) in SQLite, 
@@ -22,12 +23,12 @@ def get_dashboard():
     from datetime import datetime, timedelta
     
     six_months_ago = datetime.utcnow() - timedelta(days=180)
-    recent_pedidos = db.session.query(Pedido.data_pedido, Pedido.valor_total).filter(Pedido.data_pedido >= six_months_ago).all()
+    recent_pedidos = db.session.query(Venda.created_at, Venda.total).filter(Venda.created_at >= six_months_ago, Venda.estado != EstadoVenda.CANCELADO).all()
     
     monthly_sales = {}
     for p in recent_pedidos:
-        mes_str = p.data_pedido.strftime("%Y-%m")
-        monthly_sales[mes_str] = monthly_sales.get(mes_str, 0) + float(p.valor_total or 0)
+        mes_str = p.created_at.strftime("%Y-%m")
+        monthly_sales[mes_str] = monthly_sales.get(mes_str, 0) + float(p.total or 0)
         
     grafico = [{"mes": m, "valor": v} for m, v in sorted(monthly_sales.items())]
     

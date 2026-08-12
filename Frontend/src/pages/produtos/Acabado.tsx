@@ -7,7 +7,7 @@ import {
 } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import * as allServices from "../../services";
-import { Plus, Edit2, Trash2, Eye, Power, PackageOpen, Activity, Info } from "lucide-react";
+import { Plus, Edit2, Trash2, Eye, Power, PackageOpen, Activity, Info, BookOpen } from "lucide-react";
 import Swal from "sweetalert2";
 import { toast } from "react-toastify";
 import { schemas } from "../../data/schemas";
@@ -330,7 +330,7 @@ export default function Acabado() {
   let rawData = paginatedResponse?.items || (Array.isArray(paginatedResponse) ? paginatedResponse : []);
   if (servicoFilter !== 'all') {
     rawData = rawData.filter((item: any) => {
-      const s = item.servico || (item.tipo === "Acabado" ? "COZINHA" : "");
+      const s = String(item.servico || '').split('.').pop()?.trim().toUpperCase();
       return s === servicoFilter;
     });
   }
@@ -386,6 +386,13 @@ export default function Acabado() {
         const item = info.row.original;
         return (
           <div className="flex items-center justify-end gap-2">
+            <button
+              onClick={() => navigate(`/produtos/${item.id}/receita`)}
+              className="p-1.5 text-gray-400 hover:text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-900/20 rounded transition-colors"
+              title="Gerir Receita"
+            >
+              <BookOpen size={16} />
+            </button>
             <button
               onClick={() => {
                 setCurrentRecord(item);

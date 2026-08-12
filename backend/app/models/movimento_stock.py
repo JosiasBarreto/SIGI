@@ -26,9 +26,9 @@ class EntidadeMovimento(str, Enum):
 class MovimentoStock(BaseModel):
     __tablename__ = 'movimentacoes_armazem'
 
-    tipo = db.Column(db.Enum(TipoMovimento, values_callable=lambda x: [e.value for e in x]), nullable=False)
-    origem = db.Column(db.Enum(OrigemMovimento, values_callable=lambda x: [e.value for e in x]), nullable=False)
-    entidade_tipo = db.Column(db.Enum(EntidadeMovimento, values_callable=lambda x: [e.value for e in x]), nullable=False)
+    tipo = db.Column(db.Enum(TipoMovimento), nullable=False)
+    origem = db.Column(db.Enum(OrigemMovimento), nullable=False)
+    entidade_tipo = db.Column(db.Enum(EntidadeMovimento), nullable=False)
     referencia_id = db.Column(db.Integer, nullable=False) # ID of Ingrediente/Produto/Material
     armazem_id = db.Column(db.Integer, db.ForeignKey('armazens.id'), nullable=True)
     

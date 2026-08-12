@@ -26,7 +26,8 @@ class FichaTecnicaSchema(Schema):
 
 class ConsumoIngredienteSchema(Schema):
     id = fields.Int(dump_only=True)
-    ingrediente_id = fields.Int(required=True)
+    ingrediente_id = fields.Int(required=False, allow_none=True)
+    produto_consumivel_id = fields.Int(required=False, allow_none=True)
     ingrediente_nome = fields.Method("get_ingrediente_nome")
     ingrediente_unidade = fields.Method("get_ingrediente_unidade")
     quantidade_prevista = fields.Decimal(required=True)
@@ -34,10 +35,14 @@ class ConsumoIngredienteSchema(Schema):
     data_consumo = fields.DateTime(dump_only=True)
 
     def get_ingrediente_nome(self, obj):
-        return obj.ingrediente.nome if getattr(obj, 'ingrediente', None) else 'Ingrediente'
+        if getattr(obj, 'ingrediente', None):
+            return obj.ingrediente.nome
+        if getattr(obj, 'produto_consumivel', None):
+            return obj.produto_consumivel.nome
+        return 'Consumível'
 
     def get_ingrediente_unidade(self, obj):
-        ing = getattr(obj, 'ingrediente', None)
+        ing = getattr(obj, 'ingrediente', None) or getattr(obj, 'produto_consumivel', None)
         if not ing: return ''
         if hasattr(ing, 'unidade_medida') and ing.unidade_medida:
             return ing.unidade_medida.sigla if hasattr(ing.unidade_medida, 'sigla') else str(ing.unidade_medida)

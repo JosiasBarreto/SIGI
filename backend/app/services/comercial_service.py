@@ -199,6 +199,13 @@ class ComercialService:
                 return None, "Emissor/Remetente da operação de pagamento é obrigatório."
                 
         numero_doc = self.generate_numero_documento('FR')
+        resumo = evento.calcular_resumo_financeiro()
+        subtotal_evento = float(resumo['subtotal_geral'])
+        iva_evento = float(resumo['total_iva_geral'])
+        total_evento = float(resumo['total_geral'])
+        saldo_evento = max(0.0, total_evento - float(evento.valor_pago or 0))
+        if valor_pagar > saldo_evento + 0.01:
+            return None, "O valor do pagamento não pode ser superior ao saldo do evento."
         
         venda = Venda(
             numero_documento=numero_doc,
@@ -206,14 +213,14 @@ class ComercialService:
             cliente_id=evento.cliente_id,
             # We don't have evento_id in Venda model natively, we use observacoes to link it or if it exists, use it.
             # Assuming there's no evento_id, we will put it in observacoes.
-            subtotal=evento.valor_total,
+            subtotal=subtotal_evento,
             desconto_total=0,
-            base_tributavel=evento.valor_total,
-            total_iva=0,
-            total=evento.valor_total,
+            base_tributavel=subtotal_evento,
+            total_iva=iva_evento,
+            total=total_evento,
             valor_pago=valor_pagar,
-            saldo=float(evento.valor_total) - valor_pagar,
-            estado='Pago' if (float(evento.valor_total) - valor_pagar) <= 0 else 'Parcialmente Pago',
+            saldo=saldo_evento - valor_pagar,
+            estado='Pago' if (saldo_evento - valor_pagar) <= 0 else 'Parcialmente Pago',
             observacoes=f"Faturação referente ao Evento {evento.numero}. {observacoes}",
             criado_por=user_id
         )
@@ -237,6 +244,8 @@ class ComercialService:
                     preco_unitario=pu,
                     desconto=float(it.valor_desconto or 0),
                     subtotal=sub,
+                    taxa_iva=float(it.taxa_iva or 0),
+                    valor_iva=float(it.valor_iva or max(0, tot - sub)),
                     total=tot
                 )
                 db.session.add(v_item)
@@ -292,17 +301,19 @@ class ComercialService:
             descricao=desc_mov,
             utilizador_id=user_id,
             codigo_transferencia=codigo_transf,
-            emissor=emissor
+            emissor=emissor,
+            forma_pagamento=forma_db.nome
         )
         db.session.add(mov)
         
         
         
-        evento.valor_pago = float(evento.valor_pago) + valor_pagar
-        evento.saldo = float(evento.valor_total) - float(evento.valor_pago)
+        evento.valor_pago = float(evento.valor_pago or 0) + valor_pagar
+        evento.valor_total = total_evento
+        evento.saldo = max(0.0, total_evento - float(evento.valor_pago))
         
         if evento.saldo <= 0:
-            evento.estado = EstadoEvento.CONCLUIDO
+            evento.estado = EstadoEvento.FATURADO
             
         # Deduct stock if there are any products sold, but events usually have services and materials.
         stock_service = StockService()
@@ -370,6 +381,8 @@ class ComercialService:
             venda_id=venda.id,
             valor=valor_entregue,
             forma_pagamento_id=data.get('forma_pagamento_id'),
+            codigo_transferencia=data.get('codigo_transferencia'),
+            emissor=data.get('emissor'),
             referencia=data.get('referencia'),
             observacoes=f"Pagamento. Troco: {troco}. " + data.get('observacoes', ''),
             estado=EstadoPagamento.PAGO,
@@ -391,7 +404,10 @@ class ComercialService:
             tipo=TipoMovimentoCaixa.RECEBIMENTO,
             valor=valor_pagar_real,
             descricao=f"Recebimento de Venda {venda.numero_documento}. Troco: {troco}",
-            utilizador_id=user_id
+            utilizador_id=user_id,
+            forma_pagamento=(FormaPagamento.query.get(data.get('forma_pagamento_id')).nome if data.get('forma_pagamento_id') and FormaPagamento.query.get(data.get('forma_pagamento_id')) else None),
+            codigo_transferencia=data.get('codigo_transferencia'),
+            emissor=data.get('emissor')
         )
         db.session.add(mov)
         
@@ -420,6 +436,24 @@ class ComercialService:
         except Exception as e:
             db.session.rollback()
             raise e
+
+    def liquidar_pedido_faturado(self, pedido, venda, data, user_id):
+        """Regista parcela na fatura já emitida e mantém pedido/fatura sincronizados."""
+        from app.models.pedido import EstadoPedido, EstadoPagamento
+        pagamento_info = data.get('pagamento', data) if isinstance(data, dict) else {}
+        valor = float(pagamento_info.get('valor', 0))
+        saldo = float(pedido.saldo or 0)
+        if valor <= 0:
+            return None, "O valor do pagamento deve ser positivo."
+        if valor > saldo + 0.01:
+            return None, "O valor do pagamento nao pode ser superior ao saldo do pedido."
+        self.add_pagamento(venda.id, pagamento_info, user_id, auto_commit=False)
+        pedido.valor_pago = float(pedido.valor_pago or 0) + valor
+        pedido.saldo = max(0.0, float(pedido.valor_total or 0) - float(pedido.valor_pago))
+        pedido.estado_pagamento = EstadoPagamento.PAGO.value if pedido.saldo <= 0 else EstadoPagamento.PARCIAL.value
+        pedido.estado = EstadoPedido.CONCLUIDO.value if pedido.saldo <= 0 else EstadoPedido.CONFIRMADO.value
+        db.session.commit()
+        return venda, None
 
     def update_taxa_iva(self, iva_id: int, data: dict):
         iva = self.iva_repo.get_by_id(iva_id)
@@ -491,11 +525,26 @@ class ComercialService:
         if not pedido:
             return None, "Pedido não encontrado."
             
+        venda_existente = Venda.query.filter_by(pedido_id=pedido.id).first()
+
+        # Compatibilidade com pedidos criados por versões anteriores do POS:
+        # elas gravavam valor_pago no cabeçalho, mas não criavam Pagamento,
+        # MovimentoCaixa nem fatura. O checkout atual passa a liquidá-los uma
+        # única vez, em vez de bloquear uma venda que nunca foi registada.
+        if float(pedido.saldo or 0) <= 0 and float(pedido.valor_pago or 0) > 0:
+            pedido.valor_pago = 0
+            pedido.saldo = pedido.valor_total
+            pedido.estado_pagamento = EstadoPagamento.PENDENTE.value
+
         caixa = Caixa.query.with_for_update().filter_by(estado='Aberto').first()
         if not caixa:
             return None, "Não existe nenhum caixa aberto no momento. Abra o caixa primeiro para realizar vendas."
             
         valor_pagar = float(pagamento_info.get('valor', pedido.saldo))
+        if valor_pagar <= 0:
+            return None, "O valor do pagamento deve ser positivo."
+        if valor_pagar > float(pedido.saldo or 0):
+            return None, "O valor do pagamento nao pode ser superior ao saldo do pedido."
         forma_pg_id = pagamento_info.get('forma_pagamento_id')
         codigo_transf = pagamento_info.get('codigo_transferencia')
         emissor = pagamento_info.get('emissor')
@@ -533,17 +582,14 @@ class ComercialService:
         total_iva = 0.0
 
         for item in pedido.itens:
-            iva_perc = 0.0
-            taxa_iva_id = None
-            if item.produto and item.produto.taxa_iva:
-                iva_perc = float(item.produto.taxa_iva.percentagem)
-                taxa_iva_id = item.produto.taxa_iva_id
-                
-            item_sub = float(item.quantidade) * float(item.preco_unitario)
-            item_desc = 0.0 # If PedidoItem has no discount, assume 0
+            # A fatura reflete exatamente o pedido, incluindo descontos e IVA.
+            iva_perc = float(item.taxa_iva or 0)
+            taxa_iva_id = item.taxa_iva_id
+            item_sub = float(item.subtotal if item.subtotal is not None else item.quantidade * item.preco_unitario)
+            item_desc = float(item.desconto or 0)
             item_base = item_sub - item_desc
-            item_iva_val = item_base * (iva_perc / 100.0)
-            item_total = item_base + item_iva_val
+            item_iva_val = float(item.valor_iva or 0)
+            item_total = float(item.total if item.total is not None else item_base + item_iva_val)
 
             v_item = VendaItem(
                 venda_id=venda.id,
@@ -583,7 +629,8 @@ class ComercialService:
             venda.valor_pago = valor_pagar
             venda.saldo = float(venda.total) - valor_pagar
 
-        venda.estado = 'Pago' if (venda.saldo <= 0 if not venda.pedido_id else pedido.saldo - valor_pagar <= 0) else 'Parcialmente Pago'
+        saldo_restante_pedido = float(pedido.saldo or 0) - float(valor_pagar)
+        venda.estado = 'Pago' if (venda.saldo <= 0 if not venda.pedido_id else saldo_restante_pedido <= 0) else 'Parcialmente Pago'
             
         pagamento = Pagamento(
             pedido_id=pedido.id,
@@ -619,11 +666,11 @@ class ComercialService:
         pedido.saldo = float(pedido.valor_total) - float(pedido.valor_pago)
         
         if pedido.saldo <= 0:
-            pedido.estado_pagamento = EstadoPagamento.PAGO
-            pedido.estado = EstadoPedido.CONCLUIDO
+            pedido.estado_pagamento = EstadoPagamento.PAGO.value
+            pedido.estado = EstadoPedido.CONCLUIDO.value
         else:
-            pedido.estado_pagamento = EstadoPagamento.PARCIAL
-            pedido.estado = EstadoPedido.CONFIRMADO
+            pedido.estado_pagamento = EstadoPagamento.PARCIAL.value
+            pedido.estado = EstadoPedido.CONFIRMADO.value
             
         # Deduct stock
         stock_service = StockService()

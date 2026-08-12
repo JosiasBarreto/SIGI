@@ -292,7 +292,14 @@ def checkout_pedido(pedido_id):
     from flask_jwt_extended import get_jwt_identity
     user_id = get_jwt_identity()
     data = request.json or {}
-    venda, error = comercial_service.converter_pedido_em_venda(pedido_id, data, user_id)
+    from app.models.pedido import Pedido
+    from app.models.comercial import Venda
+    pedido = Pedido.query.get(pedido_id)
+    venda_existente = Venda.query.filter_by(pedido_id=pedido_id).order_by(Venda.id.asc()).first()
+    if pedido and venda_existente:
+        venda, error = comercial_service.liquidar_pedido_faturado(pedido, venda_existente, data, user_id)
+    else:
+        venda, error = comercial_service.converter_pedido_em_venda(pedido_id, data, user_id)
     if error:
         return jsonify({'error': error}), 400
 

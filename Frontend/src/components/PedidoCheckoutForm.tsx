@@ -38,12 +38,14 @@ export default function PedidoCheckoutForm({
   const [observacoes, setObservacoes] = useState(defaultObs);
 
   const checkoutMutation = useMutation({
-    mutationFn: (payload: any) => orderService.adicionarPagamento(orderId, payload),
+    // O checkout cria a venda/fatura e o respetivo pagamento. O endpoint de
+    // "adicionar pagamento" serve apenas para liquidar um pedido já faturado.
+    mutationFn: (payload: any) => orderService.checkoutPedido(orderId, payload),
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
       queryClient.invalidateQueries({ queryKey: ["orders-cal"] });
       queryClient.invalidateQueries({ queryKey: ["caixas"] });
-      toast.success("Pagamento registado com sucesso!");
+      toast.success("Pagamento registado e fatura emitida com sucesso!");
       onSuccess?.(response);
     },
     onError: () => {
@@ -69,7 +71,8 @@ export default function PedidoCheckoutForm({
     checkoutMutation.mutate({
       forma_pagamento_id: paymentMethod === "Transferência" ? 2 : paymentMethod === "TPA / POS" ? 3 : 1,
       valor: parsedValue,
-      referencia: requiresReference ? (codigo + (emissor ? ' / ' + emissor : '')) : null,
+      codigo_transferencia: requiresReference ? codigo : null,
+      emissor: requiresReference ? emissor : null,
       observacoes,
     });
   };

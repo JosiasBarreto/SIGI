@@ -172,11 +172,11 @@ class PedidoService:
 
         
         if pedido.saldo <= 0 and pedido.valor_total > 0:
-            pedido.estado_pagamento = EstadoPagamento.PAGO
+            pedido.estado_pagamento = EstadoPagamento.PAGO.value
         elif valor_pago > 0:
-            pedido.estado_pagamento = EstadoPagamento.PARCIAL
+            pedido.estado_pagamento = EstadoPagamento.PARCIAL.value
         else:
-            pedido.estado_pagamento = EstadoPagamento.PENDENTE
+            pedido.estado_pagamento = EstadoPagamento.PENDENTE.value
             
         db.session.add(pedido)
         db.session.flush() # get ID
@@ -330,7 +330,7 @@ class PedidoService:
             if novo_estado_enum == EstadoPedido.PRONTO and old_estado != EstadoPedido.PRONTO.value:
                 socketio.emit('pedido_pronto', {'numero': pedido.numero, 'cliente': pedido.cliente.nome if pedido.cliente else 'Balcão'})
                 
-            pedido.estado = novo_estado_enum
+            pedido.estado = novo_estado_enum.value
             
             db.session.commit()
             

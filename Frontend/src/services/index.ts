@@ -1620,7 +1620,13 @@ export const vendaService = {
 export const financeiroService = {
   getContasReceber: async (params?: { estado?: string; search?: string }): Promise<any[]> => {
     const res = await apiClient.get<any, any>('/v1/financeiro/contas-receber', { params });
-    return res?.data || res || [];
+    // build_pagination devolve { items, total, pages, page }; manter a tela
+    // protegida para os dois formatos usados pelos endpoints legados.
+    if (Array.isArray(res)) return res;
+    if (Array.isArray(res?.items)) return res.items;
+    if (Array.isArray(res?.data?.items)) return res.data.items;
+    if (Array.isArray(res?.data)) return res.data;
+    return [];
   },
 
   receberPagamento: async (contaId: string | number, param: { valor: number; metodo_pagamento: string; observacao?: string }): Promise<any> => {

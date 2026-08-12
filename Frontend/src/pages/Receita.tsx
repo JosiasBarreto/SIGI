@@ -45,6 +45,13 @@ export default function Receita() {
   });
   const consumiveis = consumiveisResponse?.items || [];
 
+  const { data: empresaConfig } = useQuery({
+    queryKey: ['empresa-config'],
+    queryFn: () => allServices.configService.get(),
+  });
+  const moeda = empresaConfig?.moeda || 'STN';
+  const formatMoney = (valor: unknown) => `${Number(valor || 0).toLocaleString('pt-ST', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${moeda}`;
+
   // 5. Fetch Finished Products for Duplication Modal
   const { data: produtosAcabadosResponse } = useQuery({
     queryKey: ['produtos_acabados_list'],
@@ -134,6 +141,11 @@ export default function Receita() {
       descricao: formData.get('descricao') || `Receita para ${produto?.nome}`,
       tempo_preparacao: Number(formData.get('tempo_preparacao')) || 45,
       rendimento_unidades: Number(formData.get('rendimento_unidades')) || 10,
+      setor: formData.get('setor') || 'Cozinha',
+      custo_gas: Number(formData.get('custo_gas')) || 0,
+      custo_energia: Number(formData.get('custo_energia')) || 0,
+      custo_pessoal: Number(formData.get('custo_pessoal')) || 0,
+      custo_outros: Number(formData.get('custo_outros')) || 0,
     };
     createReceitaMutation.mutate(payload);
   };
@@ -145,6 +157,11 @@ export default function Receita() {
       descricao: formData.get('descricao'),
       tempo_preparacao: Number(formData.get('tempo_preparacao')),
       rendimento_unidades: Number(formData.get('rendimento_unidades')),
+      setor: formData.get('setor') || 'Cozinha',
+      custo_gas: Number(formData.get('custo_gas')) || 0,
+      custo_energia: Number(formData.get('custo_energia')) || 0,
+      custo_pessoal: Number(formData.get('custo_pessoal')) || 0,
+      custo_outros: Number(formData.get('custo_outros')) || 0,
     };
     updateHeaderMutation.mutate(payload);
   };
@@ -304,12 +321,12 @@ export default function Receita() {
             {/* CUSTO TOTAL */}
             <div className="bg-white dark:bg-surface-dark p-5 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm flex items-center gap-4">
               <div className="w-12 h-12 bg-gray-50 dark:bg-gray-800 text-gray-400 dark:text-gray-500 rounded-xl flex items-center justify-center font-bold">
-                €
+                {moeda}
               </div>
               <div>
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block">Custo Total (Ingredientes)</span>
                 <span className="text-2xl font-black text-gray-950 dark:text-white">
-                  {receita.custo_total ? `${Number(receita.custo_total).toFixed(2)} €` : '0.00 €'}
+                  {formatMoney(receita.custo_total)}
                 </span>
               </div>
             </div>
@@ -322,7 +339,7 @@ export default function Receita() {
               <div>
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block">Custo Unitário Calculado</span>
                 <span className="text-2xl font-black text-blue-600 dark:text-blue-400">
-                  {receita.custo_unitario ? `${Number(receita.custo_unitario).toFixed(2)} €` : '0.00 €'}
+                  {formatMoney(receita.custo_unitario)}
                 </span>
               </div>
             </div>
@@ -335,7 +352,7 @@ export default function Receita() {
               <div>
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block">Margem Lucro Unitária</span>
                 <span className="text-2xl font-black text-gray-950 dark:text-white">
-                  {receita.margem_lucro ? `${Number(receita.margem_lucro).toFixed(2)} €` : '0.00 €'}
+                  {formatMoney(receita.margem_lucro)}
                 </span>
               </div>
             </div>
@@ -411,7 +428,7 @@ export default function Receita() {
                               {Number(item.quantidade).toFixed(3)} <span className="text-xs text-gray-400 font-bold uppercase">{item.produto_consumivel_unidade_sigla || 'Un'}</span>
                             </td>
                             <td className="p-4 text-right font-bold text-gray-900 dark:text-white">
-                              {item.custo_calculado ? `${Number(item.custo_calculado).toFixed(2)} €` : '-'}
+                              {formatMoney(item.custo_calculado)}
                             </td>
                             <td className="p-4 pr-6">
                               <div className="flex justify-end">
@@ -521,6 +538,32 @@ export default function Receita() {
                         className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 text-gray-900 dark:text-white font-medium"
                       />
                     </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Setor de produção</label>
+                    <select name="setor" defaultValue={receita.setor || 'Cozinha'} className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm text-gray-900 dark:text-white">
+                      <option value="Cozinha">Cozinha</option>
+                      <option value="Pastelaria">Pastelaria</option>
+                      <option value="Bar">Bar</option>
+                    </select>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      ['custo_gas', 'Gás', receita.custo_gas],
+                      ['custo_energia', 'Energia', receita.custo_energia],
+                      ['custo_pessoal', 'Pessoal', receita.custo_pessoal],
+                      ['custo_outros', 'Outros', receita.custo_outros],
+                    ].map(([name, label, value]) => (
+                      <div key={String(name)} className="space-y-1">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase">{label} ({moeda})</label>
+                        <input
+                          type="number" step="0.01" min="0" name={String(name)} defaultValue={Number(value || 0)}
+                          className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm text-gray-900 dark:text-white"
+                        />
+                      </div>
+                    ))}
                   </div>
 
                   <button 

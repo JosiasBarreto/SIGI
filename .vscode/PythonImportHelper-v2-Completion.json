@@ -1168,7 +1168,7 @@
         "documentation": {}
     },
     {
-        "label": "Schema",
+        "label": "pre_load",
         "importPath": "marshmallow",
         "description": "marshmallow",
         "isExtraImport": true,
@@ -1176,55 +1176,7 @@
         "documentation": {}
     },
     {
-        "label": "fields",
-        "importPath": "marshmallow",
-        "description": "marshmallow",
-        "isExtraImport": true,
-        "detail": "marshmallow",
-        "documentation": {}
-    },
-    {
-        "label": "validate",
-        "importPath": "marshmallow",
-        "description": "marshmallow",
-        "isExtraImport": true,
-        "detail": "marshmallow",
-        "documentation": {}
-    },
-    {
-        "label": "Schema",
-        "importPath": "marshmallow",
-        "description": "marshmallow",
-        "isExtraImport": true,
-        "detail": "marshmallow",
-        "documentation": {}
-    },
-    {
-        "label": "fields",
-        "importPath": "marshmallow",
-        "description": "marshmallow",
-        "isExtraImport": true,
-        "detail": "marshmallow",
-        "documentation": {}
-    },
-    {
-        "label": "validate",
-        "importPath": "marshmallow",
-        "description": "marshmallow",
-        "isExtraImport": true,
-        "detail": "marshmallow",
-        "documentation": {}
-    },
-    {
-        "label": "Schema",
-        "importPath": "marshmallow",
-        "description": "marshmallow",
-        "isExtraImport": true,
-        "detail": "marshmallow",
-        "documentation": {}
-    },
-    {
-        "label": "fields",
+        "label": "ValidationError",
         "importPath": "marshmallow",
         "description": "marshmallow",
         "isExtraImport": true,
@@ -1280,243 +1232,67 @@
         "documentation": {}
     },
     {
-        "label": "db",
-        "importPath": "app.core.database",
-        "description": "app.core.database",
+        "label": "Schema",
+        "importPath": "marshmallow",
+        "description": "marshmallow",
         "isExtraImport": true,
-        "detail": "app.core.database",
+        "detail": "marshmallow",
         "documentation": {}
     },
     {
-        "label": "db",
-        "importPath": "app.core.database",
-        "description": "app.core.database",
+        "label": "fields",
+        "importPath": "marshmallow",
+        "description": "marshmallow",
         "isExtraImport": true,
-        "detail": "app.core.database",
+        "detail": "marshmallow",
         "documentation": {}
     },
     {
-        "label": "db",
-        "importPath": "app.core.database",
-        "description": "app.core.database",
+        "label": "Schema",
+        "importPath": "marshmallow",
+        "description": "marshmallow",
         "isExtraImport": true,
-        "detail": "app.core.database",
+        "detail": "marshmallow",
         "documentation": {}
     },
     {
-        "label": "db",
-        "importPath": "app.core.database",
-        "description": "app.core.database",
+        "label": "fields",
+        "importPath": "marshmallow",
+        "description": "marshmallow",
         "isExtraImport": true,
-        "detail": "app.core.database",
+        "detail": "marshmallow",
         "documentation": {}
     },
     {
-        "label": "db",
-        "importPath": "app.core.database",
-        "description": "app.core.database",
+        "label": "validate",
+        "importPath": "marshmallow",
+        "description": "marshmallow",
         "isExtraImport": true,
-        "detail": "app.core.database",
+        "detail": "marshmallow",
         "documentation": {}
     },
     {
-        "label": "db",
-        "importPath": "app.core.database",
-        "description": "app.core.database",
+        "label": "Schema",
+        "importPath": "marshmallow",
+        "description": "marshmallow",
         "isExtraImport": true,
-        "detail": "app.core.database",
+        "detail": "marshmallow",
         "documentation": {}
     },
     {
-        "label": "db",
-        "importPath": "app.core.database",
-        "description": "app.core.database",
+        "label": "fields",
+        "importPath": "marshmallow",
+        "description": "marshmallow",
         "isExtraImport": true,
-        "detail": "app.core.database",
+        "detail": "marshmallow",
         "documentation": {}
     },
     {
-        "label": "db",
-        "importPath": "app.core.database",
-        "description": "app.core.database",
+        "label": "validate",
+        "importPath": "marshmallow",
+        "description": "marshmallow",
         "isExtraImport": true,
-        "detail": "app.core.database",
-        "documentation": {}
-    },
-    {
-        "label": "db",
-        "importPath": "app.core.database",
-        "description": "app.core.database",
-        "isExtraImport": true,
-        "detail": "app.core.database",
-        "documentation": {}
-    },
-    {
-        "label": "db",
-        "importPath": "app.core.database",
-        "description": "app.core.database",
-        "isExtraImport": true,
-        "detail": "app.core.database",
-        "documentation": {}
-    },
-    {
-        "label": "db",
-        "importPath": "app.core.database",
-        "description": "app.core.database",
-        "isExtraImport": true,
-        "detail": "app.core.database",
-        "documentation": {}
-    },
-    {
-        "label": "db",
-        "importPath": "app.core.database",
-        "description": "app.core.database",
-        "isExtraImport": true,
-        "detail": "app.core.database",
-        "documentation": {}
-    },
-    {
-        "label": "db",
-        "importPath": "app.core.database",
-        "description": "app.core.database",
-        "isExtraImport": true,
-        "detail": "app.core.database",
-        "documentation": {}
-    },
-    {
-        "label": "db",
-        "importPath": "app.core.database",
-        "description": "app.core.database",
-        "isExtraImport": true,
-        "detail": "app.core.database",
-        "documentation": {}
-    },
-    {
-        "label": "db",
-        "importPath": "app.core.database",
-        "description": "app.core.database",
-        "isExtraImport": true,
-        "detail": "app.core.database",
-        "documentation": {}
-    },
-    {
-        "label": "db",
-        "importPath": "app.core.database",
-        "description": "app.core.database",
-        "isExtraImport": true,
-        "detail": "app.core.database",
-        "documentation": {}
-    },
-    {
-        "label": "db",
-        "importPath": "app.core.database",
-        "description": "app.core.database",
-        "isExtraImport": true,
-        "detail": "app.core.database",
-        "documentation": {}
-    },
-    {
-        "label": "db",
-        "importPath": "app.core.database",
-        "description": "app.core.database",
-        "isExtraImport": true,
-        "detail": "app.core.database",
-        "documentation": {}
-    },
-    {
-        "label": "db",
-        "importPath": "app.core.database",
-        "description": "app.core.database",
-        "isExtraImport": true,
-        "detail": "app.core.database",
-        "documentation": {}
-    },
-    {
-        "label": "db",
-        "importPath": "app.core.database",
-        "description": "app.core.database",
-        "isExtraImport": true,
-        "detail": "app.core.database",
-        "documentation": {}
-    },
-    {
-        "label": "db",
-        "importPath": "app.core.database",
-        "description": "app.core.database",
-        "isExtraImport": true,
-        "detail": "app.core.database",
-        "documentation": {}
-    },
-    {
-        "label": "db",
-        "importPath": "app.core.database",
-        "description": "app.core.database",
-        "isExtraImport": true,
-        "detail": "app.core.database",
-        "documentation": {}
-    },
-    {
-        "label": "db",
-        "importPath": "app.core.database",
-        "description": "app.core.database",
-        "isExtraImport": true,
-        "detail": "app.core.database",
-        "documentation": {}
-    },
-    {
-        "label": "db",
-        "importPath": "app.core.database",
-        "description": "app.core.database",
-        "isExtraImport": true,
-        "detail": "app.core.database",
-        "documentation": {}
-    },
-    {
-        "label": "db",
-        "importPath": "app.core.database",
-        "description": "app.core.database",
-        "isExtraImport": true,
-        "detail": "app.core.database",
-        "documentation": {}
-    },
-    {
-        "label": "db",
-        "importPath": "app.core.database",
-        "description": "app.core.database",
-        "isExtraImport": true,
-        "detail": "app.core.database",
-        "documentation": {}
-    },
-    {
-        "label": "db",
-        "importPath": "app.core.database",
-        "description": "app.core.database",
-        "isExtraImport": true,
-        "detail": "app.core.database",
-        "documentation": {}
-    },
-    {
-        "label": "db",
-        "importPath": "app.core.database",
-        "description": "app.core.database",
-        "isExtraImport": true,
-        "detail": "app.core.database",
-        "documentation": {}
-    },
-    {
-        "label": "db",
-        "importPath": "app.core.database",
-        "description": "app.core.database",
-        "isExtraImport": true,
-        "detail": "app.core.database",
-        "documentation": {}
-    },
-    {
-        "label": "db",
-        "importPath": "app.core.database",
-        "description": "app.core.database",
-        "isExtraImport": true,
-        "detail": "app.core.database",
+        "detail": "marshmallow",
         "documentation": {}
     },
     {
@@ -3376,6 +3152,46 @@
         "documentation": {}
     },
     {
+        "label": "TipoRequisicao",
+        "importPath": "app.models.requisicao",
+        "description": "app.models.requisicao",
+        "isExtraImport": true,
+        "detail": "app.models.requisicao",
+        "documentation": {}
+    },
+    {
+        "label": "EstadoRequisicao",
+        "importPath": "app.models.requisicao",
+        "description": "app.models.requisicao",
+        "isExtraImport": true,
+        "detail": "app.models.requisicao",
+        "documentation": {}
+    },
+    {
+        "label": "TipoItemRequisicao",
+        "importPath": "app.models.requisicao",
+        "description": "app.models.requisicao",
+        "isExtraImport": true,
+        "detail": "app.models.requisicao",
+        "documentation": {}
+    },
+    {
+        "label": "Requisicao",
+        "importPath": "app.models.requisicao",
+        "description": "app.models.requisicao",
+        "isExtraImport": true,
+        "detail": "app.models.requisicao",
+        "documentation": {}
+    },
+    {
+        "label": "RequisicaoItem",
+        "importPath": "app.models.requisicao",
+        "description": "app.models.requisicao",
+        "isExtraImport": true,
+        "detail": "app.models.requisicao",
+        "documentation": {}
+    },
+    {
         "label": "EntregaRequisicao",
         "importPath": "app.models.requisicao",
         "description": "app.models.requisicao",
@@ -3661,110 +3477,6 @@
         "isExtraImport": true,
         "importPath": "datetime",
         "description": "datetime",
-        "detail": "datetime",
-        "documentation": {}
-    },
-    {
-        "label": "datetime",
-        "importPath": "datetime",
-        "description": "datetime",
-        "isExtraImport": true,
-        "detail": "datetime",
-        "documentation": {}
-    },
-    {
-        "label": "datetime",
-        "importPath": "datetime",
-        "description": "datetime",
-        "isExtraImport": true,
-        "detail": "datetime",
-        "documentation": {}
-    },
-    {
-        "label": "datetime",
-        "importPath": "datetime",
-        "description": "datetime",
-        "isExtraImport": true,
-        "detail": "datetime",
-        "documentation": {}
-    },
-    {
-        "label": "datetime",
-        "importPath": "datetime",
-        "description": "datetime",
-        "isExtraImport": true,
-        "detail": "datetime",
-        "documentation": {}
-    },
-    {
-        "label": "datetime",
-        "importPath": "datetime",
-        "description": "datetime",
-        "isExtraImport": true,
-        "detail": "datetime",
-        "documentation": {}
-    },
-    {
-        "label": "datetime",
-        "importPath": "datetime",
-        "description": "datetime",
-        "isExtraImport": true,
-        "detail": "datetime",
-        "documentation": {}
-    },
-    {
-        "label": "datetime",
-        "importPath": "datetime",
-        "description": "datetime",
-        "isExtraImport": true,
-        "detail": "datetime",
-        "documentation": {}
-    },
-    {
-        "label": "datetime",
-        "importPath": "datetime",
-        "description": "datetime",
-        "isExtraImport": true,
-        "detail": "datetime",
-        "documentation": {}
-    },
-    {
-        "label": "datetime",
-        "importPath": "datetime",
-        "description": "datetime",
-        "isExtraImport": true,
-        "detail": "datetime",
-        "documentation": {}
-    },
-    {
-        "label": "datetime",
-        "importPath": "datetime",
-        "description": "datetime",
-        "isExtraImport": true,
-        "detail": "datetime",
-        "documentation": {}
-    },
-    {
-        "label": "datetime",
-        "importPath": "datetime",
-        "description": "datetime",
-        "isExtraImport": true,
-        "detail": "datetime",
-        "documentation": {}
-    },
-    {
-        "label": "datetime",
-        "importPath": "datetime",
-        "description": "datetime",
-        "isExtraImport": true,
-        "detail": "datetime",
-        "documentation": {}
-    },
-    {
-        "label": "datetime",
-        "importPath": "datetime",
-        "description": "datetime",
-        "isExtraImport": true,
         "detail": "datetime",
         "documentation": {}
     },
@@ -4474,6 +4186,14 @@
         "documentation": {}
     },
     {
+        "label": "ReceitaProducao",
+        "importPath": "app.models.receita",
+        "description": "app.models.receita",
+        "isExtraImport": true,
+        "detail": "app.models.receita",
+        "documentation": {}
+    },
+    {
         "label": "ReceitaItem",
         "importPath": "app.models.receita",
         "description": "app.models.receita",
@@ -4495,14 +4215,6 @@
         "description": "app.models.receita",
         "isExtraImport": true,
         "detail": "app.models.receita",
-        "documentation": {}
-    },
-    {
-        "label": "Produto",
-        "importPath": "app.models.produto",
-        "description": "app.models.produto",
-        "isExtraImport": true,
-        "detail": "app.models.produto",
         "documentation": {}
     },
     {
@@ -4832,6 +4544,142 @@
         "description": "app.services.receita_service",
         "isExtraImport": true,
         "detail": "app.services.receita_service",
+        "documentation": {}
+    },
+    {
+        "label": "Venda",
+        "importPath": "app.models.comercial",
+        "description": "app.models.comercial",
+        "isExtraImport": true,
+        "detail": "app.models.comercial",
+        "documentation": {}
+    },
+    {
+        "label": "EstadoVenda",
+        "importPath": "app.models.comercial",
+        "description": "app.models.comercial",
+        "isExtraImport": true,
+        "detail": "app.models.comercial",
+        "documentation": {}
+    },
+    {
+        "label": "Venda",
+        "importPath": "app.models.comercial",
+        "description": "app.models.comercial",
+        "isExtraImport": true,
+        "detail": "app.models.comercial",
+        "documentation": {}
+    },
+    {
+        "label": "TaxaIVA",
+        "importPath": "app.models.comercial",
+        "description": "app.models.comercial",
+        "isExtraImport": true,
+        "detail": "app.models.comercial",
+        "documentation": {}
+    },
+    {
+        "label": "SerieDocumento",
+        "importPath": "app.models.comercial",
+        "description": "app.models.comercial",
+        "isExtraImport": true,
+        "detail": "app.models.comercial",
+        "documentation": {}
+    },
+    {
+        "label": "VendaItem",
+        "importPath": "app.models.comercial",
+        "description": "app.models.comercial",
+        "isExtraImport": true,
+        "detail": "app.models.comercial",
+        "documentation": {}
+    },
+    {
+        "label": "FechoDiario",
+        "importPath": "app.models.comercial",
+        "description": "app.models.comercial",
+        "isExtraImport": true,
+        "detail": "app.models.comercial",
+        "documentation": {}
+    },
+    {
+        "label": "Venda",
+        "importPath": "app.models.comercial",
+        "description": "app.models.comercial",
+        "isExtraImport": true,
+        "detail": "app.models.comercial",
+        "documentation": {}
+    },
+    {
+        "label": "VendaItem",
+        "importPath": "app.models.comercial",
+        "description": "app.models.comercial",
+        "isExtraImport": true,
+        "detail": "app.models.comercial",
+        "documentation": {}
+    },
+    {
+        "label": "TaxaIVA",
+        "importPath": "app.models.comercial",
+        "description": "app.models.comercial",
+        "isExtraImport": true,
+        "detail": "app.models.comercial",
+        "documentation": {}
+    },
+    {
+        "label": "SerieDocumento",
+        "importPath": "app.models.comercial",
+        "description": "app.models.comercial",
+        "isExtraImport": true,
+        "detail": "app.models.comercial",
+        "documentation": {}
+    },
+    {
+        "label": "TipoDocumento",
+        "importPath": "app.models.comercial",
+        "description": "app.models.comercial",
+        "isExtraImport": true,
+        "detail": "app.models.comercial",
+        "documentation": {}
+    },
+    {
+        "label": "EstadoVenda",
+        "importPath": "app.models.comercial",
+        "description": "app.models.comercial",
+        "isExtraImport": true,
+        "detail": "app.models.comercial",
+        "documentation": {}
+    },
+    {
+        "label": "FechoDiario",
+        "importPath": "app.models.comercial",
+        "description": "app.models.comercial",
+        "isExtraImport": true,
+        "detail": "app.models.comercial",
+        "documentation": {}
+    },
+    {
+        "label": "TipoDocumento",
+        "importPath": "app.models.comercial",
+        "description": "app.models.comercial",
+        "isExtraImport": true,
+        "detail": "app.models.comercial",
+        "documentation": {}
+    },
+    {
+        "label": "EstadoVenda",
+        "importPath": "app.models.comercial",
+        "description": "app.models.comercial",
+        "isExtraImport": true,
+        "detail": "app.models.comercial",
+        "documentation": {}
+    },
+    {
+        "label": "TaxaIVA",
+        "importPath": "app.models.comercial",
+        "description": "app.models.comercial",
+        "isExtraImport": true,
+        "detail": "app.models.comercial",
         "documentation": {}
     },
     {
@@ -5804,222 +5652,6 @@
         "documentation": {}
     },
     {
-        "label": "BaseModel",
-        "importPath": "app.models.base",
-        "description": "app.models.base",
-        "isExtraImport": true,
-        "detail": "app.models.base",
-        "documentation": {}
-    },
-    {
-        "label": "BaseModel",
-        "importPath": "app.models.base",
-        "description": "app.models.base",
-        "isExtraImport": true,
-        "detail": "app.models.base",
-        "documentation": {}
-    },
-    {
-        "label": "BaseModel",
-        "importPath": "app.models.base",
-        "description": "app.models.base",
-        "isExtraImport": true,
-        "detail": "app.models.base",
-        "documentation": {}
-    },
-    {
-        "label": "BaseModel",
-        "importPath": "app.models.base",
-        "description": "app.models.base",
-        "isExtraImport": true,
-        "detail": "app.models.base",
-        "documentation": {}
-    },
-    {
-        "label": "BaseModel",
-        "importPath": "app.models.base",
-        "description": "app.models.base",
-        "isExtraImport": true,
-        "detail": "app.models.base",
-        "documentation": {}
-    },
-    {
-        "label": "BaseModel",
-        "importPath": "app.models.base",
-        "description": "app.models.base",
-        "isExtraImport": true,
-        "detail": "app.models.base",
-        "documentation": {}
-    },
-    {
-        "label": "BaseModel",
-        "importPath": "app.models.base",
-        "description": "app.models.base",
-        "isExtraImport": true,
-        "detail": "app.models.base",
-        "documentation": {}
-    },
-    {
-        "label": "BaseModel",
-        "importPath": "app.models.base",
-        "description": "app.models.base",
-        "isExtraImport": true,
-        "detail": "app.models.base",
-        "documentation": {}
-    },
-    {
-        "label": "BaseModel",
-        "importPath": "app.models.base",
-        "description": "app.models.base",
-        "isExtraImport": true,
-        "detail": "app.models.base",
-        "documentation": {}
-    },
-    {
-        "label": "BaseModel",
-        "importPath": "app.models.base",
-        "description": "app.models.base",
-        "isExtraImport": true,
-        "detail": "app.models.base",
-        "documentation": {}
-    },
-    {
-        "label": "BaseModel",
-        "importPath": "app.models.base",
-        "description": "app.models.base",
-        "isExtraImport": true,
-        "detail": "app.models.base",
-        "documentation": {}
-    },
-    {
-        "label": "BaseModel",
-        "importPath": "app.models.base",
-        "description": "app.models.base",
-        "isExtraImport": true,
-        "detail": "app.models.base",
-        "documentation": {}
-    },
-    {
-        "label": "BaseModel",
-        "importPath": "app.models.base",
-        "description": "app.models.base",
-        "isExtraImport": true,
-        "detail": "app.models.base",
-        "documentation": {}
-    },
-    {
-        "label": "BaseModel",
-        "importPath": "app.models.base",
-        "description": "app.models.base",
-        "isExtraImport": true,
-        "detail": "app.models.base",
-        "documentation": {}
-    },
-    {
-        "label": "BaseModel",
-        "importPath": "app.models.base",
-        "description": "app.models.base",
-        "isExtraImport": true,
-        "detail": "app.models.base",
-        "documentation": {}
-    },
-    {
-        "label": "BaseModel",
-        "importPath": "app.models.base",
-        "description": "app.models.base",
-        "isExtraImport": true,
-        "detail": "app.models.base",
-        "documentation": {}
-    },
-    {
-        "label": "BaseModel",
-        "importPath": "app.models.base",
-        "description": "app.models.base",
-        "isExtraImport": true,
-        "detail": "app.models.base",
-        "documentation": {}
-    },
-    {
-        "label": "BaseModel",
-        "importPath": "app.models.base",
-        "description": "app.models.base",
-        "isExtraImport": true,
-        "detail": "app.models.base",
-        "documentation": {}
-    },
-    {
-        "label": "BaseModel",
-        "importPath": "app.models.base",
-        "description": "app.models.base",
-        "isExtraImport": true,
-        "detail": "app.models.base",
-        "documentation": {}
-    },
-    {
-        "label": "BaseModel",
-        "importPath": "app.models.base",
-        "description": "app.models.base",
-        "isExtraImport": true,
-        "detail": "app.models.base",
-        "documentation": {}
-    },
-    {
-        "label": "BaseModel",
-        "importPath": "app.models.base",
-        "description": "app.models.base",
-        "isExtraImport": true,
-        "detail": "app.models.base",
-        "documentation": {}
-    },
-    {
-        "label": "BaseModel",
-        "importPath": "app.models.base",
-        "description": "app.models.base",
-        "isExtraImport": true,
-        "detail": "app.models.base",
-        "documentation": {}
-    },
-    {
-        "label": "BaseModel",
-        "importPath": "app.models.base",
-        "description": "app.models.base",
-        "isExtraImport": true,
-        "detail": "app.models.base",
-        "documentation": {}
-    },
-    {
-        "label": "BaseModel",
-        "importPath": "app.models.base",
-        "description": "app.models.base",
-        "isExtraImport": true,
-        "detail": "app.models.base",
-        "documentation": {}
-    },
-    {
-        "label": "BaseModel",
-        "importPath": "app.models.base",
-        "description": "app.models.base",
-        "isExtraImport": true,
-        "detail": "app.models.base",
-        "documentation": {}
-    },
-    {
-        "label": "BaseModel",
-        "importPath": "app.models.base",
-        "description": "app.models.base",
-        "isExtraImport": true,
-        "detail": "app.models.base",
-        "documentation": {}
-    },
-    {
-        "label": "BaseModel",
-        "importPath": "app.models.base",
-        "description": "app.models.base",
-        "isExtraImport": true,
-        "detail": "app.models.base",
-        "documentation": {}
-    },
-    {
         "label": "Enum",
         "importPath": "enum",
         "description": "enum",
@@ -6177,174 +5809,6 @@
         "description": "enum",
         "isExtraImport": true,
         "detail": "enum",
-        "documentation": {}
-    },
-    {
-        "label": "Enum",
-        "importPath": "enum",
-        "description": "enum",
-        "isExtraImport": true,
-        "detail": "enum",
-        "documentation": {}
-    },
-    {
-        "label": "Enum",
-        "importPath": "enum",
-        "description": "enum",
-        "isExtraImport": true,
-        "detail": "enum",
-        "documentation": {}
-    },
-    {
-        "label": "Enum",
-        "importPath": "enum",
-        "description": "enum",
-        "isExtraImport": true,
-        "detail": "enum",
-        "documentation": {}
-    },
-    {
-        "label": "Enum",
-        "importPath": "enum",
-        "description": "enum",
-        "isExtraImport": true,
-        "detail": "enum",
-        "documentation": {}
-    },
-    {
-        "label": "Enum",
-        "importPath": "enum",
-        "description": "enum",
-        "isExtraImport": true,
-        "detail": "enum",
-        "documentation": {}
-    },
-    {
-        "label": "Enum",
-        "importPath": "enum",
-        "description": "enum",
-        "isExtraImport": true,
-        "detail": "enum",
-        "documentation": {}
-    },
-    {
-        "label": "Enum",
-        "importPath": "enum",
-        "description": "enum",
-        "isExtraImport": true,
-        "detail": "enum",
-        "documentation": {}
-    },
-    {
-        "label": "Enum",
-        "importPath": "enum",
-        "description": "enum",
-        "isExtraImport": true,
-        "detail": "enum",
-        "documentation": {}
-    },
-    {
-        "label": "Enum",
-        "importPath": "enum",
-        "description": "enum",
-        "isExtraImport": true,
-        "detail": "enum",
-        "documentation": {}
-    },
-    {
-        "label": "Enum",
-        "importPath": "enum",
-        "description": "enum",
-        "isExtraImport": true,
-        "detail": "enum",
-        "documentation": {}
-    },
-    {
-        "label": "Enum",
-        "importPath": "enum",
-        "description": "enum",
-        "isExtraImport": true,
-        "detail": "enum",
-        "documentation": {}
-    },
-    {
-        "label": "Enum",
-        "importPath": "enum",
-        "description": "enum",
-        "isExtraImport": true,
-        "detail": "enum",
-        "documentation": {}
-    },
-    {
-        "label": "Enum",
-        "importPath": "enum",
-        "description": "enum",
-        "isExtraImport": true,
-        "detail": "enum",
-        "documentation": {}
-    },
-    {
-        "label": "Enum",
-        "importPath": "enum",
-        "description": "enum",
-        "isExtraImport": true,
-        "detail": "enum",
-        "documentation": {}
-    },
-    {
-        "label": "Enum",
-        "importPath": "enum",
-        "description": "enum",
-        "isExtraImport": true,
-        "detail": "enum",
-        "documentation": {}
-    },
-    {
-        "label": "Enum",
-        "importPath": "enum",
-        "description": "enum",
-        "isExtraImport": true,
-        "detail": "enum",
-        "documentation": {}
-    },
-    {
-        "label": "Enum",
-        "importPath": "enum",
-        "description": "enum",
-        "isExtraImport": true,
-        "detail": "enum",
-        "documentation": {}
-    },
-    {
-        "label": "Enum",
-        "importPath": "enum",
-        "description": "enum",
-        "isExtraImport": true,
-        "detail": "enum",
-        "documentation": {}
-    },
-    {
-        "label": "Enum",
-        "importPath": "enum",
-        "description": "enum",
-        "isExtraImport": true,
-        "detail": "enum",
-        "documentation": {}
-    },
-    {
-        "label": "TypeDecorator",
-        "importPath": "sqlalchemy.types",
-        "description": "sqlalchemy.types",
-        "isExtraImport": true,
-        "detail": "sqlalchemy.types",
-        "documentation": {}
-    },
-    {
-        "label": "String",
-        "importPath": "sqlalchemy.types",
-        "description": "sqlalchemy.types",
-        "isExtraImport": true,
-        "detail": "sqlalchemy.types",
         "documentation": {}
     },
     {
@@ -7057,126 +6521,6 @@
         "description": "typing",
         "isExtraImport": true,
         "detail": "typing",
-        "documentation": {}
-    },
-    {
-        "label": "Venda",
-        "importPath": "app.models.comercial",
-        "description": "app.models.comercial",
-        "isExtraImport": true,
-        "detail": "app.models.comercial",
-        "documentation": {}
-    },
-    {
-        "label": "TaxaIVA",
-        "importPath": "app.models.comercial",
-        "description": "app.models.comercial",
-        "isExtraImport": true,
-        "detail": "app.models.comercial",
-        "documentation": {}
-    },
-    {
-        "label": "SerieDocumento",
-        "importPath": "app.models.comercial",
-        "description": "app.models.comercial",
-        "isExtraImport": true,
-        "detail": "app.models.comercial",
-        "documentation": {}
-    },
-    {
-        "label": "VendaItem",
-        "importPath": "app.models.comercial",
-        "description": "app.models.comercial",
-        "isExtraImport": true,
-        "detail": "app.models.comercial",
-        "documentation": {}
-    },
-    {
-        "label": "FechoDiario",
-        "importPath": "app.models.comercial",
-        "description": "app.models.comercial",
-        "isExtraImport": true,
-        "detail": "app.models.comercial",
-        "documentation": {}
-    },
-    {
-        "label": "Venda",
-        "importPath": "app.models.comercial",
-        "description": "app.models.comercial",
-        "isExtraImport": true,
-        "detail": "app.models.comercial",
-        "documentation": {}
-    },
-    {
-        "label": "VendaItem",
-        "importPath": "app.models.comercial",
-        "description": "app.models.comercial",
-        "isExtraImport": true,
-        "detail": "app.models.comercial",
-        "documentation": {}
-    },
-    {
-        "label": "TaxaIVA",
-        "importPath": "app.models.comercial",
-        "description": "app.models.comercial",
-        "isExtraImport": true,
-        "detail": "app.models.comercial",
-        "documentation": {}
-    },
-    {
-        "label": "SerieDocumento",
-        "importPath": "app.models.comercial",
-        "description": "app.models.comercial",
-        "isExtraImport": true,
-        "detail": "app.models.comercial",
-        "documentation": {}
-    },
-    {
-        "label": "TipoDocumento",
-        "importPath": "app.models.comercial",
-        "description": "app.models.comercial",
-        "isExtraImport": true,
-        "detail": "app.models.comercial",
-        "documentation": {}
-    },
-    {
-        "label": "EstadoVenda",
-        "importPath": "app.models.comercial",
-        "description": "app.models.comercial",
-        "isExtraImport": true,
-        "detail": "app.models.comercial",
-        "documentation": {}
-    },
-    {
-        "label": "FechoDiario",
-        "importPath": "app.models.comercial",
-        "description": "app.models.comercial",
-        "isExtraImport": true,
-        "detail": "app.models.comercial",
-        "documentation": {}
-    },
-    {
-        "label": "TipoDocumento",
-        "importPath": "app.models.comercial",
-        "description": "app.models.comercial",
-        "isExtraImport": true,
-        "detail": "app.models.comercial",
-        "documentation": {}
-    },
-    {
-        "label": "EstadoVenda",
-        "importPath": "app.models.comercial",
-        "description": "app.models.comercial",
-        "isExtraImport": true,
-        "detail": "app.models.comercial",
-        "documentation": {}
-    },
-    {
-        "label": "TaxaIVA",
-        "importPath": "app.models.comercial",
-        "description": "app.models.comercial",
-        "isExtraImport": true,
-        "detail": "app.models.comercial",
         "documentation": {}
     },
     {
@@ -8200,6 +7544,22 @@
         "documentation": {}
     },
     {
+        "label": "Turno",
+        "importPath": "app.models.turno",
+        "description": "app.models.turno",
+        "isExtraImport": true,
+        "detail": "app.models.turno",
+        "documentation": {}
+    },
+    {
+        "label": "Turno",
+        "importPath": "app.models.turno",
+        "description": "app.models.turno",
+        "isExtraImport": true,
+        "detail": "app.models.turno",
+        "documentation": {}
+    },
+    {
         "label": "FichaTecnicaRepository",
         "importPath": "app.repositories.producao_repos",
         "description": "app.repositories.producao_repos",
@@ -8229,14 +7589,6 @@
         "description": "app.repositories.requisicao_repos",
         "isExtraImport": true,
         "detail": "app.repositories.requisicao_repos",
-        "documentation": {}
-    },
-    {
-        "label": "Turno",
-        "importPath": "app.models.turno",
-        "description": "app.models.turno",
-        "isExtraImport": true,
-        "detail": "app.models.turno",
         "documentation": {}
     },
     {
@@ -9175,7 +8527,7 @@
         "kind": 2,
         "importPath": "backend.app.api.v1.comercial_controller",
         "description": "backend.app.api.v1.comercial_controller",
-        "peekOfCode": "def checkout_pedido(pedido_id):\n    from flask_jwt_extended import get_jwt_identity\n    user_id = get_jwt_identity()\n    data = request.json or {}\n    venda, error = comercial_service.converter_pedido_em_venda(pedido_id, data, user_id)\n    if error:\n        return jsonify({'error': error}), 400\n    # Disparar envio de fatura automática do checkout do pedido\n    try:\n        from app.services.notification_service import NotificationService",
+        "peekOfCode": "def checkout_pedido(pedido_id):\n    from flask_jwt_extended import get_jwt_identity\n    user_id = get_jwt_identity()\n    data = request.json or {}\n    from app.models.pedido import Pedido\n    from app.models.comercial import Venda\n    pedido = Pedido.query.get(pedido_id)\n    venda_existente = Venda.query.filter_by(pedido_id=pedido_id).order_by(Venda.id.asc()).first()\n    if pedido and venda_existente:\n        venda, error = comercial_service.liquidar_pedido_faturado(pedido, venda_existente, data, user_id)",
         "detail": "backend.app.api.v1.comercial_controller",
         "documentation": {}
     },
@@ -10129,7 +9481,7 @@
         "kind": 2,
         "importPath": "backend.app.api.v1.relatorios_controller",
         "description": "backend.app.api.v1.relatorios_controller",
-        "peekOfCode": "def get_dashboard():\n    vendas = db.session.query(func.count(Pedido.id)).scalar() or 0\n    eventos = db.session.query(func.count(Evento.id)).scalar() or 0\n    receita_total = db.session.query(func.sum(Pedido.valor_total)).scalar() or 0\n    # Example: group by real month, assuming SQLite or MySQL works. In MySQL: func.month(Pedido.data_pedido).\n    # Since we want it compatible, we can just fetch all and group in Python for safety, or use func.strftime('%m', Pedido.data_pedido) in SQLite, \n    # but the instructions say we use real MySQL. In MySQL it's func.month() or extract('month', ...).\n    # To keep it simple and robust across backends without dialects, let's fetch in last 6 months.\n    from datetime import datetime, timedelta\n    six_months_ago = datetime.utcnow() - timedelta(days=180)",
+        "peekOfCode": "def get_dashboard():\n    vendas = db.session.query(func.count(Venda.id)).filter(Venda.estado != EstadoVenda.CANCELADO).scalar() or 0\n    eventos = db.session.query(func.count(Evento.id)).scalar() or 0\n    receita_total = db.session.query(func.sum(Venda.total)).filter(Venda.estado != EstadoVenda.CANCELADO).scalar() or 0\n    # Example: group by real month, assuming SQLite or MySQL works. In MySQL: func.month(Pedido.data_pedido).\n    # Since we want it compatible, we can just fetch all and group in Python for safety, or use func.strftime('%m', Pedido.data_pedido) in SQLite, \n    # but the instructions say we use real MySQL. In MySQL it's func.month() or extract('month', ...).\n    # To keep it simple and robust across backends without dialects, let's fetch in last 6 months.\n    from datetime import datetime, timedelta\n    six_months_ago = datetime.utcnow() - timedelta(days=180)",
         "detail": "backend.app.api.v1.relatorios_controller",
         "documentation": {}
     },
@@ -10147,7 +9499,7 @@
         "kind": 5,
         "importPath": "backend.app.api.v1.relatorios_controller",
         "description": "backend.app.api.v1.relatorios_controller",
-        "peekOfCode": "relatorios_bp = Blueprint('relatorios', __name__)\n@relatorios_bp.route('/dashboard', methods=['GET'])\n@jwt_required()\ndef get_dashboard():\n    vendas = db.session.query(func.count(Pedido.id)).scalar() or 0\n    eventos = db.session.query(func.count(Evento.id)).scalar() or 0\n    receita_total = db.session.query(func.sum(Pedido.valor_total)).scalar() or 0\n    # Example: group by real month, assuming SQLite or MySQL works. In MySQL: func.month(Pedido.data_pedido).\n    # Since we want it compatible, we can just fetch all and group in Python for safety, or use func.strftime('%m', Pedido.data_pedido) in SQLite, \n    # but the instructions say we use real MySQL. In MySQL it's func.month() or extract('month', ...).",
+        "peekOfCode": "relatorios_bp = Blueprint('relatorios', __name__)\n@relatorios_bp.route('/dashboard', methods=['GET'])\n@jwt_required()\ndef get_dashboard():\n    vendas = db.session.query(func.count(Venda.id)).filter(Venda.estado != EstadoVenda.CANCELADO).scalar() or 0\n    eventos = db.session.query(func.count(Evento.id)).scalar() or 0\n    receita_total = db.session.query(func.sum(Venda.total)).filter(Venda.estado != EstadoVenda.CANCELADO).scalar() or 0\n    # Example: group by real month, assuming SQLite or MySQL works. In MySQL: func.month(Pedido.data_pedido).\n    # Since we want it compatible, we can just fetch all and group in Python for safety, or use func.strftime('%m', Pedido.data_pedido) in SQLite, \n    # but the instructions say we use real MySQL. In MySQL it's func.month() or extract('month', ...).",
         "detail": "backend.app.api.v1.relatorios_controller",
         "documentation": {}
     },
@@ -10566,15 +9918,6 @@
         "documentation": {}
     },
     {
-        "label": "FlexibleEnum",
-        "kind": 6,
-        "importPath": "backend.app.models.base",
-        "description": "backend.app.models.base",
-        "peekOfCode": "class FlexibleEnum(TypeDecorator):\n    impl = String\n    cache_ok = True\n    def __init__(self, enum_cls, *args, **kwargs):\n        super().__init__(*args, **kwargs)\n        self.enum_cls = enum_cls\n        self._name_to_value = {e.name.upper(): e.value for e in enum_cls}\n        self._value_to_name = {str(e.value).lower(): e.name for e in enum_cls}\n    def process_bind_param(self, value, dialect):\n        if value is None: return None",
-        "detail": "backend.app.models.base",
-        "documentation": {}
-    },
-    {
         "label": "enum_values",
         "kind": 2,
         "importPath": "backend.app.models.base",
@@ -10606,7 +9949,7 @@
         "kind": 6,
         "importPath": "backend.app.models.caixa",
         "description": "backend.app.models.caixa",
-        "peekOfCode": "class Caixa(BaseModel):\n    __tablename__ = 'caixas'\n    numero = db.Column(db.String(50), unique=True, nullable=False)\n    data_abertura = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)\n    data_fecho = db.Column(db.DateTime, nullable=True)\n    valor_inicial = db.Column(db.Numeric(12, 2), default=0)\n    valor_final = db.Column(db.Numeric(12, 2), default=0)\n    utilizador_abertura_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)\n    utilizador_fecho_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)\n    estado = db.Column(db.Enum(EstadoCaixa, values_callable=lambda x: [e.value for e in x]), default=EstadoCaixa.ABERTO)",
+        "peekOfCode": "class Caixa(BaseModel):\n    __tablename__ = 'caixas'\n    numero = db.Column(db.String(50), unique=True, nullable=False)\n    data_abertura = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)\n    data_fecho = db.Column(db.DateTime, nullable=True)\n    valor_inicial = db.Column(db.Numeric(12, 2), default=0)\n    valor_final = db.Column(db.Numeric(12, 2), default=0)\n    utilizador_abertura_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)\n    utilizador_fecho_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)\n    estado = db.Column(db.Enum(EstadoCaixa), default=EstadoCaixa.ABERTO)",
         "detail": "backend.app.models.caixa",
         "documentation": {}
     },
@@ -10615,7 +9958,7 @@
         "kind": 6,
         "importPath": "backend.app.models.caixa",
         "description": "backend.app.models.caixa",
-        "peekOfCode": "class MovimentoCaixa(db.Model):\n    __tablename__ = 'movimentos_caixa'\n    id = db.Column(db.Integer, primary_key=True)\n    caixa_id = db.Column(db.Integer, db.ForeignKey('caixas.id'), nullable=False)\n    tipo = db.Column(db.Enum(TipoMovimentoCaixa, values_callable=lambda x: [e.value for e in x]), nullable=False)\n    valor = db.Column(db.Numeric(12, 2), nullable=False)\n    descricao = db.Column(db.String(255), nullable=True)\n    data_movimento = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)\n    utilizador_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)\n    codigo_transferencia = db.Column(db.String(100), nullable=True)",
+        "peekOfCode": "class MovimentoCaixa(db.Model):\n    __tablename__ = 'movimentos_caixa'\n    id = db.Column(db.Integer, primary_key=True)\n    caixa_id = db.Column(db.Integer, db.ForeignKey('caixas.id'), nullable=False)\n    tipo = db.Column(db.Enum(TipoMovimentoCaixa), nullable=False)\n    valor = db.Column(db.Numeric(12, 2), nullable=False)\n    descricao = db.Column(db.String(255), nullable=True)\n    data_movimento = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)\n    utilizador_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)\n    codigo_transferencia = db.Column(db.String(100), nullable=True)",
         "detail": "backend.app.models.caixa",
         "documentation": {}
     },
@@ -10660,7 +10003,7 @@
         "kind": 6,
         "importPath": "backend.app.models.comercial",
         "description": "backend.app.models.comercial",
-        "peekOfCode": "class TaxaIVA(BaseModel):\n    __tablename__ = 'taxas_iva'\n    descricao = db.Column(db.String(50), nullable=False)\n    percentagem = db.Column(db.Numeric(5, 2), nullable=False)\n    ativo = db.Column(db.Boolean, default=True)\nclass SerieDocumento(BaseModel):\n    __tablename__ = 'series_documento'\n    tipo_documento = db.Column(db.Enum(TipoDocumento, values_callable=lambda x: [e.value for e in x]), nullable=False)\n    ano = db.Column(db.Integer, nullable=False)\n    ultimo_numero = db.Column(db.Integer, default=0)",
+        "peekOfCode": "class TaxaIVA(BaseModel):\n    __tablename__ = 'taxas_iva'\n    descricao = db.Column(db.String(50), nullable=False)\n    percentagem = db.Column(db.Numeric(5, 2), nullable=False)\n    ativo = db.Column(db.Boolean, default=True)\nclass SerieDocumento(BaseModel):\n    __tablename__ = 'series_documento'\n    tipo_documento = db.Column(db.Enum(TipoDocumento), nullable=False)\n    ano = db.Column(db.Integer, nullable=False)\n    ultimo_numero = db.Column(db.Integer, default=0)",
         "detail": "backend.app.models.comercial",
         "documentation": {}
     },
@@ -10669,7 +10012,7 @@
         "kind": 6,
         "importPath": "backend.app.models.comercial",
         "description": "backend.app.models.comercial",
-        "peekOfCode": "class SerieDocumento(BaseModel):\n    __tablename__ = 'series_documento'\n    tipo_documento = db.Column(db.Enum(TipoDocumento, values_callable=lambda x: [e.value for e in x]), nullable=False)\n    ano = db.Column(db.Integer, nullable=False)\n    ultimo_numero = db.Column(db.Integer, default=0)\nclass Venda(BaseModel):\n    __tablename__ = 'vendas'\n    numero_documento = db.Column(db.String(50), unique=True, nullable=False)\n    tipo_documento = db.Column(db.Enum(TipoDocumento, values_callable=lambda x: [e.value for e in x]), nullable=False)\n    _cliente_id = db.Column('cliente_id', db.Integer, db.ForeignKey('clientes.id'), nullable=True)",
+        "peekOfCode": "class SerieDocumento(BaseModel):\n    __tablename__ = 'series_documento'\n    tipo_documento = db.Column(db.Enum(TipoDocumento), nullable=False)\n    ano = db.Column(db.Integer, nullable=False)\n    ultimo_numero = db.Column(db.Integer, default=0)\nclass Venda(BaseModel):\n    __tablename__ = 'vendas'\n    numero_documento = db.Column(db.String(50), unique=True, nullable=False)\n    tipo_documento = db.Column(db.Enum(TipoDocumento), nullable=False)\n    _cliente_id = db.Column('cliente_id', db.Integer, db.ForeignKey('clientes.id'), nullable=True)",
         "detail": "backend.app.models.comercial",
         "documentation": {}
     },
@@ -10678,7 +10021,7 @@
         "kind": 6,
         "importPath": "backend.app.models.comercial",
         "description": "backend.app.models.comercial",
-        "peekOfCode": "class Venda(BaseModel):\n    __tablename__ = 'vendas'\n    numero_documento = db.Column(db.String(50), unique=True, nullable=False)\n    tipo_documento = db.Column(db.Enum(TipoDocumento, values_callable=lambda x: [e.value for e in x]), nullable=False)\n    _cliente_id = db.Column('cliente_id', db.Integer, db.ForeignKey('clientes.id'), nullable=True)\n    pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=True)\n    _subtotal = db.Column('subtotal', db.Numeric(12, 2), default=0, nullable=True)\n    _desconto_total = db.Column('desconto_total', db.Numeric(12, 2), default=0, nullable=True)\n    _base_tributavel = db.Column('base_tributavel', db.Numeric(12, 2), default=0, nullable=True)\n    _total_iva = db.Column('total_iva', db.Numeric(12, 2), default=0, nullable=True)",
+        "peekOfCode": "class Venda(BaseModel):\n    __tablename__ = 'vendas'\n    numero_documento = db.Column(db.String(50), unique=True, nullable=False)\n    tipo_documento = db.Column(db.Enum(TipoDocumento), nullable=False)\n    _cliente_id = db.Column('cliente_id', db.Integer, db.ForeignKey('clientes.id'), nullable=True)\n    pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=True)\n    _subtotal = db.Column('subtotal', db.Numeric(12, 2), default=0, nullable=True)\n    _desconto_total = db.Column('desconto_total', db.Numeric(12, 2), default=0, nullable=True)\n    _base_tributavel = db.Column('base_tributavel', db.Numeric(12, 2), default=0, nullable=True)\n    _total_iva = db.Column('total_iva', db.Numeric(12, 2), default=0, nullable=True)",
         "detail": "backend.app.models.comercial",
         "documentation": {}
     },
@@ -10894,7 +10237,7 @@
         "kind": 6,
         "importPath": "backend.app.models.ficha_tecnica",
         "description": "backend.app.models.ficha_tecnica",
-        "peekOfCode": "class TipoFicha(str, Enum):\n    COZINHA = 'Cozinha'\n    PASTELARIA = 'Pastelaria'\nclass FichaTecnica(BaseModel):\n    __tablename__ = 'fichas_tecnicas'\n    codigo = db.Column(db.String(50), unique=True, nullable=True)\n    nome = db.Column(db.String(100), nullable=False)\n    descricao = db.Column(db.Text, nullable=True)\n    tipo = db.Column(db.Enum(TipoFicha, values_callable=lambda x: [e.value for e in x]), nullable=False)\n    produto_acabado_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=False)",
+        "peekOfCode": "class TipoFicha(str, Enum):\n    COZINHA = 'Cozinha'\n    PASTELARIA = 'Pastelaria'\nclass FichaTecnica(BaseModel):\n    __tablename__ = 'fichas_tecnicas'\n    codigo = db.Column(db.String(50), unique=True, nullable=True)\n    nome = db.Column(db.String(100), nullable=False)\n    descricao = db.Column(db.Text, nullable=True)\n    tipo = db.Column(db.Enum(TipoFicha), nullable=False)\n    produto_acabado_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=False)",
         "detail": "backend.app.models.ficha_tecnica",
         "documentation": {}
     },
@@ -10903,7 +10246,7 @@
         "kind": 6,
         "importPath": "backend.app.models.ficha_tecnica",
         "description": "backend.app.models.ficha_tecnica",
-        "peekOfCode": "class FichaTecnica(BaseModel):\n    __tablename__ = 'fichas_tecnicas'\n    codigo = db.Column(db.String(50), unique=True, nullable=True)\n    nome = db.Column(db.String(100), nullable=False)\n    descricao = db.Column(db.Text, nullable=True)\n    tipo = db.Column(db.Enum(TipoFicha, values_callable=lambda x: [e.value for e in x]), nullable=False)\n    produto_acabado_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=False)\n    tempo_producao_minutos = db.Column(db.Integer, nullable=True)\n    rendimento = db.Column(db.Numeric(10, 2), nullable=True)\n    ativo = db.Column(db.Boolean, default=True)",
+        "peekOfCode": "class FichaTecnica(BaseModel):\n    __tablename__ = 'fichas_tecnicas'\n    codigo = db.Column(db.String(50), unique=True, nullable=True)\n    nome = db.Column(db.String(100), nullable=False)\n    descricao = db.Column(db.Text, nullable=True)\n    tipo = db.Column(db.Enum(TipoFicha), nullable=False)\n    produto_acabado_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=False)\n    tempo_producao_minutos = db.Column(db.Integer, nullable=True)\n    rendimento = db.Column(db.Numeric(10, 2), nullable=True)\n    ativo = db.Column(db.Boolean, default=True)",
         "detail": "backend.app.models.ficha_tecnica",
         "documentation": {}
     },
@@ -10939,7 +10282,7 @@
         "kind": 6,
         "importPath": "backend.app.models.financeiro",
         "description": "backend.app.models.financeiro",
-        "peekOfCode": "class Pagamento(BaseModel):\n    __tablename__ = 'pagamentos'\n    pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=True)\n    evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=True)\n    venda_id = db.Column(db.Integer, db.ForeignKey('vendas.id'), nullable=True)\n    valor = db.Column(db.Numeric(12, 2), nullable=False)\n    forma_pagamento_id = db.Column(db.Integer, db.ForeignKey('formas_pagamento.id'), nullable=False)\n    estado = db.Column(db.Enum(EstadoPagamento, values_callable=lambda x: [e.value for e in x]), default=EstadoPagamento.PENDENTE)\n    data_pagamento = db.Column(db.DateTime, nullable=True)\n    referencia = db.Column(db.String(100), nullable=True)",
+        "peekOfCode": "class Pagamento(BaseModel):\n    __tablename__ = 'pagamentos'\n    pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=True)\n    evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=True)\n    venda_id = db.Column(db.Integer, db.ForeignKey('vendas.id'), nullable=True)\n    valor = db.Column(db.Numeric(12, 2), nullable=False)\n    forma_pagamento_id = db.Column(db.Integer, db.ForeignKey('formas_pagamento.id'), nullable=False)\n    estado = db.Column(db.Enum(EstadoPagamento), default=EstadoPagamento.PENDENTE)\n    data_pagamento = db.Column(db.DateTime, nullable=True)\n    referencia = db.Column(db.String(100), nullable=True)",
         "detail": "backend.app.models.financeiro",
         "documentation": {}
     },
@@ -10966,7 +10309,7 @@
         "kind": 6,
         "importPath": "backend.app.models.financeiro",
         "description": "backend.app.models.financeiro",
-        "peekOfCode": "class ContaPagar(BaseModel):\n    __tablename__ = 'contas_pagar'\n    fornecedor_id = db.Column(db.Integer, db.ForeignKey('fornecedores.id'), nullable=True)\n    descricao = db.Column(db.String(255), nullable=False)\n    valor = db.Column(db.Numeric(12, 2), nullable=False)\n    vencimento = db.Column(db.Date, nullable=False)\n    estado = db.Column(db.Enum(EstadoConta, values_callable=lambda x: [e.value for e in x]), default=EstadoConta.ABERTA)\nclass CategoriaReceita(str, Enum):\n    VENDA = 'Venda'\n    EVENTO = 'Evento'",
+        "peekOfCode": "class ContaPagar(BaseModel):\n    __tablename__ = 'contas_pagar'\n    fornecedor_id = db.Column(db.Integer, db.ForeignKey('fornecedores.id'), nullable=True)\n    descricao = db.Column(db.String(255), nullable=False)\n    valor = db.Column(db.Numeric(12, 2), nullable=False)\n    vencimento = db.Column(db.Date, nullable=False)\n    estado = db.Column(db.Enum(EstadoConta), default=EstadoConta.ABERTA)\nclass CategoriaReceita(str, Enum):\n    VENDA = 'Venda'\n    EVENTO = 'Evento'",
         "detail": "backend.app.models.financeiro",
         "documentation": {}
     },
@@ -10975,7 +10318,7 @@
         "kind": 6,
         "importPath": "backend.app.models.financeiro",
         "description": "backend.app.models.financeiro",
-        "peekOfCode": "class CategoriaReceita(str, Enum):\n    VENDA = 'Venda'\n    EVENTO = 'Evento'\n    ALUGUER = 'Aluguer'\n    SERVICO = 'Servico'\n    OUTROS = 'Outros'\nclass Receita(BaseModel):\n    __tablename__ = 'receitas'\n    categoria = db.Column(db.Enum(CategoriaReceita, values_callable=lambda x: [e.value for e in x]), nullable=False)\n    valor = db.Column(db.Numeric(12, 2), nullable=False)",
+        "peekOfCode": "class CategoriaReceita(str, Enum):\n    VENDA = 'Venda'\n    EVENTO = 'Evento'\n    ALUGUER = 'Aluguer'\n    SERVICO = 'Servico'\n    OUTROS = 'Outros'\nclass Receita(BaseModel):\n    __tablename__ = 'receitas'\n    categoria = db.Column(db.Enum(CategoriaReceita), nullable=False)\n    valor = db.Column(db.Numeric(12, 2), nullable=False)",
         "detail": "backend.app.models.financeiro",
         "documentation": {}
     },
@@ -10984,7 +10327,7 @@
         "kind": 6,
         "importPath": "backend.app.models.financeiro",
         "description": "backend.app.models.financeiro",
-        "peekOfCode": "class Receita(BaseModel):\n    __tablename__ = 'receitas'\n    categoria = db.Column(db.Enum(CategoriaReceita, values_callable=lambda x: [e.value for e in x]), nullable=False)\n    valor = db.Column(db.Numeric(12, 2), nullable=False)\n    descricao = db.Column(db.String(255), nullable=True)\n    data_receita = db.Column(db.Date, nullable=False)\nclass CategoriaDespesa(str, Enum):\n    FORNECEDOR = 'Fornecedor'\n    COMBUSTIVEL = 'Combustivel'\n    SALARIO = 'Salario'",
+        "peekOfCode": "class Receita(BaseModel):\n    __tablename__ = 'receitas'\n    categoria = db.Column(db.Enum(CategoriaReceita), nullable=False)\n    valor = db.Column(db.Numeric(12, 2), nullable=False)\n    descricao = db.Column(db.String(255), nullable=True)\n    data_receita = db.Column(db.Date, nullable=False)\nclass CategoriaDespesa(str, Enum):\n    FORNECEDOR = 'Fornecedor'\n    COMBUSTIVEL = 'Combustivel'\n    SALARIO = 'Salario'",
         "detail": "backend.app.models.financeiro",
         "documentation": {}
     },
@@ -11002,7 +10345,7 @@
         "kind": 6,
         "importPath": "backend.app.models.financeiro",
         "description": "backend.app.models.financeiro",
-        "peekOfCode": "class CentroCusto(BaseModel):\n    __tablename__ = 'centros_custo'\n    nome = db.Column(db.String(100), unique=True, nullable=False)\nclass Despesa(BaseModel):\n    __tablename__ = 'despesas'\n    categoria = db.Column(db.Enum(CategoriaDespesa, values_callable=lambda x: [e.value for e in x]), nullable=False)\n    valor = db.Column(db.Numeric(12, 2), nullable=False)\n    descricao = db.Column(db.String(255), nullable=True)\n    data_despesa = db.Column(db.Date, nullable=False)\n    centro_custo_id = db.Column(db.Integer, db.ForeignKey('centros_custo.id'), nullable=True)",
+        "peekOfCode": "class CentroCusto(BaseModel):\n    __tablename__ = 'centros_custo'\n    nome = db.Column(db.String(100), unique=True, nullable=False)\nclass Despesa(BaseModel):\n    __tablename__ = 'despesas'\n    categoria = db.Column(db.Enum(CategoriaDespesa), nullable=False)\n    valor = db.Column(db.Numeric(12, 2), nullable=False)\n    descricao = db.Column(db.String(255), nullable=True)\n    data_despesa = db.Column(db.Date, nullable=False)\n    centro_custo_id = db.Column(db.Integer, db.ForeignKey('centros_custo.id'), nullable=True)",
         "detail": "backend.app.models.financeiro",
         "documentation": {}
     },
@@ -11011,7 +10354,7 @@
         "kind": 6,
         "importPath": "backend.app.models.financeiro",
         "description": "backend.app.models.financeiro",
-        "peekOfCode": "class Despesa(BaseModel):\n    __tablename__ = 'despesas'\n    categoria = db.Column(db.Enum(CategoriaDespesa, values_callable=lambda x: [e.value for e in x]), nullable=False)\n    valor = db.Column(db.Numeric(12, 2), nullable=False)\n    descricao = db.Column(db.String(255), nullable=True)\n    data_despesa = db.Column(db.Date, nullable=False)\n    centro_custo_id = db.Column(db.Integer, db.ForeignKey('centros_custo.id'), nullable=True)",
+        "peekOfCode": "class Despesa(BaseModel):\n    __tablename__ = 'despesas'\n    categoria = db.Column(db.Enum(CategoriaDespesa), nullable=False)\n    valor = db.Column(db.Numeric(12, 2), nullable=False)\n    descricao = db.Column(db.String(255), nullable=True)\n    data_despesa = db.Column(db.Date, nullable=False)\n    centro_custo_id = db.Column(db.Integer, db.ForeignKey('centros_custo.id'), nullable=True)",
         "detail": "backend.app.models.financeiro",
         "documentation": {}
     },
@@ -11047,7 +10390,7 @@
         "kind": 6,
         "importPath": "backend.app.models.inventario",
         "description": "backend.app.models.inventario",
-        "peekOfCode": "class EstadoInventario(str, Enum):\n    RASCUNHO = 'Rascunho'\n    CONCLUIDO = 'Concluido'\n    CANCELADO = 'Cancelado'\nclass Inventario(BaseModel):\n    __tablename__ = 'inventarios'\n    numero = db.Column(db.String(50), unique=True, nullable=False)\n    tipo = db.Column(db.Enum(TipoInventario, values_callable=lambda x: [e.value for e in x]), nullable=False)\n    estado = db.Column(db.Enum(EstadoInventario, values_callable=lambda x: [e.value for e in x]), default=EstadoInventario.RASCUNHO)\n    data_inicio = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)",
+        "peekOfCode": "class EstadoInventario(str, Enum):\n    RASCUNHO = 'Rascunho'\n    CONCLUIDO = 'Concluido'\n    CANCELADO = 'Cancelado'\nclass Inventario(BaseModel):\n    __tablename__ = 'inventarios'\n    numero = db.Column(db.String(50), unique=True, nullable=False)\n    tipo = db.Column(db.Enum(TipoInventario), nullable=False)\n    estado = db.Column(db.Enum(EstadoInventario), default=EstadoInventario.RASCUNHO)\n    data_inicio = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)",
         "detail": "backend.app.models.inventario",
         "documentation": {}
     },
@@ -11056,7 +10399,7 @@
         "kind": 6,
         "importPath": "backend.app.models.inventario",
         "description": "backend.app.models.inventario",
-        "peekOfCode": "class Inventario(BaseModel):\n    __tablename__ = 'inventarios'\n    numero = db.Column(db.String(50), unique=True, nullable=False)\n    tipo = db.Column(db.Enum(TipoInventario, values_callable=lambda x: [e.value for e in x]), nullable=False)\n    estado = db.Column(db.Enum(EstadoInventario, values_callable=lambda x: [e.value for e in x]), default=EstadoInventario.RASCUNHO)\n    data_inicio = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)\n    data_fim = db.Column(db.DateTime, nullable=True)\n    observacoes = db.Column(db.Text, nullable=True)\n    utilizador_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)\n    items = db.relationship('InventarioItem', backref='inventario', lazy=True, cascade=\"all, delete-orphan\")",
+        "peekOfCode": "class Inventario(BaseModel):\n    __tablename__ = 'inventarios'\n    numero = db.Column(db.String(50), unique=True, nullable=False)\n    tipo = db.Column(db.Enum(TipoInventario), nullable=False)\n    estado = db.Column(db.Enum(EstadoInventario), default=EstadoInventario.RASCUNHO)\n    data_inicio = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)\n    data_fim = db.Column(db.DateTime, nullable=True)\n    observacoes = db.Column(db.Text, nullable=True)\n    utilizador_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)\n    items = db.relationship('InventarioItem', backref='inventario', lazy=True, cascade=\"all, delete-orphan\")",
         "detail": "backend.app.models.inventario",
         "documentation": {}
     },
@@ -11065,7 +10408,7 @@
         "kind": 6,
         "importPath": "backend.app.models.inventario",
         "description": "backend.app.models.inventario",
-        "peekOfCode": "class TipoItemInventario(str, Enum):\n    INGREDIENTE = 'Ingrediente'\n    MATERIAL = 'Material'\n    PRODUTO = 'Produto'\nclass InventarioItem(db.Model):\n    __tablename__ = 'inventario_items'\n    id = db.Column(db.Integer, primary_key=True)\n    inventario_id = db.Column(db.Integer, db.ForeignKey('inventarios.id'), nullable=False)\n    tipo_item = db.Column(db.Enum(TipoItemInventario, values_callable=lambda x: [e.value for e in x]), nullable=False)\n    referencia_id = db.Column(db.Integer, nullable=False) ",
+        "peekOfCode": "class TipoItemInventario(str, Enum):\n    INGREDIENTE = 'Ingrediente'\n    MATERIAL = 'Material'\n    PRODUTO = 'Produto'\nclass InventarioItem(db.Model):\n    __tablename__ = 'inventario_items'\n    id = db.Column(db.Integer, primary_key=True)\n    inventario_id = db.Column(db.Integer, db.ForeignKey('inventarios.id'), nullable=False)\n    tipo_item = db.Column(db.Enum(TipoItemInventario), nullable=False)\n    referencia_id = db.Column(db.Integer, nullable=False) ",
         "detail": "backend.app.models.inventario",
         "documentation": {}
     },
@@ -11074,7 +10417,7 @@
         "kind": 6,
         "importPath": "backend.app.models.inventario",
         "description": "backend.app.models.inventario",
-        "peekOfCode": "class InventarioItem(db.Model):\n    __tablename__ = 'inventario_items'\n    id = db.Column(db.Integer, primary_key=True)\n    inventario_id = db.Column(db.Integer, db.ForeignKey('inventarios.id'), nullable=False)\n    tipo_item = db.Column(db.Enum(TipoItemInventario, values_callable=lambda x: [e.value for e in x]), nullable=False)\n    referencia_id = db.Column(db.Integer, nullable=False) \n    quantidade_sistema = db.Column(db.Numeric(12, 2), nullable=False)\n    quantidade_contada = db.Column(db.Numeric(12, 2), nullable=False)\n    diferenca = db.Column(db.Numeric(12, 2), nullable=False)\n    justificativa = db.Column(db.String(255), nullable=True)",
+        "peekOfCode": "class InventarioItem(db.Model):\n    __tablename__ = 'inventario_items'\n    id = db.Column(db.Integer, primary_key=True)\n    inventario_id = db.Column(db.Integer, db.ForeignKey('inventarios.id'), nullable=False)\n    tipo_item = db.Column(db.Enum(TipoItemInventario), nullable=False)\n    referencia_id = db.Column(db.Integer, nullable=False) \n    quantidade_sistema = db.Column(db.Numeric(12, 2), nullable=False)\n    quantidade_contada = db.Column(db.Numeric(12, 2), nullable=False)\n    diferenca = db.Column(db.Numeric(12, 2), nullable=False)\n    justificativa = db.Column(db.String(255), nullable=True)",
         "detail": "backend.app.models.inventario",
         "documentation": {}
     },
@@ -11083,7 +10426,7 @@
         "kind": 6,
         "importPath": "backend.app.models.inventario",
         "description": "backend.app.models.inventario",
-        "peekOfCode": "class InventarioContagem(BaseModel):\n    __tablename__ = 'inventarios_contagem'\n    data_contagem = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)\n    responsavel_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)\n    estado = db.Column(db.Enum(EstadoInventario, values_callable=lambda x: [e.value for e in x]), default=EstadoInventario.RASCUNHO)\n    observacoes = db.Column(db.Text, nullable=True)\n    responsavel = db.relationship('User')\n    itens = db.relationship('InventarioContagemItem', backref='inventario_contagem_rel', cascade=\"all, delete-orphan\", lazy=True)\nclass InventarioContagemItem(db.Model):\n    __tablename__ = 'inventario_contagem_itens'",
+        "peekOfCode": "class InventarioContagem(BaseModel):\n    __tablename__ = 'inventarios_contagem'\n    data_contagem = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)\n    responsavel_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)\n    estado = db.Column(db.Enum(EstadoInventario), default=EstadoInventario.RASCUNHO)\n    observacoes = db.Column(db.Text, nullable=True)\n    responsavel = db.relationship('User')\n    itens = db.relationship('InventarioContagemItem', backref='inventario_contagem_rel', cascade=\"all, delete-orphan\", lazy=True)\nclass InventarioContagemItem(db.Model):\n    __tablename__ = 'inventario_contagem_itens'",
         "detail": "backend.app.models.inventario",
         "documentation": {}
     },
@@ -11155,7 +10498,7 @@
         "kind": 6,
         "importPath": "backend.app.models.logistica",
         "description": "backend.app.models.logistica",
-        "peekOfCode": "class Motorista(BaseModel):\n    __tablename__ = 'motoristas'\n    nome = db.Column(db.String(100), nullable=False)\n    telefone = db.Column(db.String(20), nullable=True)\n    carta_conducao = db.Column(db.String(50), nullable=True)\n    validade_carta = db.Column(db.Date, nullable=True)\n    estado = db.Column(db.Enum(EstadoMotorista, values_callable=lambda x: [e.value for e in x]), default=EstadoMotorista.ATIVO)\nclass Viatura(BaseModel):\n    __tablename__ = 'viaturas'\n    matricula = db.Column(db.String(20), unique=True, nullable=False)",
+        "peekOfCode": "class Motorista(BaseModel):\n    __tablename__ = 'motoristas'\n    nome = db.Column(db.String(100), nullable=False)\n    telefone = db.Column(db.String(20), nullable=True)\n    carta_conducao = db.Column(db.String(50), nullable=True)\n    validade_carta = db.Column(db.Date, nullable=True)\n    estado = db.Column(db.Enum(EstadoMotorista), default=EstadoMotorista.ATIVO)\nclass Viatura(BaseModel):\n    __tablename__ = 'viaturas'\n    matricula = db.Column(db.String(20), unique=True, nullable=False)",
         "detail": "backend.app.models.logistica",
         "documentation": {}
     },
@@ -11164,7 +10507,7 @@
         "kind": 6,
         "importPath": "backend.app.models.logistica",
         "description": "backend.app.models.logistica",
-        "peekOfCode": "class Viatura(BaseModel):\n    __tablename__ = 'viaturas'\n    matricula = db.Column(db.String(20), unique=True, nullable=False)\n    marca = db.Column(db.String(50), nullable=True)\n    modelo = db.Column(db.String(50), nullable=True)\n    ano = db.Column(db.Integer, nullable=True)\n    capacidade = db.Column(db.Numeric(10, 2), nullable=True)\n    quilometragem = db.Column(db.Numeric(10, 2), default=0)\n    estado = db.Column(db.Enum(EstadoViatura, values_callable=lambda x: [e.value for e in x]), default=EstadoViatura.DISPONIVEL)\nclass Entrega(BaseModel):",
+        "peekOfCode": "class Viatura(BaseModel):\n    __tablename__ = 'viaturas'\n    matricula = db.Column(db.String(20), unique=True, nullable=False)\n    marca = db.Column(db.String(50), nullable=True)\n    modelo = db.Column(db.String(50), nullable=True)\n    ano = db.Column(db.Integer, nullable=True)\n    capacidade = db.Column(db.Numeric(10, 2), nullable=True)\n    quilometragem = db.Column(db.Numeric(10, 2), default=0)\n    estado = db.Column(db.Enum(EstadoViatura), default=EstadoViatura.DISPONIVEL)\nclass Entrega(BaseModel):",
         "detail": "backend.app.models.logistica",
         "documentation": {}
     },
@@ -11191,7 +10534,7 @@
         "kind": 6,
         "importPath": "backend.app.models.logistica",
         "description": "backend.app.models.logistica",
-        "peekOfCode": "class OcorrenciaLogistica(db.Model):\n    __tablename__ = 'ocorrencias_logisticas'\n    id = db.Column(db.Integer, primary_key=True)\n    entrega_id = db.Column(db.Integer, db.ForeignKey('entregas.id'), nullable=False)\n    tipo = db.Column(db.Enum(TipoOcorrenciaLogistica, values_callable=lambda x: [e.value for e in x]), nullable=False)\n    justificacao = db.Column(db.Text, nullable=False)\n    data_ocorrencia = db.Column(db.DateTime, default=datetime.utcnow)\nclass ChecklistEntrega(db.Model):\n    __tablename__ = 'checklists_entregas'\n    id = db.Column(db.Integer, primary_key=True)",
+        "peekOfCode": "class OcorrenciaLogistica(db.Model):\n    __tablename__ = 'ocorrencias_logisticas'\n    id = db.Column(db.Integer, primary_key=True)\n    entrega_id = db.Column(db.Integer, db.ForeignKey('entregas.id'), nullable=False)\n    tipo = db.Column(db.Enum(TipoOcorrenciaLogistica), nullable=False)\n    justificacao = db.Column(db.Text, nullable=False)\n    data_ocorrencia = db.Column(db.DateTime, default=datetime.utcnow)\nclass ChecklistEntrega(db.Model):\n    __tablename__ = 'checklists_entregas'\n    id = db.Column(db.Integer, primary_key=True)",
         "detail": "backend.app.models.logistica",
         "documentation": {}
     },
@@ -11227,7 +10570,7 @@
         "kind": 6,
         "importPath": "backend.app.models.material",
         "description": "backend.app.models.material",
-        "peekOfCode": "class Material(BaseModel):\n    __tablename__ = 'materiais'\n    codigo = db.Column(db.String(50), unique=True, nullable=True)\n    nome = db.Column(db.String(100), nullable=False)\n    categoria = db.Column(db.String(100), nullable=True)\n    tipo = db.Column(db.Enum(TipoMaterial, values_callable=lambda x: [e.value for e in x]), nullable=False)\n    quantidade_total = db.Column(db.Numeric(10, 2), default=0)\n    quantidade_disponivel = db.Column(db.Numeric(10, 2), default=0)\n    quantidade_reservada = db.Column(db.Numeric(10, 2), default=0)\n    estado = db.Column(db.Enum(EstadoMaterial, values_callable=lambda x: [e.value for e in x]), default=EstadoMaterial.DISPONIVEL)",
+        "peekOfCode": "class Material(BaseModel):\n    __tablename__ = 'materiais'\n    codigo = db.Column(db.String(50), unique=True, nullable=True)\n    nome = db.Column(db.String(100), nullable=False)\n    categoria = db.Column(db.String(100), nullable=True)\n    tipo = db.Column(db.Enum(TipoMaterial), nullable=False)\n    quantidade_total = db.Column(db.Numeric(10, 2), default=0)\n    quantidade_disponivel = db.Column(db.Numeric(10, 2), default=0)\n    quantidade_reservada = db.Column(db.Numeric(10, 2), default=0)\n    estado = db.Column(db.Enum(EstadoMaterial), default=EstadoMaterial.DISPONIVEL)",
         "detail": "backend.app.models.material",
         "documentation": {}
     },
@@ -11254,7 +10597,7 @@
         "kind": 6,
         "importPath": "backend.app.models.movimento_stock",
         "description": "backend.app.models.movimento_stock",
-        "peekOfCode": "class EntidadeMovimento(str, Enum):\n    INGREDIENTE = 'Ingrediente'\n    PRODUTO = 'Produto'\n    MATERIAL = 'Material'\nclass MovimentoStock(BaseModel):\n    __tablename__ = 'movimentacoes_armazem'\n    tipo = db.Column(db.Enum(TipoMovimento, values_callable=lambda x: [e.value for e in x]), nullable=False)\n    origem = db.Column(db.Enum(OrigemMovimento, values_callable=lambda x: [e.value for e in x]), nullable=False)\n    entidade_tipo = db.Column(db.Enum(EntidadeMovimento, values_callable=lambda x: [e.value for e in x]), nullable=False)\n    referencia_id = db.Column(db.Integer, nullable=False) # ID of Ingrediente/Produto/Material",
+        "peekOfCode": "class EntidadeMovimento(str, Enum):\n    INGREDIENTE = 'Ingrediente'\n    PRODUTO = 'Produto'\n    MATERIAL = 'Material'\nclass MovimentoStock(BaseModel):\n    __tablename__ = 'movimentacoes_armazem'\n    tipo = db.Column(db.Enum(TipoMovimento), nullable=False)\n    origem = db.Column(db.Enum(OrigemMovimento), nullable=False)\n    entidade_tipo = db.Column(db.Enum(EntidadeMovimento), nullable=False)\n    referencia_id = db.Column(db.Integer, nullable=False) # ID of Ingrediente/Produto/Material",
         "detail": "backend.app.models.movimento_stock",
         "documentation": {}
     },
@@ -11263,7 +10606,7 @@
         "kind": 6,
         "importPath": "backend.app.models.movimento_stock",
         "description": "backend.app.models.movimento_stock",
-        "peekOfCode": "class MovimentoStock(BaseModel):\n    __tablename__ = 'movimentacoes_armazem'\n    tipo = db.Column(db.Enum(TipoMovimento, values_callable=lambda x: [e.value for e in x]), nullable=False)\n    origem = db.Column(db.Enum(OrigemMovimento, values_callable=lambda x: [e.value for e in x]), nullable=False)\n    entidade_tipo = db.Column(db.Enum(EntidadeMovimento, values_callable=lambda x: [e.value for e in x]), nullable=False)\n    referencia_id = db.Column(db.Integer, nullable=False) # ID of Ingrediente/Produto/Material\n    armazem_id = db.Column(db.Integer, db.ForeignKey('armazens.id'), nullable=True)\n    quantidade = db.Column(db.Numeric(10, 3), nullable=False)\n    quantidade_antes = db.Column(db.Numeric(10, 3), default=0)\n    quantidade_depois = db.Column(db.Numeric(10, 3), default=0)",
+        "peekOfCode": "class MovimentoStock(BaseModel):\n    __tablename__ = 'movimentacoes_armazem'\n    tipo = db.Column(db.Enum(TipoMovimento), nullable=False)\n    origem = db.Column(db.Enum(OrigemMovimento), nullable=False)\n    entidade_tipo = db.Column(db.Enum(EntidadeMovimento), nullable=False)\n    referencia_id = db.Column(db.Integer, nullable=False) # ID of Ingrediente/Produto/Material\n    armazem_id = db.Column(db.Integer, db.ForeignKey('armazens.id'), nullable=True)\n    quantidade = db.Column(db.Numeric(10, 3), nullable=False)\n    quantidade_antes = db.Column(db.Numeric(10, 3), default=0)\n    quantidade_depois = db.Column(db.Numeric(10, 3), default=0)",
         "detail": "backend.app.models.movimento_stock",
         "documentation": {}
     },
@@ -11326,7 +10669,7 @@
         "kind": 6,
         "importPath": "backend.app.models.ordem_producao",
         "description": "backend.app.models.ordem_producao",
-        "peekOfCode": "class ConsumoIngrediente(db.Model):\n    __tablename__ = 'consumos_ingredientes'\n    id = db.Column(db.Integer, primary_key=True)\n    ordem_producao_id = db.Column(db.Integer, db.ForeignKey('ordens_producao.id'), nullable=False)\n    ingrediente_id = db.Column(db.Integer, db.ForeignKey('ingredientes.id'), nullable=False)\n    quantidade_prevista = db.Column(db.Numeric(10, 3), nullable=False)\n    quantidade_consumida = db.Column(db.Numeric(10, 3), nullable=True)\n    data_consumo = db.Column(db.DateTime, nullable=True)\n    ingrediente = db.relationship('Ingrediente')",
+        "peekOfCode": "class ConsumoIngrediente(db.Model):\n    __tablename__ = 'consumos_ingredientes'\n    id = db.Column(db.Integer, primary_key=True)\n    ordem_producao_id = db.Column(db.Integer, db.ForeignKey('ordens_producao.id'), nullable=False)\n    ingrediente_id = db.Column(db.Integer, db.ForeignKey('ingredientes.id'), nullable=True)\n    produto_consumivel_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=True)\n    quantidade_prevista = db.Column(db.Numeric(10, 3), nullable=False)\n    quantidade_consumida = db.Column(db.Numeric(10, 3), nullable=True)\n    data_consumo = db.Column(db.DateTime, nullable=True)\n    ingrediente = db.relationship('Ingrediente')",
         "detail": "backend.app.models.ordem_producao",
         "documentation": {}
     },
@@ -11371,7 +10714,7 @@
         "kind": 6,
         "importPath": "backend.app.models.pedido",
         "description": "backend.app.models.pedido",
-        "peekOfCode": "class EstadoPagamento(str, Enum):\n    PENDENTE = 'Pendente'\n    PARCIAL = 'Parcial'\n    PAGO = 'Pago'\nclass Pedido(BaseModel):\n    __tablename__ = 'pedidos'\n    numero = db.Column(db.String(50), unique=True, nullable=False)\n    cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id'), nullable=True)\n    evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=True)\n    tipo = db.Column(db.Enum(TipoPedido, values_callable=lambda x: [e.value for e in x]), nullable=False)",
+        "peekOfCode": "class EstadoPagamento(str, Enum):\n    PENDENTE = 'Pendente'\n    PARCIAL = 'Parcial'\n    PAGO = 'Pago'\nclass Pedido(BaseModel):\n    __tablename__ = 'pedidos'\n    numero = db.Column(db.String(50), unique=True, nullable=False)\n    cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id'), nullable=True)\n    evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=True)\n    # Instalações anteriores guardavam ENUMs em maiúsculas (ex.: SIMPLES).",
         "detail": "backend.app.models.pedido",
         "documentation": {}
     },
@@ -11380,7 +10723,7 @@
         "kind": 6,
         "importPath": "backend.app.models.pedido",
         "description": "backend.app.models.pedido",
-        "peekOfCode": "class Pedido(BaseModel):\n    __tablename__ = 'pedidos'\n    numero = db.Column(db.String(50), unique=True, nullable=False)\n    cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id'), nullable=True)\n    evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=True)\n    tipo = db.Column(db.Enum(TipoPedido, values_callable=lambda x: [e.value for e in x]), nullable=False)\n    origem = db.Column(db.Enum(OrigemPedido, values_callable=lambda x: [e.value for e in x]), nullable=False)\n    data_pedido = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)\n    data_entrega = db.Column(db.Date, nullable=True)\n    hora_entrega = db.Column(db.Time, nullable=True)",
+        "peekOfCode": "class Pedido(BaseModel):\n    __tablename__ = 'pedidos'\n    numero = db.Column(db.String(50), unique=True, nullable=False)\n    cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id'), nullable=True)\n    evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=True)\n    # Instalações anteriores guardavam ENUMs em maiúsculas (ex.: SIMPLES).\n    # VARCHAR evita que dados legados interrompam a leitura pelo ORM.\n    tipo = db.Column(db.String(50), nullable=False)\n    origem = db.Column(db.String(50), nullable=False)\n    data_pedido = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)",
         "detail": "backend.app.models.pedido",
         "documentation": {}
     },
@@ -11425,7 +10768,7 @@
         "kind": 6,
         "importPath": "backend.app.models.produto",
         "description": "backend.app.models.produto",
-        "peekOfCode": "class ServicoEnum(str, Enum):\n    ABASTECIMENTO = 'ABASTECIMENTO'\n    COZINHA = 'COZINHA'\n    PASTELARIA = 'PASTELARIA'\n    BAR = 'BAR'\nclass Produto(BaseModel):\n    __tablename__ = 'produtos'\n    codigo = db.Column(db.String(50), unique=True, nullable=True)\n    nome = db.Column(db.String(100), nullable=False)\n    tipo = db.Column(db.Enum(TipoProduto, values_callable=lambda x: [e.value for e in x]), nullable=False)",
+        "peekOfCode": "class ServicoEnum(str, Enum):\n    ABASTECIMENTO = 'ABASTECIMENTO'\n    COZINHA = 'COZINHA'\n    PASTELARIA = 'PASTELARIA'\n    BAR = 'BAR'\nclass Produto(BaseModel):\n    __tablename__ = 'produtos'\n    codigo = db.Column(db.String(50), unique=True, nullable=True)\n    nome = db.Column(db.String(100), nullable=False)\n    tipo = db.Column(db.Enum(TipoProduto), nullable=False)",
         "detail": "backend.app.models.produto",
         "documentation": {}
     },
@@ -11434,7 +10777,7 @@
         "kind": 6,
         "importPath": "backend.app.models.produto",
         "description": "backend.app.models.produto",
-        "peekOfCode": "class Produto(BaseModel):\n    __tablename__ = 'produtos'\n    codigo = db.Column(db.String(50), unique=True, nullable=True)\n    nome = db.Column(db.String(100), nullable=False)\n    tipo = db.Column(db.Enum(TipoProduto, values_callable=lambda x: [e.value for e in x]), nullable=False)\n    servico = db.Column(db.Enum(ServicoEnum, values_callable=lambda x: [e.value for e in x]), nullable=True)\n    categoria = db.Column(db.String(100), nullable=True)\n    categoria_id = db.Column(db.Integer, db.ForeignKey('categorias_produto.id'), nullable=True)\n    unidade_medida_id = db.Column(db.Integer, db.ForeignKey('unidades_medida.id'), nullable=True)\n    tempo_producao = db.Column(db.Integer, nullable=True) # in minutes",
+        "peekOfCode": "class Produto(BaseModel):\n    __tablename__ = 'produtos'\n    codigo = db.Column(db.String(50), unique=True, nullable=True)\n    nome = db.Column(db.String(100), nullable=False)\n    tipo = db.Column(db.Enum(TipoProduto), nullable=False)\n    servico = db.Column(db.Enum(ServicoEnum), nullable=True)\n    categoria = db.Column(db.String(100), nullable=True)\n    categoria_id = db.Column(db.Integer, db.ForeignKey('categorias_produto.id'), nullable=True)\n    unidade_medida_id = db.Column(db.Integer, db.ForeignKey('unidades_medida.id'), nullable=True)\n    tempo_producao = db.Column(db.Integer, nullable=True) # in minutes",
         "detail": "backend.app.models.produto",
         "documentation": {}
     },
@@ -11443,7 +10786,7 @@
         "kind": 6,
         "importPath": "backend.app.models.receita",
         "description": "backend.app.models.receita",
-        "peekOfCode": "class ReceitaProducao(BaseModel):\n    __tablename__ = 'receitas_producao'\n    produto_acabado_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=False, unique=True)\n    descricao = db.Column(db.Text, nullable=True)\n    tempo_preparacao = db.Column(db.Integer, nullable=True) # em minutos\n    rendimento_unidades = db.Column(db.Numeric(10, 2), default=1)\n    # Valores calculados\n    custo_total = db.Column(db.Numeric(10, 2), default=0)\n    custo_unitario = db.Column(db.Numeric(10, 2), default=0)\n    margem_lucro = db.Column(db.Numeric(10, 2), default=0)",
+        "peekOfCode": "class ReceitaProducao(BaseModel):\n    __tablename__ = 'receitas_producao'\n    produto_acabado_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=False, unique=True)\n    descricao = db.Column(db.Text, nullable=True)\n    tempo_preparacao = db.Column(db.Integer, nullable=True) # em minutos\n    rendimento_unidades = db.Column(db.Numeric(10, 2), default=1)\n    setor = db.Column(db.String(50), default='Cozinha', nullable=False)\n    custo_gas = db.Column(db.Numeric(10, 2), default=0)\n    custo_energia = db.Column(db.Numeric(10, 2), default=0)\n    custo_pessoal = db.Column(db.Numeric(10, 2), default=0)",
         "detail": "backend.app.models.receita",
         "documentation": {}
     },
@@ -11569,7 +10912,7 @@
         "kind": 6,
         "importPath": "backend.app.models.reserva",
         "description": "backend.app.models.reserva",
-        "peekOfCode": "class ReservaIngrediente(db.Model):\n    __tablename__ = 'reservas_ingredientes'\n    id = db.Column(db.Integer, primary_key=True)\n    ingrediente_id = db.Column(db.Integer, db.ForeignKey('ingredientes.id'), nullable=False)\n    pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=False)\n    quantidade = db.Column(db.Numeric(10, 3), nullable=False)\n    data_reserva = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)\n    estado = db.Column(db.Enum(EstadoReserva, values_callable=lambda x: [e.value for e in x]), default=EstadoReserva.ATIVA)\n    ingrediente = db.relationship('Ingrediente')\n    pedido = db.relationship('Pedido')",
+        "peekOfCode": "class ReservaIngrediente(db.Model):\n    __tablename__ = 'reservas_ingredientes'\n    id = db.Column(db.Integer, primary_key=True)\n    ingrediente_id = db.Column(db.Integer, db.ForeignKey('ingredientes.id'), nullable=False)\n    pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=False)\n    quantidade = db.Column(db.Numeric(10, 3), nullable=False)\n    data_reserva = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)\n    estado = db.Column(db.Enum(EstadoReserva), default=EstadoReserva.ATIVA)\n    ingrediente = db.relationship('Ingrediente')\n    pedido = db.relationship('Pedido')",
         "detail": "backend.app.models.reserva",
         "documentation": {}
     },
@@ -11587,7 +10930,7 @@
         "kind": 6,
         "importPath": "backend.app.models.stock_movement",
         "description": "backend.app.models.stock_movement",
-        "peekOfCode": "class StockMovement(BaseModel):\n    __tablename__ = 'movimentos_stock'\n    produto_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=False)\n    tipo_movimento = db.Column(db.Enum(TipoMovimentoStock, values_callable=lambda x: [e.value for e in x]), nullable=False)\n    quantidade = db.Column(db.Numeric(10, 3), nullable=False)\n    stock_anterior = db.Column(db.Numeric(10, 3), nullable=False)\n    stock_atual = db.Column(db.Numeric(10, 3), nullable=False) # renamed from posterior\n    motivo = db.Column(db.String(255), nullable=True)\n    numero_fatura = db.Column(db.String(100), nullable=True)\n    fornecedor_id = db.Column(db.Integer, db.ForeignKey('fornecedores.id'), nullable=True)",
+        "peekOfCode": "class StockMovement(BaseModel):\n    __tablename__ = 'movimentos_stock'\n    produto_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=False)\n    tipo_movimento = db.Column(db.Enum(TipoMovimentoStock), nullable=False)\n    quantidade = db.Column(db.Numeric(10, 3), nullable=False)\n    stock_anterior = db.Column(db.Numeric(10, 3), nullable=False)\n    stock_atual = db.Column(db.Numeric(10, 3), nullable=False) # renamed from posterior\n    motivo = db.Column(db.String(255), nullable=True)\n    numero_fatura = db.Column(db.String(100), nullable=True)\n    fornecedor_id = db.Column(db.Integer, db.ForeignKey('fornecedores.id'), nullable=True)",
         "detail": "backend.app.models.stock_movement",
         "documentation": {}
     },
@@ -11632,1151 +10975,8 @@
         "kind": 6,
         "importPath": "backend.app.models.user",
         "description": "backend.app.models.user",
-        "peekOfCode": "class User(BaseModel):\n    __tablename__ = 'users'\n    name = db.Column(db.String(100), nullable=False)\n    email = db.Column(db.String(120), unique=True, nullable=False, index=True)\n    password_hash = db.Column(db.String(255), nullable=False)\n    role = db.Column(db.Enum(RoleEnum, values_callable=lambda x: [e.value for e in x]), nullable=False, default=RoleEnum.ATENDIMENTO)\n    def __repr__(self):\n        return f\"<User {self.email} ({self.role})>\"",
-        "detail": "backend.app.models.user",
-        "documentation": {}
-    },
-    {
-        "label": "Armazem",
-        "kind": 6,
-        "importPath": "backend.app.models1.armazem",
-        "description": "backend.app.models1.armazem",
-        "peekOfCode": "class Armazem(BaseModel):\n    __tablename__ = 'armazens'\n    codigo = db.Column(db.String(50), unique=True, nullable=False)\n    nome = db.Column(db.String(100), nullable=False)\n    localizacao = db.Column(db.String(255), nullable=True)\n    descricao = db.Column(db.Text, nullable=True)\n    principal = db.Column(db.Boolean, default=False, nullable=False)\n    produtos_stock = db.relationship(\n        'ProdutoStockArmazem',\n        back_populates='armazem',",
-        "detail": "backend.app.models1.armazem",
-        "documentation": {}
-    },
-    {
-        "label": "ProdutoStockArmazem",
-        "kind": 6,
-        "importPath": "backend.app.models1.armazem",
-        "description": "backend.app.models1.armazem",
-        "peekOfCode": "class ProdutoStockArmazem(BaseModel):\n    __tablename__ = 'produto_stock_armazem'\n    produto_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=False)\n    armazem_id = db.Column(db.Integer, db.ForeignKey('armazens.id'), nullable=False)\n    stock_atual = db.Column(db.Numeric(10, 3), default=0, nullable=False)\n    stock_minimo = db.Column(db.Numeric(10, 3), default=0, nullable=False)\n    produto = db.relationship('Produto', back_populates='stocks_armazem')\n    armazem = db.relationship('Armazem', back_populates='produtos_stock')\n    __table_args__ = (\n        db.UniqueConstraint('produto_id', 'armazem_id', name='uq_produto_armazem_stock'),",
-        "detail": "backend.app.models1.armazem",
-        "documentation": {}
-    },
-    {
-        "label": "IngredienteStockArmazem",
-        "kind": 6,
-        "importPath": "backend.app.models1.armazem",
-        "description": "backend.app.models1.armazem",
-        "peekOfCode": "class IngredienteStockArmazem(BaseModel):\n    __tablename__ = 'ingrediente_stock_armazem'\n    ingrediente_id = db.Column(db.Integer, db.ForeignKey('ingredientes.id'), nullable=False)\n    armazem_id = db.Column(db.Integer, db.ForeignKey('armazens.id'), nullable=False)\n    stock_atual = db.Column(db.Numeric(10, 3), default=0, nullable=False)\n    stock_minimo = db.Column(db.Numeric(10, 3), default=0, nullable=False)\n    ingrediente = db.relationship('Ingrediente', back_populates='stocks_armazem')\n    armazem = db.relationship('Armazem', back_populates='ingredientes_stock')\n    __table_args__ = (\n        db.UniqueConstraint('ingrediente_id', 'armazem_id', name='uq_ingrediente_armazem_stock'),",
-        "detail": "backend.app.models1.armazem",
-        "documentation": {}
-    },
-    {
-        "label": "MaterialStockArmazem",
-        "kind": 6,
-        "importPath": "backend.app.models1.armazem",
-        "description": "backend.app.models1.armazem",
-        "peekOfCode": "class MaterialStockArmazem(BaseModel):\n    __tablename__ = 'material_stock_armazem'\n    material_id = db.Column(db.Integer, db.ForeignKey('materiais.id'), nullable=False)\n    armazem_id = db.Column(db.Integer, db.ForeignKey('armazens.id'), nullable=False)\n    stock_atual = db.Column(db.Numeric(10, 3), default=0, nullable=False)\n    stock_minimo = db.Column(db.Numeric(10, 3), default=0, nullable=False)\n    material = db.relationship('Material', back_populates='stocks_armazem')\n    armazem = db.relationship('Armazem', back_populates='materiais_stock')\n    __table_args__ = (\n        db.UniqueConstraint('material_id', 'armazem_id', name='uq_material_armazem_stock'),",
-        "detail": "backend.app.models1.armazem",
-        "documentation": {}
-    },
-    {
-        "label": "TipoOperacaoAuditoria",
-        "kind": 6,
-        "importPath": "backend.app.models1.auditoria",
-        "description": "backend.app.models1.auditoria",
-        "peekOfCode": "class TipoOperacaoAuditoria(str, Enum):\n    CREATE = 'CREATE'\n    UPDATE = 'UPDATE'\n    DELETE = 'DELETE'\n    LOGIN = 'LOGIN'\n    LOGOUT = 'LOGOUT'\n    EXPORT = 'EXPORT'\n    IMPORT = 'IMPORT'\n    BACKUP = 'BACKUP'\n    RESTORE = 'RESTORE'",
-        "detail": "backend.app.models1.auditoria",
-        "documentation": {}
-    },
-    {
-        "label": "Auditoria",
-        "kind": 6,
-        "importPath": "backend.app.models1.auditoria",
-        "description": "backend.app.models1.auditoria",
-        "peekOfCode": "class Auditoria(db.Model):\n    __tablename__ = 'auditoria'\n    id = db.Column(db.Integer, primary_key=True)\n    utilizador_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)\n    ip = db.Column(db.String(45), nullable=True)\n    modulo = db.Column(db.String(100), nullable=True)\n    entidade = db.Column(db.String(100), nullable=True)\n    registo_id = db.Column(db.Integer, nullable=True)\n    operacao = db.Column(db.String(50), nullable=False)\n    valor_anterior = db.Column(db.JSON, nullable=True)",
-        "detail": "backend.app.models1.auditoria",
-        "documentation": {}
-    },
-    {
-        "label": "LogAcesso",
-        "kind": 6,
-        "importPath": "backend.app.models1.auditoria",
-        "description": "backend.app.models1.auditoria",
-        "peekOfCode": "class LogAcesso(db.Model):\n    __tablename__ = 'log_acessos'\n    id = db.Column(db.Integer, primary_key=True)\n    utilizador_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)\n    ip = db.Column(db.String(45), nullable=True)\n    user_agent = db.Column(db.String(255), nullable=True)\n    data_login = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)\n    data_logout = db.Column(db.DateTime, nullable=True)\n    sucesso = db.Column(db.Boolean, default=True)\nclass LogErro(db.Model):",
-        "detail": "backend.app.models1.auditoria",
-        "documentation": {}
-    },
-    {
-        "label": "LogErro",
-        "kind": 6,
-        "importPath": "backend.app.models1.auditoria",
-        "description": "backend.app.models1.auditoria",
-        "peekOfCode": "class LogErro(db.Model):\n    __tablename__ = 'log_erros'\n    id = db.Column(db.Integer, primary_key=True)\n    tipo = db.Column(db.String(100), nullable=False)\n    mensagem = db.Column(db.Text, nullable=False)\n    stacktrace = db.Column(db.Text, nullable=True)\n    rota = db.Column(db.String(255), nullable=True)\n    utilizador_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)\n    data_hora = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)",
-        "detail": "backend.app.models1.auditoria",
-        "documentation": {}
-    },
-    {
-        "label": "BaseModel",
-        "kind": 6,
-        "importPath": "backend.app.models1.base",
-        "description": "backend.app.models1.base",
-        "peekOfCode": "class BaseModel(db.Model):\n    __abstract__ = True\n    id = db.Column(db.Integer, primary_key=True)\n    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)\n    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)\n    created_by = db.Column(db.Integer, nullable=True) # ID do user\n    updated_by = db.Column(db.Integer, nullable=True)\n    is_active = db.Column(db.Boolean, default=True, nullable=False)\n    deleted_at = db.Column(db.DateTime, nullable=True)\n    def soft_delete(self):",
-        "detail": "backend.app.models1.base",
-        "documentation": {}
-    },
-    {
-        "label": "enum_values",
-        "kind": 2,
-        "importPath": "backend.app.models1.base",
-        "description": "backend.app.models1.base",
-        "peekOfCode": "def enum_values(enum_cls):\n    if not enum_cls:\n        return []\n    return [e.value for e in enum_cls]\nclass BaseModel(db.Model):\n    __abstract__ = True\n    id = db.Column(db.Integer, primary_key=True)\n    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)\n    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)\n    created_by = db.Column(db.Integer, nullable=True) # ID do user",
-        "detail": "backend.app.models1.base",
-        "documentation": {}
-    },
-    {
-        "label": "EstadoCaixa",
-        "kind": 6,
-        "importPath": "backend.app.models1.caixa",
-        "description": "backend.app.models1.caixa",
-        "peekOfCode": "class EstadoCaixa(str, Enum):\n    ABERTO = 'Aberto'\n    FECHADO = 'Fechado'\nclass TipoMovimentoCaixa(str, Enum):\n    ABERTURA = 'Abertura'\n    VENDA = 'Venda'\n    RECEBIMENTO = 'Recebimento'\n    REFORCO = 'Reforco'\n    SANGRIA = 'Sangria'\n    DEVOLUCAO = 'Devolucao'",
-        "detail": "backend.app.models1.caixa",
-        "documentation": {}
-    },
-    {
-        "label": "TipoMovimentoCaixa",
-        "kind": 6,
-        "importPath": "backend.app.models1.caixa",
-        "description": "backend.app.models1.caixa",
-        "peekOfCode": "class TipoMovimentoCaixa(str, Enum):\n    ABERTURA = 'Abertura'\n    VENDA = 'Venda'\n    RECEBIMENTO = 'Recebimento'\n    REFORCO = 'Reforco'\n    SANGRIA = 'Sangria'\n    DEVOLUCAO = 'Devolucao'\n    AJUSTE = 'Ajuste'\nclass Caixa(BaseModel):\n    __tablename__ = 'caixas'",
-        "detail": "backend.app.models1.caixa",
-        "documentation": {}
-    },
-    {
-        "label": "Caixa",
-        "kind": 6,
-        "importPath": "backend.app.models1.caixa",
-        "description": "backend.app.models1.caixa",
-        "peekOfCode": "class Caixa(BaseModel):\n    __tablename__ = 'caixas'\n    numero = db.Column(db.String(50), unique=True, nullable=False)\n    data_abertura = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)\n    data_fecho = db.Column(db.DateTime, nullable=True)\n    valor_inicial = db.Column(db.Numeric(12, 2), default=0)\n    valor_final = db.Column(db.Numeric(12, 2), default=0)\n    utilizador_abertura_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)\n    utilizador_fecho_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)\n    estado = db.Column(db.Enum(EstadoCaixa), default=EstadoCaixa.ABERTO)",
-        "detail": "backend.app.models1.caixa",
-        "documentation": {}
-    },
-    {
-        "label": "MovimentoCaixa",
-        "kind": 6,
-        "importPath": "backend.app.models1.caixa",
-        "description": "backend.app.models1.caixa",
-        "peekOfCode": "class MovimentoCaixa(db.Model):\n    __tablename__ = 'movimentos_caixa'\n    id = db.Column(db.Integer, primary_key=True)\n    caixa_id = db.Column(db.Integer, db.ForeignKey('caixas.id'), nullable=False)\n    tipo = db.Column(db.Enum(TipoMovimentoCaixa), nullable=False)\n    valor = db.Column(db.Numeric(12, 2), nullable=False)\n    descricao = db.Column(db.String(255), nullable=True)\n    data_movimento = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)\n    utilizador_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)\n    codigo_transferencia = db.Column(db.String(100), nullable=True)",
-        "detail": "backend.app.models1.caixa",
-        "documentation": {}
-    },
-    {
-        "label": "CategoriaProduto",
-        "kind": 6,
-        "importPath": "backend.app.models1.categoria_produto",
-        "description": "backend.app.models1.categoria_produto",
-        "peekOfCode": "class CategoriaProduto(BaseModel):\n    __tablename__ = 'categorias_produto'\n    nome = db.Column(db.String(100), nullable=False)\n    descricao = db.Column(db.Text, nullable=True)",
-        "detail": "backend.app.models1.categoria_produto",
-        "documentation": {}
-    },
-    {
-        "label": "Cliente",
-        "kind": 6,
-        "importPath": "backend.app.models1.cliente",
-        "description": "backend.app.models1.cliente",
-        "peekOfCode": "class Cliente(BaseModel):\n    __tablename__ = 'clientes'\n    nome = db.Column(db.String(100), nullable=False)\n    empresa = db.Column(db.String(100), nullable=True)\n    nif = db.Column(db.String(20), unique=True, nullable=True)\n    telefone = db.Column(db.String(20), nullable=True)\n    whatsapp = db.Column(db.String(20), nullable=True)\n    email = db.Column(db.String(100), nullable=True)\n    morada = db.Column(db.Text, nullable=True)\n    observacoes = db.Column(db.Text, nullable=True)",
-        "detail": "backend.app.models1.cliente",
-        "documentation": {}
-    },
-    {
-        "label": "TipoDocumento",
-        "kind": 6,
-        "importPath": "backend.app.models1.comercial",
-        "description": "backend.app.models1.comercial",
-        "peekOfCode": "class TipoDocumento(str, Enum):\n    FT = 'FT'\n    FR = 'FR'\n    PROFORMA = 'PROFORMA'\n    NC = 'NC'\n    ND = 'ND'\nclass EstadoVenda(str, Enum):\n    PENDENTE = 'Pendente'\n    PARCIALMENTE_PAGO = 'Parcialmente Pago'\n    PAGO = 'Pago'",
-        "detail": "backend.app.models1.comercial",
-        "documentation": {}
-    },
-    {
-        "label": "EstadoVenda",
-        "kind": 6,
-        "importPath": "backend.app.models1.comercial",
-        "description": "backend.app.models1.comercial",
-        "peekOfCode": "class EstadoVenda(str, Enum):\n    PENDENTE = 'Pendente'\n    PARCIALMENTE_PAGO = 'Parcialmente Pago'\n    PAGO = 'Pago'\n    CANCELADO = 'Cancelado'\nclass TaxaIVA(BaseModel):\n    __tablename__ = 'taxas_iva'\n    descricao = db.Column(db.String(50), nullable=False)\n    percentagem = db.Column(db.Numeric(5, 2), nullable=False)\n    ativo = db.Column(db.Boolean, default=True)",
-        "detail": "backend.app.models1.comercial",
-        "documentation": {}
-    },
-    {
-        "label": "TaxaIVA",
-        "kind": 6,
-        "importPath": "backend.app.models1.comercial",
-        "description": "backend.app.models1.comercial",
-        "peekOfCode": "class TaxaIVA(BaseModel):\n    __tablename__ = 'taxas_iva'\n    descricao = db.Column(db.String(50), nullable=False)\n    percentagem = db.Column(db.Numeric(5, 2), nullable=False)\n    ativo = db.Column(db.Boolean, default=True)\nclass SerieDocumento(BaseModel):\n    __tablename__ = 'series_documento'\n    tipo_documento = db.Column(db.Enum(TipoDocumento), nullable=False)\n    ano = db.Column(db.Integer, nullable=False)\n    ultimo_numero = db.Column(db.Integer, default=0)",
-        "detail": "backend.app.models1.comercial",
-        "documentation": {}
-    },
-    {
-        "label": "SerieDocumento",
-        "kind": 6,
-        "importPath": "backend.app.models1.comercial",
-        "description": "backend.app.models1.comercial",
-        "peekOfCode": "class SerieDocumento(BaseModel):\n    __tablename__ = 'series_documento'\n    tipo_documento = db.Column(db.Enum(TipoDocumento), nullable=False)\n    ano = db.Column(db.Integer, nullable=False)\n    ultimo_numero = db.Column(db.Integer, default=0)\nclass Venda(BaseModel):\n    __tablename__ = 'vendas'\n    numero_documento = db.Column(db.String(50), unique=True, nullable=False)\n    tipo_documento = db.Column(db.Enum(TipoDocumento), nullable=False)\n    _cliente_id = db.Column('cliente_id', db.Integer, db.ForeignKey('clientes.id'), nullable=True)",
-        "detail": "backend.app.models1.comercial",
-        "documentation": {}
-    },
-    {
-        "label": "Venda",
-        "kind": 6,
-        "importPath": "backend.app.models1.comercial",
-        "description": "backend.app.models1.comercial",
-        "peekOfCode": "class Venda(BaseModel):\n    __tablename__ = 'vendas'\n    numero_documento = db.Column(db.String(50), unique=True, nullable=False)\n    tipo_documento = db.Column(db.Enum(TipoDocumento), nullable=False)\n    _cliente_id = db.Column('cliente_id', db.Integer, db.ForeignKey('clientes.id'), nullable=True)\n    pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=True)\n    _subtotal = db.Column('subtotal', db.Numeric(12, 2), default=0, nullable=True)\n    _desconto_total = db.Column('desconto_total', db.Numeric(12, 2), default=0, nullable=True)\n    _base_tributavel = db.Column('base_tributavel', db.Numeric(12, 2), default=0, nullable=True)\n    _total_iva = db.Column('total_iva', db.Numeric(12, 2), default=0, nullable=True)",
-        "detail": "backend.app.models1.comercial",
-        "documentation": {}
-    },
-    {
-        "label": "VendaItem",
-        "kind": 6,
-        "importPath": "backend.app.models1.comercial",
-        "description": "backend.app.models1.comercial",
-        "peekOfCode": "class VendaItem(BaseModel):\n    __tablename__ = 'venda_itens'\n    venda_id = db.Column(db.Integer, db.ForeignKey('vendas.id'), nullable=False)\n    item_tipo = db.Column(db.String(50), nullable=False) # 'Produto', 'Servico', 'Aluguer', etc.\n    item_id = db.Column(db.Integer, nullable=True) # ForeignKey could vary, thus Integer\n    descricao = db.Column(db.String(255), nullable=False)\n    quantidade = db.Column(db.Numeric(10, 2), nullable=False)\n    preco_unitario = db.Column(db.Numeric(12, 2), nullable=False)\n    desconto = db.Column(db.Numeric(12, 2), default=0)\n    taxa_iva_id = db.Column(db.Integer, db.ForeignKey('taxas_iva.id'), nullable=True)",
-        "detail": "backend.app.models1.comercial",
-        "documentation": {}
-    },
-    {
-        "label": "FechoDiario",
-        "kind": 6,
-        "importPath": "backend.app.models1.comercial",
-        "description": "backend.app.models1.comercial",
-        "peekOfCode": "class FechoDiario(BaseModel):\n    __tablename__ = 'fechos_diarios'\n    data = db.Column(db.Date, unique=True, nullable=False)\n    total_vendas = db.Column(db.Numeric(12, 2), default=0)\n    total_recebido = db.Column(db.Numeric(12, 2), default=0)\n    total_despesas = db.Column(db.Numeric(12, 2), default=0)\n    total_caixas = db.Column(db.Numeric(12, 2), default=0)\n    observacoes = db.Column(db.Text, nullable=True)\n    criado_por = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)",
-        "detail": "backend.app.models1.comercial",
-        "documentation": {}
-    },
-    {
-        "label": "Empresa",
-        "kind": 6,
-        "importPath": "backend.app.models1.empresa",
-        "description": "backend.app.models1.empresa",
-        "peekOfCode": "class Empresa(BaseModel):\n    __tablename__ = 'empresa'\n    nome = db.Column(db.String(150), nullable=False)\n    nif = db.Column(db.String(50), nullable=True)\n    licenca_empresa = db.Column(db.String(100), nullable=True)\n    licenca_aplicacao = db.Column(db.String(100), nullable=True)\n    endereco_web = db.Column(db.String(150), nullable=True)\n    utiliza_iva = db.Column(db.Boolean, default=False)\n    correio_eletronico = db.Column(db.String(150), nullable=True)\n    telefone = db.Column(db.String(50), nullable=True)",
-        "detail": "backend.app.models1.empresa",
-        "documentation": {}
-    },
-    {
-        "label": "TipoEvento",
-        "kind": 6,
-        "importPath": "backend.app.models1.evento",
-        "description": "backend.app.models1.evento",
-        "peekOfCode": "class TipoEvento(str, Enum):\n    CASAMENTO = 'Casamento'\n    ANIVERSARIO = 'Aniversario'\n    BATIZADO = 'Batizado'\n    EMPRESARIAL = 'Empresarial'\n    CATERING = 'Catering'\n    FORMATURA = 'Formatura'\n    CONFERENCIA = 'Conferencia'\n    COCKTAIL = 'Cocktail'\n    FUNERAL = 'Funeral'",
-        "detail": "backend.app.models1.evento",
-        "documentation": {}
-    },
-    {
-        "label": "EstadoEvento",
-        "kind": 6,
-        "importPath": "backend.app.models1.evento",
-        "description": "backend.app.models1.evento",
-        "peekOfCode": "class EstadoEvento(str, Enum):\n    RASCUNHO = 'Rascunho'\n    ORCAMENTO = 'Orcamento'\n    ORCAMENTADO = 'Orcamentado'\n    AGUARDANDO_APROVACAO = 'Aguardando Aprovacao'\n    AGENDADO = 'Agendado'\n    CONFIRMADO = 'Confirmado'\n    PLANEAMENTO_GERADO = 'Planeamento Gerado'\n    EM_PREPARACAO = 'Em Preparacao'\n    EM_EXECUCAO = 'Em Execucao'",
-        "detail": "backend.app.models1.evento",
-        "documentation": {}
-    },
-    {
-        "label": "TipoItemEvento",
-        "kind": 6,
-        "importPath": "backend.app.models1.evento",
-        "description": "backend.app.models1.evento",
-        "peekOfCode": "class TipoItemEvento(str, Enum):\n    SERVICO = 'Servico'\n    ESPACO = 'Espaco'\n    MATERIAL = 'Material'\n    PRODUTO = 'Produto'\n    PRODUTO_COZINHA = 'ProdutoCozinha'\n    PRODUTO_PASTELARIA = 'ProdutoPastelaria'\n    PRODUTO_REVENDA = 'ProdutoRevenda'\n    DESLOCACAO = 'Deslocacao'\n    MAO_DE_OBRA = 'MaoDeObra'",
-        "detail": "backend.app.models1.evento",
-        "documentation": {}
-    },
-    {
-        "label": "TipoCalculoPolitica",
-        "kind": 6,
-        "importPath": "backend.app.models1.evento",
-        "description": "backend.app.models1.evento",
-        "peekOfCode": "class TipoCalculoPolitica(str, Enum):\n    FIXO = 'Fixo'\n    POR_PARTICIPANTE = 'Por Participante'\n    POR_HORA = 'Por Hora'\n    POR_DIA = 'Por Dia'\n    POR_UNIDADE = 'Por Unidade'\nclass TipoServicoEvento(str, Enum):\n    COZINHA = 'Cozinha'\n    PASTELARIA = 'Pastelaria'\n    BAR = 'Bar'",
-        "detail": "backend.app.models1.evento",
-        "documentation": {}
-    },
-    {
-        "label": "TipoServicoEvento",
-        "kind": 6,
-        "importPath": "backend.app.models1.evento",
-        "description": "backend.app.models1.evento",
-        "peekOfCode": "class TipoServicoEvento(str, Enum):\n    COZINHA = 'Cozinha'\n    PASTELARIA = 'Pastelaria'\n    BAR = 'Bar'\n    LOGISTICA = 'Logistica'\n    ALUGUER = 'Aluguer'\n    LIMPEZA = 'Limpeza'\n    SEGURANCA = 'Seguranca'\n    ORNAMENTACAO = 'Ornamentacao'\n    DECORACAO = 'Decoracao'",
-        "detail": "backend.app.models1.evento",
-        "documentation": {}
-    },
-    {
-        "label": "EstadoEspaco",
-        "kind": 6,
-        "importPath": "backend.app.models1.evento",
-        "description": "backend.app.models1.evento",
-        "peekOfCode": "class EstadoEspaco(str, Enum):\n    ATIVO = 'Ativo'\n    INATIVO = 'Inativo'\nclass EstadoReservaEspaco(str, Enum):\n    RESERVADO = 'Reservado'\n    UTILIZADO = 'Utilizado'\n    FINALIZADO = 'Finalizado'\n    CANCELADO = 'Cancelado'\nclass FuncaoEquipa(str, Enum):\n    CHEFE_COZINHA = 'Chefe Cozinha'",
-        "detail": "backend.app.models1.evento",
-        "documentation": {}
-    },
-    {
-        "label": "EstadoReservaEspaco",
-        "kind": 6,
-        "importPath": "backend.app.models1.evento",
-        "description": "backend.app.models1.evento",
-        "peekOfCode": "class EstadoReservaEspaco(str, Enum):\n    RESERVADO = 'Reservado'\n    UTILIZADO = 'Utilizado'\n    FINALIZADO = 'Finalizado'\n    CANCELADO = 'Cancelado'\nclass FuncaoEquipa(str, Enum):\n    CHEFE_COZINHA = 'Chefe Cozinha'\n    COZINHEIRO = 'Cozinheiro'\n    PASTELEIRO = 'Pasteleiro'\n    ATENDIMENTO = 'Atendimento'",
-        "detail": "backend.app.models1.evento",
-        "documentation": {}
-    },
-    {
-        "label": "FuncaoEquipa",
-        "kind": 6,
-        "importPath": "backend.app.models1.evento",
-        "description": "backend.app.models1.evento",
-        "peekOfCode": "class FuncaoEquipa(str, Enum):\n    CHEFE_COZINHA = 'Chefe Cozinha'\n    COZINHEIRO = 'Cozinheiro'\n    PASTELEIRO = 'Pasteleiro'\n    ATENDIMENTO = 'Atendimento'\n    BAR = 'Bar'\n    MOTORISTA = 'Motorista'\n    SUPERVISOR = 'Supervisor'\n# CADASTROS DE REFERÊNCIA (NUNCA FORÇAM PREÇOS)\nclass ServicoCadastro(BaseModel):",
-        "detail": "backend.app.models1.evento",
-        "documentation": {}
-    },
-    {
-        "label": "ServicoCadastro",
-        "kind": 6,
-        "importPath": "backend.app.models1.evento",
-        "description": "backend.app.models1.evento",
-        "peekOfCode": "class ServicoCadastro(BaseModel):\n    __tablename__ = 'servicos_cadastro'\n    codigo = db.Column(db.String(50), unique=True, nullable=True)\n    nome = db.Column(db.String(100), nullable=False)\n    categoria = db.Column(db.String(100), nullable=True)\n    descricao = db.Column(db.Text, nullable=True)\n    unidade_padrao = db.Column(db.String(50), default='Unidade')\n    preco_sugerido = db.Column(db.Numeric(10, 2), default=0.0)\n    ativo = db.Column(db.Boolean, default=True)\nclass TipoEventoCadastro(BaseModel):",
-        "detail": "backend.app.models1.evento",
-        "documentation": {}
-    },
-    {
-        "label": "TipoEventoCadastro",
-        "kind": 6,
-        "importPath": "backend.app.models1.evento",
-        "description": "backend.app.models1.evento",
-        "peekOfCode": "class TipoEventoCadastro(BaseModel):\n    __tablename__ = 'tipos_evento_cadastro'\n    nome = db.Column(db.String(100), unique=True, nullable=False)\n    descricao = db.Column(db.Text, nullable=True)\n    ativo = db.Column(db.Boolean, default=True)\nclass EquipaCadastro(BaseModel):\n    __tablename__ = 'equipas_cadastro'\n    nome = db.Column(db.String(100), nullable=False)\n    departamento = db.Column(db.String(100), nullable=True)\n    descricao = db.Column(db.Text, nullable=True)",
-        "detail": "backend.app.models1.evento",
-        "documentation": {}
-    },
-    {
-        "label": "EquipaCadastro",
-        "kind": 6,
-        "importPath": "backend.app.models1.evento",
-        "description": "backend.app.models1.evento",
-        "peekOfCode": "class EquipaCadastro(BaseModel):\n    __tablename__ = 'equipas_cadastro'\n    nome = db.Column(db.String(100), nullable=False)\n    departamento = db.Column(db.String(100), nullable=True)\n    descricao = db.Column(db.Text, nullable=True)\n    custo_sugerido = db.Column(db.Numeric(10, 2), default=0.0)\n    preco_sugerido = db.Column(db.Numeric(10, 2), default=0.0)\n    ativo = db.Column(db.Boolean, default=True)\n# POLÍTICA COMERCIAL E TABELA DE SUGESTÃO DE PREÇOS\nclass PoliticaComercialEvento(BaseModel):",
-        "detail": "backend.app.models1.evento",
-        "documentation": {}
-    },
-    {
-        "label": "PoliticaComercialEvento",
-        "kind": 6,
-        "importPath": "backend.app.models1.evento",
-        "description": "backend.app.models1.evento",
-        "peekOfCode": "class PoliticaComercialEvento(BaseModel):\n    __tablename__ = 'politicas_comerciais_eventos'\n    codigo = db.Column(db.String(50), unique=True, nullable=False)\n    nome = db.Column(db.String(100), nullable=False)\n    tipo_evento = db.Column(db.String(100), nullable=False)\n    estado = db.Column(db.String(20), default='Ativa') # Ativa / Inativa\n    data_inicio = db.Column(db.Date, nullable=True)\n    data_fim = db.Column(db.Date, nullable=True)\n    observacoes = db.Column(db.Text, nullable=True)\n    regras = db.relationship('PoliticaComercialRegra', backref='politica', cascade=\"all, delete-orphan\", lazy='selectin')",
-        "detail": "backend.app.models1.evento",
-        "documentation": {}
-    },
-    {
-        "label": "PoliticaComercialRegra",
-        "kind": 6,
-        "importPath": "backend.app.models1.evento",
-        "description": "backend.app.models1.evento",
-        "peekOfCode": "class PoliticaComercialRegra(BaseModel):\n    __tablename__ = 'politica_comercial_regras'\n    politica_id = db.Column(db.Integer, db.ForeignKey('politicas_comerciais_eventos.id'), nullable=False)\n    tipo_item = db.Column(db.String(50), nullable=False)\n    referencia_id = db.Column(db.Integer, nullable=True)\n    nome_item = db.Column(db.String(255), nullable=True)\n    min_participantes = db.Column(db.Integer, default=1)\n    max_participantes = db.Column(db.Integer, default=99999)\n    valor_sugerido = db.Column(db.Numeric(10, 2), nullable=False)\n    tipo_calculo = db.Column(db.Enum(TipoCalculoPolitica, values_callable=lambda x: [e.value for e in x]), default=TipoCalculoPolitica.FIXO)",
-        "detail": "backend.app.models1.evento",
-        "documentation": {}
-    },
-    {
-        "label": "Espaco",
-        "kind": 6,
-        "importPath": "backend.app.models1.evento",
-        "description": "backend.app.models1.evento",
-        "peekOfCode": "class Espaco(BaseModel):\n    __tablename__ = 'espacos'\n    nome = db.Column(db.String(100), nullable=False)\n    capacidade = db.Column(db.Integer, nullable=False)\n    localizacao = db.Column(db.String(255), nullable=True)\n    descricao = db.Column(db.Text, nullable=True)\n    preco_aluguer = db.Column(db.Numeric(10, 2), default=0.0)\n    estado = db.Column(db.Enum(EstadoEspaco, values_callable=lambda x: [e.value for e in x]), default=EstadoEspaco.ATIVO)\nclass Evento(BaseModel):\n    __tablename__ = 'eventos'",
-        "detail": "backend.app.models1.evento",
-        "documentation": {}
-    },
-    {
-        "label": "Evento",
-        "kind": 6,
-        "importPath": "backend.app.models1.evento",
-        "description": "backend.app.models1.evento",
-        "peekOfCode": "class Evento(BaseModel):\n    __tablename__ = 'eventos'\n    numero = db.Column(db.String(50), unique=True, nullable=False)\n    _cliente_id = db.Column('cliente_id', db.Integer, db.ForeignKey('clientes.id'), nullable=True)\n    pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=True)\n    responsavel_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)\n    tipo_evento = db.Column(db.String(100), nullable=False)\n    titulo = db.Column(db.String(100), nullable=False)\n    descricao = db.Column(db.Text, nullable=True)\n    local_evento = db.Column(db.String(255), nullable=True)",
-        "detail": "backend.app.models1.evento",
-        "documentation": {}
-    },
-    {
-        "label": "EventoItem",
-        "kind": 6,
-        "importPath": "backend.app.models1.evento",
-        "description": "backend.app.models1.evento",
-        "peekOfCode": "class EventoItem(db.Model):\n    __tablename__ = 'eventos_itens'\n    id = db.Column(db.Integer, primary_key=True)\n    evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=False)\n    tipo_item = db.Column(db.String(50), nullable=False)\n    referencia_id = db.Column(db.Integer, nullable=True) # Referência ao cadastro base (serviço, espaço, material)\n    produto_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=True) # Se for produto (Acabado, Revenda, Consumível)\n    descricao = db.Column(db.String(255), nullable=False)\n    quantidade = db.Column(db.Numeric(10, 2), nullable=False, default=1.0)\n    unidade = db.Column(db.String(50), default='Unidade')",
-        "detail": "backend.app.models1.evento",
-        "documentation": {}
-    },
-    {
-        "label": "EventoServico",
-        "kind": 6,
-        "importPath": "backend.app.models1.evento",
-        "description": "backend.app.models1.evento",
-        "peekOfCode": "class EventoServico(db.Model):\n    __tablename__ = 'eventos_servicos'\n    id = db.Column(db.Integer, primary_key=True)\n    evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=False)\n    tipo = db.Column(db.Enum(TipoServicoEvento, values_callable=lambda x: [e.value for e in x]), nullable=False)\n    descricao = db.Column(db.String(255), nullable=True)\n    quantidade = db.Column(db.Numeric(10, 2), nullable=False)\n    valor_unitario = db.Column(db.Numeric(10, 2), nullable=False)\n    deslocacao = db.Column(db.Numeric(10, 2), default=0.0)\n    subtotal = db.Column(db.Numeric(10, 2), nullable=False)",
-        "detail": "backend.app.models1.evento",
-        "documentation": {}
-    },
-    {
-        "label": "ReservaEspaco",
-        "kind": 6,
-        "importPath": "backend.app.models1.evento",
-        "description": "backend.app.models1.evento",
-        "peekOfCode": "class ReservaEspaco(db.Model):\n    __tablename__ = 'reservas_espacos'\n    id = db.Column(db.Integer, primary_key=True)\n    evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=False)\n    espaco_id = db.Column(db.Integer, db.ForeignKey('espacos.id'), nullable=False)\n    data_inicio = db.Column(db.DateTime, nullable=False)\n    data_fim = db.Column(db.DateTime, nullable=False)\n    valor_aluguer = db.Column(db.Numeric(10, 2), default=0.0)\n    estado = db.Column(db.Enum(EstadoReservaEspaco, values_callable=lambda x: [e.value for e in x]), default=EstadoReservaEspaco.RESERVADO)\nclass ReservaMaterial(db.Model):",
-        "detail": "backend.app.models1.evento",
-        "documentation": {}
-    },
-    {
-        "label": "ReservaMaterial",
-        "kind": 6,
-        "importPath": "backend.app.models1.evento",
-        "description": "backend.app.models1.evento",
-        "peekOfCode": "class ReservaMaterial(db.Model):\n    __tablename__ = 'reservas_materiais'\n    id = db.Column(db.Integer, primary_key=True)\n    evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=False)\n    material_id = db.Column(db.Integer, db.ForeignKey('materiais.id'), nullable=False)\n    quantidade = db.Column(db.Numeric(10, 2), nullable=False)\n    valor_unitario = db.Column(db.Numeric(10, 2), default=0.0)\n    subtotal = db.Column(db.Numeric(10, 2), default=0.0)\n    data_inicio = db.Column(db.DateTime, nullable=False)\n    data_fim = db.Column(db.DateTime, nullable=False)",
-        "detail": "backend.app.models1.evento",
-        "documentation": {}
-    },
-    {
-        "label": "EventoEquipa",
-        "kind": 6,
-        "importPath": "backend.app.models1.evento",
-        "description": "backend.app.models1.evento",
-        "peekOfCode": "class EventoEquipa(db.Model):\n    __tablename__ = 'eventos_equipas'\n    id = db.Column(db.Integer, primary_key=True)\n    evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=False)\n    utilizador_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)\n    funcao = db.Column(db.Enum(FuncaoEquipa, values_callable=lambda x: [e.value for e in x]), nullable=False)\n    estado = db.Column(db.String(50), default='Alocado')",
-        "detail": "backend.app.models1.evento",
-        "documentation": {}
-    },
-    {
-        "label": "TipoFicha",
-        "kind": 6,
-        "importPath": "backend.app.models1.ficha_tecnica",
-        "description": "backend.app.models1.ficha_tecnica",
-        "peekOfCode": "class TipoFicha(str, Enum):\n    COZINHA = 'Cozinha'\n    PASTELARIA = 'Pastelaria'\nclass FichaTecnica(BaseModel):\n    __tablename__ = 'fichas_tecnicas'\n    codigo = db.Column(db.String(50), unique=True, nullable=True)\n    nome = db.Column(db.String(100), nullable=False)\n    descricao = db.Column(db.Text, nullable=True)\n    tipo = db.Column(db.Enum(TipoFicha), nullable=False)\n    produto_acabado_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=False)",
-        "detail": "backend.app.models1.ficha_tecnica",
-        "documentation": {}
-    },
-    {
-        "label": "FichaTecnica",
-        "kind": 6,
-        "importPath": "backend.app.models1.ficha_tecnica",
-        "description": "backend.app.models1.ficha_tecnica",
-        "peekOfCode": "class FichaTecnica(BaseModel):\n    __tablename__ = 'fichas_tecnicas'\n    codigo = db.Column(db.String(50), unique=True, nullable=True)\n    nome = db.Column(db.String(100), nullable=False)\n    descricao = db.Column(db.Text, nullable=True)\n    tipo = db.Column(db.Enum(TipoFicha), nullable=False)\n    produto_acabado_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=False)\n    tempo_producao_minutos = db.Column(db.Integer, nullable=True)\n    rendimento = db.Column(db.Numeric(10, 2), nullable=True)\n    ativo = db.Column(db.Boolean, default=True)",
-        "detail": "backend.app.models1.ficha_tecnica",
-        "documentation": {}
-    },
-    {
-        "label": "FichaTecnicaItem",
-        "kind": 6,
-        "importPath": "backend.app.models1.ficha_tecnica",
-        "description": "backend.app.models1.ficha_tecnica",
-        "peekOfCode": "class FichaTecnicaItem(db.Model):\n    __tablename__ = 'fichas_tecnicas_itens'\n    id = db.Column(db.Integer, primary_key=True)\n    ficha_tecnica_id = db.Column(db.Integer, db.ForeignKey('fichas_tecnicas.id'), nullable=False)\n    ingrediente_id = db.Column(db.Integer, db.ForeignKey('ingredientes.id'), nullable=False)\n    quantidade = db.Column(db.Numeric(10, 3), nullable=False)\n    unidade = db.Column(db.String(20), nullable=False)\n    observacao = db.Column(db.String(255), nullable=True)\n    ingrediente = db.relationship('Ingrediente')",
-        "detail": "backend.app.models1.ficha_tecnica",
-        "documentation": {}
-    },
-    {
-        "label": "FormaPagamento",
-        "kind": 6,
-        "importPath": "backend.app.models1.financeiro",
-        "description": "backend.app.models1.financeiro",
-        "peekOfCode": "class FormaPagamento(BaseModel):\n    __tablename__ = 'formas_pagamento'\n    nome = db.Column(db.String(100), unique=True, nullable=False)\n    ativo = db.Column(db.Boolean, default=True)\nclass EstadoPagamento(str, Enum):\n    PENDENTE = 'Pendente'\n    PARCIAL = 'Parcial'\n    PAGO = 'Pago'\n    CANCELADO = 'Cancelado'\nclass Pagamento(BaseModel):",
-        "detail": "backend.app.models1.financeiro",
-        "documentation": {}
-    },
-    {
-        "label": "EstadoPagamento",
-        "kind": 6,
-        "importPath": "backend.app.models1.financeiro",
-        "description": "backend.app.models1.financeiro",
-        "peekOfCode": "class EstadoPagamento(str, Enum):\n    PENDENTE = 'Pendente'\n    PARCIAL = 'Parcial'\n    PAGO = 'Pago'\n    CANCELADO = 'Cancelado'\nclass Pagamento(BaseModel):\n    __tablename__ = 'pagamentos'\n    pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=True)\n    evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=True)\n    venda_id = db.Column(db.Integer, db.ForeignKey('vendas.id'), nullable=True)",
-        "detail": "backend.app.models1.financeiro",
-        "documentation": {}
-    },
-    {
-        "label": "Pagamento",
-        "kind": 6,
-        "importPath": "backend.app.models1.financeiro",
-        "description": "backend.app.models1.financeiro",
-        "peekOfCode": "class Pagamento(BaseModel):\n    __tablename__ = 'pagamentos'\n    pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=True)\n    evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=True)\n    venda_id = db.Column(db.Integer, db.ForeignKey('vendas.id'), nullable=True)\n    valor = db.Column(db.Numeric(12, 2), nullable=False)\n    forma_pagamento_id = db.Column(db.Integer, db.ForeignKey('formas_pagamento.id'), nullable=False)\n    estado = db.Column(db.Enum(EstadoPagamento), default=EstadoPagamento.PENDENTE)\n    data_pagamento = db.Column(db.DateTime, nullable=True)\n    referencia = db.Column(db.String(100), nullable=True)",
-        "detail": "backend.app.models1.financeiro",
-        "documentation": {}
-    },
-    {
-        "label": "EstadoConta",
-        "kind": 6,
-        "importPath": "backend.app.models1.financeiro",
-        "description": "backend.app.models1.financeiro",
-        "peekOfCode": "class EstadoConta(str, Enum):\n    ABERTA = 'Aberta'\n    PARCIAL = 'Parcial'\n    PAGA = 'Paga'\n    ATRASADA = 'Atrasada'\nclass ContaReceber(BaseModel):\n    __tablename__ = 'contas_receber'\n    cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id'), nullable=True)\n    pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=True)\n    evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=True)",
-        "detail": "backend.app.models1.financeiro",
-        "documentation": {}
-    },
-    {
-        "label": "ContaReceber",
-        "kind": 6,
-        "importPath": "backend.app.models1.financeiro",
-        "description": "backend.app.models1.financeiro",
-        "peekOfCode": "class ContaReceber(BaseModel):\n    __tablename__ = 'contas_receber'\n    cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id'), nullable=True)\n    pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=True)\n    evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=True)\n    venda_id = db.Column(db.Integer, db.ForeignKey('vendas.id'), nullable=True)\n    valor_original = db.Column(db.Numeric(12, 2), nullable=False)\n    valor_pago = db.Column(db.Numeric(12, 2), default=0)\n    saldo = db.Column(db.Numeric(12, 2), nullable=False)\n    vencimento = db.Column(db.Date, nullable=False)",
-        "detail": "backend.app.models1.financeiro",
-        "documentation": {}
-    },
-    {
-        "label": "ContaPagar",
-        "kind": 6,
-        "importPath": "backend.app.models1.financeiro",
-        "description": "backend.app.models1.financeiro",
-        "peekOfCode": "class ContaPagar(BaseModel):\n    __tablename__ = 'contas_pagar'\n    fornecedor_id = db.Column(db.Integer, db.ForeignKey('fornecedores.id'), nullable=True)\n    descricao = db.Column(db.String(255), nullable=False)\n    valor = db.Column(db.Numeric(12, 2), nullable=False)\n    vencimento = db.Column(db.Date, nullable=False)\n    estado = db.Column(db.Enum(EstadoConta), default=EstadoConta.ABERTA)\nclass CategoriaReceita(str, Enum):\n    VENDA = 'Venda'\n    EVENTO = 'Evento'",
-        "detail": "backend.app.models1.financeiro",
-        "documentation": {}
-    },
-    {
-        "label": "CategoriaReceita",
-        "kind": 6,
-        "importPath": "backend.app.models1.financeiro",
-        "description": "backend.app.models1.financeiro",
-        "peekOfCode": "class CategoriaReceita(str, Enum):\n    VENDA = 'Venda'\n    EVENTO = 'Evento'\n    ALUGUER = 'Aluguer'\n    SERVICO = 'Servico'\n    OUTROS = 'Outros'\nclass Receita(BaseModel):\n    __tablename__ = 'receitas'\n    categoria = db.Column(db.Enum(CategoriaReceita), nullable=False)\n    valor = db.Column(db.Numeric(12, 2), nullable=False)",
-        "detail": "backend.app.models1.financeiro",
-        "documentation": {}
-    },
-    {
-        "label": "Receita",
-        "kind": 6,
-        "importPath": "backend.app.models1.financeiro",
-        "description": "backend.app.models1.financeiro",
-        "peekOfCode": "class Receita(BaseModel):\n    __tablename__ = 'receitas'\n    categoria = db.Column(db.Enum(CategoriaReceita), nullable=False)\n    valor = db.Column(db.Numeric(12, 2), nullable=False)\n    descricao = db.Column(db.String(255), nullable=True)\n    data_receita = db.Column(db.Date, nullable=False)\nclass CategoriaDespesa(str, Enum):\n    FORNECEDOR = 'Fornecedor'\n    COMBUSTIVEL = 'Combustivel'\n    SALARIO = 'Salario'",
-        "detail": "backend.app.models1.financeiro",
-        "documentation": {}
-    },
-    {
-        "label": "CategoriaDespesa",
-        "kind": 6,
-        "importPath": "backend.app.models1.financeiro",
-        "description": "backend.app.models1.financeiro",
-        "peekOfCode": "class CategoriaDespesa(str, Enum):\n    FORNECEDOR = 'Fornecedor'\n    COMBUSTIVEL = 'Combustivel'\n    SALARIO = 'Salario'\n    ENERGIA = 'Energia'\n    AGUA = 'Agua'\n    INTERNET = 'Internet'\n    MANUTENCAO = 'Manutencao'\n    OUTROS = 'Outros'\nclass CentroCusto(BaseModel):",
-        "detail": "backend.app.models1.financeiro",
-        "documentation": {}
-    },
-    {
-        "label": "CentroCusto",
-        "kind": 6,
-        "importPath": "backend.app.models1.financeiro",
-        "description": "backend.app.models1.financeiro",
-        "peekOfCode": "class CentroCusto(BaseModel):\n    __tablename__ = 'centros_custo'\n    nome = db.Column(db.String(100), unique=True, nullable=False)\nclass Despesa(BaseModel):\n    __tablename__ = 'despesas'\n    categoria = db.Column(db.Enum(CategoriaDespesa), nullable=False)\n    valor = db.Column(db.Numeric(12, 2), nullable=False)\n    descricao = db.Column(db.String(255), nullable=True)\n    data_despesa = db.Column(db.Date, nullable=False)\n    centro_custo_id = db.Column(db.Integer, db.ForeignKey('centros_custo.id'), nullable=True)",
-        "detail": "backend.app.models1.financeiro",
-        "documentation": {}
-    },
-    {
-        "label": "Despesa",
-        "kind": 6,
-        "importPath": "backend.app.models1.financeiro",
-        "description": "backend.app.models1.financeiro",
-        "peekOfCode": "class Despesa(BaseModel):\n    __tablename__ = 'despesas'\n    categoria = db.Column(db.Enum(CategoriaDespesa), nullable=False)\n    valor = db.Column(db.Numeric(12, 2), nullable=False)\n    descricao = db.Column(db.String(255), nullable=True)\n    data_despesa = db.Column(db.Date, nullable=False)\n    centro_custo_id = db.Column(db.Integer, db.ForeignKey('centros_custo.id'), nullable=True)",
-        "detail": "backend.app.models1.financeiro",
-        "documentation": {}
-    },
-    {
-        "label": "Fornecedor",
-        "kind": 6,
-        "importPath": "backend.app.models1.fornecedor",
-        "description": "backend.app.models1.fornecedor",
-        "peekOfCode": "class Fornecedor(BaseModel):\n    __tablename__ = 'fornecedores'\n    codigo = db.Column(db.String(50), unique=True, nullable=True)\n    nome = db.Column(db.String(100), nullable=False)\n    nif = db.Column(db.String(20), unique=True, nullable=True)\n    email = db.Column(db.String(100), nullable=True)\n    telefone = db.Column(db.String(20), nullable=True)\n    morada = db.Column(db.Text, nullable=True)\n    contacto_principal = db.Column(db.String(100), nullable=True)\n    observacoes = db.Column(db.Text, nullable=True)",
-        "detail": "backend.app.models1.fornecedor",
-        "documentation": {}
-    },
-    {
-        "label": "Ingrediente",
-        "kind": 6,
-        "importPath": "backend.app.models1.ingrediente",
-        "description": "backend.app.models1.ingrediente",
-        "peekOfCode": "class Ingrediente(BaseModel):\n    __tablename__ = 'ingredientes'\n    codigo = db.Column(db.String(50), unique=True, nullable=True)\n    nome = db.Column(db.String(100), nullable=False)\n    categoria = db.Column(db.String(100), nullable=True)\n    unidade_medida = db.Column(db.String(20), nullable=False)\n    stock_atual = db.Column(db.Numeric(10, 3), default=0)\n    stock_minimo = db.Column(db.Numeric(10, 3), default=0)\n    stock_maximo = db.Column(db.Numeric(10, 3), default=0)\n    validade = db.Column(db.Date, nullable=True)",
-        "detail": "backend.app.models1.ingrediente",
-        "documentation": {}
-    },
-    {
-        "label": "TipoInventario",
-        "kind": 6,
-        "importPath": "backend.app.models1.inventario",
-        "description": "backend.app.models1.inventario",
-        "peekOfCode": "class TipoInventario(str, Enum):\n    GERAL = 'Geral'\n    PARCIAL = 'Parcial'\nclass EstadoInventario(str, Enum):\n    RASCUNHO = 'Rascunho'\n    CONCLUIDO = 'Concluido'\n    CANCELADO = 'Cancelado'\nclass Inventario(BaseModel):\n    __tablename__ = 'inventarios'\n    numero = db.Column(db.String(50), unique=True, nullable=False)",
-        "detail": "backend.app.models1.inventario",
-        "documentation": {}
-    },
-    {
-        "label": "EstadoInventario",
-        "kind": 6,
-        "importPath": "backend.app.models1.inventario",
-        "description": "backend.app.models1.inventario",
-        "peekOfCode": "class EstadoInventario(str, Enum):\n    RASCUNHO = 'Rascunho'\n    CONCLUIDO = 'Concluido'\n    CANCELADO = 'Cancelado'\nclass Inventario(BaseModel):\n    __tablename__ = 'inventarios'\n    numero = db.Column(db.String(50), unique=True, nullable=False)\n    tipo = db.Column(db.Enum(TipoInventario), nullable=False)\n    estado = db.Column(db.Enum(EstadoInventario), default=EstadoInventario.RASCUNHO)\n    data_inicio = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)",
-        "detail": "backend.app.models1.inventario",
-        "documentation": {}
-    },
-    {
-        "label": "Inventario",
-        "kind": 6,
-        "importPath": "backend.app.models1.inventario",
-        "description": "backend.app.models1.inventario",
-        "peekOfCode": "class Inventario(BaseModel):\n    __tablename__ = 'inventarios'\n    numero = db.Column(db.String(50), unique=True, nullable=False)\n    tipo = db.Column(db.Enum(TipoInventario), nullable=False)\n    estado = db.Column(db.Enum(EstadoInventario), default=EstadoInventario.RASCUNHO)\n    data_inicio = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)\n    data_fim = db.Column(db.DateTime, nullable=True)\n    observacoes = db.Column(db.Text, nullable=True)\n    utilizador_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)\n    items = db.relationship('InventarioItem', backref='inventario', lazy=True, cascade=\"all, delete-orphan\")",
-        "detail": "backend.app.models1.inventario",
-        "documentation": {}
-    },
-    {
-        "label": "TipoItemInventario",
-        "kind": 6,
-        "importPath": "backend.app.models1.inventario",
-        "description": "backend.app.models1.inventario",
-        "peekOfCode": "class TipoItemInventario(str, Enum):\n    INGREDIENTE = 'Ingrediente'\n    MATERIAL = 'Material'\n    PRODUTO = 'Produto'\nclass InventarioItem(db.Model):\n    __tablename__ = 'inventario_items'\n    id = db.Column(db.Integer, primary_key=True)\n    inventario_id = db.Column(db.Integer, db.ForeignKey('inventarios.id'), nullable=False)\n    tipo_item = db.Column(db.Enum(TipoItemInventario), nullable=False)\n    referencia_id = db.Column(db.Integer, nullable=False) ",
-        "detail": "backend.app.models1.inventario",
-        "documentation": {}
-    },
-    {
-        "label": "InventarioItem",
-        "kind": 6,
-        "importPath": "backend.app.models1.inventario",
-        "description": "backend.app.models1.inventario",
-        "peekOfCode": "class InventarioItem(db.Model):\n    __tablename__ = 'inventario_items'\n    id = db.Column(db.Integer, primary_key=True)\n    inventario_id = db.Column(db.Integer, db.ForeignKey('inventarios.id'), nullable=False)\n    tipo_item = db.Column(db.Enum(TipoItemInventario), nullable=False)\n    referencia_id = db.Column(db.Integer, nullable=False) \n    quantidade_sistema = db.Column(db.Numeric(12, 2), nullable=False)\n    quantidade_contada = db.Column(db.Numeric(12, 2), nullable=False)\n    diferenca = db.Column(db.Numeric(12, 2), nullable=False)\n    justificativa = db.Column(db.String(255), nullable=True)",
-        "detail": "backend.app.models1.inventario",
-        "documentation": {}
-    },
-    {
-        "label": "InventarioContagem",
-        "kind": 6,
-        "importPath": "backend.app.models1.inventario",
-        "description": "backend.app.models1.inventario",
-        "peekOfCode": "class InventarioContagem(BaseModel):\n    __tablename__ = 'inventarios_contagem'\n    data_contagem = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)\n    responsavel_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)\n    estado = db.Column(db.Enum(EstadoInventario), default=EstadoInventario.RASCUNHO)\n    observacoes = db.Column(db.Text, nullable=True)\n    responsavel = db.relationship('User')\n    itens = db.relationship('InventarioContagemItem', backref='inventario_contagem_rel', cascade=\"all, delete-orphan\", lazy=True)\nclass InventarioContagemItem(db.Model):\n    __tablename__ = 'inventario_contagem_itens'",
-        "detail": "backend.app.models1.inventario",
-        "documentation": {}
-    },
-    {
-        "label": "InventarioContagemItem",
-        "kind": 6,
-        "importPath": "backend.app.models1.inventario",
-        "description": "backend.app.models1.inventario",
-        "peekOfCode": "class InventarioContagemItem(db.Model):\n    __tablename__ = 'inventario_contagem_itens'\n    id = db.Column(db.Integer, primary_key=True)\n    inventario_id = db.Column(db.Integer, db.ForeignKey('inventarios_contagem.id'), nullable=False)\n    produto_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=False)\n    stock_sistema = db.Column(db.Numeric(10, 3), nullable=False)\n    stock_real = db.Column(db.Numeric(10, 3), nullable=False)\n    diferenca = db.Column(db.Numeric(10, 3), nullable=False)\n    justificativa = db.Column(db.Text, nullable=True)\n    produto = db.relationship('Produto')",
-        "detail": "backend.app.models1.inventario",
-        "documentation": {}
-    },
-    {
-        "label": "TipoItem",
-        "kind": 6,
-        "importPath": "backend.app.models1.item_pedido",
-        "description": "backend.app.models1.item_pedido",
-        "peekOfCode": "class TipoItem(str, Enum):\n    PRODUTO = 'Produto'\n    PRODUTO_ACABADO = 'Produto Acabado'\n    PRODUTO_REVENDA = 'Produto Revenda'\n    SERVICO = 'Servico'\n    ALUGUER = 'Aluguer'\nclass ItemPedido(BaseModel):\n    __tablename__ = 'itens_pedido'\n    pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=False)\n    tipo_item = db.Column(db.String(50), nullable=False)",
-        "detail": "backend.app.models1.item_pedido",
-        "documentation": {}
-    },
-    {
-        "label": "ItemPedido",
-        "kind": 6,
-        "importPath": "backend.app.models1.item_pedido",
-        "description": "backend.app.models1.item_pedido",
-        "peekOfCode": "class ItemPedido(BaseModel):\n    __tablename__ = 'itens_pedido'\n    pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=False)\n    tipo_item = db.Column(db.String(50), nullable=False)\n    # Can be null if it's purely a service or aluguer without a matching product record\n    produto_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=True)\n    produto = db.relationship('Produto', lazy='joined')\n    # Used if it's a custom service/aluguer\n    descricao = db.Column(db.String(255), nullable=True)\n    quantidade = db.Column(db.Numeric(10, 2), nullable=False)",
-        "detail": "backend.app.models1.item_pedido",
-        "documentation": {}
-    },
-    {
-        "label": "EstadoMotorista",
-        "kind": 6,
-        "importPath": "backend.app.models1.logistica",
-        "description": "backend.app.models1.logistica",
-        "peekOfCode": "class EstadoMotorista(str, Enum):\n    ATIVO = 'Ativo'\n    INATIVO = 'Inativo'\nclass EstadoViatura(str, Enum):\n    DISPONIVEL = 'Disponivel'\n    EM_SERVICO = 'Em Servico'\n    MANUTENCAO = 'Manutencao'\n    INATIVA = 'Inativa'\nclass EstadoEntrega(str, Enum):\n    AGENDADA = 'Agendada'",
-        "detail": "backend.app.models1.logistica",
-        "documentation": {}
-    },
-    {
-        "label": "EstadoViatura",
-        "kind": 6,
-        "importPath": "backend.app.models1.logistica",
-        "description": "backend.app.models1.logistica",
-        "peekOfCode": "class EstadoViatura(str, Enum):\n    DISPONIVEL = 'Disponivel'\n    EM_SERVICO = 'Em Servico'\n    MANUTENCAO = 'Manutencao'\n    INATIVA = 'Inativa'\nclass EstadoEntrega(str, Enum):\n    AGENDADA = 'Agendada'\n    EM_TRANSITO = 'Em Transito'\n    ENTREGUE = 'Entregue'\n    RECOLHIDA = 'Recolhida'",
-        "detail": "backend.app.models1.logistica",
-        "documentation": {}
-    },
-    {
-        "label": "EstadoEntrega",
-        "kind": 6,
-        "importPath": "backend.app.models1.logistica",
-        "description": "backend.app.models1.logistica",
-        "peekOfCode": "class EstadoEntrega(str, Enum):\n    AGENDADA = 'Agendada'\n    EM_TRANSITO = 'Em Transito'\n    ENTREGUE = 'Entregue'\n    RECOLHIDA = 'Recolhida'\n    CANCELADA = 'Cancelado'\nclass TipoOcorrenciaLogistica(str, Enum):\n    ATRASO = 'Atraso'\n    ACIDENTE = 'Acidente'\n    PERDA = 'Perda'",
-        "detail": "backend.app.models1.logistica",
-        "documentation": {}
-    },
-    {
-        "label": "TipoOcorrenciaLogistica",
-        "kind": 6,
-        "importPath": "backend.app.models1.logistica",
-        "description": "backend.app.models1.logistica",
-        "peekOfCode": "class TipoOcorrenciaLogistica(str, Enum):\n    ATRASO = 'Atraso'\n    ACIDENTE = 'Acidente'\n    PERDA = 'Perda'\n    DANO = 'Dano'\n    OUTRO = 'Outro'\nclass Motorista(BaseModel):\n    __tablename__ = 'motoristas'\n    nome = db.Column(db.String(100), nullable=False)\n    telefone = db.Column(db.String(20), nullable=True)",
-        "detail": "backend.app.models1.logistica",
-        "documentation": {}
-    },
-    {
-        "label": "Motorista",
-        "kind": 6,
-        "importPath": "backend.app.models1.logistica",
-        "description": "backend.app.models1.logistica",
-        "peekOfCode": "class Motorista(BaseModel):\n    __tablename__ = 'motoristas'\n    nome = db.Column(db.String(100), nullable=False)\n    telefone = db.Column(db.String(20), nullable=True)\n    carta_conducao = db.Column(db.String(50), nullable=True)\n    validade_carta = db.Column(db.Date, nullable=True)\n    estado = db.Column(db.Enum(EstadoMotorista), default=EstadoMotorista.ATIVO)\nclass Viatura(BaseModel):\n    __tablename__ = 'viaturas'\n    matricula = db.Column(db.String(20), unique=True, nullable=False)",
-        "detail": "backend.app.models1.logistica",
-        "documentation": {}
-    },
-    {
-        "label": "Viatura",
-        "kind": 6,
-        "importPath": "backend.app.models1.logistica",
-        "description": "backend.app.models1.logistica",
-        "peekOfCode": "class Viatura(BaseModel):\n    __tablename__ = 'viaturas'\n    matricula = db.Column(db.String(20), unique=True, nullable=False)\n    marca = db.Column(db.String(50), nullable=True)\n    modelo = db.Column(db.String(50), nullable=True)\n    ano = db.Column(db.Integer, nullable=True)\n    capacidade = db.Column(db.Numeric(10, 2), nullable=True)\n    quilometragem = db.Column(db.Numeric(10, 2), default=0)\n    estado = db.Column(db.Enum(EstadoViatura), default=EstadoViatura.DISPONIVEL)\nclass Entrega(BaseModel):",
-        "detail": "backend.app.models1.logistica",
-        "documentation": {}
-    },
-    {
-        "label": "Entrega",
-        "kind": 6,
-        "importPath": "backend.app.models1.logistica",
-        "description": "backend.app.models1.logistica",
-        "peekOfCode": "class Entrega(BaseModel):\n    __tablename__ = 'entregas'\n    numero = db.Column(db.String(50), unique=True, nullable=False)\n    pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=True)\n    evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=True)\n    motorista_id = db.Column(db.Integer, db.ForeignKey('motoristas.id'), nullable=False)\n    viatura_id = db.Column(db.Integer, db.ForeignKey('viaturas.id'), nullable=False)\n    data_saida = db.Column(db.Date, nullable=True)\n    hora_saida = db.Column(db.Time, nullable=True)\n    data_entrega = db.Column(db.Date, nullable=True)",
-        "detail": "backend.app.models1.logistica",
-        "documentation": {}
-    },
-    {
-        "label": "ReservaViatura",
-        "kind": 6,
-        "importPath": "backend.app.models1.logistica",
-        "description": "backend.app.models1.logistica",
-        "peekOfCode": "class ReservaViatura(db.Model):\n    __tablename__ = 'reservas_viaturas'\n    id = db.Column(db.Integer, primary_key=True)\n    evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=False)\n    viatura_id = db.Column(db.Integer, db.ForeignKey('viaturas.id'), nullable=False)\n    motorista_id = db.Column(db.Integer, db.ForeignKey('motoristas.id'), nullable=False)\n    data_saida = db.Column(db.DateTime, nullable=False)\n    data_retorno = db.Column(db.DateTime, nullable=False)\n    estado = db.Column(db.String(50), default='Agendada')\nclass OcorrenciaLogistica(db.Model):",
-        "detail": "backend.app.models1.logistica",
-        "documentation": {}
-    },
-    {
-        "label": "OcorrenciaLogistica",
-        "kind": 6,
-        "importPath": "backend.app.models1.logistica",
-        "description": "backend.app.models1.logistica",
-        "peekOfCode": "class OcorrenciaLogistica(db.Model):\n    __tablename__ = 'ocorrencias_logisticas'\n    id = db.Column(db.Integer, primary_key=True)\n    entrega_id = db.Column(db.Integer, db.ForeignKey('entregas.id'), nullable=False)\n    tipo = db.Column(db.Enum(TipoOcorrenciaLogistica), nullable=False)\n    justificacao = db.Column(db.Text, nullable=False)\n    data_ocorrencia = db.Column(db.DateTime, default=datetime.utcnow)\nclass ChecklistEntrega(db.Model):\n    __tablename__ = 'checklists_entregas'\n    id = db.Column(db.Integer, primary_key=True)",
-        "detail": "backend.app.models1.logistica",
-        "documentation": {}
-    },
-    {
-        "label": "ChecklistEntrega",
-        "kind": 6,
-        "importPath": "backend.app.models1.logistica",
-        "description": "backend.app.models1.logistica",
-        "peekOfCode": "class ChecklistEntrega(db.Model):\n    __tablename__ = 'checklists_entregas'\n    id = db.Column(db.Integer, primary_key=True)\n    entrega_id = db.Column(db.Integer, db.ForeignKey('entregas.id'), nullable=False)\n    tipo = db.Column(db.String(50), nullable=False) # SAIDA, RETORNO\n    item = db.Column(db.String(255), nullable=False)\n    validado = db.Column(db.Boolean, default=False)\n    observacao = db.Column(db.Text, nullable=True)",
-        "detail": "backend.app.models1.logistica",
-        "documentation": {}
-    },
-    {
-        "label": "TipoMaterial",
-        "kind": 6,
-        "importPath": "backend.app.models1.material",
-        "description": "backend.app.models1.material",
-        "peekOfCode": "class TipoMaterial(str, Enum):\n    REUTILIZAVEL = 'Reutilizavel'\n    CONSUMIVEL = 'Consumivel'\nclass EstadoMaterial(str, Enum):\n    DISPONIVEL = 'Disponivel'\n    RESERVADO = 'Reservado'\n    EM_USO = 'Em Uso'\n    DANIFICADO = 'Danificado'\n    MANUTENCAO = 'Manutencao'\nclass Material(BaseModel):",
-        "detail": "backend.app.models1.material",
-        "documentation": {}
-    },
-    {
-        "label": "EstadoMaterial",
-        "kind": 6,
-        "importPath": "backend.app.models1.material",
-        "description": "backend.app.models1.material",
-        "peekOfCode": "class EstadoMaterial(str, Enum):\n    DISPONIVEL = 'Disponivel'\n    RESERVADO = 'Reservado'\n    EM_USO = 'Em Uso'\n    DANIFICADO = 'Danificado'\n    MANUTENCAO = 'Manutencao'\nclass Material(BaseModel):\n    __tablename__ = 'materiais'\n    codigo = db.Column(db.String(50), unique=True, nullable=True)\n    nome = db.Column(db.String(100), nullable=False)",
-        "detail": "backend.app.models1.material",
-        "documentation": {}
-    },
-    {
-        "label": "Material",
-        "kind": 6,
-        "importPath": "backend.app.models1.material",
-        "description": "backend.app.models1.material",
-        "peekOfCode": "class Material(BaseModel):\n    __tablename__ = 'materiais'\n    codigo = db.Column(db.String(50), unique=True, nullable=True)\n    nome = db.Column(db.String(100), nullable=False)\n    categoria = db.Column(db.String(100), nullable=True)\n    tipo = db.Column(db.Enum(TipoMaterial), nullable=False)\n    quantidade_total = db.Column(db.Numeric(10, 2), default=0)\n    quantidade_disponivel = db.Column(db.Numeric(10, 2), default=0)\n    quantidade_reservada = db.Column(db.Numeric(10, 2), default=0)\n    estado = db.Column(db.Enum(EstadoMaterial), default=EstadoMaterial.DISPONIVEL)",
-        "detail": "backend.app.models1.material",
-        "documentation": {}
-    },
-    {
-        "label": "TipoMovimento",
-        "kind": 6,
-        "importPath": "backend.app.models1.movimento_stock",
-        "description": "backend.app.models1.movimento_stock",
-        "peekOfCode": "class TipoMovimento(str, Enum):\n    ENTRADA = 'Entrada'\n    SAIDA = 'Saida'\n    AJUSTE = 'Ajuste'\n    DEVOLUCAO = 'Devolucao'\n    PERDA = 'Perda'\n    DANIFICADO = 'Danificado'\nclass OrigemMovimento(str, Enum):\n    ARMAZEM = 'Armazem'\n    REQUISICAO = 'Requisicao'",
-        "detail": "backend.app.models1.movimento_stock",
-        "documentation": {}
-    },
-    {
-        "label": "OrigemMovimento",
-        "kind": 6,
-        "importPath": "backend.app.models1.movimento_stock",
-        "description": "backend.app.models1.movimento_stock",
-        "peekOfCode": "class OrigemMovimento(str, Enum):\n    ARMAZEM = 'Armazem'\n    REQUISICAO = 'Requisicao'\n    DEVOLUCAO = 'Devolucao'\n    COMPRA = 'Compra'\n    AJUSTE = 'Ajuste'\n    VENDA = 'Venda'\nclass EntidadeMovimento(str, Enum):\n    INGREDIENTE = 'Ingrediente'\n    PRODUTO = 'Produto'",
-        "detail": "backend.app.models1.movimento_stock",
-        "documentation": {}
-    },
-    {
-        "label": "EntidadeMovimento",
-        "kind": 6,
-        "importPath": "backend.app.models1.movimento_stock",
-        "description": "backend.app.models1.movimento_stock",
-        "peekOfCode": "class EntidadeMovimento(str, Enum):\n    INGREDIENTE = 'Ingrediente'\n    PRODUTO = 'Produto'\n    MATERIAL = 'Material'\nclass MovimentoStock(BaseModel):\n    __tablename__ = 'movimentacoes_armazem'\n    tipo = db.Column(db.Enum(TipoMovimento), nullable=False)\n    origem = db.Column(db.Enum(OrigemMovimento), nullable=False)\n    entidade_tipo = db.Column(db.Enum(EntidadeMovimento), nullable=False)\n    referencia_id = db.Column(db.Integer, nullable=False) # ID of Ingrediente/Produto/Material",
-        "detail": "backend.app.models1.movimento_stock",
-        "documentation": {}
-    },
-    {
-        "label": "MovimentoStock",
-        "kind": 6,
-        "importPath": "backend.app.models1.movimento_stock",
-        "description": "backend.app.models1.movimento_stock",
-        "peekOfCode": "class MovimentoStock(BaseModel):\n    __tablename__ = 'movimentacoes_armazem'\n    tipo = db.Column(db.Enum(TipoMovimento), nullable=False)\n    origem = db.Column(db.Enum(OrigemMovimento), nullable=False)\n    entidade_tipo = db.Column(db.Enum(EntidadeMovimento), nullable=False)\n    referencia_id = db.Column(db.Integer, nullable=False) # ID of Ingrediente/Produto/Material\n    armazem_id = db.Column(db.Integer, db.ForeignKey('armazens.id'), nullable=True)\n    quantidade = db.Column(db.Numeric(10, 3), nullable=False)\n    quantidade_antes = db.Column(db.Numeric(10, 3), default=0)\n    quantidade_depois = db.Column(db.Numeric(10, 3), default=0)",
-        "detail": "backend.app.models1.movimento_stock",
-        "documentation": {}
-    },
-    {
-        "label": "SectorProducao",
-        "kind": 6,
-        "importPath": "backend.app.models1.ordem_producao",
-        "description": "backend.app.models1.ordem_producao",
-        "peekOfCode": "class SectorProducao(str, Enum):\n    COZINHA = 'Cozinha'\n    PASTELARIA = 'Pastelaria'\n    BAR = 'Bar'\nclass TurnoProducao(str, Enum):\n    MANHA = 'Manhã'\n    TARDE = 'Tarde'\n    NOITE = 'Noite'\nclass PrioridadeProducao(str, Enum):\n    BAIXA = 'Baixa'",
-        "detail": "backend.app.models1.ordem_producao",
-        "documentation": {}
-    },
-    {
-        "label": "TurnoProducao",
-        "kind": 6,
-        "importPath": "backend.app.models1.ordem_producao",
-        "description": "backend.app.models1.ordem_producao",
-        "peekOfCode": "class TurnoProducao(str, Enum):\n    MANHA = 'Manhã'\n    TARDE = 'Tarde'\n    NOITE = 'Noite'\nclass PrioridadeProducao(str, Enum):\n    BAIXA = 'Baixa'\n    MEDIA = 'Media'\n    ALTA = 'Alta'\n    URGENTE = 'Urgente'\nclass EstadoProducao(str, Enum):",
-        "detail": "backend.app.models1.ordem_producao",
-        "documentation": {}
-    },
-    {
-        "label": "PrioridadeProducao",
-        "kind": 6,
-        "importPath": "backend.app.models1.ordem_producao",
-        "description": "backend.app.models1.ordem_producao",
-        "peekOfCode": "class PrioridadeProducao(str, Enum):\n    BAIXA = 'Baixa'\n    MEDIA = 'Media'\n    ALTA = 'Alta'\n    URGENTE = 'Urgente'\nclass EstadoProducao(str, Enum):\n    PENDENTE = 'Pendente'\n    EM_PRODUCAO = 'Em Producao'\n    PRONTO = 'Pronto'\n    ENTREGUE = 'Entregue'",
-        "detail": "backend.app.models1.ordem_producao",
-        "documentation": {}
-    },
-    {
-        "label": "EstadoProducao",
-        "kind": 6,
-        "importPath": "backend.app.models1.ordem_producao",
-        "description": "backend.app.models1.ordem_producao",
-        "peekOfCode": "class EstadoProducao(str, Enum):\n    PENDENTE = 'Pendente'\n    EM_PRODUCAO = 'Em Producao'\n    PRONTO = 'Pronto'\n    ENTREGUE = 'Entregue'\n    CANCELADO = 'Cancelado'\nclass OrdemProducao(BaseModel):\n    __tablename__ = 'ordens_producao'\n    numero = db.Column(db.String(50), unique=True, nullable=False)\n    pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=False)",
-        "detail": "backend.app.models1.ordem_producao",
-        "documentation": {}
-    },
-    {
-        "label": "OrdemProducao",
-        "kind": 6,
-        "importPath": "backend.app.models1.ordem_producao",
-        "description": "backend.app.models1.ordem_producao",
-        "peekOfCode": "class OrdemProducao(BaseModel):\n    __tablename__ = 'ordens_producao'\n    numero = db.Column(db.String(50), unique=True, nullable=False)\n    pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=False)\n    produto_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=True) # Keeping for backward compat\n    quantidade = db.Column(db.Numeric(10, 2), nullable=True) # Keeping for backward compat\n    sector = db.Column(db.String(50), nullable=False)\n    turno = db.Column(db.String(50), nullable=True)\n    responsavel_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)\n    data_producao = db.Column(db.Date, nullable=True)",
-        "detail": "backend.app.models1.ordem_producao",
-        "documentation": {}
-    },
-    {
-        "label": "OrdemProducaoItem",
-        "kind": 6,
-        "importPath": "backend.app.models1.ordem_producao",
-        "description": "backend.app.models1.ordem_producao",
-        "peekOfCode": "class OrdemProducaoItem(db.Model):\n    __tablename__ = 'ordem_producao_itens'\n    id = db.Column(db.Integer, primary_key=True)\n    ordem_producao_id = db.Column(db.Integer, db.ForeignKey('ordens_producao.id'), nullable=False)\n    produto_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=False)\n    quantidade = db.Column(db.Numeric(10, 2), nullable=False)\n    observacoes = db.Column(db.Text, nullable=True)\n    produto = db.relationship('Produto')\nclass ConsumoIngrediente(db.Model):\n    __tablename__ = 'consumos_ingredientes'",
-        "detail": "backend.app.models1.ordem_producao",
-        "documentation": {}
-    },
-    {
-        "label": "ConsumoIngrediente",
-        "kind": 6,
-        "importPath": "backend.app.models1.ordem_producao",
-        "description": "backend.app.models1.ordem_producao",
-        "peekOfCode": "class ConsumoIngrediente(db.Model):\n    __tablename__ = 'consumos_ingredientes'\n    id = db.Column(db.Integer, primary_key=True)\n    ordem_producao_id = db.Column(db.Integer, db.ForeignKey('ordens_producao.id'), nullable=False)\n    ingrediente_id = db.Column(db.Integer, db.ForeignKey('ingredientes.id'), nullable=False)\n    quantidade_prevista = db.Column(db.Numeric(10, 3), nullable=False)\n    quantidade_consumida = db.Column(db.Numeric(10, 3), nullable=True)\n    data_consumo = db.Column(db.DateTime, nullable=True)\n    ingrediente = db.relationship('Ingrediente')",
-        "detail": "backend.app.models1.ordem_producao",
-        "documentation": {}
-    },
-    {
-        "label": "TipoPedido",
-        "kind": 6,
-        "importPath": "backend.app.models1.pedido",
-        "description": "backend.app.models1.pedido",
-        "peekOfCode": "class TipoPedido(str, Enum):\n    SIMPLES = 'Simples'\n    COMPOSTO = 'Composto'\nclass OrigemPedido(str, Enum):\n    BALCAO = 'Balcao'\n    WHATSAPP = 'Whatsapp'\n    TELEFONE = 'Telefone'\n    EMAIL = 'Email'\nclass EstadoPedido(str, Enum):\n    PENDENTE = 'Pendente'",
-        "detail": "backend.app.models1.pedido",
-        "documentation": {}
-    },
-    {
-        "label": "OrigemPedido",
-        "kind": 6,
-        "importPath": "backend.app.models1.pedido",
-        "description": "backend.app.models1.pedido",
-        "peekOfCode": "class OrigemPedido(str, Enum):\n    BALCAO = 'Balcao'\n    WHATSAPP = 'Whatsapp'\n    TELEFONE = 'Telefone'\n    EMAIL = 'Email'\nclass EstadoPedido(str, Enum):\n    PENDENTE = 'Pendente'\n    AGENDADO = 'Agendado'\n    CONFIRMADO = 'Confirmado'\n    EM_PRODUCAO = 'Em Producao'",
-        "detail": "backend.app.models1.pedido",
-        "documentation": {}
-    },
-    {
-        "label": "EstadoPedido",
-        "kind": 6,
-        "importPath": "backend.app.models1.pedido",
-        "description": "backend.app.models1.pedido",
-        "peekOfCode": "class EstadoPedido(str, Enum):\n    PENDENTE = 'Pendente'\n    AGENDADO = 'Agendado'\n    CONFIRMADO = 'Confirmado'\n    EM_PRODUCAO = 'Em Producao'\n    PRONTO = 'Pronto'\n    ENTREGUE = 'Entregue'\n    CONCLUIDO = 'Concluido'\n    CANCELADO = 'Cancelado'\nclass FormaPagamento(str, Enum):",
-        "detail": "backend.app.models1.pedido",
-        "documentation": {}
-    },
-    {
-        "label": "FormaPagamento",
-        "kind": 6,
-        "importPath": "backend.app.models1.pedido",
-        "description": "backend.app.models1.pedido",
-        "peekOfCode": "class FormaPagamento(str, Enum):\n    DINHEIRO = 'Dinheiro'\n    TRANSFERENCIA = 'Transferencia'\n    POS = 'POS'\n    MIXTO = 'Mixto'\nclass EstadoPagamento(str, Enum):\n    PENDENTE = 'Pendente'\n    PARCIAL = 'Parcial'\n    PAGO = 'Pago'\nclass Pedido(BaseModel):",
-        "detail": "backend.app.models1.pedido",
-        "documentation": {}
-    },
-    {
-        "label": "EstadoPagamento",
-        "kind": 6,
-        "importPath": "backend.app.models1.pedido",
-        "description": "backend.app.models1.pedido",
-        "peekOfCode": "class EstadoPagamento(str, Enum):\n    PENDENTE = 'Pendente'\n    PARCIAL = 'Parcial'\n    PAGO = 'Pago'\nclass Pedido(BaseModel):\n    __tablename__ = 'pedidos'\n    numero = db.Column(db.String(50), unique=True, nullable=False)\n    cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id'), nullable=True)\n    evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=True)\n    tipo = db.Column(db.Enum(TipoPedido, values_callable=lambda x: [e.value for e in x]), nullable=False)",
-        "detail": "backend.app.models1.pedido",
-        "documentation": {}
-    },
-    {
-        "label": "Pedido",
-        "kind": 6,
-        "importPath": "backend.app.models1.pedido",
-        "description": "backend.app.models1.pedido",
-        "peekOfCode": "class Pedido(BaseModel):\n    __tablename__ = 'pedidos'\n    numero = db.Column(db.String(50), unique=True, nullable=False)\n    cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id'), nullable=True)\n    evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=True)\n    tipo = db.Column(db.Enum(TipoPedido, values_callable=lambda x: [e.value for e in x]), nullable=False)\n    origem = db.Column(db.Enum(OrigemPedido, values_callable=lambda x: [e.value for e in x]), nullable=False)\n    data_pedido = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)\n    data_entrega = db.Column(db.Date, nullable=True)\n    hora_entrega = db.Column(db.Time, nullable=True)",
-        "detail": "backend.app.models1.pedido",
-        "documentation": {}
-    },
-    {
-        "label": "Producao",
-        "kind": 6,
-        "importPath": "backend.app.models1.producao_nova",
-        "description": "backend.app.models1.producao_nova",
-        "peekOfCode": "class Producao(BaseModel):\n    __tablename__ = 'producoes'\n    numero = db.Column(db.String(50), unique=True, nullable=False)\n    produto_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=False)\n    quantidade_produzida = db.Column(db.Numeric(10, 2), nullable=False)\n    responsavel_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)\n    turno = db.Column(db.String(50), nullable=True) # Manhã, Tarde, Noite\n    data_producao = db.Column(db.DateTime, default=datetime.utcnow)\n    estado = db.Column(db.String(50), default='Concluída')\n    observacoes = db.Column(db.Text, nullable=True)",
-        "detail": "backend.app.models1.producao_nova",
-        "documentation": {}
-    },
-    {
-        "label": "ProducaoItem",
-        "kind": 6,
-        "importPath": "backend.app.models1.producao_nova",
-        "description": "backend.app.models1.producao_nova",
-        "peekOfCode": "class ProducaoItem(db.Model):\n    __tablename__ = 'producao_itens'\n    id = db.Column(db.Integer, primary_key=True)\n    producao_id = db.Column(db.Integer, db.ForeignKey('producoes.id'), nullable=False)\n    produto_consumivel_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=False)\n    quantidade_prevista = db.Column(db.Numeric(10, 3), nullable=False)\n    quantidade_real = db.Column(db.Numeric(10, 3), nullable=False)\n    consumivel = db.relationship('Produto', foreign_keys=[produto_consumivel_id])\nclass ProducaoDesvio(BaseModel):\n    __tablename__ = 'producao_desvios'",
-        "detail": "backend.app.models1.producao_nova",
-        "documentation": {}
-    },
-    {
-        "label": "ProducaoDesvio",
-        "kind": 6,
-        "importPath": "backend.app.models1.producao_nova",
-        "description": "backend.app.models1.producao_nova",
-        "peekOfCode": "class ProducaoDesvio(BaseModel):\n    __tablename__ = 'producao_desvios'\n    producao_id = db.Column(db.Integer, db.ForeignKey('producoes.id'), nullable=False)\n    produto_consumivel_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=False)\n    quantidade_prevista = db.Column(db.Numeric(10, 3), nullable=False)\n    quantidade_real = db.Column(db.Numeric(10, 3), nullable=False)\n    diferenca = db.Column(db.Numeric(10, 3), nullable=False)\n    justificativa = db.Column(db.Text, nullable=False)\n    utilizador_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)\n    data = db.Column(db.DateTime, default=datetime.utcnow)",
-        "detail": "backend.app.models1.producao_nova",
-        "documentation": {}
-    },
-    {
-        "label": "TipoProduto",
-        "kind": 6,
-        "importPath": "backend.app.models1.produto",
-        "description": "backend.app.models1.produto",
-        "peekOfCode": "class TipoProduto(str, Enum):\n    ACABADO = 'Acabado'\n    REVENDA = 'Revenda'\n    CONSUMIVEL = 'Consumivel'\nclass ServicoEnum(str, Enum):\n    ABASTECIMENTO = 'ABASTECIMENTO'\n    COZINHA = 'COZINHA'\n    PASTELARIA = 'PASTELARIA'\n    BAR = 'BAR'\nclass Produto(BaseModel):",
-        "detail": "backend.app.models1.produto",
-        "documentation": {}
-    },
-    {
-        "label": "ServicoEnum",
-        "kind": 6,
-        "importPath": "backend.app.models1.produto",
-        "description": "backend.app.models1.produto",
-        "peekOfCode": "class ServicoEnum(str, Enum):\n    ABASTECIMENTO = 'ABASTECIMENTO'\n    COZINHA = 'COZINHA'\n    PASTELARIA = 'PASTELARIA'\n    BAR = 'BAR'\nclass Produto(BaseModel):\n    __tablename__ = 'produtos'\n    codigo = db.Column(db.String(50), unique=True, nullable=True)\n    nome = db.Column(db.String(100), nullable=False)\n    tipo = db.Column(db.Enum(TipoProduto), nullable=False)",
-        "detail": "backend.app.models1.produto",
-        "documentation": {}
-    },
-    {
-        "label": "Produto",
-        "kind": 6,
-        "importPath": "backend.app.models1.produto",
-        "description": "backend.app.models1.produto",
-        "peekOfCode": "class Produto(BaseModel):\n    __tablename__ = 'produtos'\n    codigo = db.Column(db.String(50), unique=True, nullable=True)\n    nome = db.Column(db.String(100), nullable=False)\n    tipo = db.Column(db.Enum(TipoProduto), nullable=False)\n    servico = db.Column(db.Enum(ServicoEnum), nullable=True)\n    categoria = db.Column(db.String(100), nullable=True)\n    categoria_id = db.Column(db.Integer, db.ForeignKey('categorias_produto.id'), nullable=True)\n    unidade_medida_id = db.Column(db.Integer, db.ForeignKey('unidades_medida.id'), nullable=True)\n    tempo_producao = db.Column(db.Integer, nullable=True) # in minutes",
-        "detail": "backend.app.models1.produto",
-        "documentation": {}
-    },
-    {
-        "label": "ReceitaProducao",
-        "kind": 6,
-        "importPath": "backend.app.models1.receita",
-        "description": "backend.app.models1.receita",
-        "peekOfCode": "class ReceitaProducao(BaseModel):\n    __tablename__ = 'receitas_producao'\n    produto_acabado_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=False, unique=True)\n    descricao = db.Column(db.Text, nullable=True)\n    tempo_preparacao = db.Column(db.Integer, nullable=True) # em minutos\n    rendimento_unidades = db.Column(db.Numeric(10, 2), default=1)\n    # Valores calculados\n    custo_total = db.Column(db.Numeric(10, 2), default=0)\n    custo_unitario = db.Column(db.Numeric(10, 2), default=0)\n    margem_lucro = db.Column(db.Numeric(10, 2), default=0)",
-        "detail": "backend.app.models1.receita",
-        "documentation": {}
-    },
-    {
-        "label": "ReceitaItem",
-        "kind": 6,
-        "importPath": "backend.app.models1.receita",
-        "description": "backend.app.models1.receita",
-        "peekOfCode": "class ReceitaItem(db.Model):\n    __tablename__ = 'receita_itens'\n    id = db.Column(db.Integer, primary_key=True)\n    receita_id = db.Column(db.Integer, db.ForeignKey('receitas_producao.id'), nullable=False)\n    produto_consumivel_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=False) # MUST BE CONSUMIVEL\n    quantidade = db.Column(db.Numeric(10, 3), nullable=False)\n    # Cached\n    custo_calculado = db.Column(db.Numeric(10, 2), default=0)\n    observacao = db.Column(db.String(255), nullable=True)\n    consumivel = db.relationship('Produto', foreign_keys=[produto_consumivel_id])",
-        "detail": "backend.app.models1.receita",
-        "documentation": {}
-    },
-    {
-        "label": "TipoRequisicao",
-        "kind": 6,
-        "importPath": "backend.app.models1.requisicao",
-        "description": "backend.app.models1.requisicao",
-        "peekOfCode": "class TipoRequisicao(str, Enum):\n    INICIAL = 'Inicial'\n    COMPLEMENTAR = 'Complementar'\nclass SectorRequisicao(str, Enum):\n    COZINHA = 'Cozinha'\n    PASTELARIA = 'Pastelaria'\n    BAR = 'Bar'\n    EVENTOS = 'Eventos'\n    LOGISTICA = 'Logistica'\n    ALUGUER = 'Aluguer'",
-        "detail": "backend.app.models1.requisicao",
-        "documentation": {}
-    },
-    {
-        "label": "SectorRequisicao",
-        "kind": 6,
-        "importPath": "backend.app.models1.requisicao",
-        "description": "backend.app.models1.requisicao",
-        "peekOfCode": "class SectorRequisicao(str, Enum):\n    COZINHA = 'Cozinha'\n    PASTELARIA = 'Pastelaria'\n    BAR = 'Bar'\n    EVENTOS = 'Eventos'\n    LOGISTICA = 'Logistica'\n    ALUGUER = 'Aluguer'\n    OUTRO = 'Outro'\nclass EstadoRequisicao(str, Enum):\n    PENDENTE = 'Pendente'",
-        "detail": "backend.app.models1.requisicao",
-        "documentation": {}
-    },
-    {
-        "label": "EstadoRequisicao",
-        "kind": 6,
-        "importPath": "backend.app.models1.requisicao",
-        "description": "backend.app.models1.requisicao",
-        "peekOfCode": "class EstadoRequisicao(str, Enum):\n    PENDENTE = 'Pendente'\n    APROVADA = 'Aprovada'\n    ENTREGUE = 'Entregue'\n    EM_USO = 'Em Uso'\n    DEVOLUCAO_PARCIAL = 'Devolucao Parcial'\n    DEVOLVIDA = 'Devolvida'\n    ENCERRADA = 'Encerrada'\n    CANCELADA = 'Cancelada'\nclass Requisicao(BaseModel):",
-        "detail": "backend.app.models1.requisicao",
-        "documentation": {}
-    },
-    {
-        "label": "Requisicao",
-        "kind": 6,
-        "importPath": "backend.app.models1.requisicao",
-        "description": "backend.app.models1.requisicao",
-        "peekOfCode": "class Requisicao(BaseModel):\n    __tablename__ = 'requisicoes'\n    numero = db.Column(db.String(50), unique=True, nullable=False)\n    tipo = db.Column(db.String(50), nullable=False)\n    sector = db.Column(db.String(50), nullable=False)\n    turno_id = db.Column(db.Integer, db.ForeignKey('turnos.id'), nullable=True) \n    responsavel_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)\n    evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=True)\n    data_requisicao = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)\n    estado = db.Column(db.String(50), default='Pendente')",
-        "detail": "backend.app.models1.requisicao",
-        "documentation": {}
-    },
-    {
-        "label": "TipoItemRequisicao",
-        "kind": 6,
-        "importPath": "backend.app.models1.requisicao",
-        "description": "backend.app.models1.requisicao",
-        "peekOfCode": "class TipoItemRequisicao(str, Enum):\n    INGREDIENTE = 'Ingrediente'\n    MATERIAL = 'Material'\n    CONSUMIVEL = 'Consumivel'\nclass RequisicaoItem(db.Model):\n    __tablename__ = 'requisicoes_itens'\n    id = db.Column(db.Integer, primary_key=True)\n    requisicao_id = db.Column(db.Integer, db.ForeignKey('requisicoes.id'), nullable=False)\n    tipo_item = db.Column(db.String(50), nullable=False)\n    item_id = db.Column(db.Integer, nullable=False)",
-        "detail": "backend.app.models1.requisicao",
-        "documentation": {}
-    },
-    {
-        "label": "RequisicaoItem",
-        "kind": 6,
-        "importPath": "backend.app.models1.requisicao",
-        "description": "backend.app.models1.requisicao",
-        "peekOfCode": "class RequisicaoItem(db.Model):\n    __tablename__ = 'requisicoes_itens'\n    id = db.Column(db.Integer, primary_key=True)\n    requisicao_id = db.Column(db.Integer, db.ForeignKey('requisicoes.id'), nullable=False)\n    tipo_item = db.Column(db.String(50), nullable=False)\n    item_id = db.Column(db.Integer, nullable=False)\n    quantidade_solicitada = db.Column(db.Numeric(10, 3), nullable=False)\n    quantidade_aprovada = db.Column(db.Numeric(10, 3), default=0)\n    quantidade_entregue = db.Column(db.Numeric(10, 3), default=0)\n    quantidade_devolvida = db.Column(db.Numeric(10, 3), default=0)",
-        "detail": "backend.app.models1.requisicao",
-        "documentation": {}
-    },
-    {
-        "label": "EntregaRequisicao",
-        "kind": 6,
-        "importPath": "backend.app.models1.requisicao",
-        "description": "backend.app.models1.requisicao",
-        "peekOfCode": "class EntregaRequisicao(db.Model):\n    __tablename__ = 'entregas_requisicao'\n    id = db.Column(db.Integer, primary_key=True)\n    requisicao_id = db.Column(db.Integer, db.ForeignKey('requisicoes.id'), nullable=False)\n    armazem_responsavel_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)\n    data_entrega = db.Column(db.Date, default=datetime.utcnow, nullable=False)\n    hora_entrega = db.Column(db.Time, default=datetime.utcnow, nullable=False)\n    observacao = db.Column(db.Text, nullable=True)\n    armazem_responsavel = db.relationship('User', foreign_keys=[armazem_responsavel_id])\nclass DevolucaoMaterial(db.Model):",
-        "detail": "backend.app.models1.requisicao",
-        "documentation": {}
-    },
-    {
-        "label": "DevolucaoMaterial",
-        "kind": 6,
-        "importPath": "backend.app.models1.requisicao",
-        "description": "backend.app.models1.requisicao",
-        "peekOfCode": "class DevolucaoMaterial(db.Model):\n    __tablename__ = 'devolucoes_materiais'\n    id = db.Column(db.Integer, primary_key=True)\n    requisicao_id = db.Column(db.Integer, db.ForeignKey('requisicoes.id'), nullable=False)\n    material_id = db.Column(db.Integer, db.ForeignKey('materiais.id'), nullable=False)\n    quantidade_entregue = db.Column(db.Numeric(10, 3), nullable=False)\n    quantidade_devolvida = db.Column(db.Numeric(10, 3), default=0)\n    quantidade_danificada = db.Column(db.Numeric(10, 3), default=0)\n    quantidade_perdida = db.Column(db.Numeric(10, 3), default=0)\n    data_devolucao = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)",
-        "detail": "backend.app.models1.requisicao",
-        "documentation": {}
-    },
-    {
-        "label": "TipoOcorrencia",
-        "kind": 6,
-        "importPath": "backend.app.models1.requisicao",
-        "description": "backend.app.models1.requisicao",
-        "peekOfCode": "class TipoOcorrencia(str, Enum):\n    PERDA = 'Perda'\n    DANIFICADO = 'Danificado'\n    NAO_DEVOLVIDO = 'Nao Devolvido'\nclass EstadoOcorrencia(str, Enum):\n    ABERTA = 'Aberta'\n    ANALISE = 'Analise'\n    RESOLVIDA = 'Resolvida'\nclass OcorrenciaMaterial(BaseModel):\n    __tablename__ = 'ocorrencias_materiais'",
-        "detail": "backend.app.models1.requisicao",
-        "documentation": {}
-    },
-    {
-        "label": "EstadoOcorrencia",
-        "kind": 6,
-        "importPath": "backend.app.models1.requisicao",
-        "description": "backend.app.models1.requisicao",
-        "peekOfCode": "class EstadoOcorrencia(str, Enum):\n    ABERTA = 'Aberta'\n    ANALISE = 'Analise'\n    RESOLVIDA = 'Resolvida'\nclass OcorrenciaMaterial(BaseModel):\n    __tablename__ = 'ocorrencias_materiais'\n    numero = db.Column(db.String(50), unique=True, nullable=False)\n    material_id = db.Column(db.Integer, db.ForeignKey('materiais.id'), nullable=False)\n    responsavel_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)\n    tipo = db.Column(db.Enum(TipoOcorrencia, values_callable=lambda x: [e.value for e in x]), nullable=False)",
-        "detail": "backend.app.models1.requisicao",
-        "documentation": {}
-    },
-    {
-        "label": "OcorrenciaMaterial",
-        "kind": 6,
-        "importPath": "backend.app.models1.requisicao",
-        "description": "backend.app.models1.requisicao",
-        "peekOfCode": "class OcorrenciaMaterial(BaseModel):\n    __tablename__ = 'ocorrencias_materiais'\n    numero = db.Column(db.String(50), unique=True, nullable=False)\n    material_id = db.Column(db.Integer, db.ForeignKey('materiais.id'), nullable=False)\n    responsavel_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)\n    tipo = db.Column(db.Enum(TipoOcorrencia, values_callable=lambda x: [e.value for e in x]), nullable=False)\n    quantidade = db.Column(db.Numeric(10, 3), nullable=False)\n    valor_estimado = db.Column(db.Numeric(10, 2), default=0)\n    justificacao = db.Column(db.Text, nullable=False)\n    data_ocorrencia = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)",
-        "detail": "backend.app.models1.requisicao",
-        "documentation": {}
-    },
-    {
-        "label": "EstadoReserva",
-        "kind": 6,
-        "importPath": "backend.app.models1.reserva",
-        "description": "backend.app.models1.reserva",
-        "peekOfCode": "class EstadoReserva(str, Enum):\n    ATIVA = 'Ativa'\n    UTILIZADA = 'Utilizada'\n    CANCELADA = 'Cancelada'\nclass ReservaIngrediente(db.Model):\n    __tablename__ = 'reservas_ingredientes'\n    id = db.Column(db.Integer, primary_key=True)\n    ingrediente_id = db.Column(db.Integer, db.ForeignKey('ingredientes.id'), nullable=False)\n    pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=False)\n    quantidade = db.Column(db.Numeric(10, 3), nullable=False)",
-        "detail": "backend.app.models1.reserva",
-        "documentation": {}
-    },
-    {
-        "label": "ReservaIngrediente",
-        "kind": 6,
-        "importPath": "backend.app.models1.reserva",
-        "description": "backend.app.models1.reserva",
-        "peekOfCode": "class ReservaIngrediente(db.Model):\n    __tablename__ = 'reservas_ingredientes'\n    id = db.Column(db.Integer, primary_key=True)\n    ingrediente_id = db.Column(db.Integer, db.ForeignKey('ingredientes.id'), nullable=False)\n    pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=False)\n    quantidade = db.Column(db.Numeric(10, 3), nullable=False)\n    data_reserva = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)\n    estado = db.Column(db.Enum(EstadoReserva), default=EstadoReserva.ATIVA)\n    ingrediente = db.relationship('Ingrediente')\n    pedido = db.relationship('Pedido')",
-        "detail": "backend.app.models1.reserva",
-        "documentation": {}
-    },
-    {
-        "label": "TipoMovimentoStock",
-        "kind": 6,
-        "importPath": "backend.app.models1.stock_movement",
-        "description": "backend.app.models1.stock_movement",
-        "peekOfCode": "class TipoMovimentoStock(str, Enum):\n    ENTRADA = 'Entrada'\n    SAIDA = 'Saida'\n    COMPRA = 'Compra'\n    VENDA = 'Venda'\n    REQUISICAO = 'Requisição'\n    PRODUCAO = 'Produção'\n    AJUSTE = 'Ajuste'\n    INVENTARIO = 'Inventário'\n    PERDA = 'Perda'",
-        "detail": "backend.app.models1.stock_movement",
-        "documentation": {}
-    },
-    {
-        "label": "StockMovement",
-        "kind": 6,
-        "importPath": "backend.app.models1.stock_movement",
-        "description": "backend.app.models1.stock_movement",
-        "peekOfCode": "class StockMovement(BaseModel):\n    __tablename__ = 'movimentos_stock'\n    produto_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=False)\n    tipo_movimento = db.Column(db.Enum(TipoMovimentoStock), nullable=False)\n    quantidade = db.Column(db.Numeric(10, 3), nullable=False)\n    stock_anterior = db.Column(db.Numeric(10, 3), nullable=False)\n    stock_atual = db.Column(db.Numeric(10, 3), nullable=False) # renamed from posterior\n    motivo = db.Column(db.String(255), nullable=True)\n    numero_fatura = db.Column(db.String(100), nullable=True)\n    fornecedor_id = db.Column(db.Integer, db.ForeignKey('fornecedores.id'), nullable=True)",
-        "detail": "backend.app.models1.stock_movement",
-        "documentation": {}
-    },
-    {
-        "label": "TokenBlocklist",
-        "kind": 6,
-        "importPath": "backend.app.models1.token_blocklist",
-        "description": "backend.app.models1.token_blocklist",
-        "peekOfCode": "class TokenBlocklist(db.Model):\n    __tablename__ = 'token_blocklist'\n    id = db.Column(db.Integer, primary_key=True)\n    jti = db.Column(db.String(36), nullable=False, index=True)\n    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)",
-        "detail": "backend.app.models1.token_blocklist",
-        "documentation": {}
-    },
-    {
-        "label": "Turno",
-        "kind": 6,
-        "importPath": "backend.app.models1.turno",
-        "description": "backend.app.models1.turno",
-        "peekOfCode": "class Turno(BaseModel):\n    __tablename__ = 'turnos'\n    nome = db.Column(db.String(50), unique=True, nullable=False) # e.g., 'Manhã', 'Tarde', 'Noite'\n    hora_inicio = db.Column(db.Time, nullable=True) # Start time\n    hora_fim = db.Column(db.Time, nullable=True) # End time\n    ativo = db.Column(db.Boolean, default=True)\n    def __repr__(self):\n        return f\"<Turno {self.nome}>\"",
-        "detail": "backend.app.models1.turno",
-        "documentation": {}
-    },
-    {
-        "label": "UnidadeMedida",
-        "kind": 6,
-        "importPath": "backend.app.models1.unidade_medida",
-        "description": "backend.app.models1.unidade_medida",
-        "peekOfCode": "class UnidadeMedida(BaseModel):\n    __tablename__ = 'unidades_medida'\n    nome = db.Column(db.String(50), nullable=False)\n    sigla = db.Column(db.String(10), nullable=False, unique=True)\n    descricao = db.Column(db.Text, nullable=True)",
-        "detail": "backend.app.models1.unidade_medida",
-        "documentation": {}
-    },
-    {
-        "label": "RoleEnum",
-        "kind": 6,
-        "importPath": "backend.app.models1.user",
-        "description": "backend.app.models1.user",
-        "peekOfCode": "class RoleEnum(str, Enum):\n    ADMINISTRADOR = 'Administrador'\n    ATENDIMENTO = 'Atendimento'\n    COZINHA = 'Cozinha'\n    PASTELARIA = 'Pastelaria'\n    ARMAZEM = 'Armazém'\n    MOTORISTA = 'Motorista'\n    CONTROLADOR_MATERIAIS = 'Controlador de Materiais'\n    FINANCEIRO = 'Financeiro'\nclass User(BaseModel):",
-        "detail": "backend.app.models1.user",
-        "documentation": {}
-    },
-    {
-        "label": "User",
-        "kind": 6,
-        "importPath": "backend.app.models1.user",
-        "description": "backend.app.models1.user",
         "peekOfCode": "class User(BaseModel):\n    __tablename__ = 'users'\n    name = db.Column(db.String(100), nullable=False)\n    email = db.Column(db.String(120), unique=True, nullable=False, index=True)\n    password_hash = db.Column(db.String(255), nullable=False)\n    role = db.Column(db.Enum(RoleEnum), nullable=False, default=RoleEnum.ATENDIMENTO)\n    def __repr__(self):\n        return f\"<User {self.email} ({self.role})>\"",
-        "detail": "backend.app.models1.user",
+        "detail": "backend.app.models.user",
         "documentation": {}
     },
     {
@@ -13180,7 +11380,7 @@
         "kind": 6,
         "importPath": "backend.app.schemas.armazem_schema",
         "description": "backend.app.schemas.armazem_schema",
-        "peekOfCode": "class ProdutoSchema(Schema):\n    id = fields.Int(dump_only=True)\n    codigo = fields.Str(dump_only=True)\n    nome = fields.Str(required=True, validate=validate.Length(min=2))\n    tipo = fields.Str(required=False, allow_none=True, load_default='Acabado')\n    servico = fields.Str(required=False, allow_none=True)\n    categoria = fields.Str(required=False) # Mantido por compatibilidade\n    categoria_id = fields.Int(required=False, allow_none=True)\n    unidade_medida_id = fields.Int(required=False, allow_none=True)\n    tempo_producao = fields.Int(required=False, allow_none=True)",
+        "peekOfCode": "class ProdutoSchema(Schema):\n    id = fields.Int(dump_only=True)\n    codigo = fields.Str(dump_only=True)\n    nome = fields.Str(required=True, validate=validate.Length(min=2))\n    tipo = fields.Str(required=False, allow_none=True, load_default='Acabado')\n    servico = fields.Function(\n        serialize=lambda obj: obj.servico.value if getattr(obj, 'servico', None) and hasattr(obj.servico, 'value') else (str(obj.servico).split('.')[-1] if getattr(obj, 'servico', None) else None),\n        deserialize=lambda value: str(value).split('.')[-1] if value is not None else None,\n        required=False,\n        allow_none=True,",
         "detail": "backend.app.schemas.armazem_schema",
         "documentation": {}
     },
@@ -13540,7 +11740,7 @@
         "kind": 6,
         "importPath": "backend.app.schemas.producao_schema",
         "description": "backend.app.schemas.producao_schema",
-        "peekOfCode": "class ConsumoIngredienteSchema(Schema):\n    id = fields.Int(dump_only=True)\n    ingrediente_id = fields.Int(required=True)\n    ingrediente_nome = fields.Method(\"get_ingrediente_nome\")\n    ingrediente_unidade = fields.Method(\"get_ingrediente_unidade\")\n    quantidade_prevista = fields.Decimal(required=True)\n    quantidade_consumida = fields.Decimal(required=False, allow_none=True)\n    data_consumo = fields.DateTime(dump_only=True)\n    def get_ingrediente_nome(self, obj):\n        return obj.ingrediente.nome if getattr(obj, 'ingrediente', None) else 'Ingrediente'",
+        "peekOfCode": "class ConsumoIngredienteSchema(Schema):\n    id = fields.Int(dump_only=True)\n    ingrediente_id = fields.Int(required=False, allow_none=True)\n    produto_consumivel_id = fields.Int(required=False, allow_none=True)\n    ingrediente_nome = fields.Method(\"get_ingrediente_nome\")\n    ingrediente_unidade = fields.Method(\"get_ingrediente_unidade\")\n    quantidade_prevista = fields.Decimal(required=True)\n    quantidade_consumida = fields.Decimal(required=False, allow_none=True)\n    data_consumo = fields.DateTime(dump_only=True)\n    def get_ingrediente_nome(self, obj):",
         "detail": "backend.app.schemas.producao_schema",
         "documentation": {}
     },
@@ -13882,7 +12082,7 @@
         "kind": 6,
         "importPath": "backend.app.services.producao_service",
         "description": "backend.app.services.producao_service",
-        "peekOfCode": "class ProducaoService:\n    def __init__(self):\n        self.ficha_repo = FichaTecnicaRepository()\n        self.ordem_repo = OrdemProducaoRepository()\n    # --- Fichas Técnicas ---\n    def create_ficha(self, data, user_id):\n        itens_data = data.pop('itens', [])\n        ficha = FichaTecnica(**data, created_by=user_id)\n        for item in itens_data:\n            i = FichaTecnicaItem(",
+        "peekOfCode": "class ProducaoService:\n    def __init__(self):\n        self.ficha_repo = FichaTecnicaRepository()\n        self.ordem_repo = OrdemProducaoRepository()\n    @staticmethod\n    def _turno_atual():\n        \"\"\"Devolve o turno ativo correspondente à hora atual, incluindo turnos noturnos.\"\"\"\n        agora = datetime.now().time()\n        for turno in Turno.query.filter_by(ativo=True).all():\n            if not turno.hora_inicio or not turno.hora_fim:",
         "detail": "backend.app.services.producao_service",
         "documentation": {}
     },
@@ -14719,7 +12919,7 @@
         "kind": 2,
         "importPath": "backend.apply_migration",
         "description": "backend.apply_migration",
-        "peekOfCode": "def run_migrations():\n    queries = [\n        # Atualizar ENUM tipo_item na tabela itens_pedido para incluir 'Produto'\n        \"ALTER TABLE itens_pedido MODIFY COLUMN tipo_item ENUM('Produto', 'Produto Acabado', 'Produto Revenda', 'Servico', 'Aluguer') NOT NULL;\",\n        # Garantir todas as colunas de valor/desconto e totais na tabela itens_pedido\n        \"ALTER TABLE itens_pedido ADD COLUMN IF NOT EXISTS subtotal NUMERIC(10,2) DEFAULT 0;\",\n        \"ALTER TABLE itens_pedido ADD COLUMN IF NOT EXISTS total NUMERIC(10,2) DEFAULT 0;\",\n        \"ALTER TABLE itens_pedido ADD COLUMN IF NOT EXISTS desconto NUMERIC(10,2) DEFAULT 0;\",\n        \"ALTER TABLE itens_pedido ADD COLUMN IF NOT EXISTS taxa_iva_id INTEGER NULL;\",\n        \"ALTER TABLE itens_pedido ADD COLUMN IF NOT EXISTS taxa_iva NUMERIC(5,2) DEFAULT 0;\",",
+        "peekOfCode": "def run_migrations():\n    queries = [\n        \"ALTER TABLE receitas_producao ADD COLUMN IF NOT EXISTS custo_gas NUMERIC(10,2) DEFAULT 0;\",\n        \"ALTER TABLE receitas_producao ADD COLUMN IF NOT EXISTS custo_energia NUMERIC(10,2) DEFAULT 0;\",\n        \"ALTER TABLE receitas_producao ADD COLUMN IF NOT EXISTS custo_pessoal NUMERIC(10,2) DEFAULT 0;\",\n        \"ALTER TABLE receitas_producao ADD COLUMN IF NOT EXISTS custo_outros NUMERIC(10,2) DEFAULT 0;\",\n        \"ALTER TABLE receitas_producao ADD COLUMN IF NOT EXISTS setor VARCHAR(50) NOT NULL DEFAULT 'Cozinha';\",\n        \"ALTER TABLE consumos_ingredientes MODIFY COLUMN ingrediente_id INTEGER NULL;\",\n        \"ALTER TABLE consumos_ingredientes ADD COLUMN IF NOT EXISTS produto_consumivel_id INTEGER NULL;\",\n        # Remove ENUMs legados e normaliza grafias antigas antes de o ORM ler pedidos.",
         "detail": "backend.apply_migration",
         "documentation": {}
     },

@@ -506,6 +506,16 @@ class ArmazemService:
             return None, "Material não encontrado."
 
         armazem_id = data.pop('armazem_id', None)
+        if 'estado' in data:
+            estado = str(data['estado']).strip().replace('ç', 'c').replace('Ç', 'C')
+            estado_normalizado = next(
+                (item.value for item in EstadoMaterial
+                 if estado.casefold() in (item.name.casefold(), item.value.casefold())),
+                None,
+            )
+            if not estado_normalizado:
+                return None, "Estado de material inválido."
+            data['estado'] = estado_normalizado
 
         # Synchronize quantity fields if total quantity changes
         if 'quantidade_total' in data:

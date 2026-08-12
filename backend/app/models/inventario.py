@@ -15,8 +15,8 @@ class EstadoInventario(str, Enum):
 class Inventario(BaseModel):
     __tablename__ = 'inventarios'
     numero = db.Column(db.String(50), unique=True, nullable=False)
-    tipo = db.Column(db.Enum(TipoInventario, values_callable=lambda x: [e.value for e in x]), nullable=False)
-    estado = db.Column(db.Enum(EstadoInventario, values_callable=lambda x: [e.value for e in x]), default=EstadoInventario.RASCUNHO)
+    tipo = db.Column(db.Enum(TipoInventario), nullable=False)
+    estado = db.Column(db.Enum(EstadoInventario), default=EstadoInventario.RASCUNHO)
     data_inicio = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     data_fim = db.Column(db.DateTime, nullable=True)
     observacoes = db.Column(db.Text, nullable=True)
@@ -33,7 +33,7 @@ class InventarioItem(db.Model):
     __tablename__ = 'inventario_items'
     id = db.Column(db.Integer, primary_key=True)
     inventario_id = db.Column(db.Integer, db.ForeignKey('inventarios.id'), nullable=False)
-    tipo_item = db.Column(db.Enum(TipoItemInventario, values_callable=lambda x: [e.value for e in x]), nullable=False)
+    tipo_item = db.Column(db.Enum(TipoItemInventario), nullable=False)
     referencia_id = db.Column(db.Integer, nullable=False) 
     quantidade_sistema = db.Column(db.Numeric(12, 2), nullable=False)
     quantidade_contada = db.Column(db.Numeric(12, 2), nullable=False)
@@ -45,7 +45,7 @@ class InventarioContagem(BaseModel):
 
     data_contagem = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     responsavel_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    estado = db.Column(db.Enum(EstadoInventario, values_callable=lambda x: [e.value for e in x]), default=EstadoInventario.RASCUNHO)
+    estado = db.Column(db.Enum(EstadoInventario), default=EstadoInventario.RASCUNHO)
     observacoes = db.Column(db.Text, nullable=True)
 
     responsavel = db.relationship('User')

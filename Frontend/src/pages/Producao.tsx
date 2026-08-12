@@ -4,6 +4,7 @@ import { productionService, productService, requestService } from "../services";
 import { Play, CheckCircle, Clock, ChefHat, Timer, AlertCircle, Undo2, Utensils, Cake, Wine, CheckCheck, User, Filter } from "lucide-react";
 import { cn } from "../lib/utils";
 import { toast } from "react-toastify";
+import Modal from "../components/Common/Modal";
 
 type SectorType = "Todos" | "Cozinha" | "Pastelaria" | "Bar";
 
@@ -11,6 +12,8 @@ export default function Producao() {
   const queryClient = useQueryClient();
   const [now, setNow] = useState(new Date());
   const [selectedSector, setSelectedSector] = useState<SectorType>("Todos");
+  const [page, setPage] = useState(1);
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
 
   // Update clock every minute for time-based alerts
   useEffect(() => {
@@ -19,10 +22,11 @@ export default function Producao() {
   }, []);
 
   const { data: ordersResponse, isLoading } = useQuery({
-    queryKey: ["production-orders", selectedSector],
+    queryKey: ["production-orders", selectedSector, page],
     queryFn: () => productionService.getAll({ 
       sector: selectedSector !== "Todos" ? selectedSector : undefined, 
-      per_page: 500 
+      page,
+      per_page: 40,
     }),
     refetchInterval: 10000, // Real-time polling
   });
@@ -92,12 +96,13 @@ export default function Producao() {
   const entregues = productionOrders.filter((o: any) => normalizeEstadoProducao(o.estado || o.status) === "Entregue");
 
   // Format Helper
-  const getTempoDecorrido = (dataStr: string) => {
-    if (!dataStr) return { mins: 0, text: "Recente" };
+  const getTempoDecorrido = (dataStr: string, type: string) => {
+    if (!dataStr) return { mins: 0, text: type === 'pendente' ? "Aguardando início" : "Sem registo" };
     const date = new Date(dataStr);
     const diffMs = now.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);
-    return { 
+    if (diffMins < 0) return { mins: 0, text: "Agendada" };
+    return {
       mins: diffMins, 
       text: diffMins < 1 ? "Agora" : `${diffMins} min` 
     };
@@ -112,7 +117,7 @@ export default function Producao() {
 
   // Card Component for KDS
   const OrderCard = ({ order, type }: { order: any, type: 'pendente' | 'producao' | 'pronto' | 'entregue' }) => {
-    const tempo = getTempoDecorrido(order.data_producao || order.created_at);
+    const tempo = getTempoDecorrido(type === 'producao' ? (order.hora_inicio || order.created_at) : order.created_at, type);
     const isAtrasado = type === 'pendente' && tempo.mins >= 15;
     const sector = order.sector || order.setor || "Cozinha";
 
@@ -184,6 +189,10 @@ export default function Producao() {
               );
             })}
           </div>
+
+          <button onClick={() => setSelectedOrder(order)} className="mt-3 text-xs font-bold text-primary hover:underline">
+            Ver produtos, receita e consumos
+          </button>
 
           {(() => {
             const reqId = order.requisicao_id || order.requisicaoId;
@@ -287,7 +296,7 @@ export default function Producao() {
           {(["Todos", "Cozinha", "Pastelaria", "Bar"] as SectorType[]).map((sec) => (
             <button
               key={sec}
-              onClick={() => setSelectedSector(sec)}
+              onClick={() => { setSelectedSector(sec); setPage(1); }}
               className={cn(
                 "px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap",
                 selectedSector === sec
@@ -299,6 +308,14 @@ export default function Producao() {
               {sec === "Todos" ? "Todos os Setores" : sec}
             </button>
           ))}
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between text-sm text-gray-500">
+        <span>{ordersResponse?.total || 0} ordens encontradas · página {ordersResponse?.page || page} de {ordersResponse?.pages || 1}</span>
+        <div className="flex gap-2">
+          <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} className="px-3 py-1.5 rounded-lg border disabled:opacity-40">Anterior</button>
+          <button disabled={page >= (ordersResponse?.pages || 1)} onClick={() => setPage(p => p + 1)} className="px-3 py-1.5 rounded-lg border disabled:opacity-40">Seguinte</button>
         </div>
       </div>
 
@@ -398,6 +415,22 @@ export default function Producao() {
         </div>
 
       </div>
+
+      <Modal isOpen={!!selectedOrder} onClose={() => setSelectedOrder(null)} title={`Detalhe da Ordem ${selectedOrder?.numero || ''}`}>
+        {selectedOrder && (
+          <div className="space-y-5 text-sm">
+            <div className="grid grid-cols-2 gap-3 text-gray-600 dark:text-gray-300">
+              <p><b>Pedido:</b> {selectedOrder.pedido_numero || selectedOrder.pedido_id}</p>
+              <p><b>Cliente:</b> {selectedOrder.cliente_nome || 'Balcão'}</p>
+              <p><b>Setor:</b> {selectedOrder.sector}</p>
+              <p><b>Entrega:</b> {selectedOrder.data_entrega || '—'} {selectedOrder.hora_entrega || ''}</p>
+            </div>
+            <div><h3 className="font-bold mb-2">Produtos a preparar</h3>{(selectedOrder.itens || []).map((i: any) => <p key={i.id} className="py-1 border-b">{i.quantidade} × {i.produto_nome || `Produto #${i.produto_id}`}</p>)}</div>
+            <div><h3 className="font-bold mb-2">Receita / consumíveis previstos</h3>{(selectedOrder.consumos || []).map((i: any) => <p key={i.id} className="py-1 border-b">{i.quantidade_prevista} {i.ingrediente_unidade || ''} · {i.ingrediente_nome}</p>)}</div>
+            {selectedOrder.observacoes_pedido && <p className="p-3 rounded-lg bg-amber-50 text-amber-800"><b>Observações do pedido:</b> {selectedOrder.observacoes_pedido}</p>}
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

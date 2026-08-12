@@ -20,7 +20,7 @@ class Pagamento(BaseModel):
     venda_id = db.Column(db.Integer, db.ForeignKey('vendas.id'), nullable=True)
     valor = db.Column(db.Numeric(12, 2), nullable=False)
     forma_pagamento_id = db.Column(db.Integer, db.ForeignKey('formas_pagamento.id'), nullable=False)
-    estado = db.Column(db.Enum(EstadoPagamento, values_callable=lambda x: [e.value for e in x]), default=EstadoPagamento.PENDENTE)
+    estado = db.Column(db.Enum(EstadoPagamento), default=EstadoPagamento.PENDENTE)
     data_pagamento = db.Column(db.DateTime, nullable=True)
     referencia = db.Column(db.String(100), nullable=True)
     observacoes = db.Column(db.Text, nullable=True)
@@ -43,7 +43,7 @@ class ContaReceber(BaseModel):
     valor_pago = db.Column(db.Numeric(12, 2), default=0)
     saldo = db.Column(db.Numeric(12, 2), nullable=False)
     vencimento = db.Column(db.Date, nullable=False)
-    estado = db.Column(db.Enum(EstadoConta, values_callable=lambda x: [e.value for e in x]), default=EstadoConta.ABERTA)
+    estado = db.Column(db.Enum(EstadoConta), default=EstadoConta.ABERTA)
 
 class ContaPagar(BaseModel):
     __tablename__ = 'contas_pagar'
@@ -51,7 +51,7 @@ class ContaPagar(BaseModel):
     descricao = db.Column(db.String(255), nullable=False)
     valor = db.Column(db.Numeric(12, 2), nullable=False)
     vencimento = db.Column(db.Date, nullable=False)
-    estado = db.Column(db.Enum(EstadoConta, values_callable=lambda x: [e.value for e in x]), default=EstadoConta.ABERTA)
+    estado = db.Column(db.Enum(EstadoConta), default=EstadoConta.ABERTA)
 
 class CategoriaReceita(str, Enum):
     VENDA = 'Venda'
@@ -62,7 +62,7 @@ class CategoriaReceita(str, Enum):
 
 class Receita(BaseModel):
     __tablename__ = 'receitas'
-    categoria = db.Column(db.Enum(CategoriaReceita, values_callable=lambda x: [e.value for e in x]), nullable=False)
+    categoria = db.Column(db.Enum(CategoriaReceita), nullable=False)
     valor = db.Column(db.Numeric(12, 2), nullable=False)
     descricao = db.Column(db.String(255), nullable=True)
     data_receita = db.Column(db.Date, nullable=False)
@@ -83,7 +83,7 @@ class CentroCusto(BaseModel):
 
 class Despesa(BaseModel):
     __tablename__ = 'despesas'
-    categoria = db.Column(db.Enum(CategoriaDespesa, values_callable=lambda x: [e.value for e in x]), nullable=False)
+    categoria = db.Column(db.Enum(CategoriaDespesa), nullable=False)
     valor = db.Column(db.Numeric(12, 2), nullable=False)
     descricao = db.Column(db.String(255), nullable=True)
     data_despesa = db.Column(db.Date, nullable=False)

@@ -292,9 +292,8 @@ with app.app_context():
             db.session.rollback()
 
     for sql in [
-        "ALTER TABLE pedidos MODIFY COLUMN estado ENUM('PENDENTE','AGENDADO','CONFIRMADO','EM_PRODUCAO','PRONTO','ENTREGUE','CONCLUIDO','CANCELADO') DEFAULT 'PENDENTE';",
-        "ALTER TABLE itens_pedido MODIFY COLUMN tipo_item ENUM('PRODUTO','PRODUTO ACABADO','PRODUTO DE REVENDA','SERVICO','ALUGUER','MATERIAL') NOT NULL;",
-        "ALTER TABLE eventos MODIFY COLUMN estado ENUM('AGENDADO','CONFIRMADO','EM PREPARACAO','EM EXECUCAO','FINALIZADO','CONCLUIDO','CANCELADO') DEFAULT 'AGENDADO';",
+        # Os estados e tipos abaixo são VARCHAR para aceitar os valores
+        # apresentados pela aplicação (ex.: "Em Producao") sem truncamento.
         "ALTER TABLE materiais MODIFY COLUMN estado ENUM('DISPONIVEL','RESERVA','EM USO','DEVOLVIDO','DANIFICADO','MANUTENCAO','CANCELADO') DEFAULT 'DISPONIVEL';",
         "ALTER TABLE materiais ADD COLUMN ativo BOOLEAN DEFAULT TRUE;",
     ]:

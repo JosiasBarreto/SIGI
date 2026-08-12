@@ -270,8 +270,14 @@ class FinanceiroService:
 
     # --- FLUXO DE CAIXA ---
     def obter_fluxo_caixa(self, inicio, fim):
-        entradas = db.session.query(func.sum(Receita.valor)).filter(Receita.data_receita.between(inicio, fim)).scalar() or 0
-        saidas = db.session.query(func.sum(Despesa.valor)).filter(Despesa.data_despesa.between(inicio, fim)).scalar() or 0
+        entradas = db.session.query(func.sum(MovimentoCaixa.valor)).filter(
+            MovimentoCaixa.data_movimento.between(inicio, fim),
+            MovimentoCaixa.tipo.in_([TipoMovimentoCaixa.ABERTURA, TipoMovimentoCaixa.VENDA, TipoMovimentoCaixa.RECEBIMENTO, TipoMovimentoCaixa.REFORCO])
+        ).scalar() or 0
+        saidas = db.session.query(func.sum(MovimentoCaixa.valor)).filter(
+            MovimentoCaixa.data_movimento.between(inicio, fim),
+            MovimentoCaixa.tipo.in_([TipoMovimentoCaixa.SANGRIA, TipoMovimentoCaixa.DEVOLUCAO, TipoMovimentoCaixa.AJUSTE])
+        ).scalar() or 0
         
         return {
             "entradas": float(entradas),

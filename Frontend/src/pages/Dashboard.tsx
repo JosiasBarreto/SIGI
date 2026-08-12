@@ -7,7 +7,8 @@ import {
   productionService, 
   deliveryService,
   financialService,
-  financeiroService
+  financeiroService,
+  dashboardService
 } from "../services";
 import { 
   ShoppingCart, 
@@ -75,6 +76,10 @@ export default function Dashboard() {
     queryKey: ["entregas-dash"],
     queryFn: () => deliveryService.getAll({ per_page: 1000 })
   });
+  const { data: dashboardStats } = useQuery({
+    queryKey: ["dashboard", "stats"],
+    queryFn: () => dashboardService.getStats()
+  });
 
   const isLoading = isOrdersLoading || isProductsLoading || isMaterialsLoading || isProdLoading || isFinLoading || isRecLoading || isEntregasLoading;
 
@@ -107,10 +112,10 @@ export default function Dashboard() {
 
   // 1. Vendas do dia & Vendas do mês
   const ordersToday = orders.filter((o: any) => (o.data_pedido || o.dueDate || todayStr).startsWith(todayStr));
-  const vendasDoDia = ordersToday.reduce((acc: number, curr: any) => acc + Number(curr.total || curr.valor_total || 0), 0);
+  const vendasDoDia = Number(dashboardStats?.kpis?.receita_estimada ?? ordersToday.reduce((acc: number, curr: any) => acc + Number(curr.total || curr.valor_total || 0), 0));
 
   const ordersThisMonth = orders.filter((o: any) => (o.data_pedido || o.dueDate || todayStr).startsWith(thisMonthStr));
-  const vendasDoMes = ordersThisMonth.reduce((acc: number, curr: any) => acc + Number(curr.total || curr.valor_total || 0), 0);
+  const vendasDoMes = Number(dashboardStats?.kpis?.receita_estimada ?? ordersThisMonth.reduce((acc: number, curr: any) => acc + Number(curr.total || curr.valor_total || 0), 0));
 
   // 2. Pedidos ativos vs agendados
   const pedidosAtivos = orders.filter((o: any) => ["Pendente", "Em Preparação", "Confirmado"].includes(o.estado || o.status)).length;
@@ -139,7 +144,7 @@ export default function Dashboard() {
   // 8. Financeiro: receitas, despesas & lucro estimado
   // Computed dynamically based on real data instead of fallbacks when possible
   const financeiroReceitas = financialRecords.filter((r: any) => r.type === "Receita" || r.tipo === "Receita").reduce((acc: number, curr: any) => acc + Number(curr.amount || curr.valor || 0), 0) || vendasDoMes;
-  const financeiroDespesas = financialRecords.filter((r: any) => r.type === "Despesa" || r.tipo === "Despesa").reduce((acc: number, curr: any) => acc + Number(curr.amount || curr.valor || 0), 0) || (vendasDoMes * 0.45);
+  const financeiroDespesas = financialRecords.filter((r: any) => r.type === "Despesa" || r.tipo === "Despesa").reduce((acc: number, curr: any) => acc + Number(curr.amount || curr.valor || 0), 0);
   const lucroEstimado = financeiroReceitas - financeiroDespesas;
 
   // Generate dynamic chart data based on the last 7 days of actual orders and financial records

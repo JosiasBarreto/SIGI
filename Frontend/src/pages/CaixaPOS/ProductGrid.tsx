@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { ChevronLeft, ChevronRight, PackageSearch } from "lucide-react";
 
 interface Product {
   id: string | number;
@@ -31,10 +32,45 @@ const ProductGrid: React.FC<ProductGridProps> = ({
   handleAddToCart,
   formatCurrency,
 }) => {
+  const [page, setPage] = useState(1);
+  const pageSize = 48;
+  const totalPages = Math.max(1, Math.ceil(displayProducts.length / pageSize));
+  const catalogKey = `${displayProducts.length}:${displayProducts[0]?.id ?? ""}:${displayProducts[displayProducts.length - 1]?.id ?? ""}`;
+  const visibleProducts = useMemo(
+    () => displayProducts.slice((page - 1) * pageSize, page * pageSize),
+    [displayProducts, page]
+  );
+
+  useEffect(() => {
+    setPage(1);
+  }, [catalogKey]);
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+
   return (
-    <div className="flex-1 overflow-y-auto p-4 bg-gray-50 dark:bg-background-dark">
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-        {displayProducts.map((p) => {
+    <div className="flex-1 min-h-0 overflow-y-auto p-3 sm:p-4 bg-gray-50 dark:bg-background-dark">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs text-gray-500 dark:text-gray-400">
+        <span>{displayProducts.length} produto{displayProducts.length === 1 ? "" : "s"} encontrado{displayProducts.length === 1 ? "" : "s"}</span>
+        {displayProducts.length > pageSize && (
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={() => setPage((value) => Math.max(1, value - 1))} disabled={page === 1} className="p-1 rounded border border-gray-200 disabled:opacity-40 dark:border-gray-700" aria-label="Página anterior"><ChevronLeft size={15} /></button>
+            <span className="font-medium">Página {page} de {totalPages}</span>
+            <button type="button" onClick={() => setPage((value) => Math.min(totalPages, value + 1))} disabled={page === totalPages} className="p-1 rounded border border-gray-200 disabled:opacity-40 dark:border-gray-700" aria-label="Página seguinte"><ChevronRight size={15} /></button>
+          </div>
+        )}
+      </div>
+
+      {visibleProducts.length === 0 ? (
+        <div className="min-h-56 flex flex-col items-center justify-center text-center text-gray-500">
+          <PackageSearch size={34} className="mb-3 opacity-50" />
+          <p className="font-medium">Nenhum produto encontrado</p>
+          <p className="text-xs mt-1">Ajuste a pesquisa, categoria ou setor.</p>
+        </div>
+      ) : (
+      <div className="grid grid-cols-1 min-[420px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-2 sm:gap-3">
+        {visibleProducts.map((p) => {
           const category = p.category || p.categoria;
           const name = p.name || p.nome;
 
@@ -52,7 +88,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({
             <button
               key={p.id}
               onClick={() => handleAddToCart(p)}
-              className="bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-800 rounded-lg p-3 text-left hover:border-primary/50 hover:shadow-lg transition-all flex flex-col justify-between gap-3"
+              className="min-h-36 bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-800 rounded-lg p-3 text-left hover:border-primary/50 hover:shadow-lg focus-visible:ring-2 focus-visible:ring-primary transition-all flex flex-col justify-between gap-3"
             >
               {/* Categoria + Serviço + Nome */}
               <div>
@@ -119,6 +155,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({
           );
         })}
       </div>
+      )}
     </div>
   );
 };

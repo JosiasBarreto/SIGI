@@ -63,9 +63,11 @@ class ConsumoIngrediente(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     ordem_producao_id = db.Column(db.Integer, db.ForeignKey('ordens_producao.id'), nullable=False)
-    ingrediente_id = db.Column(db.Integer, db.ForeignKey('ingredientes.id'), nullable=False)
+    ingrediente_id = db.Column(db.Integer, db.ForeignKey('ingredientes.id'), nullable=True)
+    produto_consumivel_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=True)
     quantidade_prevista = db.Column(db.Numeric(10, 3), nullable=False)
     quantidade_consumida = db.Column(db.Numeric(10, 3), nullable=True)
     data_consumo = db.Column(db.DateTime, nullable=True)
 
     ingrediente = db.relationship('Ingrediente')
+    produto_consumivel = db.relationship('Produto', foreign_keys=[produto_consumivel_id])

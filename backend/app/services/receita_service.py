@@ -14,7 +14,12 @@ class ReceitaService:
             produto_acabado_id=produto.id,
             descricao=data.get('descricao'),
             tempo_preparacao=data.get('tempo_preparacao'),
-            rendimento_unidades=data.get('rendimento_unidades', 1)
+            rendimento_unidades=data.get('rendimento_unidades', 1),
+            setor=data.get('setor', 'Cozinha'),
+            custo_gas=data.get('custo_gas', 0),
+            custo_energia=data.get('custo_energia', 0),
+            custo_pessoal=data.get('custo_pessoal', 0),
+            custo_outros=data.get('custo_outros', 0),
         )
         db.session.add(receita)
         db.session.flush()
@@ -51,8 +56,9 @@ class ReceitaService:
             receita.descricao = data['descricao']
         if 'tempo_preparacao' in data:
             receita.tempo_preparacao = data['tempo_preparacao']
-        if 'rendimento_unidades' in data:
-            receita.rendimento_unidades = data['rendimento_unidades']
+        for campo in ('rendimento_unidades', 'setor', 'custo_gas', 'custo_energia', 'custo_pessoal', 'custo_outros'):
+            if campo in data:
+                setattr(receita, campo, data[campo])
             
         receita.recalcular_custos()
         db.session.commit()
@@ -74,6 +80,11 @@ class ReceitaService:
             "descricao": receita.descricao,
             "tempo_preparacao": receita.tempo_preparacao,
             "rendimento_unidades": float(receita.rendimento_unidades),
+            "setor": receita.setor,
+            "custo_gas": float(receita.custo_gas or 0),
+            "custo_energia": float(receita.custo_energia or 0),
+            "custo_pessoal": float(receita.custo_pessoal or 0),
+            "custo_outros": float(receita.custo_outros or 0),
             "custo_total": float(receita.custo_total),
             "custo_unitario": float(receita.custo_unitario),
             "margem_lucro": float(receita.margem_lucro),
@@ -199,6 +210,8 @@ class ReceitaService:
                 "descricao": r.descricao,
                 "tempo_preparacao": r.tempo_preparacao,
                 "rendimento_unidades": float(r.rendimento_unidades),
+                "setor": r.setor,
+                "custo_indireto": sum(float(valor or 0) for valor in (r.custo_gas, r.custo_energia, r.custo_pessoal, r.custo_outros)),
                 "custo_total": float(r.custo_total),
                 "custo_unitario": float(r.custo_unitario),
                 "margem_lucro": float(r.margem_lucro),

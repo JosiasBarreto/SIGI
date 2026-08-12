@@ -1,4 +1,4 @@
-from marshmallow import Schema, fields, validate
+from marshmallow import Schema, fields, validate, pre_load, ValidationError
 from app.models.pedido import TipoPedido, OrigemPedido, EstadoPedido, FormaPagamento, EstadoPagamento
 from app.models.item_pedido import TipoItem
 
@@ -56,6 +56,32 @@ class PedidoSchema(Schema):
     estado_pagamento = fields.Str(required=False, allow_none=True, load_default='Pendente')
     
     itens = fields.List(fields.Nested(ItemPedidoSchema), required=False)
+
+    @pre_load
+    def normalizar_enums(self, data, **kwargs):
+        """Aceita grafias legadas (SIMPLES, BALCAO, etc.) e guarda um valor único."""
+        data = dict(data or {})
+        campos = {
+            'tipo': TipoPedido,
+            'origem': OrigemPedido,
+            'estado': EstadoPedido,
+            'forma_pagamento': FormaPagamento,
+            'estado_pagamento': EstadoPagamento,
+        }
+        for campo, enum_cls in campos.items():
+            valor = data.get(campo)
+            if valor is None:
+                continue
+            texto = str(valor).strip()
+            encontrado = next(
+                (m.value for m in enum_cls
+                 if texto.casefold() in (m.name.casefold(), str(m.value).casefold())),
+                None,
+            )
+            if encontrado is None:
+                raise ValidationError({campo: [f'Valor inválido: {valor}.']})
+            data[campo] = encontrado
+        return data
 
 class AlterarEstadoPedidoSchema(Schema):
     estado = fields.Raw(required=True)

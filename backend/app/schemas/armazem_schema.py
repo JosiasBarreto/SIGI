@@ -54,7 +54,12 @@ class ProdutoSchema(Schema):
     codigo = fields.Str(dump_only=True)
     nome = fields.Str(required=True, validate=validate.Length(min=2))
     tipo = fields.Str(required=False, allow_none=True, load_default='Acabado')
-    servico = fields.Str(required=False, allow_none=True)
+    servico = fields.Function(
+        serialize=lambda obj: obj.servico.value if getattr(obj, 'servico', None) and hasattr(obj.servico, 'value') else (str(obj.servico).split('.')[-1] if getattr(obj, 'servico', None) else None),
+        deserialize=lambda value: str(value).split('.')[-1] if value is not None else None,
+        required=False,
+        allow_none=True,
+    )
     categoria = fields.Str(required=False) # Mantido por compatibilidade
     categoria_id = fields.Int(required=False, allow_none=True)
     unidade_medida_id = fields.Int(required=False, allow_none=True)

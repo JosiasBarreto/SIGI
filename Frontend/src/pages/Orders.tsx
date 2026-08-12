@@ -197,9 +197,11 @@ export default function Orders() {
       const strFormaPagamento = paymentOption === "Sem Pagamento" ? "Dinheiro" : (paymentMethod === "Transferência" ? "Transferencia" : (paymentMethod === "TPA / POS" ? "POS" : "Dinheiro"));
       
       const orderPayload: any = {
-        forma_pagamento: strFormaPagamento,
-        estado_pagamento: paymentOption === "Sem Pagamento" ? "Pendente" : (vPaid >= totalFinal ? "Pago" : (vPaid > 0 ? "Parcial" : "Pendente")),
-        valor_pago: paymentOption === "Sem Pagamento" ? 0 : vPaid,
+        // O checkout regista o pagamento e gera a fatura; enviá-lo aqui
+        // fazia o saldo ser abatido duas vezes.
+        forma_pagamento: "Dinheiro",
+        estado_pagamento: "Pendente",
+        valor_pago: 0,
 
         cliente_id: finalClientId ? Number(finalClientId) : null,
         tipo: orderType === "Composto" ? "Composto" : "Simples",
@@ -386,18 +388,17 @@ export default function Orders() {
     "Cancelados": ["Cancelado", "CANCELADO"],
   };
 
+  const normalizarEstado = (valor: unknown) => String(valor || '')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .trim().toUpperCase().replace(/[\s.-]+/g, '_');
+
   const visibleOrders = orders?.filter((o: any) => {
     const matchesSearch = getClientName(o.clientId || o.cliente_id).toLowerCase().includes(searchTerm.toLowerCase()) ||
         String(o.numero || o.id).toLowerCase().includes(searchTerm.toLowerCase());
     
     const mappedStatuses = estadoMap[activeTab] || [];
-    const rawState = String(o.estado || o.status || '');
-    const cleanState = rawState.includes('.') ? (rawState.split('.').pop() || '') : rawState;
-    const matchesStatus = mappedStatuses.some(st => 
-      st.toLowerCase() === cleanState.toLowerCase() ||
-      cleanState.toLowerCase().includes(st.toLowerCase()) ||
-      rawState.toLowerCase().includes(st.toLowerCase())
-    );
+    const estado = normalizarEstado(o.estado || o.status);
+    const matchesStatus = mappedStatuses.some(st => normalizarEstado(st) === estado);
     
     return matchesSearch && matchesStatus;
   }) || [];
