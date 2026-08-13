@@ -14,6 +14,24 @@ from marshmallow import ValidationError
 armazem_bp = Blueprint('armazem', __name__)
 armazem_service = ArmazemService()
 
+@armazem_bp.route('/importacao/validar', methods=['POST'])
+@jwt_required()
+@requires_roles('Administrador', 'Armazém')
+def validar_importacao_catalogo():
+    linhas = (request.get_json() or {}).get('linhas', [])
+    resultado = armazem_service.validar_importacao_catalogo(linhas)
+    return jsonify({'linhas': resultado, 'resumo': {'total': len(resultado), 'validos': sum(x['valido'] for x in resultado), 'invalidos': sum(not x['valido'] for x in resultado)}}), 200
+
+@armazem_bp.route('/importacao/confirmar', methods=['POST'])
+@jwt_required()
+@requires_roles('Administrador', 'Armazém')
+def confirmar_importacao_catalogo():
+    linhas = (request.get_json() or {}).get('linhas', [])
+    resultado, erro = armazem_service.importar_catalogo(linhas, get_jwt_identity())
+    if erro:
+        return jsonify(erro), 400
+    return jsonify({'msg': 'Importação concluída', 'itens': resultado}), 201
+
 def build_pagination(repo, schema, request):
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 10, type=int)
@@ -36,8 +54,8 @@ def build_pagination(repo, schema, request):
         "page": page
     }), 200
 
-@armazem_bp.route('/migrate', methods=['GET'])
-def run_migrations():
+def _legacy_migration_code_disabled():
+    """Historical migration code retained only for reference; never routed or run."""
     from app.core.database import db
     from sqlalchemy import text
     
@@ -449,6 +467,14 @@ def create_produto():
     if error:
         return jsonify({"msg": error}), 400
     return jsonify(ProdutoSchema().dump(result)), 201
+
+@armazem_bp.route('/produtos/<int:id>', methods=['GET'])
+@jwt_required()
+def get_produto(id):
+    produto = armazem_service.produto_repo.get_by_id(id)
+    if not produto:
+        return jsonify({"msg": "Produto não encontrado"}), 404
+    return jsonify(ProdutoSchema().dump(produto)), 200
 
 @armazem_bp.route('/produtos/<int:id>', methods=['PUT'])
 @jwt_required()

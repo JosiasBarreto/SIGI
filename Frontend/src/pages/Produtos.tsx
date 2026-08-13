@@ -6,9 +6,10 @@ import { useQuery } from "@tanstack/react-query";
 import { productService, warehouseService } from "../services";
 import ControleStockLote from "./Armazens/ControleStockLote";
 import { PackagePlus } from "lucide-react";
+import ImportacaoCatalogo from './produtos/ImportacaoCatalogo';
 
 export default function Produtos() {
-  const [activeTab, setActiveTab] = useState<"Consumivel" | "Acabado" | "Revenda" | "ControleStock">("Consumivel");
+  const [activeTab, setActiveTab] = useState<"Consumivel" | "Acabado" | "Revenda" | "ControleStock" | "Importacao">("Consumivel");
 
   const { data: armazensResponse } = useQuery({
     queryKey: ["armazens"],
@@ -68,6 +69,7 @@ export default function Produtos() {
           <PackagePlus size={16} />
           Controle de Stock
         </button>
+        <button onClick={() => setActiveTab("Importacao")} className={`px-4 py-2 text-sm font-bold rounded-lg transition-colors ${activeTab === "Importacao" ? "bg-white dark:bg-surface-dark text-primary shadow" : "text-gray-500 hover:text-gray-950 dark:text-gray-400"}`}>Importar Excel</button>
       </div>
 
       <div className="mt-4">
@@ -75,6 +77,7 @@ export default function Produtos() {
         {activeTab === "Acabado" && <Acabado />}
         {activeTab === "Revenda" && <Revenda />}
         {activeTab === "ControleStock" && <ControleStockLote armazens={armazens} defaultItemTypeFilter="Produto" />}
+        {activeTab === "Importacao" && <ImportacaoCatalogo />}
       </div>
     </div>
   );

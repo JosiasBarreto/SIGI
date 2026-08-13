@@ -27,8 +27,12 @@ class ReceitaProducao(BaseModel):
     itens = db.relationship('ReceitaItem', backref='receita', cascade="all, delete-orphan", lazy=True)
 
     def recalcular_custos(self):
+        # O custo é sempre recalculado do zero a partir dos itens persistidos.
+        # Assim, inclusões, alterações e remoções não deixam valores antigos
+        # acumulados no total da receita.
         custo = 0
-        for item in self.itens:
+        itens = ReceitaItem.query.filter_by(receita_id=self.id).all()
+        for item in itens:
             # fetch preco_compra directly from relation
             custo_item = float(item.consumivel.preco_compra or 0) * float(item.quantidade)
             item.custo_calculado = custo_item

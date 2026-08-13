@@ -21,7 +21,11 @@ def create_app(config_class=Config):
     CORS(app)
     db.init_app(app)
     jwt.init_app(app)
-    socketio.init_app(app, cors_allowed_origins="*")
+    socketio.init_app(
+        app,
+        cors_allowed_origins=app.config['SOCKETIO_CORS_ALLOWED_ORIGINS'],
+        message_queue=app.config.get('SOCKETIO_MESSAGE_QUEUE'),
+    )
     migrate.init_app(app, db)
     
     swagger_config = {
@@ -78,8 +82,10 @@ def create_app(config_class=Config):
     from app.api.v1.turno_controller import turno_bp
     from app.api.v1.receita_controller import receita_bp
     from app.api.v1.setup_controller import setup_bp
+    from app.api.v1.backup_controller import backup_bp
     
     app.register_blueprint(setup_bp, url_prefix='/api/v1/setup')
+    app.register_blueprint(backup_bp, url_prefix='/api/v1/backups')
     app.register_blueprint(auth_bp, url_prefix='/api/v1/auth')
     app.register_blueprint(user_bp, url_prefix='/api/v1/users')
     app.register_blueprint(comercial_bp, url_prefix='/api/v1/vendas')

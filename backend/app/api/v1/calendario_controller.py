@@ -6,6 +6,7 @@ from app.models.pedido import Pedido
 from app.models.ordem_producao import OrdemProducao
 from app.models.logistica import Entrega
 from app.models.requisicao import Requisicao
+from app.models.turno import Turno
 from sqlalchemy import extract
 from datetime import datetime
 
@@ -24,13 +25,17 @@ def get_calendario_dia():
     pedidos = db.session.query(Pedido).filter(Pedido.data_entrega == date_obj, Pedido.is_active == True).all()
     producoes = db.session.query(OrdemProducao).filter(OrdemProducao.data_producao == date_obj, OrdemProducao.is_active == True).all()
     entregas = db.session.query(Entrega).filter(Entrega.data_saida == date_obj, Entrega.is_active == True).all()
+    # Turnos são modelos recorrentes (sem uma data de escala), portanto os
+    # turnos ativos compõem a equipa prevista de qualquer dia selecionado.
+    turnos = db.session.query(Turno).filter(Turno.is_active == True, Turno.ativo == True).all()
     
     return jsonify({
         "data": date_str,
-        "eventos": [{"id": e.id, "numero": e.numero, "titulo": e.titulo, "estado": e.estado} for e in eventos],
-        "pedidos": [{"id": p.id, "numero": p.numero, "estado": p.estado} for p in pedidos],
-        "producoes": [{"id": o.id, "numero": o.numero, "sector": o.sector, "estado": o.estado} for o in producoes],
-        "entregas": [{"id": ent.id, "numero": ent.numero, "estado": ent.estado} for ent in entregas]
+        "eventos": [{"id": e.id, "numero": e.numero, "titulo": e.titulo, "estado": str(e.estado.value if hasattr(e.estado, 'value') else e.estado), "local": getattr(e, 'local', None), "observacoes": getattr(e, 'observacoes', None)} for e in eventos],
+        "pedidos": [{"id": p.id, "numero": p.numero, "estado": p.estado, "cliente": p.cliente.nome if getattr(p, 'cliente', None) else 'Balcão', "valor_total": float(p.valor_total or 0), "valor_pago": float(p.valor_pago or 0), "hora_entrega": str(p.hora_entrega) if p.hora_entrega else None, "observacoes": p.observacoes} for p in pedidos],
+        "producoes": [{"id": o.id, "numero": o.numero, "sector": o.sector, "estado": o.estado, "hora_inicio": o.hora_inicio.isoformat() if o.hora_inicio else None} for o in producoes],
+        "entregas": [{"id": ent.id, "numero": ent.numero, "estado": str(ent.estado.value if hasattr(ent.estado, 'value') else ent.estado), "local": getattr(ent, 'local_entrega', None), "hora_saida": str(ent.hora_saida) if ent.hora_saida else None} for ent in entregas],
+        "turnos": [{"id": t.id, "nome": t.nome, "hora_inicio": str(t.hora_inicio) if t.hora_inicio else None, "hora_fim": str(t.hora_fim) if t.hora_fim else None, "estado": 'Ativo'} for t in turnos]
     }), 200
 
 @calendario_bp.route('/mes', methods=['GET'])

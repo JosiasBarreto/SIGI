@@ -10,6 +10,24 @@ export function SocketListeners() {
   const { addNotification } = useNotifications();
 
   useEffect(() => {
+    const playProductionAlert = () => {
+      // A generated tone avoids bundling an arbitrary audio asset. Browsers
+      // may require a prior user interaction before allowing audio playback.
+      try {
+        const AudioContextCtor = window.AudioContext || (window as any).webkitAudioContext;
+        const context = new AudioContextCtor();
+        const oscillator = context.createOscillator();
+        const gain = context.createGain();
+        oscillator.frequency.value = 880;
+        gain.gain.setValueAtTime(0.12, context.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 0.45);
+        oscillator.connect(gain).connect(context.destination);
+        oscillator.start();
+        oscillator.stop(context.currentTime + 0.45);
+      } catch {
+        // Notification remains visible when the device/browser disallows sound.
+      }
+    };
     const handleNovoPedido = (payload: any) => {
       queryClient.invalidateQueries({ queryKey: ['pedidos'] });
       queryClient.invalidateQueries({ queryKey: ['requests'] });
@@ -20,15 +38,23 @@ export function SocketListeners() {
 
     const handleNovaOrdemProducao = (payload: any) => {
       queryClient.invalidateQueries({ queryKey: ['producao'] });
+      queryClient.invalidateQueries({ queryKey: ['production-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['prod-cal'] });
+      queryClient.invalidateQueries({ queryKey: ['calendario-dia'] });
       queryClient.invalidateQueries({ queryKey: ['pedidos'] });
       queryClient.invalidateQueries({ queryKey: ['requests'] });
-      const msg = payload?.numero ? `Nova ordem de produção na cozinha: ${payload.numero}` : 'Tlim! Nova ordem recebida na cozinha!';
+      const sector = payload?.sector || 'Produção';
+      const msg = payload?.numero ? `Nova ordem de produção em ${sector}: ${payload.numero}` : `Tlim! Nova ordem recebida em ${sector}!`;
+      playProductionAlert();
       toast.success(msg);
-      addNotification({ title: 'Cozinha', message: msg, type: 'success' });
+      addNotification({ title: sector, message: msg, type: 'success' });
     };
 
     const handleProducaoIniciada = (payload: any) => {
       queryClient.invalidateQueries({ queryKey: ['producao'] });
+      queryClient.invalidateQueries({ queryKey: ['production-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['prod-cal'] });
+      queryClient.invalidateQueries({ queryKey: ['calendario-dia'] });
       queryClient.invalidateQueries({ queryKey: ['pedidos'] });
       const msg = payload?.numero ? `Produção iniciada para: ${payload.numero}` : 'Produção iniciada!';
       toast.info(msg);
@@ -38,6 +64,9 @@ export function SocketListeners() {
     const handleProducaoConcluida = (payload: any) => {
       queryClient.invalidateQueries({ queryKey: ['pedidos'] });
       queryClient.invalidateQueries({ queryKey: ['producao'] });
+      queryClient.invalidateQueries({ queryKey: ['production-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['prod-cal'] });
+      queryClient.invalidateQueries({ queryKey: ['calendario-dia'] });
       queryClient.invalidateQueries({ queryKey: ['requests'] });
       const msg = payload?.numero ? `Ordem de produção concluída: ${payload.numero}` : 'Ordem de produção concluída!';
       toast.success(msg);
@@ -87,6 +116,8 @@ export function SocketListeners() {
     const handleNovoEvento = (payload: any) => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
       queryClient.invalidateQueries({ queryKey: ['events-cal'] });
+      queryClient.invalidateQueries({ queryKey: ['calendario-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['calendario-dia'] });
       const msg = payload?.titulo ? `Novo evento agendado: ${payload.titulo}` : 'Novo evento agendado!';
       toast.info(msg);
       addNotification({ title: 'Novo Evento', message: msg, type: 'info' });

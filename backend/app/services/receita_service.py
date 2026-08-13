@@ -141,8 +141,9 @@ class ReceitaService:
             return False, "Item não encontrado"
             
         db.session.delete(item)
-        receita.itens.remove(item)
-        
+        # Força a remoção antes do cálculo para que a consulta de custos não
+        # inclua o item já excluído.
+        db.session.flush()
         receita.recalcular_custos()
         db.session.commit()
         AuditService.log_action(user_id, "REMOVE_ITEM", "receitas_producao", receita.id, new_values={"item_id": item_id})

@@ -71,8 +71,10 @@ export function useCaixaCart(products: any[], descontoClientePercent: number) {
   }, [cart]);
 
   const cartCalculations = useMemo(() => {
+    const roundMoney = (value: number) => Math.round((value + Number.EPSILON) * 100) / 100;
+    const totalBrutoCarrinho = cart.reduce((sum, item) => sum + Number(item.preco_venda || item.salePrice || 0) * Number(item.qty || 1), 0);
     let grossSubtotal = 0;
-    let grossTotalComIva = 0;
+    let baseTributavel = 0;
     let totalItemDiscounts = 0;
     let calculatedIva = 0;
 
@@ -80,10 +82,7 @@ export function useCaixaCart(products: any[], descontoClientePercent: number) {
       const qty = Number(item.qty || 1);
       const precoVenda = Number(item.preco_venda || item.salePrice || 0);
       const taxaIva = Number(item.taxa_iva || 0);
-      const precoComIva = Number(item.preco_venda_com_iva || (taxaIva > 0 ? precoVenda * (1 + taxaIva / 100) : precoVenda));
-
-      const itemGrossSemIva = precoVenda * qty;
-      const itemGrossComIva = precoComIva * qty;
+      const itemGrossSemIva = roundMoney(precoVenda * qty);
 
       const descValor = Number(item.desconto_valor || 0);
       const descTipo = item.desconto_tipo || "percentual";
@@ -91,34 +90,41 @@ export function useCaixaCart(products: any[], descontoClientePercent: number) {
 
       if (descValor > 0) {
         if (descTipo === "percentual") {
-          itemDescAmount = itemGrossComIva * (Math.min(100, Math.max(0, descValor)) / 100);
+          itemDescAmount = itemGrossSemIva * (Math.min(100, Math.max(0, descValor)) / 100);
         } else {
-          itemDescAmount = Math.min(itemGrossComIva, descValor);
+          itemDescAmount = Math.min(itemGrossSemIva, descValor);
         }
       }
+      // Os descontos globais são rateados na base sem IVA, exatamente como o
+      // payload enviado ao servidor para cada linha.
+      itemDescAmount += (itemGrossSemIva - itemDescAmount) * (descontoClientePercent / 100);
+      if (descontoManual > 0 && totalBrutoCarrinho > 0) {
+        itemDescAmount += descontoManual * (itemGrossSemIva / totalBrutoCarrinho);
+      }
 
-      const itemNetComIva = Math.max(0, itemGrossComIva - itemDescAmount);
+      itemDescAmount = roundMoney(itemDescAmount);
+      const itemBase = roundMoney(Math.max(0, itemGrossSemIva - itemDescAmount));
+      const itemIva = roundMoney(itemBase * taxaIva / 100);
 
       grossSubtotal += itemGrossSemIva;
-      grossTotalComIva += itemGrossComIva;
+      baseTributavel += itemBase;
       totalItemDiscounts += itemDescAmount;
 
-      if (taxaIva > 0) {
-        const itemNetSemIva = itemNetComIva / (1 + taxaIva / 100);
-        calculatedIva += (itemNetComIva - itemNetSemIva);
-      }
+      calculatedIva += itemIva;
     });
 
-    const netComIvaBeforeGlobal = Math.max(0, grossTotalComIva - totalItemDiscounts);
-    const descontoAutomatico = netComIvaBeforeGlobal * (descontoClientePercent / 100);
-    const finalTotal = Math.max(0, netComIvaBeforeGlobal - descontoAutomatico - descontoManual);
+    // O desconto de cliente/manual é enviado distribuído pelos itens no POS.
+    // Esta prévia replica a ordem fiscal: desconto → base tributável → IVA.
+    const descontoAutomatico = roundMoney(Math.max(0, grossSubtotal - totalItemDiscounts) * (descontoClientePercent / 100));
+    const ivaFinal = roundMoney(calculatedIva);
+    const finalTotal = roundMoney(baseTributavel + ivaFinal);
 
     return {
       subtotal: grossSubtotal,
-      totalComIva: grossTotalComIva,
+      totalComIva: roundMoney(grossSubtotal + calculatedIva),
       totalItemDiscounts,
       descontoAutomatico,
-      iva: calculatedIva,
+      iva: ivaFinal,
       total: finalTotal,
     };
   }, [cart, descontoClientePercent, descontoManual]);

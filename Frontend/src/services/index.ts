@@ -1443,7 +1443,7 @@ export const configService = {
         impressaoAuto: data.impressao_auto ?? false,
         backupAuto: data.backup_auto ?? false,
         numVias: data.numero_vias ?? 2,
-        taxaIva: data.taxa_iva ?? 14,
+        taxaIva: data.taxa_iva ?? null,
         licenca_aplicacao: data.licenca_aplicacao || 'Não atribuido',
         numero_whatsapp: data.numero_whatsapp || 'Não atribuido',
         telemoveis: data.telemoveis || []
@@ -1466,7 +1466,7 @@ export const configService = {
         impressaoAuto: false,
         backupAuto: false,
         numVias: 2,
-        taxaIva: 14,
+        taxaIva: null,
         logotipo: ""
       };
     }

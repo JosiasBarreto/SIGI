@@ -86,14 +86,18 @@ export default function Calendario() {
   const production = productionResp?.items || [];
   const deliveries = deliveriesResp?.items || [];
   const shifts = shiftsResp?.items || [];
+  const shiftDates = Array.from(
+    { length: new Date(currentYear, currentMonth, 0).getDate() },
+    (_, index) => new Date(currentYear, currentMonth - 1, index + 1)
+  );
 
   // Helper to map and colorize calendar events
   const calendarEvents = [
     ...events.map((e: any) => ({
       id: `e-${e.id}`,
-      title: `EVENTO: ${e.name} @ ${e.location}`,
-      start: new Date(e.date + 'T' + (e.startTime || '09:00')),
-      end: new Date(e.date + 'T' + (e.endTime || '13:00')),
+      title: `EVENTO: ${e.name || e.titulo || e.numero}${(e.location || e.local) ? ` @ ${e.location || e.local}` : ''}`,
+      start: new Date((e.date || e.data_evento) + 'T' + (e.startTime || e.hora_inicio || '09:00')),
+      end: new Date((e.date || e.data_evento) + 'T' + (e.endTime || e.hora_fim || '13:00')),
       color: '#FF6B00', // primary orange
       type: 'EVENTO',
       resource: e
@@ -107,11 +111,11 @@ export default function Calendario() {
       type: 'PEDIDO',
       resource: o
     })),
-    ...production.filter((p: any) => p.status === 'Em Produção').map((p: any) => ({
+    ...production.map((p: any) => ({
       id: `p-${p.id}`,
-      title: `PROD: #${p.id} em curso`,
-      start: new Date(p.dueDate || new Date()),
-      end: new Date(new Date(p.dueDate || new Date()).getTime() + 7200000), // 2h duration
+      title: `PROD: ${p.numero || `#${p.id}`} — ${p.estado || p.status || 'Pendente'}`,
+      start: new Date(p.data_producao || p.dueDate || p.data_entrega || new Date()),
+      end: new Date(new Date(p.data_producao || p.dueDate || p.data_entrega || new Date()).getTime() + 7200000),
       color: '#F59E0B', // warning amber
       type: 'PRODUÇÃO',
       resource: p
@@ -127,10 +131,10 @@ export default function Calendario() {
     })),
     ...shifts
       .filter((s: any) => s.startTime || s.hora_inicio || s.nome)
-      .map((s: any) => {
+      .flatMap((s: any) => shiftDates.map((shiftDate) => {
         const title = s.userRole ? `TURNO: ${s.userRole}` : `Turno: ${s.nome || 'Configurado'}`;
         
-        let startDate = new Date();
+        let startDate = new Date(shiftDate);
         if (s.startTime) {
           startDate = new Date(s.startTime);
         } else if (s.hora_inicio) {
@@ -159,7 +163,7 @@ export default function Calendario() {
           type: 'TURNO',
           resource: s
         };
-      })
+      }))
   ];
 
   const handleSelectEvent = (event: any) => {
@@ -188,7 +192,7 @@ export default function Calendario() {
     } else {
       Swal.fire({
         title: event.title,
-        text: `Agendamento operativo do tipo ${event.type}.`,
+        html: `<div class="text-left text-sm space-y-2"><p><strong>Tipo:</strong> ${event.type}</p><p><strong>Estado:</strong> ${raw.estado || raw.status || '—'}</p><p><strong>Número:</strong> ${raw.numero || raw.id || '—'}</p><p><strong>Início:</strong> ${format(event.start, 'dd/MM/yyyy HH:mm')}</p>${raw.observacoes ? `<p><strong>Observações:</strong> ${raw.observacoes}</p>` : ''}</div>`,
         icon: 'info',
         confirmButtonText: 'OK'
       });
@@ -477,6 +481,14 @@ export default function Calendario() {
               <div className="text-center py-8 text-gray-500 text-xs">A carregar planeamento...</div>
             ) : (
               <>
+                <div>
+                  <h4 className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                    <CalendarIcon size={12} className="text-primary" /> Eventos
+                  </h4>
+                  {(!dayDetails?.eventos || dayDetails.eventos.length === 0) ? <p className="text-[10px] text-gray-400 italic">Sem eventos para este dia.</p> : (
+                    <div className="space-y-1.5">{dayDetails.eventos.map((e: any) => <div key={e.id} className="p-2 rounded-lg bg-primary/5 border border-primary/15 text-[11px]"><b>{e.numero || `Evento #${e.id}`}</b><span className="block text-gray-500">{e.titulo} · {e.estado}</span></div>)}</div>
+                  )}
+                </div>
                 {/* 1. Pedidos Agendados a levantar/faturar */}
                 <div>
                   <h4 className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-widest mb-2 flex items-center gap-1.5">

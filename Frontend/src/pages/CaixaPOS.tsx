@@ -222,7 +222,7 @@ export default function CaixaPOS() {
     }
 
     // 3. Payment method mandatory fields:
-    if (paymentMethod === "Transferência" || paymentMethod === "TPA / POS") {
+    if (paymentMethod === "Transferência" || paymentMethod === "TPA / POS" || paymentMethod === "Mixto") {
       if (!codigoTransferencia.trim()) {
         toast.error("Código de transferência / comprovativo é obrigatório.");
         return;
@@ -236,7 +236,15 @@ export default function CaixaPOS() {
     const valorPagoNum =
       isAgendado && valorPago !== "" ? parseFloat(valorPago) : total;
 
-    if (paymentMethod === "Dinheiro" && amountReceived < valorPagoNum) {
+    const valorDinheiroMixto = Number(paymentFormState?.valorCashMixto || 0);
+    const valorPosMixto = Number(paymentFormState?.valorPosMixto || 0);
+    if (paymentMethod === "Mixto" && Math.abs(valorDinheiroMixto + valorPosMixto - valorPagoNum) > 0.01) {
+      toast.error("No pagamento misto, a soma de Dinheiro e POS deve ser igual ao valor a liquidar.");
+      return;
+    }
+
+    const minimoDinheiroRecebido = paymentMethod === "Mixto" ? valorDinheiroMixto : valorPagoNum;
+    if ((paymentMethod === "Dinheiro" || paymentMethod === "Mixto") && amountReceived < minimoDinheiroRecebido) {
       toast.error("Valor recebido insuficiente.");
       return;
     }
@@ -249,6 +257,18 @@ export default function CaixaPOS() {
           : paymentMethod === "TPA / POS"
           ? 3
           : 1;
+
+      const pagamentos = valorPagoNum <= 0 ? [] : paymentMethod === "Mixto"
+        ? [
+            { forma_pagamento_id: 1, valor: valorDinheiroMixto },
+            { forma_pagamento_id: 3, valor: valorPosMixto, codigo_transferencia: codigoTransferencia || null, emissor: emissor || null },
+          ].filter((pagamento) => pagamento.valor > 0)
+        : [{
+            forma_pagamento_id: paymentMethodId,
+            valor: valorPagoNum,
+            codigo_transferencia: paymentMethod !== "Dinheiro" ? (codigoTransferencia || null) : null,
+            emissor: paymentMethod !== "Dinheiro" ? (emissor || null) : null,
+          }];
 
       const mapCartToVendaItens = (
         quantidadesDisponiveis?: Record<number, number>
@@ -304,17 +324,7 @@ export default function CaixaPOS() {
         cliente_id: selectedClient ? Number(selectedClient) : undefined,
         observacoes: "Venda direta via POS",
         itens: mapCartToVendaItens(),
-        pagamentos:
-          valorPagamento > 0
-            ? [
-                {
-                  forma_pagamento_id: paymentMethodId,
-                  valor: valorPagamento,
-                  codigo_transferencia: paymentMethod !== "Dinheiro" ? (codigoTransferencia || null) : null,
-                  emissor: paymentMethod !== "Dinheiro" ? (emissor || null) : null,
-                },
-              ]
-            : [],
+        pagamentos: valorPagamento > 0 ? pagamentos : [],
       });
 
       const d = new Date();
@@ -394,13 +404,9 @@ export default function CaixaPOS() {
         if (valorPagoNum > 0) {
           const vendaRes = await checkoutPedido.mutateAsync({
             pedido_id: createdOrder.id,
-            pagamento: {
-              observacoes: `Liquidação em caixa`,
-              valor: valorPagoNum,
-              forma_pagamento_id: paymentMethodId,
-              codigo_transferencia: paymentMethod !== "Dinheiro" ? (codigoTransferencia || null) : null,
-              emissor: paymentMethod !== "Dinheiro" ? (emissor || null) : null
-            } as any,
+            pagamento: pagamentos.length === 1
+              ? { ...pagamentos[0], observacoes: "Liquidação em caixa" } as any
+              : { pagamentos, observacoes: "Liquidação mista em caixa" } as any,
           });
           setCreatedVenda(vendaRes);
         } else {
@@ -460,7 +466,7 @@ export default function CaixaPOS() {
       return;
     }
     const targetId = venda.pedido_id || venda.id;
-    if (venda.pedido_id || tipoPedido === "Agendado") {
+    if (!venda.id) {
       documentService.imprimirReciboPedido(targetId).catch(() => {
         documentService.imprimirReciboVenda(venda.id).catch((err) => {
           toast.error(err?.message || "Erro ao gerar recibo térmico.");
@@ -882,7 +888,7 @@ export default function CaixaPOS() {
                     type="button"
                     onClick={() => {
                       const docId = createdVenda.pedido_id || createdVenda.id;
-                      if (createdVenda.pedido_id || tipoPedido === "Agendado") {
+                      if (!createdVenda.id) {
                         documentService.pedidoPdf(docId).catch(() => {
                           documentService.vendaPdf(createdVenda.id).catch((err) =>
                             toast.error(err.message || "Erro ao abrir PDF.")
@@ -904,7 +910,7 @@ export default function CaixaPOS() {
                     type="button"
                     onClick={() => {
                       const docId = createdVenda.pedido_id || createdVenda.id;
-                      if (createdVenda.pedido_id || tipoPedido === "Agendado") {
+                      if (!createdVenda.id) {
                         documentService.pedidoRecibo(docId).catch(() => {
                           documentService.vendaRecibo(createdVenda.id).catch((err) =>
                             toast.error(err.message || "Erro ao descarregar recibo.")

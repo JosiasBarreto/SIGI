@@ -5,6 +5,7 @@ from app.repositories.comercial_repos import VendaRepository, TaxaIVARepository,
 from app.services.audit_service import AuditService
 from app.models.produto import Produto, TipoProduto
 from app.services.stock_service import StockService
+from app.services.venda_calculo_service import calcular_item_venda, calcular_venda
 
 class StockInsuficienteError(Exception):
     def __init__(self, message="Stock insuficiente para esta operação."):
@@ -33,6 +34,21 @@ class ComercialService:
         
         # Formatar
         return f"{tipo_documento} {ano_atual}/{numero:06d}"
+
+    @staticmethod
+    def _atualizar_pagamento_pedido(pedido):
+        """Update only the financial dimension of a pedido.
+
+        The operational state belongs to the production/delivery workflow and
+        must never be marked Concluido merely because the invoice was paid.
+        """
+        from app.models.pedido import EstadoPagamento
+        pedido.saldo = max(0.0, float(pedido.valor_total or 0) - float(pedido.valor_pago or 0))
+        pedido.estado_pagamento = (
+            EstadoPagamento.PAGO.value if pedido.saldo <= 0 else
+            EstadoPagamento.PARCIAL.value if float(pedido.valor_pago or 0) > 0 else
+            EstadoPagamento.PENDENTE.value
+        )
 
     def create_venda(self, data: dict, user_id: int):
         # Transaction is expected to be managed by the controller, but we can assume db.session scope
@@ -63,10 +79,7 @@ class ComercialService:
         db.session.add(venda)
         db.session.flush()
 
-        subtotal = 0.0
-        total_desconto = 0.0
-        base_tributavel = 0.0
-        total_iva = 0.0
+        itens_calculados = []
 
         for item_data in data.get('itens', []):
             produto = None
@@ -76,51 +89,46 @@ class ComercialService:
                     db.session.rollback()
                     raise ValueError(f"O produto '{produto.nome}' é consumível e não pode ser vendido.")
 
-            qtd = float(item_data['quantidade'])
+            qtd = item_data.get('quantidade')
             
             preco_unit = 0.0
             taxa_iva = None
             if produto:
-                preco_unit = float(produto.preco_venda) if produto.preco_venda is not None else 0.0
+                preco_unit = produto.preco_venda if produto.preco_venda is not None else 0
                 if produto.taxa_iva:
                     taxa_iva = produto.taxa_iva
                     
             if 'preco_unitario' in item_data and not produto:
-                preco_unit = float(item_data['preco_unitario'])
+                preco_unit = item_data['preco_unitario']
                 
             if item_data.get('taxa_iva_id') and not taxa_iva:
                 taxa_iva = TaxaIVA.query.get(item_data['taxa_iva_id'])
             
-            iva_perc = float(taxa_iva.percentagem) if taxa_iva else 0.0
-            
-            desc = float(item_data.get('desconto', 0))
-            
-            sub = preco_unit * qtd
-            item_base = sub - desc
-            valor_iva = item_base * (iva_perc / 100.0)
-            total_item = item_base + valor_iva
+            iva_perc = taxa_iva.percentagem if taxa_iva else 0
+            calculado = calcular_item_venda(
+                preco_unit, qtd, iva_perc,
+                desconto_percentual=item_data.get('desconto_percentual'),
+                desconto_valor=None if item_data.get('desconto_percentual') is not None else item_data.get('desconto', 0),
+            )
             
             venda_item = VendaItem(
                 venda_id=venda.id,
                 item_tipo=item_data.get('item_tipo', 'Produto'),
                 item_id=item_data.get('item_id'),
                 descricao=item_data.get('descricao', produto.nome if produto else 'Item'),
-                quantidade=qtd,
-                preco_unitario=preco_unit,
-                desconto=desc,
+                quantidade=calculado.quantidade,
+                preco_unitario=calculado.preco_unitario,
+                desconto=calculado.desconto,
                 taxa_iva_id=taxa_iva.id if taxa_iva else None,
-                taxa_iva=iva_perc,
-                valor_iva=valor_iva,
-                subtotal=sub,
-                total=total_item
+                taxa_iva=calculado.taxa_iva,
+                valor_iva=calculado.valor_iva,
+                subtotal=calculado.subtotal,
+                total=calculado.total
             )
             
             db.session.add(venda_item)
             
-            subtotal += sub
-            total_desconto += desc
-            base_tributavel += item_base
-            total_iva += valor_iva
+            itens_calculados.append(calculado)
             
         if venda.pedido_id:
             venda._subtotal = None
@@ -132,11 +140,12 @@ class ComercialService:
             venda._cliente_id = None
             venda._valor_pago = None
         else:
-            venda.subtotal = subtotal
-            venda.desconto_total = total_desconto
-            venda.base_tributavel = base_tributavel
-            venda.total_iva = total_iva
-            venda.total = base_tributavel + total_iva
+            totais = calcular_venda(itens_calculados)
+            venda.subtotal = totais['subtotal']
+            venda.desconto_total = totais['desconto']
+            venda.base_tributavel = totais['base_tributavel']
+            venda.total_iva = totais['valor_iva']
+            venda.total = totais['total']
             venda.saldo = venda.total
         
         # Process inline payments if provided
@@ -369,7 +378,7 @@ class ComercialService:
         valor_pagar_real = min(valor_entregue, saldo_pendente)
         troco = max(0.0, valor_entregue - saldo_pendente)
             
-        from app.models.financeiro import Pagamento, EstadoPagamento
+        from app.models.financeiro import Pagamento, EstadoPagamento, FormaPagamento
         from app.models.caixa import Caixa, MovimentoCaixa, TipoMovimentoCaixa
 
         # Verificar caixa aberto
@@ -439,7 +448,7 @@ class ComercialService:
 
     def liquidar_pedido_faturado(self, pedido, venda, data, user_id):
         """Regista parcela na fatura já emitida e mantém pedido/fatura sincronizados."""
-        from app.models.pedido import EstadoPedido, EstadoPagamento
+        from app.models.pedido import EstadoPagamento
         pagamento_info = data.get('pagamento', data) if isinstance(data, dict) else {}
         valor = float(pagamento_info.get('valor', 0))
         saldo = float(pedido.saldo or 0)
@@ -449,9 +458,7 @@ class ComercialService:
             return None, "O valor do pagamento nao pode ser superior ao saldo do pedido."
         self.add_pagamento(venda.id, pagamento_info, user_id, auto_commit=False)
         pedido.valor_pago = float(pedido.valor_pago or 0) + valor
-        pedido.saldo = max(0.0, float(pedido.valor_total or 0) - float(pedido.valor_pago))
-        pedido.estado_pagamento = EstadoPagamento.PAGO.value if pedido.saldo <= 0 else EstadoPagamento.PARCIAL.value
-        pedido.estado = EstadoPedido.CONCLUIDO.value if pedido.saldo <= 0 else EstadoPedido.CONFIRMADO.value
+        self._atualizar_pagamento_pedido(pedido)
         db.session.commit()
         return venda, None
 
@@ -663,14 +670,7 @@ class ComercialService:
         db.session.add(mov)
         
         pedido.valor_pago = float(pedido.valor_pago or 0) + valor_pagar
-        pedido.saldo = float(pedido.valor_total) - float(pedido.valor_pago)
-        
-        if pedido.saldo <= 0:
-            pedido.estado_pagamento = EstadoPagamento.PAGO.value
-            pedido.estado = EstadoPedido.CONCLUIDO.value
-        else:
-            pedido.estado_pagamento = EstadoPagamento.PARCIAL.value
-            pedido.estado = EstadoPedido.CONFIRMADO.value
+        self._atualizar_pagamento_pedido(pedido)
             
         # Deduct stock
         stock_service = StockService()

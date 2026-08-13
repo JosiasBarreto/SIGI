@@ -19,6 +19,7 @@ export const useComercial = () => {
       // Invalida cache para atualizar painéis
       queryClient.invalidateQueries({ queryKey: ['vendas'] });
       queryClient.invalidateQueries({ queryKey: ['caixa'] });
+      queryClient.invalidateQueries({ queryKey: ['fluxo_caixa'] });
       queryClient.invalidateQueries({ queryKey: ['produtos'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
@@ -35,6 +36,7 @@ export const useComercial = () => {
       queryClient.invalidateQueries({ queryKey: ['pedidos'] });
       queryClient.invalidateQueries({ queryKey: ['vendas'] });
       queryClient.invalidateQueries({ queryKey: ['caixa'] });
+      queryClient.invalidateQueries({ queryKey: ['fluxo_caixa'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
     onError: (error: any) => {
@@ -51,6 +53,7 @@ export const useComercial = () => {
       queryClient.invalidateQueries({ queryKey: ['eventos'] });
       queryClient.invalidateQueries({ queryKey: ['vendas'] });
       queryClient.invalidateQueries({ queryKey: ['caixa'] });
+      queryClient.invalidateQueries({ queryKey: ['fluxo_caixa'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
     onError: (error: any) => {
@@ -67,6 +70,8 @@ export const useComercial = () => {
       queryClient.invalidateQueries({ queryKey: ['vendas'] });
       queryClient.invalidateQueries({ queryKey: ['contas_receber'] });
       queryClient.invalidateQueries({ queryKey: ['caixa'] });
+      queryClient.invalidateQueries({ queryKey: ['fluxo_caixa'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
     onError: (error: any) => {
       toast.error(error.message || 'Erro ao registar pagamento');

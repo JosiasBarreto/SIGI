@@ -2,6 +2,23 @@ from flask import request
 from app.models.auditoria import Auditoria, LogAcesso, LogErro
 from app.core.database import db
 import traceback
+from datetime import date, datetime
+from decimal import Decimal
+from enum import Enum
+
+def _json_safe(value):
+    """Converte valores de schemas/ORM em dados aceites por colunas JSON."""
+    if isinstance(value, Decimal):
+        return float(value)
+    if isinstance(value, (date, datetime)):
+        return value.isoformat()
+    if isinstance(value, Enum):
+        return value.value
+    if isinstance(value, dict):
+        return {str(key): _json_safe(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple, set)):
+        return [_json_safe(item) for item in value]
+    return value
 
 class AuditService:
     @staticmethod
@@ -15,8 +32,8 @@ class AuditService:
                 operacao=action.upper() if isinstance(action, str) else action.name,
                 entidade=entidade,
                 registo_id=record_id,
-                valor_anterior=old_values,
-                valor_novo=new_values,
+                valor_anterior=_json_safe(old_values),
+                valor_novo=_json_safe(new_values),
                 justificativa=justificativa,
                 ip=ip_address,
                 modulo=modulo

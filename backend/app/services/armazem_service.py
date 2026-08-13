@@ -28,6 +28,82 @@ class ArmazemService:
         self.ing_stock_repo = IngredienteStockArmazemRepository()
         self.mat_stock_repo = MaterialStockArmazemRepository()
 
+    def validar_importacao_catalogo(self, linhas):
+        """Valida o lote antes de qualquer escrita; usado pela pré-visualização."""
+        vistos_codigo, vistos_nome, resultado = set(), set(), []
+        for numero, linha in enumerate(linhas or [], start=2):
+            item = {str(k).strip(): v for k, v in linha.items() if k is not None}
+            tipo = str(item.get('tipo') or '').strip()
+            nome = str(item.get('nome') or '').strip()
+            codigo = str(item.get('codigo') or '').strip()
+            erros, alertas = [], []
+            if tipo not in ('Consumivel', 'Acabado', 'Revenda', 'Material'):
+                erros.append('tipo deve ser Consumivel, Acabado, Revenda ou Material')
+            if not nome:
+                erros.append('nome é obrigatório')
+            if codigo and codigo.lower() in vistos_codigo:
+                erros.append('código repetido no ficheiro')
+            if nome and nome.lower() in vistos_nome:
+                erros.append('nome repetido no ficheiro')
+            vistos_codigo.add(codigo.lower()); vistos_nome.add(nome.lower())
+            if tipo == 'Material':
+                duplicado = Material.query.filter(db.func.lower(Material.nome) == nome.lower(), Material.is_active == True).first() if nome else None
+            else:
+                duplicado = Produto.query.filter(db.func.lower(Produto.nome) == nome.lower(), Produto.is_active == True).first() if nome else None
+            if codigo:
+                modelo = Material if tipo == 'Material' else Produto
+                duplicado = duplicado or modelo.query.filter(db.func.lower(modelo.codigo) == codigo.lower(), modelo.is_active == True).first()
+            if duplicado:
+                erros.append(f'duplicado no sistema: {duplicado.nome}')
+            try:
+                quantidade = float(item.get('quantidade_inicial') or 0)
+                minimo = float(item.get('stock_minimo') or 0)
+                if quantidade < 0: erros.append('quantidade_inicial não pode ser negativa')
+                if quantidade <= minimo and minimo > 0: alertas.append('stock inicial baixo/crítico')
+            except (TypeError, ValueError):
+                erros.append('quantidade_inicial ou stock_minimo inválidos')
+            resultado.append({'linha': numero, 'dados': item, 'valido': not erros, 'erros': erros, 'alertas': alertas})
+        return resultado
+
+    def importar_catalogo(self, linhas, user_id):
+        validacao = self.validar_importacao_catalogo(linhas)
+        invalidos = [item for item in validacao if not item['valido']]
+        if invalidos:
+            return None, {'msg': 'Existem linhas inválidas; corrija-as antes de confirmar.', 'linhas': invalidos}
+        inseridos = []
+        try:
+            for item in validacao:
+                dados = item['dados'].copy()
+                tipo = dados.pop('tipo')
+                quantidade = float(dados.pop('quantidade_inicial', 0) or 0)
+                armazem_id = dados.get('armazem_id') or None
+                for campo in ('categoria_id', 'unidade_medida_id', 'tempo_producao', 'taxa_iva_id', 'armazem_id'):
+                    if dados.get(campo) in ('', None): dados.pop(campo, None)
+                    elif campo.endswith('_id') or campo == 'tempo_producao': dados[campo] = int(dados[campo])
+                for campo in ('preco_compra', 'preco_venda', 'stock_minimo', 'valor_unitario'):
+                    if dados.get(campo) in ('', None): dados.pop(campo, None)
+                    else: dados[campo] = float(dados[campo])
+                dados['armazem_id'] = int(armazem_id) if armazem_id else None
+                if tipo == 'Material':
+                    dados['tipo'] = dados.pop('tipo_material', None) or 'Reutilizavel'
+                    dados['quantidade_total'] = quantidade
+                    material, erro = self.create_material(dados, user_id)
+                    if erro: raise ValueError(erro)
+                    inseridos.append({'tipo': 'Material', 'id': material.id, 'nome': material.nome, 'quantidade_entrada': quantidade})
+                else:
+                    dados['tipo'] = tipo
+                    produto, erro = self.create_produto(dados, user_id)
+                    if erro: raise ValueError(erro)
+                    if quantidade > 0:
+                        produto, erro = self.entrada_stock(produto.id, {'quantidade': quantidade, 'armazem_id': dados.get('armazem_id'), 'preco_compra': dados.get('preco_compra'), 'observacao': 'Entrada inicial via importação Excel'}, user_id)
+                        if erro: raise ValueError(erro)
+                    inseridos.append({'tipo': tipo, 'id': produto.id, 'nome': produto.nome, 'quantidade_entrada': quantidade})
+            AuditService.log_action(user_id, 'IMPORT', 'catalogo', new_values={'total': len(inseridos)}, modulo='ARMAZEM')
+            return inseridos, None
+        except Exception as error:
+            db.session.rollback()
+            return None, {'msg': str(error)}
+
     # --- Fornecedor ---
     def create_fornecedor(self, data, user_id):
         # Validate unique NIF

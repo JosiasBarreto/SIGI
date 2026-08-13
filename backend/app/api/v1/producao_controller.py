@@ -4,6 +4,7 @@ from app.services.producao_service import ProducaoService
 from app.schemas.producao_schema import FichaTecnicaSchema, OrdemProducaoSchema, AlterarEstadoOrdemSchema
 from app.middleware.auth_middleware import requires_roles
 from marshmallow import ValidationError
+from datetime import datetime
 
 producao_bp = Blueprint('producao', __name__)
 producao_service = ProducaoService()
@@ -58,6 +59,22 @@ def get_ordens():
         producao_service.processar_pedidos_agendados()
     except Exception as e:
         print("⚠ Erro ao processar agendados no get_ordens:", e)
+    data_producao = request.args.get('data', request.args.get('data_producao'))
+    if data_producao:
+        try:
+            data_producao_obj = datetime.strptime(data_producao, '%Y-%m-%d').date()
+        except ValueError:
+            return jsonify({"msg": "Formato de data inválido. Use YYYY-MM-DD"}), 400
+
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 10, type=int)
+        model = producao_service.ordem_repo.model_class
+        query = model.query.filter_by(is_active=True, data_producao=data_producao_obj)
+        sector = request.args.get('sector')
+        if sector:
+            query = query.filter(model.sector.ilike(sector))
+        pagination = query.order_by(model.created_at.desc()).paginate(page=page, per_page=per_page, error_out=False)
+        return jsonify({"items": OrdemProducaoSchema(many=True).dump(pagination.items), "total": pagination.total, "pages": pagination.pages, "page": page}), 200
     return build_pagination(producao_service.ordem_repo, OrdemProducaoSchema, request)
 
 @producao_bp.route('/processar-agendados', methods=['POST', 'GET'])

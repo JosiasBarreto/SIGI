@@ -1,3 +1,5 @@
+import { enumLabel } from "../lib/enumLabels";
+
 export interface FieldSchema {
   name: string;
   label: string;
@@ -233,7 +235,7 @@ export const schemas: Record<string, ModuleSchema> = {
     columns: [
       { key: "codigo", label: "Código" },
       { key: "nome", label: "Nome" },
-      { key: "tipo", label: "Tipo" },
+      { key: "tipo", label: "Tipo", render: (value: unknown) => enumLabel(value) },
       {
         key: "quantidade_total",
         label: "Qtd Total",
@@ -269,7 +271,7 @@ export const schemas: Record<string, ModuleSchema> = {
             <span
               className={`px-2 py-1 text-xs font-medium rounded-full ${colorClass}`}
             >
-              {value}
+              {enumLabel(value)}
             </span>
           );
         },

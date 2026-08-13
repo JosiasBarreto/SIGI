@@ -284,7 +284,7 @@ def get_pedido_receipt_data(pedido):
     return {
         "empresa": empresa,
         "documento": {
-            "tipo": "PEDIDO DE VENDA",
+            "tipo": "PEDIDO / ORDEM DE PRODUÇÃO — NÃO FISCAL",
             "numero": pedido.numero,
             "estado": pedido.estado.value if hasattr(pedido.estado, 'value') else str(pedido.estado),
             "data_hora_operacao": dt_op,

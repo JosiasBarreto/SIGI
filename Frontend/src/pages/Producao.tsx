@@ -12,6 +12,7 @@ export default function Producao() {
   const queryClient = useQueryClient();
   const [now, setNow] = useState(new Date());
   const [selectedSector, setSelectedSector] = useState<SectorType>("Todos");
+  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [page, setPage] = useState(1);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
 
@@ -22,9 +23,10 @@ export default function Producao() {
   }, []);
 
   const { data: ordersResponse, isLoading } = useQuery({
-    queryKey: ["production-orders", selectedSector, page],
+    queryKey: ["production-orders", selectedSector, selectedDate, page],
     queryFn: () => productionService.getAll({ 
       sector: selectedSector !== "Todos" ? selectedSector : undefined, 
+      data: selectedDate,
       page,
       per_page: 40,
     }),
@@ -292,8 +294,13 @@ export default function Producao() {
         </h1>
 
         {/* Sector Tabs */}
-        <div className="flex items-center bg-gray-100 dark:bg-gray-800 p-1 rounded-xl gap-1 overflow-x-auto">
-          {(["Todos", "Cozinha", "Pastelaria", "Bar"] as SectorType[]).map((sec) => (
+        <div className="flex flex-wrap items-center gap-3">
+          <label className="flex items-center gap-2 text-xs font-bold text-gray-600 dark:text-gray-300">
+            <Filter size={15} /> Data
+            <input type="date" value={selectedDate} onChange={(e) => { setSelectedDate(e.target.value); setPage(1); }} className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-2 py-1.5 text-xs" />
+          </label>
+          <div className="flex items-center bg-gray-100 dark:bg-gray-800 p-1 rounded-xl gap-1 overflow-x-auto">
+            {(["Todos", "Cozinha", "Pastelaria", "Bar"] as SectorType[]).map((sec) => (
             <button
               key={sec}
               onClick={() => { setSelectedSector(sec); setPage(1); }}
@@ -307,12 +314,13 @@ export default function Producao() {
               {sectorIcons[sec]}
               {sec === "Todos" ? "Todos os Setores" : sec}
             </button>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
 
       <div className="flex items-center justify-between text-sm text-gray-500">
-        <span>{ordersResponse?.total || 0} ordens encontradas · página {ordersResponse?.page || page} de {ordersResponse?.pages || 1}</span>
+        <span>{ordersResponse?.total || 0} ordens para {selectedDate.split('-').reverse().join('/')} · página {ordersResponse?.page || page} de {ordersResponse?.pages || 1}</span>
         <div className="flex gap-2">
           <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} className="px-3 py-1.5 rounded-lg border disabled:opacity-40">Anterior</button>
           <button disabled={page >= (ordersResponse?.pages || 1)} onClick={() => setPage(p => p + 1)} className="px-3 py-1.5 rounded-lg border disabled:opacity-40">Seguinte</button>

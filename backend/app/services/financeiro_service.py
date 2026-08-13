@@ -270,12 +270,18 @@ class FinanceiroService:
 
     # --- FLUXO DE CAIXA ---
     def obter_fluxo_caixa(self, inicio, fim):
+        # The end date is inclusive in the UI; comparing with midnight used to
+        # hide all movements created later on the selected last day.
+        from datetime import timedelta
+        fim_exclusivo = fim + timedelta(days=1)
         entradas = db.session.query(func.sum(MovimentoCaixa.valor)).filter(
-            MovimentoCaixa.data_movimento.between(inicio, fim),
+            MovimentoCaixa.data_movimento >= inicio,
+            MovimentoCaixa.data_movimento < fim_exclusivo,
             MovimentoCaixa.tipo.in_([TipoMovimentoCaixa.ABERTURA, TipoMovimentoCaixa.VENDA, TipoMovimentoCaixa.RECEBIMENTO, TipoMovimentoCaixa.REFORCO])
         ).scalar() or 0
         saidas = db.session.query(func.sum(MovimentoCaixa.valor)).filter(
-            MovimentoCaixa.data_movimento.between(inicio, fim),
+            MovimentoCaixa.data_movimento >= inicio,
+            MovimentoCaixa.data_movimento < fim_exclusivo,
             MovimentoCaixa.tipo.in_([TipoMovimentoCaixa.SANGRIA, TipoMovimentoCaixa.DEVOLUCAO, TipoMovimentoCaixa.AJUSTE])
         ).scalar() or 0
         

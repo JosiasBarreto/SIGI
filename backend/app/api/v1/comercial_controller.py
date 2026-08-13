@@ -1,4 +1,6 @@
 from flask import Blueprint, request, jsonify, send_file
+from datetime import datetime, timedelta
+from sqlalchemy import or_
 
 comercial_bp = Blueprint('comercial', __name__)
 fiscal_bp = Blueprint('fiscal', __name__)
@@ -8,6 +10,7 @@ from flask_jwt_extended import jwt_required
 from app.middleware.auth_middleware import requires_roles
 from app.services.pdf_generator import generate_venda_pdf, generate_venda_receipt, get_venda_receipt_data
 from app.models.cliente import Cliente
+from app.models.comercial import Venda, EstadoVenda, TipoDocumento
 
 comercial_service = ComercialService()
 
@@ -177,9 +180,33 @@ def create_venda():
 @comercial_bp.route('', methods=['GET'])
 @jwt_required()
 def get_vendas():
-    vendas = comercial_service.get_vendas()
-    result = [_serialize_venda_dict(v) for v in vendas]
-    return jsonify(result), 200
+    page = max(1, request.args.get('page', 1, type=int))
+    per_page = min(200, max(1, request.args.get('per_page', 10, type=int)))
+    query = Venda.query
+    search = request.args.get('search', '').strip()
+    if search:
+        query = query.filter(or_(Venda.numero_documento.ilike(f'%{search}%'), Venda.observacoes.ilike(f'%{search}%')))
+    if request.args.get('estado'):
+        estado = request.args['estado']
+        # The historic UI used the abbreviated display label.  Translate it at
+        # the boundary and keep the database enum as the source of truth.
+        if estado == 'Parcial':
+            estado = EstadoVenda.PARCIALMENTE_PAGO.value
+        query = query.filter(Venda.estado == EstadoVenda(estado))
+    if request.args.get('tipo_documento'):
+        query = query.filter(Venda.tipo_documento == TipoDocumento(request.args['tipo_documento']))
+    if request.args.get('cliente_id'):
+        query = query.filter(Venda._cliente_id == request.args.get('cliente_id', type=int))
+    if request.args.get('data_inicio'):
+        query = query.filter(Venda.created_at >= datetime.strptime(request.args['data_inicio'], '%Y-%m-%d'))
+    if request.args.get('data_fim'):
+        query = query.filter(Venda.created_at < datetime.strptime(request.args['data_fim'], '%Y-%m-%d') + timedelta(days=1))
+    pagination = query.order_by(Venda.created_at.desc()).paginate(page=page, per_page=per_page, error_out=False)
+    return jsonify({
+        'items': [_serialize_venda_dict(v) for v in pagination.items],
+        'total': pagination.total, 'pages': pagination.pages,
+        'page': page, 'per_page': per_page
+    }), 200
 
 @comercial_bp.route('/<int:venda_id>', methods=['GET'])
 @jwt_required()
@@ -292,6 +319,14 @@ def checkout_pedido(pedido_id):
     from flask_jwt_extended import get_jwt_identity
     user_id = get_jwt_identity()
     data = request.json or {}
+    pagamento_payload = data.get('pagamento', data) if isinstance(data, dict) else {}
+    pagamentos = pagamento_payload.get('pagamentos', []) if isinstance(pagamento_payload, dict) else []
+    # O POS envia um pagamento por meio.  O primeiro cria/liquida a venda e os
+    # restantes são registados como parcelas da mesma fatura.
+    if pagamentos:
+        if not isinstance(pagamentos, list) or not pagamentos:
+            return jsonify({'error': 'Lista de pagamentos inválida.'}), 400
+        data = {'pagamento': {**pagamento_payload, **pagamentos[0]}}
     from app.models.pedido import Pedido
     from app.models.comercial import Venda
     pedido = Pedido.query.get(pedido_id)
@@ -302,6 +337,19 @@ def checkout_pedido(pedido_id):
         venda, error = comercial_service.converter_pedido_em_venda(pedido_id, data, user_id)
     if error:
         return jsonify({'error': error}), 400
+
+    try:
+        for pagamento in pagamentos[1:]:
+            comercial_service.add_pagamento(venda.id, pagamento, user_id)
+        if pagamentos and venda.pedido:
+            from app.models.pedido import EstadoPagamento
+            pedido = venda.pedido
+            pedido.valor_pago = venda.valor_pago
+            comercial_service._atualizar_pagamento_pedido(pedido)
+            from app.core.database import db
+            db.session.commit()
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
 
     # Disparar envio de fatura automática do checkout do pedido
     try:

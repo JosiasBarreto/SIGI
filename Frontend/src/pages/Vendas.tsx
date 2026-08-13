@@ -94,6 +94,15 @@ export default function Vendas() {
     data_venda: venda.data_venda || venda.created_at,
     estado: venda.estado === 'Parcialmente Pago' ? 'Parcial' : venda.estado
   });
+  const taxaIvaItem = (item: any) => item.taxa_iva ?? item.iva_taxa;
+  const resumoIva = (venda: any) => Object.values((venda.itens || []).reduce((grupos: Record<string, { taxa: number; valor: number }>, item: any) => {
+    const taxa = Number(taxaIvaItem(item));
+    if (!Number.isFinite(taxa)) return grupos;
+    const chave = String(taxa);
+    grupos[chave] ||= { taxa, valor: 0 };
+    grupos[chave].valor += Number(item.valor_iva ?? 0);
+    return grupos;
+  }, {} as Record<string, { taxa: number; valor: number }>));
   const vendas = vendasRaw.map(normalizeVenda);
   const paginationInfo = (vendasResponse as any)?.pagination || vendasResponse || { page: 1, per_page: 10, total: 0, pages: 0 };
 
@@ -300,7 +309,7 @@ export default function Vendas() {
                   <td>${it.produto_nome}</td>
                   <td class="right">${it.quantidade}</td>
                   <td class="right">${formatCurrency(it.preco_unitario)}</td>
-                  <td class="right">${it.iva_taxa || 14}%</td>
+                  <td class="right">${taxaIvaItem(it) ?? '—'}%</td>
                   <td class="right">${formatCurrency(it.total)}</td>
                 </tr>
               `).join('')}
@@ -590,7 +599,7 @@ export default function Vendas() {
     {
       accessorKey: "iva_taxa",
       header: () => <div className="text-right">IVA (%)</div>,
-      cell: ({ row }) => <div className="text-right font-mono text-gray-500">{row.original.iva_taxa || 14}%</div>
+      cell: ({ row }) => <div className="text-right font-mono text-gray-500">{taxaIvaItem(row.original) ?? '—'}%</div>
     },
     {
       accessorKey: "total",
@@ -656,7 +665,7 @@ export default function Vendas() {
             >
               <option value="">Qualquer Estado</option>
               <option value="Pago">Pago</option>
-              <option value="Parcial">Liquidação Parcial</option>
+              <option value="Parcialmente Pago">Liquidação Parcial</option>
               <option value="Pendente">Pendente de Cobrança</option>
               <option value="Cancelado">Retificado / Cancelado</option>
             </select>
@@ -858,8 +867,14 @@ export default function Vendas() {
                   <span>Subtotal Isento / Líquido:</span>
                   <span className="font-mono">{formatCurrency(selectedVenda.subtotal)}</span>
                 </div>
+                {resumoIva(selectedVenda).map(({ taxa, valor }) => (
+                  <div key={taxa} className="flex justify-between text-gray-500 font-bold">
+                    <span>IVA {taxa}%:</span>
+                    <span className="font-mono">{formatCurrency(valor)}</span>
+                  </div>
+                ))}
                 <div className="flex justify-between text-gray-500 font-bold">
-                  <span>Total IVA Retido (14% S.I.):</span>
+                  <span>Total IVA:</span>
                   <span className="font-mono">{formatCurrency(selectedVenda.iva_valor)}</span>
                 </div>
                 <hr className="my-2" />
@@ -1127,7 +1142,7 @@ export default function Vendas() {
               <div className="p-3 border border-gray-100 dark:border-gray-800/60 rounded-xl bg-white dark:bg-surface-dark/40">
                 <div className="text-[10px] font-bold text-gray-400 uppercase">Imposto (IVA)</div>
                 <div className="text-sm font-black text-gray-800 dark:text-gray-200 mt-1 font-mono">
-                  {viewItemDetails.iva_taxa || 14}%
+                  {taxaIvaItem(viewItemDetails) ?? '—'}%
                 </div>
               </div>
               <div className="p-3 border border-gray-100 dark:border-gray-800/60 rounded-xl bg-indigo-50/20 dark:bg-indigo-950/10 border-indigo-100/50 dark:border-indigo-900/30">

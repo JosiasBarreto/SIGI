@@ -217,11 +217,24 @@ class ProducaoService:
             self._atualizar_requisicao_diaria(setor, necessidades_consumiveis, user_id or pedido.created_by)
         
         db.session.commit()
+        # Orders created for an immediate pedido start in production. Keep the
+        # pedido list in the same operational state; payment is tracked
+        # separately in `estado_pagamento`.
+        if ordens_criadas and not producao_futura:
+            estado_anterior = pedido.estado.value if hasattr(pedido.estado, 'value') else str(pedido.estado)
+            pedido.estado = EstadoPedido.EM_PRODUCAO.value
+            db.session.commit()
+            socketio.emit('pedido_atualizado', {
+                'numero': pedido.numero,
+                'antigo_estado': estado_anterior,
+                'novo_estado': EstadoPedido.EM_PRODUCAO.value,
+            })
         for ordem in ordens_criadas:
             if user_id:
                 AuditService.log_action(user_id, "CREATE", "ordens_producao", ordem.id)
             
-        socketio.emit('nova_ordem_producao', {'pedido_id': pedido.id, 'numero': pedido.numero})
+        from app.websocket.socket_manager import notify_production_orders
+        notify_production_orders(pedido.id, pedido.numero, [ordem.sector for ordem in ordens_criadas])
         return True, None
 
     # --- Processamento Automático de Pedidos Agendados ---

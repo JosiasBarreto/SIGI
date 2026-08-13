@@ -507,7 +507,7 @@ export function DataTable<TData>({
         </table>
       </div>
 
-      {(table.getFilteredRowModel().rows.length > 0 || manualPagination) && (
+      {(manualPagination ? (pageCount || 0) > 1 : table.getFilteredRowModel().rows.length > 10) && (
         <div className="p-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/20 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-gray-500">
           <div className="flex items-center gap-2">
             <span>Mostrar</span>

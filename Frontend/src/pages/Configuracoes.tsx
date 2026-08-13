@@ -22,6 +22,7 @@ import { toast } from "react-toastify";
 import { useTheme } from "../components/Layout/ThemeContext";
 import { Palette } from "lucide-react";
 import { configService, fiscalService, productService } from "../services";
+import apiClient from "../api/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface BackupItem {
@@ -739,8 +740,21 @@ export default function Configuracoes() {
   };
 
   // Run Manual Backup Action
-  const triggerManualBackup = () => {
+  const triggerManualBackup = async () => {
     setLoading(true);
+    try {
+      const item: any = await apiClient.post('/v1/backups', {});
+      const record: BackupItem = { id: item.filename, filename: item.filename, date: new Date(item.created_at).toLocaleString(), size: `${(Number(item.size) / 1024 / 1024).toFixed(2)} MB`, type: 'Manual' };
+      saveBackupsToStorage([record, ...backups.filter((backup) => backup.id !== record.id)]);
+      window.open(`${apiClient.defaults.baseURL}/v1/backups/${encodeURIComponent(item.filename)}/download`, '_blank');
+      toast.success('Backup SQL completo criado e colocado para download.');
+      setLoading(false);
+      return;
+    } catch (error: any) {
+      toast.error(error?.message || 'Falha ao criar o backup no servidor.');
+      setLoading(false);
+      return;
+    }
     toast.info("A processar cópia de segurança dos dados...");
 
     setTimeout(() => {
@@ -780,12 +794,21 @@ export default function Configuracoes() {
   };
 
   // Restore simulation
-  const handleRestoreBackup = (filename: string) => {
+  const handleRestoreBackup = (filename: string, file?: File) => {
     const confirm = window.confirm(
       `Aviso: Tem a certeza que pretende restaurar os dados para a versão de "${filename}"? Esta ação causará a reinicialização dos registos locais.`
     );
     if (confirm) {
       setLoading(true);
+      if (file) {
+        const body = new FormData();
+        body.append('file', file);
+        apiClient.post('/v1/backups/restore', body, { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 600000 })
+          .then(() => toast.success('Sistema restaurado. Reinicie o backend para renovar as sessões.'))
+          .catch((error: any) => toast.error(error?.message || 'Não foi possível restaurar o backup.'))
+          .finally(() => setLoading(false));
+        return;
+      }
       toast.info(`A restaurar cópia de segurança: ${filename}...`);
       setTimeout(() => {
         setLoading(false);
@@ -1367,7 +1390,7 @@ export default function Configuracoes() {
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (file) {
-                      handleRestoreBackup(file.name);
+                      handleRestoreBackup(file.name, file);
                     }
                   }}
                 />

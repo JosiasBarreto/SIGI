@@ -91,6 +91,8 @@ export default function Dashboard() {
   const financialRecords = financialRes?.items || [];
   const receivables = Array.isArray(recebimentosRes) ? recebimentosRes : ((recebimentosRes as any)?.items || (recebimentosRes as any)?.data || []);
   const entregas = entregasRes?.items || [];
+  const operacionalHoje = (dashboardStats as any)?.operacional_hoje;
+  const maisVendidos = (dashboardStats as any)?.mais_vendidos || [];
 
   if (isLoading) {
     return (
@@ -112,7 +114,7 @@ export default function Dashboard() {
 
   // 1. Vendas do dia & Vendas do mês
   const ordersToday = orders.filter((o: any) => (o.data_pedido || o.dueDate || todayStr).startsWith(todayStr));
-  const vendasDoDia = Number(dashboardStats?.kpis?.receita_estimada ?? ordersToday.reduce((acc: number, curr: any) => acc + Number(curr.total || curr.valor_total || 0), 0));
+  const vendasDoDia = Number(operacionalHoje?.valor_vendas ?? ordersToday.reduce((acc: number, curr: any) => acc + Number(curr.total || curr.valor_total || 0), 0));
 
   const ordersThisMonth = orders.filter((o: any) => (o.data_pedido || o.dueDate || todayStr).startsWith(thisMonthStr));
   const vendasDoMes = Number(dashboardStats?.kpis?.receita_estimada ?? ordersThisMonth.reduce((acc: number, curr: any) => acc + Number(curr.total || curr.valor_total || 0), 0));
@@ -231,7 +233,7 @@ export default function Dashboard() {
           </div>
           <div>
             <h3 className="text-xl font-bold font-mono text-gray-900 dark:text-white tracking-tight">{formatCurrency(vendasDoDia)}</h3>
-            <p className="text-[10px] text-gray-400 mt-1">Acumulado do mês: <span className="font-bold text-gray-600 dark:text-gray-200">{formatCurrency(vendasDoMes || 4250000)}</span></p>
+            <p className="text-[10px] text-gray-400 mt-1">Acumulado do mês: <span className="font-bold text-gray-600 dark:text-gray-200">{formatCurrency(vendasDoMes)}</span></p>
           </div>
         </div>
 
@@ -268,6 +270,30 @@ export default function Dashboard() {
           </div>
         </div>
 
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-gray-50 dark:bg-gray-800/20 border border-gray-200 dark:border-gray-800 p-4 rounded-xl">
+          <span className="text-[10px] text-gray-400 font-semibold uppercase">Vendas do dia</span>
+          <div className="text-2xl font-extrabold font-mono mt-1">{operacionalHoje?.vendas ?? 0}</div>
+        </div>
+        <div className="bg-gray-50 dark:bg-gray-800/20 border border-gray-200 dark:border-gray-800 p-4 rounded-xl">
+          <span className="text-[10px] text-gray-400 font-semibold uppercase">Pedidos do dia</span>
+          <div className="text-2xl font-extrabold font-mono mt-1">{operacionalHoje?.pedidos ?? 0}</div>
+        </div>
+        <div className="bg-gray-50 dark:bg-gray-800/20 border border-gray-200 dark:border-gray-800 p-4 rounded-xl">
+          <span className="text-[10px] text-gray-400 font-semibold uppercase">Produção do dia</span>
+          <div className="text-2xl font-extrabold font-mono mt-1">{operacionalHoje?.producao ?? 0}</div>
+        </div>
+      </div>
+
+      <div className="bg-white dark:bg-surface-dark p-6 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm">
+        <h3 className="font-bold text-gray-900 dark:text-white text-sm mb-4">Produtos mais vendidos</h3>
+        {maisVendidos.length ? <div className="space-y-3">{maisVendidos.map((item: any) => (
+          <div key={item.descricao} className="flex justify-between text-sm border-b border-gray-100 dark:border-gray-800 pb-2 last:border-0">
+            <span>{item.descricao}</span><span className="font-mono">{item.quantidade} un. · {formatCurrency(item.valor)}</span>
+          </div>
+        ))}</div> : <p className="text-sm text-gray-400">Ainda não há itens vendidos para apresentar.</p>}
       </div>
 
       {/* Grid: 8 ERP Operational Pillars */}

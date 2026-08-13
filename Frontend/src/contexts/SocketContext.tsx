@@ -22,13 +22,22 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    const newSocket = io(import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:8000', {
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://192.168.100.141:8000/api';
+    const socketUrl = apiUrl.replace(/\/api(?:\/.*)?\/?$/, '');
+    const newSocket = io(socketUrl, {
       auth: {
         token: localStorage.getItem('access_token')
-      }
+      },
+      transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionAttempts: Infinity,
     });
 
-    newSocket.on('connect', () => setIsConnected(true));
+    newSocket.on('connect', () => {
+      setIsConnected(true);
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      newSocket.emit('join', { token: localStorage.getItem('access_token') });
+    });
     newSocket.on('disconnect', () => setIsConnected(false));
     
     setSocket(newSocket);
@@ -62,4 +71,3 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
 export function useSocket() {
   return useContext(SocketContext);
 }
-

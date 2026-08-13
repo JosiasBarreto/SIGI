@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { orderService, clientService, productService, materialService, financialService } from "../services";
+import { orderService, clientService, productService, financialService } from "../services";
 import { TipoProduto } from '../enums';
 import { Plus, Search, Calendar, ChevronRight, FileText, Clock, Trash2, X, AlertCircle, ShoppingCart, UserPlus, CreditCard, ChevronLeft, Wrench, Eye } from "lucide-react";
 import { formatCurrency, cn } from "../lib/utils";
@@ -74,24 +74,15 @@ export default function Orders() {
     queryFn: () => productService.getAll({ per_page: 1000 }),
   });
 
-  const { data: materialsResponse } = useQuery({
-    queryKey: ["materials"],
-    queryFn: () => materialService.getAll({ per_page: 1000 }),
-  });
-
   const orders = ordersResponse?.items || [];
   const clients = clientsResponse?.items || [];
   const products = (productsResponse?.items || []).filter((p: any) => {
     const pTipo = p.tipo || '';
     return pTipo !== TipoProduto.CONSUMIVEL && pTipo !== 'Consumível' && pTipo !== 'Consumivel';
   });
-  const materials = materialsResponse?.items || [];
-
-  // Combine products & materials for selection
-  const combinableItems = [
-    ...products.map(p => ({ ...p, uniqueId: `p-${p.id}`, isMaterial: false, category: p.categoria || "Produto" })),
-    ...materials.map(m => ({ ...m, uniqueId: `m-${m.id}`, isMaterial: true, name: m.nome, salePrice: Number(m.valor_unitario || 1000), category: m.categoria || "Material" }))
-  ];
+  // A commercial pedido can contain saleable products only. Consumables and
+  // operational materials are managed by stock/requisition workflows.
+  const combinableItems = products.map(p => ({ ...p, uniqueId: `p-${p.id}`, isMaterial: false, category: p.categoria || "Produto" }));
 
   const updateMutation = useMutation({
     mutationFn: ({ id, estado, justificativa }: { id: string | number; estado: string; justificativa?: string }) =>
@@ -509,10 +500,10 @@ export default function Orders() {
         </div>
       )}
 
-      {/* ROL / WIZARD ASSISTANCE MODAL FOR ORDER CREATION */}
+      {/* Inline order form: it remains in context instead of blocking the page. */}
       {isWizardOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto animate-fade-in" id="wizard-modal-container">
-          <div className="bg-white dark:bg-surface-dark rounded-2xl border border-gray-200 dark:border-gray-800 shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-fade-in-up">
+        <section className="bg-white dark:bg-surface-dark rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm w-full flex flex-col overflow-hidden animate-fade-in" id="order-form-container">
+          <div className="w-full flex flex-col">
             
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/20">
@@ -682,7 +673,7 @@ export default function Orders() {
                       {cart.length === 0 ? (
                         <div className="p-8 border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-xl text-center text-gray-400">
                           <ShoppingCart size={32} className="mx-auto mb-2 opacity-30" />
-                          Selecione produtos ou materiais ao lado para carregar no pedido composto.
+                          Selecione produtos ao lado para adicionar ao pedido.
                         </div>
                       ) : (
                         <div className="space-y-3 max-h-[350px] overflow-y-auto pr-1">
@@ -924,7 +915,7 @@ export default function Orders() {
             </div>
 
           </div>
-        </div>
+        </section>
       )}
 
     </div>

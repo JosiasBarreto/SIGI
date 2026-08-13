@@ -88,6 +88,38 @@
         "documentation": {}
     },
     {
+        "label": "send_file",
+        "importPath": "flask",
+        "description": "flask",
+        "isExtraImport": true,
+        "detail": "flask",
+        "documentation": {}
+    },
+    {
+        "label": "request",
+        "importPath": "flask",
+        "description": "flask",
+        "isExtraImport": true,
+        "detail": "flask",
+        "documentation": {}
+    },
+    {
+        "label": "Blueprint",
+        "importPath": "flask",
+        "description": "flask",
+        "isExtraImport": true,
+        "detail": "flask",
+        "documentation": {}
+    },
+    {
+        "label": "jsonify",
+        "importPath": "flask",
+        "description": "flask",
+        "isExtraImport": true,
+        "detail": "flask",
+        "documentation": {}
+    },
+    {
         "label": "request",
         "importPath": "flask",
         "description": "flask",
@@ -472,7 +504,7 @@
         "documentation": {}
     },
     {
-        "label": "request",
+        "label": "current_app",
         "importPath": "flask",
         "description": "flask",
         "isExtraImport": true,
@@ -521,6 +553,22 @@
     },
     {
         "label": "get_jwt",
+        "importPath": "flask_jwt_extended",
+        "description": "flask_jwt_extended",
+        "isExtraImport": true,
+        "detail": "flask_jwt_extended",
+        "documentation": {}
+    },
+    {
+        "label": "jwt_required",
+        "importPath": "flask_jwt_extended",
+        "description": "flask_jwt_extended",
+        "isExtraImport": true,
+        "detail": "flask_jwt_extended",
+        "documentation": {}
+    },
+    {
+        "label": "get_jwt_identity",
         "importPath": "flask_jwt_extended",
         "description": "flask_jwt_extended",
         "isExtraImport": true,
@@ -792,6 +840,14 @@
         "documentation": {}
     },
     {
+        "label": "decode_token",
+        "importPath": "flask_jwt_extended",
+        "description": "flask_jwt_extended",
+        "isExtraImport": true,
+        "detail": "flask_jwt_extended",
+        "documentation": {}
+    },
+    {
         "label": "ArmazemService",
         "importPath": "app.services.armazem_service",
         "description": "app.services.armazem_service",
@@ -893,6 +949,14 @@
         "description": "app.schemas.armazem_schema",
         "isExtraImport": true,
         "detail": "app.schemas.armazem_schema",
+        "documentation": {}
+    },
+    {
+        "label": "requires_roles",
+        "importPath": "app.middleware.auth_middleware",
+        "description": "app.middleware.auth_middleware",
+        "isExtraImport": true,
+        "detail": "app.middleware.auth_middleware",
         "documentation": {}
     },
     {
@@ -1912,14 +1976,6 @@
         "documentation": {}
     },
     {
-        "label": "db",
-        "importPath": "app.core.database",
-        "description": "app.core.database",
-        "isExtraImport": true,
-        "detail": "app.core.database",
-        "documentation": {}
-    },
-    {
         "label": "AuthService",
         "importPath": "app.services.auth_service",
         "description": "app.services.auth_service",
@@ -1941,6 +1997,159 @@
         "description": "flasgger",
         "isExtraImport": true,
         "detail": "flasgger",
+        "documentation": {}
+    },
+    {
+        "label": "backup_service",
+        "importPath": "app.services.backup_service",
+        "description": "app.services.backup_service",
+        "isExtraImport": true,
+        "detail": "app.services.backup_service",
+        "documentation": {}
+    },
+    {
+        "label": "AuditService",
+        "importPath": "app.services.audit_service",
+        "description": "app.services.audit_service",
+        "isExtraImport": true,
+        "detail": "app.services.audit_service",
+        "documentation": {}
+    },
+    {
+        "label": "AuditService",
+        "importPath": "app.services.audit_service",
+        "description": "app.services.audit_service",
+        "isExtraImport": true,
+        "detail": "app.services.audit_service",
+        "documentation": {}
+    },
+    {
+        "label": "AuditService",
+        "importPath": "app.services.audit_service",
+        "description": "app.services.audit_service",
+        "isExtraImport": true,
+        "detail": "app.services.audit_service",
+        "documentation": {}
+    },
+    {
+        "label": "AuditService",
+        "importPath": "app.services.audit_service",
+        "description": "app.services.audit_service",
+        "isExtraImport": true,
+        "detail": "app.services.audit_service",
+        "documentation": {}
+    },
+    {
+        "label": "AuditService",
+        "importPath": "app.services.audit_service",
+        "description": "app.services.audit_service",
+        "isExtraImport": true,
+        "detail": "app.services.audit_service",
+        "documentation": {}
+    },
+    {
+        "label": "AuditService",
+        "importPath": "app.services.audit_service",
+        "description": "app.services.audit_service",
+        "isExtraImport": true,
+        "detail": "app.services.audit_service",
+        "documentation": {}
+    },
+    {
+        "label": "AuditService",
+        "importPath": "app.services.audit_service",
+        "description": "app.services.audit_service",
+        "isExtraImport": true,
+        "detail": "app.services.audit_service",
+        "documentation": {}
+    },
+    {
+        "label": "AuditService",
+        "importPath": "app.services.audit_service",
+        "description": "app.services.audit_service",
+        "isExtraImport": true,
+        "detail": "app.services.audit_service",
+        "documentation": {}
+    },
+    {
+        "label": "AuditService",
+        "importPath": "app.services.audit_service",
+        "description": "app.services.audit_service",
+        "isExtraImport": true,
+        "detail": "app.services.audit_service",
+        "documentation": {}
+    },
+    {
+        "label": "AuditService",
+        "importPath": "app.services.audit_service",
+        "description": "app.services.audit_service",
+        "isExtraImport": true,
+        "detail": "app.services.audit_service",
+        "documentation": {}
+    },
+    {
+        "label": "AuditService",
+        "importPath": "app.services.audit_service",
+        "description": "app.services.audit_service",
+        "isExtraImport": true,
+        "detail": "app.services.audit_service",
+        "documentation": {}
+    },
+    {
+        "label": "AuditService",
+        "importPath": "app.services.audit_service",
+        "description": "app.services.audit_service",
+        "isExtraImport": true,
+        "detail": "app.services.audit_service",
+        "documentation": {}
+    },
+    {
+        "label": "AuditService",
+        "importPath": "app.services.audit_service",
+        "description": "app.services.audit_service",
+        "isExtraImport": true,
+        "detail": "app.services.audit_service",
+        "documentation": {}
+    },
+    {
+        "label": "AuditService",
+        "importPath": "app.services.audit_service",
+        "description": "app.services.audit_service",
+        "isExtraImport": true,
+        "detail": "app.services.audit_service",
+        "documentation": {}
+    },
+    {
+        "label": "AuditService",
+        "importPath": "app.services.audit_service",
+        "description": "app.services.audit_service",
+        "isExtraImport": true,
+        "detail": "app.services.audit_service",
+        "documentation": {}
+    },
+    {
+        "label": "AuditService",
+        "importPath": "app.services.audit_service",
+        "description": "app.services.audit_service",
+        "isExtraImport": true,
+        "detail": "app.services.audit_service",
+        "documentation": {}
+    },
+    {
+        "label": "AuditService",
+        "importPath": "app.services.audit_service",
+        "description": "app.services.audit_service",
+        "isExtraImport": true,
+        "detail": "app.services.audit_service",
+        "documentation": {}
+    },
+    {
+        "label": "os",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "os",
+        "description": "os",
+        "detail": "os",
         "documentation": {}
     },
     {
@@ -3360,7 +3569,39 @@
         "documentation": {}
     },
     {
+        "label": "Turno",
+        "importPath": "app.models.turno",
+        "description": "app.models.turno",
+        "isExtraImport": true,
+        "detail": "app.models.turno",
+        "documentation": {}
+    },
+    {
+        "label": "Turno",
+        "importPath": "app.models.turno",
+        "description": "app.models.turno",
+        "isExtraImport": true,
+        "detail": "app.models.turno",
+        "documentation": {}
+    },
+    {
+        "label": "Turno",
+        "importPath": "app.models.turno",
+        "description": "app.models.turno",
+        "isExtraImport": true,
+        "detail": "app.models.turno",
+        "documentation": {}
+    },
+    {
         "label": "extract",
+        "importPath": "sqlalchemy",
+        "description": "sqlalchemy",
+        "isExtraImport": true,
+        "detail": "sqlalchemy",
+        "documentation": {}
+    },
+    {
+        "label": "or_",
         "importPath": "sqlalchemy",
         "description": "sqlalchemy",
         "isExtraImport": true,
@@ -3464,14 +3705,6 @@
         "documentation": {}
     },
     {
-        "label": "text",
-        "importPath": "sqlalchemy",
-        "description": "sqlalchemy",
-        "isExtraImport": true,
-        "detail": "sqlalchemy",
-        "documentation": {}
-    },
-    {
         "label": "datetime",
         "kind": 6,
         "isExtraImport": true,
@@ -3497,7 +3730,47 @@
         "documentation": {}
     },
     {
+        "label": "timedelta",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
         "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "timedelta",
         "importPath": "datetime",
         "description": "datetime",
         "isExtraImport": true,
@@ -3586,6 +3859,30 @@
     },
     {
         "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "date",
         "importPath": "datetime",
         "description": "datetime",
         "isExtraImport": true,
@@ -3846,6 +4143,174 @@
         "description": "app.models.cliente",
         "isExtraImport": true,
         "detail": "app.models.cliente",
+        "documentation": {}
+    },
+    {
+        "label": "Venda",
+        "importPath": "app.models.comercial",
+        "description": "app.models.comercial",
+        "isExtraImport": true,
+        "detail": "app.models.comercial",
+        "documentation": {}
+    },
+    {
+        "label": "EstadoVenda",
+        "importPath": "app.models.comercial",
+        "description": "app.models.comercial",
+        "isExtraImport": true,
+        "detail": "app.models.comercial",
+        "documentation": {}
+    },
+    {
+        "label": "TipoDocumento",
+        "importPath": "app.models.comercial",
+        "description": "app.models.comercial",
+        "isExtraImport": true,
+        "detail": "app.models.comercial",
+        "documentation": {}
+    },
+    {
+        "label": "Venda",
+        "importPath": "app.models.comercial",
+        "description": "app.models.comercial",
+        "isExtraImport": true,
+        "detail": "app.models.comercial",
+        "documentation": {}
+    },
+    {
+        "label": "VendaItem",
+        "importPath": "app.models.comercial",
+        "description": "app.models.comercial",
+        "isExtraImport": true,
+        "detail": "app.models.comercial",
+        "documentation": {}
+    },
+    {
+        "label": "EstadoVenda",
+        "importPath": "app.models.comercial",
+        "description": "app.models.comercial",
+        "isExtraImport": true,
+        "detail": "app.models.comercial",
+        "documentation": {}
+    },
+    {
+        "label": "Venda",
+        "importPath": "app.models.comercial",
+        "description": "app.models.comercial",
+        "isExtraImport": true,
+        "detail": "app.models.comercial",
+        "documentation": {}
+    },
+    {
+        "label": "TaxaIVA",
+        "importPath": "app.models.comercial",
+        "description": "app.models.comercial",
+        "isExtraImport": true,
+        "detail": "app.models.comercial",
+        "documentation": {}
+    },
+    {
+        "label": "SerieDocumento",
+        "importPath": "app.models.comercial",
+        "description": "app.models.comercial",
+        "isExtraImport": true,
+        "detail": "app.models.comercial",
+        "documentation": {}
+    },
+    {
+        "label": "VendaItem",
+        "importPath": "app.models.comercial",
+        "description": "app.models.comercial",
+        "isExtraImport": true,
+        "detail": "app.models.comercial",
+        "documentation": {}
+    },
+    {
+        "label": "FechoDiario",
+        "importPath": "app.models.comercial",
+        "description": "app.models.comercial",
+        "isExtraImport": true,
+        "detail": "app.models.comercial",
+        "documentation": {}
+    },
+    {
+        "label": "Venda",
+        "importPath": "app.models.comercial",
+        "description": "app.models.comercial",
+        "isExtraImport": true,
+        "detail": "app.models.comercial",
+        "documentation": {}
+    },
+    {
+        "label": "VendaItem",
+        "importPath": "app.models.comercial",
+        "description": "app.models.comercial",
+        "isExtraImport": true,
+        "detail": "app.models.comercial",
+        "documentation": {}
+    },
+    {
+        "label": "TaxaIVA",
+        "importPath": "app.models.comercial",
+        "description": "app.models.comercial",
+        "isExtraImport": true,
+        "detail": "app.models.comercial",
+        "documentation": {}
+    },
+    {
+        "label": "SerieDocumento",
+        "importPath": "app.models.comercial",
+        "description": "app.models.comercial",
+        "isExtraImport": true,
+        "detail": "app.models.comercial",
+        "documentation": {}
+    },
+    {
+        "label": "TipoDocumento",
+        "importPath": "app.models.comercial",
+        "description": "app.models.comercial",
+        "isExtraImport": true,
+        "detail": "app.models.comercial",
+        "documentation": {}
+    },
+    {
+        "label": "EstadoVenda",
+        "importPath": "app.models.comercial",
+        "description": "app.models.comercial",
+        "isExtraImport": true,
+        "detail": "app.models.comercial",
+        "documentation": {}
+    },
+    {
+        "label": "FechoDiario",
+        "importPath": "app.models.comercial",
+        "description": "app.models.comercial",
+        "isExtraImport": true,
+        "detail": "app.models.comercial",
+        "documentation": {}
+    },
+    {
+        "label": "TipoDocumento",
+        "importPath": "app.models.comercial",
+        "description": "app.models.comercial",
+        "isExtraImport": true,
+        "detail": "app.models.comercial",
+        "documentation": {}
+    },
+    {
+        "label": "EstadoVenda",
+        "importPath": "app.models.comercial",
+        "description": "app.models.comercial",
+        "isExtraImport": true,
+        "detail": "app.models.comercial",
+        "documentation": {}
+    },
+    {
+        "label": "TaxaIVA",
+        "importPath": "app.models.comercial",
+        "description": "app.models.comercial",
+        "isExtraImport": true,
+        "detail": "app.models.comercial",
         "documentation": {}
     },
     {
@@ -4547,142 +5012,6 @@
         "documentation": {}
     },
     {
-        "label": "Venda",
-        "importPath": "app.models.comercial",
-        "description": "app.models.comercial",
-        "isExtraImport": true,
-        "detail": "app.models.comercial",
-        "documentation": {}
-    },
-    {
-        "label": "EstadoVenda",
-        "importPath": "app.models.comercial",
-        "description": "app.models.comercial",
-        "isExtraImport": true,
-        "detail": "app.models.comercial",
-        "documentation": {}
-    },
-    {
-        "label": "Venda",
-        "importPath": "app.models.comercial",
-        "description": "app.models.comercial",
-        "isExtraImport": true,
-        "detail": "app.models.comercial",
-        "documentation": {}
-    },
-    {
-        "label": "TaxaIVA",
-        "importPath": "app.models.comercial",
-        "description": "app.models.comercial",
-        "isExtraImport": true,
-        "detail": "app.models.comercial",
-        "documentation": {}
-    },
-    {
-        "label": "SerieDocumento",
-        "importPath": "app.models.comercial",
-        "description": "app.models.comercial",
-        "isExtraImport": true,
-        "detail": "app.models.comercial",
-        "documentation": {}
-    },
-    {
-        "label": "VendaItem",
-        "importPath": "app.models.comercial",
-        "description": "app.models.comercial",
-        "isExtraImport": true,
-        "detail": "app.models.comercial",
-        "documentation": {}
-    },
-    {
-        "label": "FechoDiario",
-        "importPath": "app.models.comercial",
-        "description": "app.models.comercial",
-        "isExtraImport": true,
-        "detail": "app.models.comercial",
-        "documentation": {}
-    },
-    {
-        "label": "Venda",
-        "importPath": "app.models.comercial",
-        "description": "app.models.comercial",
-        "isExtraImport": true,
-        "detail": "app.models.comercial",
-        "documentation": {}
-    },
-    {
-        "label": "VendaItem",
-        "importPath": "app.models.comercial",
-        "description": "app.models.comercial",
-        "isExtraImport": true,
-        "detail": "app.models.comercial",
-        "documentation": {}
-    },
-    {
-        "label": "TaxaIVA",
-        "importPath": "app.models.comercial",
-        "description": "app.models.comercial",
-        "isExtraImport": true,
-        "detail": "app.models.comercial",
-        "documentation": {}
-    },
-    {
-        "label": "SerieDocumento",
-        "importPath": "app.models.comercial",
-        "description": "app.models.comercial",
-        "isExtraImport": true,
-        "detail": "app.models.comercial",
-        "documentation": {}
-    },
-    {
-        "label": "TipoDocumento",
-        "importPath": "app.models.comercial",
-        "description": "app.models.comercial",
-        "isExtraImport": true,
-        "detail": "app.models.comercial",
-        "documentation": {}
-    },
-    {
-        "label": "EstadoVenda",
-        "importPath": "app.models.comercial",
-        "description": "app.models.comercial",
-        "isExtraImport": true,
-        "detail": "app.models.comercial",
-        "documentation": {}
-    },
-    {
-        "label": "FechoDiario",
-        "importPath": "app.models.comercial",
-        "description": "app.models.comercial",
-        "isExtraImport": true,
-        "detail": "app.models.comercial",
-        "documentation": {}
-    },
-    {
-        "label": "TipoDocumento",
-        "importPath": "app.models.comercial",
-        "description": "app.models.comercial",
-        "isExtraImport": true,
-        "detail": "app.models.comercial",
-        "documentation": {}
-    },
-    {
-        "label": "EstadoVenda",
-        "importPath": "app.models.comercial",
-        "description": "app.models.comercial",
-        "isExtraImport": true,
-        "detail": "app.models.comercial",
-        "documentation": {}
-    },
-    {
-        "label": "TaxaIVA",
-        "importPath": "app.models.comercial",
-        "description": "app.models.comercial",
-        "isExtraImport": true,
-        "detail": "app.models.comercial",
-        "documentation": {}
-    },
-    {
         "label": "RequisicaoService",
         "importPath": "app.services.requisicao_service",
         "description": "app.services.requisicao_service",
@@ -4788,6 +5117,14 @@
     },
     {
         "label": "RoleEnum",
+        "importPath": "app.models.user",
+        "description": "app.models.user",
+        "isExtraImport": true,
+        "detail": "app.models.user",
+        "documentation": {}
+    },
+    {
+        "label": "User",
         "importPath": "app.models.user",
         "description": "app.models.user",
         "isExtraImport": true,
@@ -5251,15 +5588,6 @@
         "documentation": {}
     },
     {
-        "label": "os",
-        "kind": 6,
-        "isExtraImport": true,
-        "importPath": "os",
-        "description": "os",
-        "detail": "os",
-        "documentation": {}
-    },
-    {
         "label": "load_dotenv",
         "importPath": "dotenv",
         "description": "dotenv",
@@ -5281,134 +5609,6 @@
         "description": "werkzeug.exceptions",
         "isExtraImport": true,
         "detail": "werkzeug.exceptions",
-        "documentation": {}
-    },
-    {
-        "label": "AuditService",
-        "importPath": "app.services.audit_service",
-        "description": "app.services.audit_service",
-        "isExtraImport": true,
-        "detail": "app.services.audit_service",
-        "documentation": {}
-    },
-    {
-        "label": "AuditService",
-        "importPath": "app.services.audit_service",
-        "description": "app.services.audit_service",
-        "isExtraImport": true,
-        "detail": "app.services.audit_service",
-        "documentation": {}
-    },
-    {
-        "label": "AuditService",
-        "importPath": "app.services.audit_service",
-        "description": "app.services.audit_service",
-        "isExtraImport": true,
-        "detail": "app.services.audit_service",
-        "documentation": {}
-    },
-    {
-        "label": "AuditService",
-        "importPath": "app.services.audit_service",
-        "description": "app.services.audit_service",
-        "isExtraImport": true,
-        "detail": "app.services.audit_service",
-        "documentation": {}
-    },
-    {
-        "label": "AuditService",
-        "importPath": "app.services.audit_service",
-        "description": "app.services.audit_service",
-        "isExtraImport": true,
-        "detail": "app.services.audit_service",
-        "documentation": {}
-    },
-    {
-        "label": "AuditService",
-        "importPath": "app.services.audit_service",
-        "description": "app.services.audit_service",
-        "isExtraImport": true,
-        "detail": "app.services.audit_service",
-        "documentation": {}
-    },
-    {
-        "label": "AuditService",
-        "importPath": "app.services.audit_service",
-        "description": "app.services.audit_service",
-        "isExtraImport": true,
-        "detail": "app.services.audit_service",
-        "documentation": {}
-    },
-    {
-        "label": "AuditService",
-        "importPath": "app.services.audit_service",
-        "description": "app.services.audit_service",
-        "isExtraImport": true,
-        "detail": "app.services.audit_service",
-        "documentation": {}
-    },
-    {
-        "label": "AuditService",
-        "importPath": "app.services.audit_service",
-        "description": "app.services.audit_service",
-        "isExtraImport": true,
-        "detail": "app.services.audit_service",
-        "documentation": {}
-    },
-    {
-        "label": "AuditService",
-        "importPath": "app.services.audit_service",
-        "description": "app.services.audit_service",
-        "isExtraImport": true,
-        "detail": "app.services.audit_service",
-        "documentation": {}
-    },
-    {
-        "label": "AuditService",
-        "importPath": "app.services.audit_service",
-        "description": "app.services.audit_service",
-        "isExtraImport": true,
-        "detail": "app.services.audit_service",
-        "documentation": {}
-    },
-    {
-        "label": "AuditService",
-        "importPath": "app.services.audit_service",
-        "description": "app.services.audit_service",
-        "isExtraImport": true,
-        "detail": "app.services.audit_service",
-        "documentation": {}
-    },
-    {
-        "label": "AuditService",
-        "importPath": "app.services.audit_service",
-        "description": "app.services.audit_service",
-        "isExtraImport": true,
-        "detail": "app.services.audit_service",
-        "documentation": {}
-    },
-    {
-        "label": "AuditService",
-        "importPath": "app.services.audit_service",
-        "description": "app.services.audit_service",
-        "isExtraImport": true,
-        "detail": "app.services.audit_service",
-        "documentation": {}
-    },
-    {
-        "label": "AuditService",
-        "importPath": "app.services.audit_service",
-        "description": "app.services.audit_service",
-        "isExtraImport": true,
-        "detail": "app.services.audit_service",
-        "documentation": {}
-    },
-    {
-        "label": "AuditService",
-        "importPath": "app.services.audit_service",
-        "description": "app.services.audit_service",
-        "isExtraImport": true,
-        "detail": "app.services.audit_service",
         "documentation": {}
     },
     {
@@ -5649,6 +5849,14 @@
         "description": "app.models.base",
         "isExtraImport": true,
         "detail": "app.models.base",
+        "documentation": {}
+    },
+    {
+        "label": "Enum",
+        "importPath": "enum",
+        "description": "enum",
+        "isExtraImport": true,
+        "detail": "enum",
         "documentation": {}
     },
     {
@@ -7189,6 +7397,54 @@
         "documentation": {}
     },
     {
+        "label": "Decimal",
+        "importPath": "decimal",
+        "description": "decimal",
+        "isExtraImport": true,
+        "detail": "decimal",
+        "documentation": {}
+    },
+    {
+        "label": "Decimal",
+        "importPath": "decimal",
+        "description": "decimal",
+        "isExtraImport": true,
+        "detail": "decimal",
+        "documentation": {}
+    },
+    {
+        "label": "ROUND_HALF_UP",
+        "importPath": "decimal",
+        "description": "decimal",
+        "isExtraImport": true,
+        "detail": "decimal",
+        "documentation": {}
+    },
+    {
+        "label": "InvalidOperation",
+        "importPath": "decimal",
+        "description": "decimal",
+        "isExtraImport": true,
+        "detail": "decimal",
+        "documentation": {}
+    },
+    {
+        "label": "Decimal",
+        "importPath": "decimal",
+        "description": "decimal",
+        "isExtraImport": true,
+        "detail": "decimal",
+        "documentation": {}
+    },
+    {
+        "label": "Decimal",
+        "importPath": "decimal",
+        "description": "decimal",
+        "isExtraImport": true,
+        "detail": "decimal",
+        "documentation": {}
+    },
+    {
         "label": "UserRepository",
         "importPath": "app.repositories.user_repository",
         "description": "app.repositories.user_repository",
@@ -7202,6 +7458,24 @@
         "description": "app.repositories.user_repository",
         "isExtraImport": true,
         "detail": "app.repositories.user_repository",
+        "documentation": {}
+    },
+    {
+        "label": "subprocess",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "subprocess",
+        "description": "subprocess",
+        "detail": "subprocess",
+        "documentation": {}
+    },
+    {
+        "label": "shutil",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "shutil",
+        "description": "shutil",
+        "detail": "shutil",
         "documentation": {}
     },
     {
@@ -7242,6 +7516,38 @@
         "description": "app.services.stock_service",
         "isExtraImport": true,
         "detail": "app.services.stock_service",
+        "documentation": {}
+    },
+    {
+        "label": "calcular_item_venda",
+        "importPath": "app.services.venda_calculo_service",
+        "description": "app.services.venda_calculo_service",
+        "isExtraImport": true,
+        "detail": "app.services.venda_calculo_service",
+        "documentation": {}
+    },
+    {
+        "label": "calcular_venda",
+        "importPath": "app.services.venda_calculo_service",
+        "description": "app.services.venda_calculo_service",
+        "isExtraImport": true,
+        "detail": "app.services.venda_calculo_service",
+        "documentation": {}
+    },
+    {
+        "label": "calcular_item_venda",
+        "importPath": "app.services.venda_calculo_service",
+        "description": "app.services.venda_calculo_service",
+        "isExtraImport": true,
+        "detail": "app.services.venda_calculo_service",
+        "documentation": {}
+    },
+    {
+        "label": "calcular_venda",
+        "importPath": "app.services.venda_calculo_service",
+        "description": "app.services.venda_calculo_service",
+        "isExtraImport": true,
+        "detail": "app.services.venda_calculo_service",
         "documentation": {}
     },
     {
@@ -7544,22 +7850,6 @@
         "documentation": {}
     },
     {
-        "label": "Turno",
-        "importPath": "app.models.turno",
-        "description": "app.models.turno",
-        "isExtraImport": true,
-        "detail": "app.models.turno",
-        "documentation": {}
-    },
-    {
-        "label": "Turno",
-        "importPath": "app.models.turno",
-        "description": "app.models.turno",
-        "isExtraImport": true,
-        "detail": "app.models.turno",
-        "documentation": {}
-    },
-    {
         "label": "FichaTecnicaRepository",
         "importPath": "app.repositories.producao_repos",
         "description": "app.repositories.producao_repos",
@@ -7589,6 +7879,14 @@
         "description": "app.repositories.requisicao_repos",
         "isExtraImport": true,
         "detail": "app.repositories.requisicao_repos",
+        "documentation": {}
+    },
+    {
+        "label": "dataclass",
+        "importPath": "dataclasses",
+        "description": "dataclasses",
+        "isExtraImport": true,
+        "detail": "dataclasses",
         "documentation": {}
     },
     {
@@ -7833,14 +8131,6 @@
         "documentation": {}
     },
     {
-        "label": "Decimal",
-        "importPath": "decimal",
-        "description": "decimal",
-        "isExtraImport": true,
-        "detail": "decimal",
-        "documentation": {}
-    },
-    {
         "label": "pytest",
         "kind": 6,
         "isExtraImport": true,
@@ -7868,22 +8158,6 @@
         "documentation": {}
     },
     {
-        "label": "Migrate",
-        "importPath": "flask_migrate",
-        "description": "flask_migrate",
-        "isExtraImport": true,
-        "detail": "flask_migrate",
-        "documentation": {}
-    },
-    {
-        "label": "OperationalError",
-        "importPath": "sqlalchemy.exc",
-        "description": "sqlalchemy.exc",
-        "isExtraImport": true,
-        "detail": "sqlalchemy.exc",
-        "documentation": {}
-    },
-    {
         "label": "time",
         "kind": 6,
         "isExtraImport": true,
@@ -7893,20 +8167,29 @@
         "documentation": {}
     },
     {
+        "label": "validar_importacao_catalogo",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.armazem_controller",
+        "description": "backend.app.api.v1.armazem_controller",
+        "peekOfCode": "def validar_importacao_catalogo():\n    linhas = (request.get_json() or {}).get('linhas', [])\n    resultado = armazem_service.validar_importacao_catalogo(linhas)\n    return jsonify({'linhas': resultado, 'resumo': {'total': len(resultado), 'validos': sum(x['valido'] for x in resultado), 'invalidos': sum(not x['valido'] for x in resultado)}}), 200\n@armazem_bp.route('/importacao/confirmar', methods=['POST'])\n@jwt_required()\n@requires_roles('Administrador', 'Armazém')\ndef confirmar_importacao_catalogo():\n    linhas = (request.get_json() or {}).get('linhas', [])\n    resultado, erro = armazem_service.importar_catalogo(linhas, get_jwt_identity())",
+        "detail": "backend.app.api.v1.armazem_controller",
+        "documentation": {}
+    },
+    {
+        "label": "confirmar_importacao_catalogo",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.armazem_controller",
+        "description": "backend.app.api.v1.armazem_controller",
+        "peekOfCode": "def confirmar_importacao_catalogo():\n    linhas = (request.get_json() or {}).get('linhas', [])\n    resultado, erro = armazem_service.importar_catalogo(linhas, get_jwt_identity())\n    if erro:\n        return jsonify(erro), 400\n    return jsonify({'msg': 'Importação concluída', 'itens': resultado}), 201\ndef build_pagination(repo, schema, request):\n    page = request.args.get('page', 1, type=int)\n    per_page = request.args.get('per_page', 10, type=int)\n    search = request.args.get('search', '')",
+        "detail": "backend.app.api.v1.armazem_controller",
+        "documentation": {}
+    },
+    {
         "label": "build_pagination",
         "kind": 2,
         "importPath": "backend.app.api.v1.armazem_controller",
         "description": "backend.app.api.v1.armazem_controller",
         "peekOfCode": "def build_pagination(repo, schema, request):\n    page = request.args.get('page', 1, type=int)\n    per_page = request.args.get('per_page', 10, type=int)\n    search = request.args.get('search', '')\n    # filters logic... simplified\n    filters = {}\n    for key, value in request.args.items():\n        if key not in ['page', 'per_page', 'search'] and hasattr(repo.model_class, key):\n            filters[key] = value\n    search_fields = ['nome', 'codigo'] if hasattr(repo.model_class, 'nome') else []",
-        "detail": "backend.app.api.v1.armazem_controller",
-        "documentation": {}
-    },
-    {
-        "label": "run_migrations",
-        "kind": 2,
-        "importPath": "backend.app.api.v1.armazem_controller",
-        "description": "backend.app.api.v1.armazem_controller",
-        "peekOfCode": "def run_migrations():\n    from app.core.database import db\n    from sqlalchemy import text\n    # Import all models to ensure metadata registration and table auto-creation\n    try:\n        from app.models.user import User\n        from app.models.produto import Produto\n        from app.models.cliente import Cliente\n        from app.models.fornecedor import Fornecedor\n        from app.models.ingrediente import Ingrediente",
         "detail": "backend.app.api.v1.armazem_controller",
         "documentation": {}
     },
@@ -8051,6 +8334,15 @@
         "importPath": "backend.app.api.v1.armazem_controller",
         "description": "backend.app.api.v1.armazem_controller",
         "peekOfCode": "def create_produto():\n    try:\n        data = ProdutoSchema().load(request.get_json())\n    except ValidationError as err:\n        return jsonify({\"msg\": \"Validation error\", \"errors\": err.messages}), 400\n    user_id = get_jwt_identity()\n    result, error = armazem_service.create_produto(data, user_id)\n    if error:\n        return jsonify({\"msg\": error}), 400\n    return jsonify(ProdutoSchema().dump(result)), 201",
+        "detail": "backend.app.api.v1.armazem_controller",
+        "documentation": {}
+    },
+    {
+        "label": "get_produto",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.armazem_controller",
+        "description": "backend.app.api.v1.armazem_controller",
+        "peekOfCode": "def get_produto(id):\n    produto = armazem_service.produto_repo.get_by_id(id)\n    if not produto:\n        return jsonify({\"msg\": \"Produto não encontrado\"}), 404\n    return jsonify(ProdutoSchema().dump(produto)), 200\n@armazem_bp.route('/produtos/<int:id>', methods=['PUT'])\n@jwt_required()\n@requires_roles('Administrador', 'Armazém')\ndef update_produto(id):\n    try:",
         "detail": "backend.app.api.v1.armazem_controller",
         "documentation": {}
     },
@@ -8275,7 +8567,7 @@
         "kind": 5,
         "importPath": "backend.app.api.v1.armazem_controller",
         "description": "backend.app.api.v1.armazem_controller",
-        "peekOfCode": "armazem_bp = Blueprint('armazem', __name__)\narmazem_service = ArmazemService()\ndef build_pagination(repo, schema, request):\n    page = request.args.get('page', 1, type=int)\n    per_page = request.args.get('per_page', 10, type=int)\n    search = request.args.get('search', '')\n    # filters logic... simplified\n    filters = {}\n    for key, value in request.args.items():\n        if key not in ['page', 'per_page', 'search'] and hasattr(repo.model_class, key):",
+        "peekOfCode": "armazem_bp = Blueprint('armazem', __name__)\narmazem_service = ArmazemService()\n@armazem_bp.route('/importacao/validar', methods=['POST'])\n@jwt_required()\n@requires_roles('Administrador', 'Armazém')\ndef validar_importacao_catalogo():\n    linhas = (request.get_json() or {}).get('linhas', [])\n    resultado = armazem_service.validar_importacao_catalogo(linhas)\n    return jsonify({'linhas': resultado, 'resumo': {'total': len(resultado), 'validos': sum(x['valido'] for x in resultado), 'invalidos': sum(not x['valido'] for x in resultado)}}), 200\n@armazem_bp.route('/importacao/confirmar', methods=['POST'])",
         "detail": "backend.app.api.v1.armazem_controller",
         "documentation": {}
     },
@@ -8284,7 +8576,7 @@
         "kind": 5,
         "importPath": "backend.app.api.v1.armazem_controller",
         "description": "backend.app.api.v1.armazem_controller",
-        "peekOfCode": "armazem_service = ArmazemService()\ndef build_pagination(repo, schema, request):\n    page = request.args.get('page', 1, type=int)\n    per_page = request.args.get('per_page', 10, type=int)\n    search = request.args.get('search', '')\n    # filters logic... simplified\n    filters = {}\n    for key, value in request.args.items():\n        if key not in ['page', 'per_page', 'search'] and hasattr(repo.model_class, key):\n            filters[key] = value",
+        "peekOfCode": "armazem_service = ArmazemService()\n@armazem_bp.route('/importacao/validar', methods=['POST'])\n@jwt_required()\n@requires_roles('Administrador', 'Armazém')\ndef validar_importacao_catalogo():\n    linhas = (request.get_json() or {}).get('linhas', [])\n    resultado = armazem_service.validar_importacao_catalogo(linhas)\n    return jsonify({'linhas': resultado, 'resumo': {'total': len(resultado), 'validos': sum(x['valido'] for x in resultado), 'invalidos': sum(not x['valido'] for x in resultado)}}), 200\n@armazem_bp.route('/importacao/confirmar', methods=['POST'])\n@jwt_required()",
         "detail": "backend.app.api.v1.armazem_controller",
         "documentation": {}
     },
@@ -8370,6 +8662,51 @@
         "documentation": {}
     },
     {
+        "label": "list_backups",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.backup_controller",
+        "description": "backend.app.api.v1.backup_controller",
+        "peekOfCode": "def list_backups():\n    return jsonify({'items': backup_service.list()}), 200\n@backup_bp.route('', methods=['POST'])\n@jwt_required()\n@requires_roles('Administrador')\ndef create_backup():\n    try:\n        result = backup_service.create()\n        AuditService.log_action(get_jwt_identity(), 'BACKUP', 'sistema', new_values={'filename': result['filename']}, modulo='CONFIGURACOES')\n        return jsonify(result), 201",
+        "detail": "backend.app.api.v1.backup_controller",
+        "documentation": {}
+    },
+    {
+        "label": "create_backup",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.backup_controller",
+        "description": "backend.app.api.v1.backup_controller",
+        "peekOfCode": "def create_backup():\n    try:\n        result = backup_service.create()\n        AuditService.log_action(get_jwt_identity(), 'BACKUP', 'sistema', new_values={'filename': result['filename']}, modulo='CONFIGURACOES')\n        return jsonify(result), 201\n    except Exception as error:\n        return jsonify({'msg': f'Não foi possível criar o backup: {error}'}), 500\n@backup_bp.route('/<path:filename>/download', methods=['GET'])\n@jwt_required()\n@requires_roles('Administrador')",
+        "detail": "backend.app.api.v1.backup_controller",
+        "documentation": {}
+    },
+    {
+        "label": "download_backup",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.backup_controller",
+        "description": "backend.app.api.v1.backup_controller",
+        "peekOfCode": "def download_backup(filename):\n    for item in backup_service.list():\n        if item['filename'] == filename:\n            return send_file(os.path.join(backup_service._dir(), filename), as_attachment=True, download_name=filename)\n    return jsonify({'msg': 'Backup não encontrado'}), 404\n@backup_bp.route('/restore', methods=['POST'])\n@jwt_required()\n@requires_roles('Administrador')\ndef restore_backup():\n    try:",
+        "detail": "backend.app.api.v1.backup_controller",
+        "documentation": {}
+    },
+    {
+        "label": "restore_backup",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.backup_controller",
+        "description": "backend.app.api.v1.backup_controller",
+        "peekOfCode": "def restore_backup():\n    try:\n        backup_service.restore(request.files.get('file'))\n        AuditService.log_action(get_jwt_identity(), 'RESTORE', 'sistema', modulo='CONFIGURACOES')\n        return jsonify({'msg': 'Restauro concluído. Reinicie o serviço para renovar as sessões ativas.'}), 200\n    except ValueError as error:\n        return jsonify({'msg': str(error)}), 400\n    except Exception as error:\n        return jsonify({'msg': f'Falha no restauro: {error}'}), 500",
+        "detail": "backend.app.api.v1.backup_controller",
+        "documentation": {}
+    },
+    {
+        "label": "backup_bp",
+        "kind": 5,
+        "importPath": "backend.app.api.v1.backup_controller",
+        "description": "backend.app.api.v1.backup_controller",
+        "peekOfCode": "backup_bp = Blueprint('backup', __name__)\n@backup_bp.route('', methods=['GET'])\n@jwt_required()\n@requires_roles('Administrador')\ndef list_backups():\n    return jsonify({'items': backup_service.list()}), 200\n@backup_bp.route('', methods=['POST'])\n@jwt_required()\n@requires_roles('Administrador')\ndef create_backup():",
+        "detail": "backend.app.api.v1.backup_controller",
+        "documentation": {}
+    },
+    {
         "label": "get_calendario_dia",
         "kind": 2,
         "importPath": "backend.app.api.v1.calendario_controller",
@@ -8446,7 +8783,7 @@
         "kind": 2,
         "importPath": "backend.app.api.v1.comercial_controller",
         "description": "backend.app.api.v1.comercial_controller",
-        "peekOfCode": "def get_vendas():\n    vendas = comercial_service.get_vendas()\n    result = [_serialize_venda_dict(v) for v in vendas]\n    return jsonify(result), 200\n@comercial_bp.route('/<int:venda_id>', methods=['GET'])\n@jwt_required()\ndef get_venda(venda_id):\n    venda = comercial_service.get_venda(venda_id)\n    if not venda:\n        return jsonify({'error': 'Venda not found'}), 404",
+        "peekOfCode": "def get_vendas():\n    page = max(1, request.args.get('page', 1, type=int))\n    per_page = min(200, max(1, request.args.get('per_page', 10, type=int)))\n    query = Venda.query\n    search = request.args.get('search', '').strip()\n    if search:\n        query = query.filter(or_(Venda.numero_documento.ilike(f'%{search}%'), Venda.observacoes.ilike(f'%{search}%')))\n    if request.args.get('estado'):\n        estado = request.args['estado']\n        # The historic UI used the abbreviated display label.  Translate it at",
         "detail": "backend.app.api.v1.comercial_controller",
         "documentation": {}
     },
@@ -8527,7 +8864,7 @@
         "kind": 2,
         "importPath": "backend.app.api.v1.comercial_controller",
         "description": "backend.app.api.v1.comercial_controller",
-        "peekOfCode": "def checkout_pedido(pedido_id):\n    from flask_jwt_extended import get_jwt_identity\n    user_id = get_jwt_identity()\n    data = request.json or {}\n    from app.models.pedido import Pedido\n    from app.models.comercial import Venda\n    pedido = Pedido.query.get(pedido_id)\n    venda_existente = Venda.query.filter_by(pedido_id=pedido_id).order_by(Venda.id.asc()).first()\n    if pedido and venda_existente:\n        venda, error = comercial_service.liquidar_pedido_faturado(pedido, venda_existente, data, user_id)",
+        "peekOfCode": "def checkout_pedido(pedido_id):\n    from flask_jwt_extended import get_jwt_identity\n    user_id = get_jwt_identity()\n    data = request.json or {}\n    pagamento_payload = data.get('pagamento', data) if isinstance(data, dict) else {}\n    pagamentos = pagamento_payload.get('pagamentos', []) if isinstance(pagamento_payload, dict) else []\n    # O POS envia um pagamento por meio.  O primeiro cria/liquida a venda e os\n    # restantes são registados como parcelas da mesma fatura.\n    if pagamentos:\n        if not isinstance(pagamentos, list) or not pagamentos:",
         "detail": "backend.app.api.v1.comercial_controller",
         "documentation": {}
     },
@@ -8536,7 +8873,7 @@
         "kind": 5,
         "importPath": "backend.app.api.v1.comercial_controller",
         "description": "backend.app.api.v1.comercial_controller",
-        "peekOfCode": "comercial_bp = Blueprint('comercial', __name__)\nfiscal_bp = Blueprint('fiscal', __name__)\nfrom app.services.comercial_service import ComercialService, StockInsuficienteError\nfrom flask_jwt_extended import jwt_required\nfrom app.middleware.auth_middleware import requires_roles\nfrom app.services.pdf_generator import generate_venda_pdf, generate_venda_receipt, get_venda_receipt_data\nfrom app.models.cliente import Cliente\ncomercial_service = ComercialService()\ndef _serialize_venda_dict(venda):\n    cliente_nome = \"Consumidor Final\"",
+        "peekOfCode": "comercial_bp = Blueprint('comercial', __name__)\nfiscal_bp = Blueprint('fiscal', __name__)\nfrom app.services.comercial_service import ComercialService, StockInsuficienteError\nfrom flask_jwt_extended import jwt_required\nfrom app.middleware.auth_middleware import requires_roles\nfrom app.services.pdf_generator import generate_venda_pdf, generate_venda_receipt, get_venda_receipt_data\nfrom app.models.cliente import Cliente\nfrom app.models.comercial import Venda, EstadoVenda, TipoDocumento\ncomercial_service = ComercialService()\ndef _serialize_venda_dict(venda):",
         "detail": "backend.app.api.v1.comercial_controller",
         "documentation": {}
     },
@@ -8545,7 +8882,7 @@
         "kind": 5,
         "importPath": "backend.app.api.v1.comercial_controller",
         "description": "backend.app.api.v1.comercial_controller",
-        "peekOfCode": "fiscal_bp = Blueprint('fiscal', __name__)\nfrom app.services.comercial_service import ComercialService, StockInsuficienteError\nfrom flask_jwt_extended import jwt_required\nfrom app.middleware.auth_middleware import requires_roles\nfrom app.services.pdf_generator import generate_venda_pdf, generate_venda_receipt, get_venda_receipt_data\nfrom app.models.cliente import Cliente\ncomercial_service = ComercialService()\ndef _serialize_venda_dict(venda):\n    cliente_nome = \"Consumidor Final\"\n    cliente_nif = \"Consumidor Final\"",
+        "peekOfCode": "fiscal_bp = Blueprint('fiscal', __name__)\nfrom app.services.comercial_service import ComercialService, StockInsuficienteError\nfrom flask_jwt_extended import jwt_required\nfrom app.middleware.auth_middleware import requires_roles\nfrom app.services.pdf_generator import generate_venda_pdf, generate_venda_receipt, get_venda_receipt_data\nfrom app.models.cliente import Cliente\nfrom app.models.comercial import Venda, EstadoVenda, TipoDocumento\ncomercial_service = ComercialService()\ndef _serialize_venda_dict(venda):\n    cliente_nome = \"Consumidor Final\"",
         "detail": "backend.app.api.v1.comercial_controller",
         "documentation": {}
     },
@@ -9328,7 +9665,7 @@
         "kind": 2,
         "importPath": "backend.app.api.v1.producao_controller",
         "description": "backend.app.api.v1.producao_controller",
-        "peekOfCode": "def get_ordens():\n    try:\n        producao_service.processar_pedidos_agendados()\n    except Exception as e:\n        print(\"⚠ Erro ao processar agendados no get_ordens:\", e)\n    return build_pagination(producao_service.ordem_repo, OrdemProducaoSchema, request)\n@producao_bp.route('/processar-agendados', methods=['POST', 'GET'])\n@jwt_required()\ndef processar_agendados():\n    count = producao_service.processar_pedidos_agendados()",
+        "peekOfCode": "def get_ordens():\n    try:\n        producao_service.processar_pedidos_agendados()\n    except Exception as e:\n        print(\"⚠ Erro ao processar agendados no get_ordens:\", e)\n    data_producao = request.args.get('data', request.args.get('data_producao'))\n    if data_producao:\n        try:\n            data_producao_obj = datetime.strptime(data_producao, '%Y-%m-%d').date()\n        except ValueError:",
         "detail": "backend.app.api.v1.producao_controller",
         "documentation": {}
     },
@@ -9481,7 +9818,7 @@
         "kind": 2,
         "importPath": "backend.app.api.v1.relatorios_controller",
         "description": "backend.app.api.v1.relatorios_controller",
-        "peekOfCode": "def get_dashboard():\n    vendas = db.session.query(func.count(Venda.id)).filter(Venda.estado != EstadoVenda.CANCELADO).scalar() or 0\n    eventos = db.session.query(func.count(Evento.id)).scalar() or 0\n    receita_total = db.session.query(func.sum(Venda.total)).filter(Venda.estado != EstadoVenda.CANCELADO).scalar() or 0\n    # Example: group by real month, assuming SQLite or MySQL works. In MySQL: func.month(Pedido.data_pedido).\n    # Since we want it compatible, we can just fetch all and group in Python for safety, or use func.strftime('%m', Pedido.data_pedido) in SQLite, \n    # but the instructions say we use real MySQL. In MySQL it's func.month() or extract('month', ...).\n    # To keep it simple and robust across backends without dialects, let's fetch in last 6 months.\n    from datetime import datetime, timedelta\n    six_months_ago = datetime.utcnow() - timedelta(days=180)",
+        "peekOfCode": "def get_dashboard():\n    # `total` is an instance @property. SQL expressions must use the mapped\n    # storage column, otherwise SQLAlchemy receives a Python property object.\n    query = db.session.query(Venda).filter(Venda.estado != EstadoVenda.CANCELADO)\n    inicio = request.args.get('inicio')\n    fim = request.args.get('fim')\n    if inicio:\n        query = query.filter(Venda.created_at >= datetime.strptime(inicio, '%Y-%m-%d'))\n    if fim:\n        query = query.filter(Venda.created_at < datetime.strptime(fim, '%Y-%m-%d') + timedelta(days=1))",
         "detail": "backend.app.api.v1.relatorios_controller",
         "documentation": {}
     },
@@ -9499,7 +9836,7 @@
         "kind": 5,
         "importPath": "backend.app.api.v1.relatorios_controller",
         "description": "backend.app.api.v1.relatorios_controller",
-        "peekOfCode": "relatorios_bp = Blueprint('relatorios', __name__)\n@relatorios_bp.route('/dashboard', methods=['GET'])\n@jwt_required()\ndef get_dashboard():\n    vendas = db.session.query(func.count(Venda.id)).filter(Venda.estado != EstadoVenda.CANCELADO).scalar() or 0\n    eventos = db.session.query(func.count(Evento.id)).scalar() or 0\n    receita_total = db.session.query(func.sum(Venda.total)).filter(Venda.estado != EstadoVenda.CANCELADO).scalar() or 0\n    # Example: group by real month, assuming SQLite or MySQL works. In MySQL: func.month(Pedido.data_pedido).\n    # Since we want it compatible, we can just fetch all and group in Python for safety, or use func.strftime('%m', Pedido.data_pedido) in SQLite, \n    # but the instructions say we use real MySQL. In MySQL it's func.month() or extract('month', ...).",
+        "peekOfCode": "relatorios_bp = Blueprint('relatorios', __name__)\n@relatorios_bp.route('/dashboard', methods=['GET'])\n@jwt_required()\ndef get_dashboard():\n    # `total` is an instance @property. SQL expressions must use the mapped\n    # storage column, otherwise SQLAlchemy receives a Python property object.\n    query = db.session.query(Venda).filter(Venda.estado != EstadoVenda.CANCELADO)\n    inicio = request.args.get('inicio')\n    fim = request.args.get('fim')\n    if inicio:",
         "detail": "backend.app.api.v1.relatorios_controller",
         "documentation": {}
     },
@@ -9751,7 +10088,7 @@
         "kind": 6,
         "importPath": "backend.app.config.settings",
         "description": "backend.app.config.settings",
-        "peekOfCode": "class Config:\n    SECRET_KEY = os.environ.get('SECRET_KEY', 'default-secret-key-sabor-imbativel')\n    # Database MySQL\n    MYSQL_USER = os.environ.get('MYSQL_USER', 'root')\n    MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD', 'root')\n    MYSQL_HOST = os.environ.get('MYSQL_HOST', 'localhost')\n    MYSQL_PORT = os.environ.get('MYSQL_PORT', '3306')\n    MYSQL_DB = os.environ.get('MYSQL_DB', 'sigi_db')\n    SQLALCHEMY_DATABASE_URI = f\"mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DB}\"\n    SQLALCHEMY_TRACK_MODIFICATIONS = False",
+        "peekOfCode": "class Config:\n    SECRET_KEY = os.environ.get('SECRET_KEY')\n    # Database MySQL\n    MYSQL_USER = os.environ.get('MYSQL_USER', 'root')\n    MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD', 'root')\n    MYSQL_HOST = os.environ.get('MYSQL_HOST', 'localhost')\n    MYSQL_PORT = os.environ.get('MYSQL_PORT', '3306')\n    MYSQL_DB = os.environ.get('MYSQL_DB', 'sigi_db')\n    SQLALCHEMY_DATABASE_URI = f\"mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DB}\"\n    SQLALCHEMY_TRACK_MODIFICATIONS = False",
         "detail": "backend.app.config.settings",
         "documentation": {}
     },
@@ -11907,6 +12244,24 @@
         "documentation": {}
     },
     {
+        "label": "BackupService",
+        "kind": 6,
+        "importPath": "backend.app.services.backup_service",
+        "description": "backend.app.services.backup_service",
+        "peekOfCode": "class BackupService:\n    \"\"\"Backups SQL completos, sem expor credenciais ao cliente.\"\"\"\n    def _dir(self):\n        path = current_app.config['BACKUP_DIR']\n        os.makedirs(path, exist_ok=True)\n        return path\n    def _mysql_args(self, executable):\n        cfg = current_app.config\n        return [executable, '-h', cfg['MYSQL_HOST'], '-P', str(cfg['MYSQL_PORT']), '-u', cfg['MYSQL_USER']]\n    def _resolve_binary(self, configured_name, alternatives):",
+        "detail": "backend.app.services.backup_service",
+        "documentation": {}
+    },
+    {
+        "label": "backup_service",
+        "kind": 5,
+        "importPath": "backend.app.services.backup_service",
+        "description": "backend.app.services.backup_service",
+        "peekOfCode": "backup_service = BackupService()",
+        "detail": "backend.app.services.backup_service",
+        "documentation": {}
+    },
+    {
         "label": "StockInsuficienteError",
         "kind": 6,
         "importPath": "backend.app.services.comercial_service",
@@ -12159,6 +12514,69 @@
         "documentation": {}
     },
     {
+        "label": "ItemCalculado",
+        "kind": 6,
+        "importPath": "backend.app.services.venda_calculo_service",
+        "description": "backend.app.services.venda_calculo_service",
+        "peekOfCode": "class ItemCalculado:\n    quantidade: Decimal\n    preco_unitario: Decimal\n    subtotal: Decimal\n    desconto: Decimal\n    base_tributavel: Decimal\n    taxa_iva: Decimal\n    valor_iva: Decimal\n    total: Decimal\ndef calcular_item_venda(preco_unitario, quantidade, taxa_iva=0, desconto_percentual=None, desconto_valor=None):",
+        "detail": "backend.app.services.venda_calculo_service",
+        "documentation": {}
+    },
+    {
+        "label": "money",
+        "kind": 2,
+        "importPath": "backend.app.services.venda_calculo_service",
+        "description": "backend.app.services.venda_calculo_service",
+        "peekOfCode": "def money(value):\n    try:\n        return Decimal(str(value or 0)).quantize(CENT, rounding=ROUND_HALF_UP)\n    except (InvalidOperation, ValueError):\n        raise ValueError('Valor monetário inválido.')\ndef decimal_value(value, field):\n    try:\n        return Decimal(str(value))\n    except (InvalidOperation, ValueError, TypeError):\n        raise ValueError(f'{field} inválido.')",
+        "detail": "backend.app.services.venda_calculo_service",
+        "documentation": {}
+    },
+    {
+        "label": "decimal_value",
+        "kind": 2,
+        "importPath": "backend.app.services.venda_calculo_service",
+        "description": "backend.app.services.venda_calculo_service",
+        "peekOfCode": "def decimal_value(value, field):\n    try:\n        return Decimal(str(value))\n    except (InvalidOperation, ValueError, TypeError):\n        raise ValueError(f'{field} inválido.')\n@dataclass(frozen=True)\nclass ItemCalculado:\n    quantidade: Decimal\n    preco_unitario: Decimal\n    subtotal: Decimal",
+        "detail": "backend.app.services.venda_calculo_service",
+        "documentation": {}
+    },
+    {
+        "label": "calcular_item_venda",
+        "kind": 2,
+        "importPath": "backend.app.services.venda_calculo_service",
+        "description": "backend.app.services.venda_calculo_service",
+        "peekOfCode": "def calcular_item_venda(preco_unitario, quantidade, taxa_iva=0, desconto_percentual=None, desconto_valor=None):\n    preco = money(preco_unitario)\n    qtd = decimal_value(quantidade, 'Quantidade')\n    taxa = decimal_value(taxa_iva or 0, 'Taxa de IVA')\n    if preco < 0 or qtd <= 0 or taxa < 0:\n        raise ValueError('Preço, quantidade e IVA devem ser valores não negativos; quantidade deve ser maior que zero.')\n    bruto = money(preco * qtd)\n    if desconto_percentual is not None:\n        percentual = decimal_value(desconto_percentual, 'Desconto percentual')\n        if percentual < 0 or percentual > 100:",
+        "detail": "backend.app.services.venda_calculo_service",
+        "documentation": {}
+    },
+    {
+        "label": "calcular_venda",
+        "kind": 2,
+        "importPath": "backend.app.services.venda_calculo_service",
+        "description": "backend.app.services.venda_calculo_service",
+        "peekOfCode": "def calcular_venda(itens):\n    if not itens:\n        raise ValueError('A venda deve ter pelo menos um item.')\n    campos = ('subtotal', 'desconto', 'base_tributavel', 'valor_iva', 'total')\n    totais = {campo: Decimal('0.00') for campo in campos}\n    for item in itens:\n        for campo in campos:\n            totais[campo] += getattr(item, campo)\n    totais = {campo: money(valor) for campo, valor in totais.items()}\n    if money(totais['base_tributavel'] + totais['valor_iva']) != totais['total']:",
+        "detail": "backend.app.services.venda_calculo_service",
+        "documentation": {}
+    },
+    {
+        "label": "CENT",
+        "kind": 5,
+        "importPath": "backend.app.services.venda_calculo_service",
+        "description": "backend.app.services.venda_calculo_service",
+        "peekOfCode": "CENT = Decimal('0.01')\ndef money(value):\n    try:\n        return Decimal(str(value or 0)).quantize(CENT, rounding=ROUND_HALF_UP)\n    except (InvalidOperation, ValueError):\n        raise ValueError('Valor monetário inválido.')\ndef decimal_value(value, field):\n    try:\n        return Decimal(str(value))\n    except (InvalidOperation, ValueError, TypeError):",
+        "detail": "backend.app.services.venda_calculo_service",
+        "documentation": {}
+    },
+    {
+        "label": "production_room",
+        "kind": 2,
+        "importPath": "backend.app.websocket.socket_manager",
+        "description": "backend.app.websocket.socket_manager",
+        "peekOfCode": "def production_room(role):\n    \"\"\"Return the canonical Socket.IO room for a production role.\"\"\"\n    return str(role).strip().lower().replace(' ', '_')\ndef send_notification(user_id, message, module=\"geral\"):\n    \"\"\"\n    Utility to emit notifications to a specific user's room\n    \"\"\"\n    socketio.emit('notification', {'message': message, 'module': module}, room=f\"user_{user_id}\")\ndef broadcast_production_update(op_numero, estado):\n    \"\"\"",
+        "detail": "backend.app.websocket.socket_manager",
+        "documentation": {}
+    },
+    {
         "label": "send_notification",
         "kind": 2,
         "importPath": "backend.app.websocket.socket_manager",
@@ -12172,7 +12590,16 @@
         "kind": 2,
         "importPath": "backend.app.websocket.socket_manager",
         "description": "backend.app.websocket.socket_manager",
-        "peekOfCode": "def broadcast_production_update(op_numero, estado):\n    \"\"\"\n    Utility to broadcast a production update internally\n    \"\"\"\n    socketio.emit('production_update', {'numero': op_numero, 'estado': estado}, room=\"producao\")\n@socketio.on('connect')\ndef handle_connect():\n    # Ideally should authenticate, but for now we accept connections\n    pass\n@socketio.on('join')",
+        "peekOfCode": "def broadcast_production_update(op_numero, estado):\n    \"\"\"\n    Utility to broadcast a production update internally\n    \"\"\"\n    socketio.emit('production_update', {'numero': op_numero, 'estado': estado}, room=\"producao\")\ndef notify_production_orders(pedido_id, numero, sectors):\n    \"\"\"Notify only the departments which received production orders.\"\"\"\n    for sector in {str(sector.value if hasattr(sector, 'value') else sector) for sector in sectors}:\n        socketio.emit(\n            'nova_ordem_producao',",
+        "detail": "backend.app.websocket.socket_manager",
+        "documentation": {}
+    },
+    {
+        "label": "notify_production_orders",
+        "kind": 2,
+        "importPath": "backend.app.websocket.socket_manager",
+        "description": "backend.app.websocket.socket_manager",
+        "peekOfCode": "def notify_production_orders(pedido_id, numero, sectors):\n    \"\"\"Notify only the departments which received production orders.\"\"\"\n    for sector in {str(sector.value if hasattr(sector, 'value') else sector) for sector in sectors}:\n        socketio.emit(\n            'nova_ordem_producao',\n            {'pedido_id': pedido_id, 'numero': numero, 'sector': sector},\n            room=production_room(sector),\n        )\n@socketio.on('connect')\ndef handle_connect():",
         "detail": "backend.app.websocket.socket_manager",
         "documentation": {}
     },
@@ -12181,7 +12608,7 @@
         "kind": 2,
         "importPath": "backend.app.websocket.socket_manager",
         "description": "backend.app.websocket.socket_manager",
-        "peekOfCode": "def handle_connect():\n    # Ideally should authenticate, but for now we accept connections\n    pass\n@socketio.on('join')\ndef on_join(data):\n    # Data is expected to be dict with user_id and roles/rooms\n    user_id = data.get('user_id')\n    if user_id:\n        room = f\"user_{user_id}\"\n        join_room(room)",
+        "peekOfCode": "def handle_connect():\n    # Ideally should authenticate, but for now we accept connections\n    pass\n@socketio.on('join')\ndef on_join(data):\n    # Rooms are derived from the signed-in user; clients cannot subscribe to\n    # arbitrary operational departments by supplying a room name.\n    token = (data or {}).get('token')\n    if not token:\n        emit('error', {'msg': 'Autenticação Socket.IO obrigatória.'})",
         "detail": "backend.app.websocket.socket_manager",
         "documentation": {}
     },
@@ -12190,7 +12617,7 @@
         "kind": 2,
         "importPath": "backend.app.websocket.socket_manager",
         "description": "backend.app.websocket.socket_manager",
-        "peekOfCode": "def on_join(data):\n    # Data is expected to be dict with user_id and roles/rooms\n    user_id = data.get('user_id')\n    if user_id:\n        room = f\"user_{user_id}\"\n        join_room(room)\n        emit('status', {'msg': f'Joined {room}'}, room=room)\n    rooms = data.get('rooms', [])\n    for r in rooms:\n        join_room(r)",
+        "peekOfCode": "def on_join(data):\n    # Rooms are derived from the signed-in user; clients cannot subscribe to\n    # arbitrary operational departments by supplying a room name.\n    token = (data or {}).get('token')\n    if not token:\n        emit('error', {'msg': 'Autenticação Socket.IO obrigatória.'})\n        return\n    try:\n        user_id = decode_token(token)['sub']\n        user = User.query.get(user_id)",
         "detail": "backend.app.websocket.socket_manager",
         "documentation": {}
     },
@@ -12208,7 +12635,7 @@
         "kind": 5,
         "importPath": "backend.app.websocket.socket_manager",
         "description": "backend.app.websocket.socket_manager",
-        "peekOfCode": "socketio = SocketIO(cors_allowed_origins=\"*\")\ndef send_notification(user_id, message, module=\"geral\"):\n    \"\"\"\n    Utility to emit notifications to a specific user's room\n    \"\"\"\n    socketio.emit('notification', {'message': message, 'module': module}, room=f\"user_{user_id}\")\ndef broadcast_production_update(op_numero, estado):\n    \"\"\"\n    Utility to broadcast a production update internally\n    \"\"\"",
+        "peekOfCode": "socketio = SocketIO(\n    cors_allowed_origins=os.environ.get('SOCKETIO_CORS_ALLOWED_ORIGINS', '*'),\n    message_queue=os.environ.get('SOCKETIO_MESSAGE_QUEUE') or None,\n)\ndef production_room(role):\n    \"\"\"Return the canonical Socket.IO room for a production role.\"\"\"\n    return str(role).strip().lower().replace(' ', '_')\ndef send_notification(user_id, message, module=\"geral\"):\n    \"\"\"\n    Utility to emit notifications to a specific user's room",
         "detail": "backend.app.websocket.socket_manager",
         "documentation": {}
     },
@@ -12915,6 +13342,51 @@
         "documentation": {}
     },
     {
+        "label": "test_iva_e_desconto_percentual_regra_oficial",
+        "kind": 2,
+        "importPath": "backend.tests.test_venda_calculo_service",
+        "description": "backend.tests.test_venda_calculo_service",
+        "peekOfCode": "def test_iva_e_desconto_percentual_regra_oficial():\n    item = calcular_item_venda('50.00', 5, 15, desconto_percentual=3)\n    assert item.subtotal == Decimal('250.00')\n    assert item.desconto == Decimal('7.50')\n    assert item.base_tributavel == Decimal('242.50')\n    assert item.valor_iva == Decimal('36.38')\n    assert item.total == Decimal('278.88')\ndef test_iva_zero_e_desconto_valor():\n    item = calcular_item_venda('20', 2, 0, desconto_valor='5')\n    assert (item.base_tributavel, item.valor_iva, item.total) == (Decimal('35.00'), Decimal('0.00'), Decimal('35.00'))",
+        "detail": "backend.tests.test_venda_calculo_service",
+        "documentation": {}
+    },
+    {
+        "label": "test_iva_zero_e_desconto_valor",
+        "kind": 2,
+        "importPath": "backend.tests.test_venda_calculo_service",
+        "description": "backend.tests.test_venda_calculo_service",
+        "peekOfCode": "def test_iva_zero_e_desconto_valor():\n    item = calcular_item_venda('20', 2, 0, desconto_valor='5')\n    assert (item.base_tributavel, item.valor_iva, item.total) == (Decimal('35.00'), Decimal('0.00'), Decimal('35.00'))\ndef test_multiplas_taxas_somam_valores_das_linhas():\n    itens = [calcular_item_venda(17, 10, 15), calcular_item_venda(20, 2, 0)]\n    totais = calcular_venda(itens)\n    assert totais['total'] == sum(item.total for item in itens)\n    assert totais['valor_iva'] == sum(item.valor_iva for item in itens)\n@pytest.mark.parametrize('desconto', [-1, 101])\ndef test_rejeita_desconto_percentual_invalido(desconto):",
+        "detail": "backend.tests.test_venda_calculo_service",
+        "documentation": {}
+    },
+    {
+        "label": "test_multiplas_taxas_somam_valores_das_linhas",
+        "kind": 2,
+        "importPath": "backend.tests.test_venda_calculo_service",
+        "description": "backend.tests.test_venda_calculo_service",
+        "peekOfCode": "def test_multiplas_taxas_somam_valores_das_linhas():\n    itens = [calcular_item_venda(17, 10, 15), calcular_item_venda(20, 2, 0)]\n    totais = calcular_venda(itens)\n    assert totais['total'] == sum(item.total for item in itens)\n    assert totais['valor_iva'] == sum(item.valor_iva for item in itens)\n@pytest.mark.parametrize('desconto', [-1, 101])\ndef test_rejeita_desconto_percentual_invalido(desconto):\n    with pytest.raises(ValueError):\n        calcular_item_venda(10, 1, 15, desconto_percentual=desconto)\ndef test_rejeita_quantidade_zero_e_desconto_superior_ao_bruto():",
+        "detail": "backend.tests.test_venda_calculo_service",
+        "documentation": {}
+    },
+    {
+        "label": "test_rejeita_desconto_percentual_invalido",
+        "kind": 2,
+        "importPath": "backend.tests.test_venda_calculo_service",
+        "description": "backend.tests.test_venda_calculo_service",
+        "peekOfCode": "def test_rejeita_desconto_percentual_invalido(desconto):\n    with pytest.raises(ValueError):\n        calcular_item_venda(10, 1, 15, desconto_percentual=desconto)\ndef test_rejeita_quantidade_zero_e_desconto_superior_ao_bruto():\n    with pytest.raises(ValueError): calcular_item_venda(10, 0, 15)\n    with pytest.raises(ValueError): calcular_item_venda(10, 1, 15, desconto_valor=11)",
+        "detail": "backend.tests.test_venda_calculo_service",
+        "documentation": {}
+    },
+    {
+        "label": "test_rejeita_quantidade_zero_e_desconto_superior_ao_bruto",
+        "kind": 2,
+        "importPath": "backend.tests.test_venda_calculo_service",
+        "description": "backend.tests.test_venda_calculo_service",
+        "peekOfCode": "def test_rejeita_quantidade_zero_e_desconto_superior_ao_bruto():\n    with pytest.raises(ValueError): calcular_item_venda(10, 0, 15)\n    with pytest.raises(ValueError): calcular_item_venda(10, 1, 15, desconto_valor=11)",
+        "detail": "backend.tests.test_venda_calculo_service",
+        "documentation": {}
+    },
+    {
         "label": "run_migrations",
         "kind": 2,
         "importPath": "backend.apply_migration",
@@ -13005,38 +13477,11 @@
         "documentation": {}
     },
     {
-        "label": "is_concurrent_ddl_error",
-        "kind": 2,
-        "importPath": "backend.run",
-        "description": "backend.run",
-        "peekOfCode": "def is_concurrent_ddl_error(exc):\n    return \"being modified by concurrent DDL statement\" in str(exc) or \"(1684\" in str(exc)\ndef run_with_ddl_retry(action, label, attempts=12, delay=2):\n    for attempt in range(1, attempts + 1):\n        try:\n            return action()\n        except OperationalError as exc:\n            db.session.rollback()\n            if not is_concurrent_ddl_error(exc) or attempt == attempts:\n                raise",
-        "detail": "backend.run",
-        "documentation": {}
-    },
-    {
-        "label": "run_with_ddl_retry",
-        "kind": 2,
-        "importPath": "backend.run",
-        "description": "backend.run",
-        "peekOfCode": "def run_with_ddl_retry(action, label, attempts=12, delay=2):\n    for attempt in range(1, attempts + 1):\n        try:\n            return action()\n        except OperationalError as exc:\n            db.session.rollback()\n            if not is_concurrent_ddl_error(exc) or attempt == attempts:\n                raise\n            print(f\"[WARN] {label} aguardando DDL concorrente no MySQL ({attempt}/{attempts})...\")\n            time.sleep(delay)",
-        "detail": "backend.run",
-        "documentation": {}
-    },
-    {
         "label": "app",
         "kind": 5,
         "importPath": "backend.run",
         "description": "backend.run",
-        "peekOfCode": "app = create_app()\nmigrate = Migrate(app, db)\nwith app.app_context():\n    # Import all models to ensure metadata registration and table auto-creation\n    from app.models.user import User\n    from app.models.produto import Produto\n    from app.models.cliente import Cliente\n    from app.models.fornecedor import Fornecedor\n    from app.models.ingrediente import Ingrediente\n    from app.models.categoria_produto import CategoriaProduto",
-        "detail": "backend.run",
-        "documentation": {}
-    },
-    {
-        "label": "migrate",
-        "kind": 5,
-        "importPath": "backend.run",
-        "description": "backend.run",
-        "peekOfCode": "migrate = Migrate(app, db)\nwith app.app_context():\n    # Import all models to ensure metadata registration and table auto-creation\n    from app.models.user import User\n    from app.models.produto import Produto\n    from app.models.cliente import Cliente\n    from app.models.fornecedor import Fornecedor\n    from app.models.ingrediente import Ingrediente\n    from app.models.categoria_produto import CategoriaProduto\n    from app.models.unidade_medida import UnidadeMedida",
+        "peekOfCode": "app = create_app()\nif __name__ == '__main__':\n    socketio.run(\n        app,\n        host=os.environ.get('HOST', '0.0.0.0'),\n        port=int(os.environ.get('PORT', '8000')),\n        debug=os.environ.get('FLASK_DEBUG', '').lower() in ('1', 'true'),\n    )",
         "detail": "backend.run",
         "documentation": {}
     },
