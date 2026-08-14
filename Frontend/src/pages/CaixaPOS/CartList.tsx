@@ -35,7 +35,7 @@ interface CartListProps {
 const CartList: React.FC<CartListProps> = ({
   cart,
   showPriceWithIva = false,
-  currencySymbol = "Kz",
+  currencySymbol = "STN",
   formatCurrency,
   removeItem,
   updateQty,
@@ -140,9 +140,24 @@ const CartList: React.FC<CartListProps> = ({
                     >
                       <Minus size={12} />
                     </button>
-                    <span className="w-6 text-center font-bold text-xs text-gray-900 dark:text-white">
-                      {item.qty}
-                    </span>
+                    <input
+                      type="number"
+                      min="1"
+                      className="w-10 text-center font-bold text-xs text-gray-900 dark:text-white bg-transparent border-none outline-none hide-number-spinners"
+                      value={item.qty}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value);
+                        if (!isNaN(val) && val > 0) {
+                          const diff = val - item.qty;
+                          updateQty(item.id, diff);
+                        }
+                      }}
+                      onBlur={(e) => {
+                        if (e.target.value === "" || parseInt(e.target.value) <= 0) {
+                          updateQty(item.id, 1 - item.qty); // Reset to 1
+                        }
+                      }}
+                    />
                     <button
                       onClick={() => updateQty(item.id, 1)}
                       className="px-2 py-1 hover:text-primary rounded text-gray-700 dark:text-gray-300"

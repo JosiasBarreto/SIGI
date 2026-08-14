@@ -82,7 +82,7 @@ export default function Eventos() {
 
   const gerarPlaneamentoMutation = useMutation({
     mutationFn: (id: string | number) => allServices.eventService.gerarPlaneamento(id),
-    onSuccess: (res: any) => {
+    onSuccess: (res: any, variables) => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
       toast.success('Motor de Planeamento executado com sucesso! Ordens de produção, reservas e requisições geradas.');
       if (currentRecord) {
@@ -101,12 +101,17 @@ export default function Eventos() {
 
   const faturarMutation = useMutation({
     mutationFn: ({ id, pagamento }: { id: string | number; pagamento: any }) => allServices.eventService.faturar(id, pagamento),
-    onSuccess: (res: any) => {
+    onSuccess: (res: any, variables) => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
       setIsViewOpen(false);
       toast.success('Evento faturado com sucesso e convertido em Venda!');
       const vendaId = res?.venda_id || res?.venda?.id || res?.id || currentRecord?.venda_id;
       if (vendaId) {
+        if (variables?.pagamento?.tipo_documento === 'PROFORMA') {
+          toast.success('Pró-Forma emitida. A abrir impressão A4.');
+          allServices.vendaService.imprimirVendaPdf(vendaId).catch((err) => toast.error(err?.message || 'Erro ao imprimir Pró-Forma.'));
+          return;
+        }
         Swal.fire({
           title: 'Evento Faturado com Sucesso!',
           text: 'Escolha a opção de documento comercial a gerar:',
@@ -165,6 +170,11 @@ export default function Eventos() {
       title: 'Faturar Evento (Converter em Venda)',
       html: `
         <div class="space-y-3 text-left">
+          <label class="block text-xs font-bold uppercase text-gray-500">Documento comercial</label>
+          <select id="evento-documento" class="swal2-select w-full m-0">
+            <option value="FR">FR — Fatura-Recibo (pagamento total)</option>
+            <option value="PROFORMA">Pró-Forma (sem pagamento)</option>
+          </select>
           <label class="block text-xs font-bold uppercase text-gray-500">Valor a receber (${moeda})</label>
           <input id="evento-valor" type="number" min="0.01" step="0.01" class="swal2-input w-full m-0" value="${valorPadrao}">
           <label class="block text-xs font-bold uppercase text-gray-500">Forma de pagamento</label>
@@ -182,6 +192,10 @@ export default function Eventos() {
       confirmButtonText: 'Faturar Evento',
       cancelButtonText: 'Cancelar',
       preConfirm: () => {
+        const tipoDocumento = (document.getElementById('evento-documento') as HTMLSelectElement).value;
+        if (tipoDocumento === 'PROFORMA') {
+          return { tipo_documento: 'PROFORMA' };
+        }
         const valor = Number((document.getElementById('evento-valor') as HTMLInputElement).value);
         const forma = Number((document.getElementById('evento-forma') as HTMLSelectElement).value);
         const codigo = (document.getElementById('evento-codigo') as HTMLInputElement).value.trim();
@@ -195,6 +209,7 @@ export default function Eventos() {
           return false;
         }
         return {
+          tipo_documento: 'FR',
           valor,
           forma_pagamento_id: forma,
           codigo_transferencia: forma === 2 || forma === 3 ? codigo : null,

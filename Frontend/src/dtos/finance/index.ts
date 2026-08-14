@@ -9,15 +9,24 @@ export interface PagamentoRequest {
 }
 export interface PagamentoResponse {
   id: number;
-  venda_id: number;
-  valor: number;
-  forma_pagamento_id: number;
+  // The current endpoint returns the updated venda, with the last settlement
+  // attached. Legacy fields remain optional for older deployments.
+  venda_id?: number;
+  valor?: number;
+  forma_pagamento_id?: number;
   forma_pagamento_nome?: string;
-  data_pagamento: string;
+  data_pagamento?: string;
   observacoes?: string;
-  novo_saldo_venda: number;
-  estado_venda: string;
-  troco_gerado: number;
+  novo_saldo_venda?: number;
+  estado_venda?: string;
+  troco_gerado?: number;
+  tipo_documento?: string;
+  saldo?: number;
+  ultimo_pagamento?: {
+    id: number;
+    valor: number;
+    recibo_url: string;
+  };
 }
 export interface CaixaDTO {
   id: number;

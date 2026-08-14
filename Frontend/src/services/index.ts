@@ -104,18 +104,18 @@ export function createService<T>(endpoint: string, _fakeCollection?: string) {
     },
 
     async getById(id: string): Promise<T> {
-      const response = await apiClient.get<any, T>(`${endpoint}/${id}`);
-      return response;
+      const response = await apiClient.get<any, any>(`${endpoint}/${id}`);
+      return response as T;
     },
 
     async create(item: Partial<T>): Promise<T> {
-      const response = await apiClient.post<any, T>(endpoint, item);
-      return response;
+      const response = await apiClient.post<any, any>(endpoint, item);
+      return response as T;
     },
 
     async update(id: string, item: Partial<T>): Promise<T> {
-      const response = await apiClient.put<any, T>(`${endpoint}/${id}`, item);
-      return response;
+      const response = await apiClient.put<any, any>(`${endpoint}/${id}`, item);
+      return response as T;
     },
 
     async delete(id: string): Promise<boolean> {
@@ -499,12 +499,12 @@ const getCompanyConfig = () => {
     const sigi = JSON.parse(localStorage.getItem('sigi_config') || '{}');
     return {
       empresa: sigi.empresa || sigi.nome_empresa || sigi.nome || 'Sabor Imbatível, S.A.',
-      nif: sigi.nif || '500123456',
-      telefone: sigi.telefone || sigi.telemovel || '923000000',
-      email: sigi.email || 'comercial@saborimbativel.co.ao',
-      endereco: sigi.endereco || sigi.morada || 'Luanda, Angola',
-      licenca: sigi.licenca || sigi.certificado || '001/SIGI/2026',
-      moeda: sigi.moeda || sigi.moeda_simbolo || 'Kz'
+      nif: sigi.nif || '',
+      telefone: sigi.telefone || sigi.telemovel || '',
+      email: sigi.email || '',
+      endereco: sigi.endereco || sigi.morada || '',
+      licenca: sigi.licenca || sigi.certificado || '',
+      moeda: sigi.moeda || sigi.moeda_simbolo || ''
     };
   } catch {
     return {
@@ -1527,6 +1527,25 @@ export const fiscalService = {
 };
 
 export const vendaService = {
+  emitirDocumentoPedido: async (pedidoId: string | number, tipo_documento: 'FT' | 'PROFORMA'): Promise<any> => {
+    try {
+      return await apiClient.post<any, any>(`/v1/vendas/pedidos/${pedidoId}/documentos`, { tipo_documento });
+    } catch (error: any) {
+      if (error?.response?.status === 404 || error?.status === 404) {
+        return apiClient.post<any, any>(`/v1/comercial/pedidos/${pedidoId}/documentos`, { tipo_documento });
+      }
+      throw error;
+    }
+  },
+
+  async imprimirVendaPdf(id: string | number) {
+    const blob = await fetchBlobWithFallbacks([
+      `/v1/vendas/${id}/pdf`,
+      `/v1/comercial/vendas/${id}/pdf`,
+      `/v1/comercial/${id}/pdf`,
+    ]);
+    printBlob(blob);
+  },
   getAll: async (params?: BaseServiceParams & { estado?: string; cliente_id?: string; tipo_documento?: string; data_inicio?: string; data_fim?: string }): Promise<PaginatedData<any>> => {
     try {
       const res = await apiClient.get<any, any>('/v1/vendas', { params });

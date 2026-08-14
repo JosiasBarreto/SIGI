@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { orderService, clientService, productService, financialService } from "../services";
+import { orderService, clientService, productService, financialService, vendaService } from "../services";
 import { TipoProduto } from '../enums';
 import { Plus, Search, Calendar, ChevronRight, FileText, Clock, Trash2, X, AlertCircle, ShoppingCart, UserPlus, CreditCard, ChevronLeft, Wrench, Eye } from "lucide-react";
 import { formatCurrency, cn } from "../lib/utils";
@@ -94,6 +94,21 @@ export default function Orders() {
     onError: (err: any) => {
       toast.error(err?.message || "Erro ao atualizar estado do pedido.");
     }
+  });
+
+  const emitirDocumentoMutation = useMutation({
+    mutationFn: ({ pedidoId, tipo }: { pedidoId: number; tipo: 'FT' | 'PROFORMA' }) =>
+      vendaService.emitirDocumentoPedido(pedidoId, tipo),
+    onSuccess: (venda, variables) => {
+      toast.success(`${venda.tipo_documento} emitida: ${venda.numero_documento || venda.numero}`);
+      queryClient.invalidateQueries({ queryKey: ['vendas'] });
+      if (variables.tipo === 'PROFORMA') {
+        vendaService.imprimirVendaPdf(venda.id).catch((err) =>
+          toast.error(err?.message || 'Erro ao imprimir a Pró-Forma.')
+        );
+      }
+    },
+    onError: (err: any) => toast.error(err?.response?.data?.error || 'Não foi possível emitir o documento.')
   });
 
   const clientCreateMutation = useMutation({
@@ -351,16 +366,26 @@ export default function Orders() {
       id: "acoes",
       header: "Ações",
       cell: ({ row }) => (
-        <button
-          onClick={() => setSelectedOrder(row.original)}
-          className="text-primary hover:text-primary-hover bg-primary/10 hover:bg-primary/20 px-3 py-1.5 rounded-xl transition-all flex items-center justify-center font-bold"
-          title="Ver mais detalhes"
-        >
-          <Eye size={16} className="mr-1" /> Ver detalhes
-        </button>
+        <div className="flex flex-wrap justify-end gap-1">
+          <button
+            onClick={() => emitirDocumentoMutation.mutate({ pedidoId: Number(row.original.id), tipo: 'PROFORMA' })}
+            className="text-gray-700 bg-gray-100 hover:bg-gray-200 px-2 py-1.5 rounded-lg text-xs font-bold"
+            title="Emitir Fatura Pró-Forma"
+          >Proforma</button>
+          <button
+            onClick={() => emitirDocumentoMutation.mutate({ pedidoId: Number(row.original.id), tipo: 'FT' })}
+            className="text-blue-700 bg-blue-50 hover:bg-blue-100 px-2 py-1.5 rounded-lg text-xs font-bold"
+            title="Emitir Fatura"
+          >FT</button>
+          <button
+            onClick={() => setSelectedOrder(row.original)}
+            className="text-primary hover:text-primary-hover bg-primary/10 hover:bg-primary/20 px-2 py-1.5 rounded-lg transition-all flex items-center justify-center font-bold"
+            title="Ver mais detalhes"
+          ><Eye size={16} /></button>
+        </div>
       )
     }
-  ], [clients]);
+  ], [clients, emitirDocumentoMutation]);
 
   if (isLoading) {
     return (

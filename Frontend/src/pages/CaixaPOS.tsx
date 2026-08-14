@@ -5,6 +5,7 @@ import {
   clientService,
   orderService,
   documentService,
+  vendaService,
 } from "../services";
 import { useComercial } from "../hooks";
 import {
@@ -62,6 +63,7 @@ export default function CaixaPOS() {
   });
   const [selectedClient, setSelectedClient] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("Dinheiro");
+  const [tipoDocumento, setTipoDocumento] = useState<"FR" | "PROFORMA">("FR");
   const [step, setStep] = useState(1);
   const [amountReceived, setAmountReceived] = useState<number>(0);
   const [showPriceWithIva] = useState(true);
@@ -206,6 +208,7 @@ export default function CaixaPOS() {
 
   const confirmPayment = async () => {
     const isAgendado = tipoPedido === "Agendado";
+    const isProforma = tipoDocumento === "PROFORMA";
 
     // 1. Client obligation rule:
     if (isAgendado && !selectedClient) {
@@ -222,7 +225,7 @@ export default function CaixaPOS() {
     }
 
     // 3. Payment method mandatory fields:
-    if (paymentMethod === "Transferência" || paymentMethod === "TPA / POS" || paymentMethod === "Mixto") {
+    if (!isProforma && (paymentMethod === "Transferência" || paymentMethod === "TPA / POS" || paymentMethod === "Mixto")) {
       if (!codigoTransferencia.trim()) {
         toast.error("Código de transferência / comprovativo é obrigatório.");
         return;
@@ -233,18 +236,17 @@ export default function CaixaPOS() {
       }
     }
 
-    const valorPagoNum =
-      isAgendado && valorPago !== "" ? parseFloat(valorPago) : total;
+    const valorPagoNum = isProforma ? 0 : (isAgendado && valorPago !== "" ? parseFloat(valorPago) : total);
 
     const valorDinheiroMixto = Number(paymentFormState?.valorCashMixto || 0);
     const valorPosMixto = Number(paymentFormState?.valorPosMixto || 0);
-    if (paymentMethod === "Mixto" && Math.abs(valorDinheiroMixto + valorPosMixto - valorPagoNum) > 0.01) {
+    if (!isProforma && paymentMethod === "Mixto" && Math.abs(valorDinheiroMixto + valorPosMixto - valorPagoNum) > 0.01) {
       toast.error("No pagamento misto, a soma de Dinheiro e POS deve ser igual ao valor a liquidar.");
       return;
     }
 
     const minimoDinheiroRecebido = paymentMethod === "Mixto" ? valorDinheiroMixto : valorPagoNum;
-    if ((paymentMethod === "Dinheiro" || paymentMethod === "Mixto") && amountReceived < minimoDinheiroRecebido) {
+    if (!isProforma && (paymentMethod === "Dinheiro" || paymentMethod === "Mixto") && amountReceived < minimoDinheiroRecebido) {
       toast.error("Valor recebido insuficiente.");
       return;
     }
@@ -320,7 +322,7 @@ export default function CaixaPOS() {
         converterStockInsuficiente = false,
         valorPagamento = valorPagoNum
       ) => ({
-        tipo_documento: "FR",
+        tipo_documento: tipoDocumento,
         cliente_id: selectedClient ? Number(selectedClient) : undefined,
         observacoes: "Venda direta via POS",
         itens: mapCartToVendaItens(),
@@ -410,16 +412,10 @@ export default function CaixaPOS() {
           });
           setCreatedVenda(vendaRes);
         } else {
-          // Just represent the pending order as a created venda
-          setCreatedVenda({
-            id: createdOrder.id,
-            pedido_id: createdOrder.id,
-            numero: createdOrder.numero,
-            total: total,
-            saldo: total,
-            estado_pagamento: "PENDENTE",
-            itens: createdOrder.itens
-          });
+          // Pedido and venda identifiers are distinct. Issue the FT first so
+          // printing always uses a real commercial-document identifier.
+          const vendaRes = await vendaService.emitirDocumentoPedido(createdOrder.id, isProforma ? "PROFORMA" : "FT");
+          setCreatedVenda(vendaRes);
         }
       }
 
@@ -448,6 +444,7 @@ export default function CaixaPOS() {
     setSelectedClient("");
     setAmountReceived(0);
     setPaymentMethod("Dinheiro");
+    setTipoDocumento("FR");
     setTipoPedido("Imediato");
     setDataEntrega("");
     setValorPago("");
@@ -465,6 +462,12 @@ export default function CaixaPOS() {
       toast.error("Documento não encontrado para impressão.");
       return;
     }
+    // Never fall back to a pedido URL with a venda identifier: matching ids
+    // can point to a different historical document.
+    documentService.imprimirReciboVenda(venda.id).catch((err) => {
+      toast.error(err?.message || "Erro ao gerar recibo térmico.");
+    });
+    return;
     const targetId = venda.pedido_id || venda.id;
     if (!venda.id) {
       documentService.imprimirReciboPedido(targetId).catch(() => {
@@ -824,6 +827,19 @@ export default function CaixaPOS() {
                 </div>
               )}
 
+              <div className="p-3 rounded-xl border border-gray-200 dark:border-gray-700 space-y-1">
+                <label className="block text-[10px] font-bold text-gray-500 uppercase">Documento comercial</label>
+                <select
+                  value={tipoDocumento}
+                  onChange={(e) => setTipoDocumento(e.target.value as "FR" | "PROFORMA")}
+                  className="w-full text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-2"
+                >
+                  <option value="FR">FR — Venda direta paga</option>
+                  <option value="PROFORMA">Pró-Forma — sem pagamento</option>
+                </select>
+                {tipoDocumento === "PROFORMA" && <p className="text-[10px] text-amber-600">A Pró-Forma não movimenta caixa nem regista pagamento.</p>}
+              </div>
+
               {/* Flexible Multi-Method Payment Form */}
               <FlexiblePaymentForm
                 total={total}
@@ -887,6 +903,10 @@ export default function CaixaPOS() {
                   <button
                     type="button"
                     onClick={() => {
+                      documentService.vendaPdf(createdVenda.id).catch((err) =>
+                        toast.error(err.message || "Erro ao abrir PDF.")
+                      );
+                      return;
                       const docId = createdVenda.pedido_id || createdVenda.id;
                       if (!createdVenda.id) {
                         documentService.pedidoPdf(docId).catch(() => {
@@ -909,6 +929,10 @@ export default function CaixaPOS() {
                   <button
                     type="button"
                     onClick={() => {
+                      documentService.vendaRecibo(createdVenda.id).catch((err) =>
+                        toast.error(err.message || "Erro ao descarregar recibo.")
+                      );
+                      return;
                       const docId = createdVenda.pedido_id || createdVenda.id;
                       if (!createdVenda.id) {
                         documentService.pedidoRecibo(docId).catch(() => {

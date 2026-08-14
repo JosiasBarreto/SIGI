@@ -224,10 +224,16 @@ export default function Vendas() {
         }
       });
       setIsPaymentOpen(false);
-      // Update selected detail modal in real-time
-      if (selectedVenda && String(selectedVenda.id) === String(resp.venda_id)) {
-        // optimistically fetch fresh detail
-        handleOpenDetail({ id: resp.venda_id });
+      const vendaId = resp?.id ?? selectedVenda.id;
+      // The payment endpoint returns the updated venda, rather than a wrapper
+      // containing the former `venda_id` field.
+      if (selectedVenda && String(selectedVenda.id) === String(vendaId)) {
+        handleOpenDetail({ id: vendaId });
+      }
+      const r = resp as any;
+      if (r?.tipo_documento === 'FT' && Number(r?.saldo || 0) <= 0 && r?.ultimo_pagamento?.recibo_url) {
+        toast.success('FT liquidada. O recibo de liquidação foi aberto.');
+        window.open(r.ultimo_pagamento.recibo_url, '_blank', 'noopener,noreferrer');
       }
     } catch (err) {
       // handled by hook

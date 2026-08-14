@@ -152,10 +152,15 @@ class ComercialService:
         pagamentos_data = data.get('pagamentos', [])
         for pag_data in pagamentos_data:
             self.add_pagamento(venda.id, pag_data, user_id, auto_commit=False)
+
+        if tipo_documento == TipoDocumento.FR and float(venda.saldo or 0) > 0.005:
+            db.session.rollback()
+            raise ValueError('FR só pode ser emitida quando a venda está totalmente paga. Emita FT para pagamento posterior ou parcial.')
         
-        # Deduct stock
-        stock_service = StockService()
-        stock_service.baixar_stock_venda(venda, user_id)
+        # A Pró-Forma is only a commercial proposal: it does not move stock.
+        if tipo_documento != TipoDocumento.PROFORMA:
+            stock_service = StockService()
+            stock_service.baixar_stock_venda(venda, user_id)
 
         try:
             db.session.commit()
@@ -180,11 +185,49 @@ class ComercialService:
         from app.models.comercial import Venda, VendaItem
         
         pagamento_info = data.get('pagamento', data) if isinstance(data, dict) else {}
+        tipo_documento = str(pagamento_info.get('tipo_documento', 'FR')).upper()
 
         evento = Evento.query.get(evento_id)
         if not evento:
             return None, "Evento não encontrado."
             
+        if tipo_documento == TipoDocumento.PROFORMA.value:
+            resumo = evento.calcular_resumo_financeiro()
+            venda = Venda(
+                numero_documento=self.generate_numero_documento(TipoDocumento.PROFORMA.value),
+                tipo_documento=TipoDocumento.PROFORMA,
+                cliente_id=evento.cliente_id,
+                subtotal=float(resumo['subtotal_geral']),
+                desconto_total=0,
+                base_tributavel=float(resumo['subtotal_geral']),
+                total_iva=float(resumo['total_iva_geral']),
+                total=float(resumo['total_geral']),
+                valor_pago=0,
+                saldo=float(resumo['total_geral']),
+                estado=EstadoVenda.PENDENTE,
+                observacoes=f'Fatura Proforma referente ao Evento {evento.numero}.',
+                criado_por=user_id,
+            )
+            db.session.add(venda)
+            db.session.flush()
+            for item in evento.itens or []:
+                db.session.add(VendaItem(
+                    venda_id=venda.id, item_tipo=str(item.tipo_item),
+                    item_id=item.referencia_id or item.produto_id or item.id,
+                    descricao=item.descricao, quantidade=item.quantidade,
+                    preco_unitario=item.preco_unitario, desconto=item.valor_desconto or 0,
+                    taxa_iva=item.taxa_iva or 0, valor_iva=item.valor_iva or 0,
+                    subtotal=item.subtotal or 0, total=item.total or 0,
+                ))
+            try:
+                db.session.commit()
+                return venda, None
+            except Exception as exc:
+                db.session.rollback()
+                return None, f'Erro ao emitir Proforma do evento: {str(exc)}'
+        if tipo_documento != TipoDocumento.FR.value:
+            return None, 'Tipo de documento de evento inválido.'
+
         caixa = Caixa.query.with_for_update().filter_by(estado='Aberto').first()
         if not caixa:
             return None, "Não existe nenhum caixa aberto no momento. Abra o caixa primeiro para realizar vendas."
@@ -367,6 +410,8 @@ class ComercialService:
 
     def add_pagamento(self, venda_id, data, user_id, auto_commit=True):
         venda = self.get_venda(venda_id)
+        if venda and venda.tipo_documento == TipoDocumento.PROFORMA:
+            raise ValueError('Fatura Pró-Forma não aceita pagamentos. Emita uma FT para faturar o pedido.')
         if not venda:
             raise ValueError("Venda não encontrada")
             
@@ -375,6 +420,8 @@ class ComercialService:
             raise ValueError("Valor do pagamento deve ser positivo")
             
         saldo_pendente = float(venda.saldo)
+        if venda.tipo_documento == TipoDocumento.FR and float(data.get('valor', 0)) < saldo_pendente:
+            raise ValueError('FR não aceita pagamento parcial. Registe pagamentos parciais numa FT.')
         valor_pagar_real = min(valor_entregue, saldo_pendente)
         troco = max(0.0, valor_entregue - saldo_pendente)
             
@@ -445,6 +492,60 @@ class ComercialService:
         except Exception as e:
             db.session.rollback()
             raise e
+
+    def emitir_documento_pedido(self, pedido_id: int, tipo_documento: str, user_id: int):
+        """Issue an unpaid FT or a non-fiscal Proforma for an existing pedido.
+
+        This deliberately does not move cash or stock: the pedido remains the
+        operational instruction and the new Venda is the commercial document.
+        """
+        from app.models.pedido import Pedido
+        try:
+            tipo = TipoDocumento(tipo_documento)
+        except ValueError as exc:
+            raise ValueError('Tipo de documento inválido.') from exc
+        if tipo not in (TipoDocumento.FT, TipoDocumento.PROFORMA):
+            raise ValueError('Para pedido, emita FT ou PROFORMA. FR é reservado para venda direta paga.')
+
+        pedido = Pedido.query.get(pedido_id)
+        if not pedido:
+            raise ValueError('Pedido não encontrado.')
+        existente = Venda.query.filter_by(pedido_id=pedido.id, tipo_documento=tipo).first()
+        if existente:
+            return existente
+
+        venda = Venda(
+            numero_documento=self.generate_numero_documento(tipo.value),
+            tipo_documento=tipo,
+            cliente_id=pedido.cliente_id,
+            pedido_id=pedido.id,
+            estado=EstadoVenda.PENDENTE,
+            observacoes=f'Documento {tipo.value} emitido a partir do pedido {pedido.numero}.',
+            criado_por=user_id,
+            _subtotal=None, _desconto_total=None, _base_tributavel=None,
+            _total_iva=None, _total=None, _valor_pago=0, _saldo=None,
+        )
+        db.session.add(venda)
+        db.session.flush()
+        for item in pedido.itens:
+            db.session.add(VendaItem(
+                venda_id=venda.id,
+                item_tipo=item.tipo_item.value if hasattr(item.tipo_item, 'value') else item.tipo_item,
+                item_id=item.produto_id,
+                descricao=item.descricao or (item.produto.nome if item.produto else 'Item'),
+                quantidade=item.quantidade,
+                preco_unitario=item.preco_unitario,
+                desconto=item.desconto or 0,
+                taxa_iva_id=item.taxa_iva_id,
+                taxa_iva=item.taxa_iva or 0,
+                valor_iva=item.valor_iva or 0,
+                subtotal=item.subtotal,
+                total=item.total,
+            ))
+        db.session.commit()
+        self.audit_service.log_action(user_id, 'EMITIR_DOCUMENTO', 'vendas', venda.id,
+                                      new_values={'tipo': tipo.value, 'pedido_id': pedido.id})
+        return venda
 
     def liquidar_pedido_faturado(self, pedido, venda, data, user_id):
         """Regista parcela na fatura já emitida e mantém pedido/fatura sincronizados."""
@@ -569,11 +670,12 @@ class ComercialService:
             if not emissor:
                 return None, "Emissor/Remetente da operação de pagamento é obrigatório."
                 
-        numero_doc = self.generate_numero_documento('FR')
+        # A pedido is billed as FT. FR remains exclusive to direct, fully paid POS sales.
+        numero_doc = self.generate_numero_documento('FT')
         
         venda = Venda(
             numero_documento=numero_doc,
-            tipo_documento='FR',
+            tipo_documento='FT',
             cliente_id=pedido.cliente_id,
             pedido_id=pedido.id,
             estado='Pendente',

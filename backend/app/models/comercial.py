@@ -125,6 +125,38 @@ class VendaItem(BaseModel):
     subtotal = db.Column(db.Numeric(12, 2), nullable=False)
     total = db.Column(db.Numeric(12, 2), nullable=False)
 
+
+class Proforma(BaseModel):
+    """Documento comercial não fiscal, separado de vendas e pagamentos."""
+    __tablename__ = 'proformas'
+    numero_documento = db.Column(db.String(50), unique=True, nullable=False)
+    cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id'), nullable=True)
+    pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=True)
+    origem = db.Column(db.String(20), nullable=False)
+    subtotal = db.Column(db.Numeric(12, 2), default=0, nullable=False)
+    desconto_total = db.Column(db.Numeric(12, 2), default=0, nullable=False)
+    total_iva = db.Column(db.Numeric(12, 2), default=0, nullable=False)
+    total = db.Column(db.Numeric(12, 2), default=0, nullable=False)
+    estado = db.Column(db.String(20), default='Emitida', nullable=False)
+    observacoes = db.Column(db.Text, nullable=True)
+    criado_por = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    itens = db.relationship('ProformaItem', backref='proforma', lazy='selectin', cascade='all, delete-orphan')
+
+
+class ProformaItem(BaseModel):
+    __tablename__ = 'proforma_itens'
+    proforma_id = db.Column(db.Integer, db.ForeignKey('proformas.id'), nullable=False)
+    item_tipo = db.Column(db.String(50), nullable=False)
+    item_id = db.Column(db.Integer, nullable=True)
+    descricao = db.Column(db.String(255), nullable=False)
+    quantidade = db.Column(db.Numeric(10, 2), nullable=False)
+    preco_unitario = db.Column(db.Numeric(12, 2), nullable=False)
+    desconto = db.Column(db.Numeric(12, 2), default=0)
+    taxa_iva = db.Column(db.Numeric(5, 2), default=0)
+    valor_iva = db.Column(db.Numeric(12, 2), default=0)
+    subtotal = db.Column(db.Numeric(12, 2), nullable=False)
+    total = db.Column(db.Numeric(12, 2), nullable=False)
+
 class FechoDiario(BaseModel):
     __tablename__ = 'fechos_diarios'
     data = db.Column(db.Date, unique=True, nullable=False)

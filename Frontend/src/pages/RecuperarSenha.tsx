@@ -2,12 +2,15 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import { authService } from "../services/authService";
+import { useTheme } from "../components/Layout/ThemeContext";
+import { Sun, Moon } from "lucide-react";
 
 export default function RecuperarSenha() {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [tempPassword, setTempPassword] = useState("");
+  const { theme, toggleTheme } = useTheme();
 
   const handleRecover = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,16 +31,27 @@ export default function RecuperarSenha() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-background-dark p-4 animate-fade-in">
-      <div className="bg-surface dark:bg-surface-dark p-8 rounded-2xl shadow-xl w-full max-w-md border border-gray-100 dark:border-gray-800">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-surface to-secondary/10 dark:from-background-dark dark:via-background-dark dark:to-background-dark p-6 relative transition-colors duration-300">
+      
+      {/* Theme Toggle */}
+      <button
+        onClick={toggleTheme}
+        className="absolute top-6 right-6 p-2.5 rounded-full bg-white/60 dark:bg-neutral-800/60 hover:bg-white dark:hover:bg-neutral-800 transition-all backdrop-blur-md text-gray-700 dark:text-gray-300 shadow-sm border border-gray-200 dark:border-gray-700 z-10"
+        title="Alternar Tema"
+      >
+        {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+      </button>
+
+      <div className="backdrop-blur-xl bg-white/80 dark:bg-neutral-900/80 p-8 sm:p-10 rounded-[2rem] shadow-2xl w-full max-w-md border border-white/50 dark:border-gray-800/50 animate-in fade-in slide-in-from-bottom-8 duration-700">
+        
         <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 flex items-center justify-center text-3xl font-bold mb-4 shadow-lg shadow-gray-900/30 dark:shadow-white/30">
-            S
+          <div className="w-20 h-20 rounded-3xl bg-gradient-to-tr from-primary to-secondary text-white flex items-center justify-center mb-6 shadow-xl shadow-primary/30 transform transition-transform hover:scale-105 duration-300">
+            <span className="text-4xl font-bold">S</span>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 text-center">
             Recuperação de Senha
           </h1>
-          <p className="text-sm text-gray-500 mt-2 text-center">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 text-center">
             Insira o seu email associado à conta SIGI para receber as instruções de recuperação.
           </p>
         </div>
@@ -70,34 +84,38 @@ export default function RecuperarSenha() {
           </div>
         ) : (
           <form onSubmit={handleRecover} className="space-y-5">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <div className="space-y-1.5">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 ml-1">
                 Email
               </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none focus:ring-2 focus:ring-primary/50 text-gray-900 dark:text-gray-100"
-                required
-                placeholder="Introduza o seu email"
-              />
+              <div className="relative group">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full px-4 py-3 bg-gray-50/50 dark:bg-neutral-950/50 border border-gray-200 dark:border-gray-800 rounded-2xl outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-gray-900 dark:text-gray-100 transition-all"
+                  required
+                  placeholder="Introduza o seu email"
+                />
+              </div>
             </div>
 
-            <button
-              type="submit"
-              disabled={isLoading || !email}
-              className="w-full py-2.5 bg-primary hover:bg-primary-hover text-white rounded-lg font-medium transition-colors shadow-md shadow-primary/20 disabled:opacity-70 flex justify-center"
-            >
-              {isLoading ? (
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              ) : (
-                "Enviar Instruções"
-              )}
-            </button>
+            <div className="pt-2">
+              <button
+                type="submit"
+                disabled={isLoading || !email}
+                className="w-full py-3.5 bg-gradient-to-r from-primary to-secondary hover:brightness-110 text-white rounded-2xl font-semibold shadow-lg shadow-primary/30 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center"
+              >
+                {isLoading ? (
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  "Enviar Instruções"
+                )}
+              </button>
+            </div>
             
-            <div className="text-center mt-4">
-              <Link to="/login" className="text-sm font-medium text-primary hover:text-primary-hover transition-colors">
+            <div className="text-center mt-6">
+              <Link to="/login" className="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-primary transition-colors">
                 Lembrei-me da senha. Voltar ao login.
               </Link>
             </div>

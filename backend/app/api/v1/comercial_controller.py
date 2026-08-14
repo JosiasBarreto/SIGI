@@ -8,7 +8,7 @@ fiscal_bp = Blueprint('fiscal', __name__)
 from app.services.comercial_service import ComercialService, StockInsuficienteError
 from flask_jwt_extended import jwt_required
 from app.middleware.auth_middleware import requires_roles
-from app.services.pdf_generator import generate_venda_pdf, generate_venda_receipt, get_venda_receipt_data
+from app.services.pdf_generator import generate_venda_pdf, generate_venda_receipt, generate_pagamento_receipt, get_venda_receipt_data
 from app.models.cliente import Cliente
 from app.models.comercial import Venda, EstadoVenda, TipoDocumento
 
@@ -246,6 +246,21 @@ def get_venda_recibo(venda_id):
         mimetype='application/pdf'
     )
 
+
+@comercial_bp.route('/<int:venda_id>/pagamentos/<int:pagamento_id>/recibo', methods=['GET'])
+@jwt_required()
+def get_pagamento_recibo(venda_id, pagamento_id):
+    from app.models.financeiro import Pagamento
+    venda = comercial_service.get_venda(venda_id)
+    pagamento = Pagamento.query.filter_by(id=pagamento_id, venda_id=venda_id).first()
+    if not venda or not pagamento:
+        return jsonify({'error': 'Pagamento não encontrado'}), 404
+    return send_file(
+        generate_pagamento_receipt(venda, pagamento), as_attachment=True,
+        download_name=f'recibo_{venda.numero_documento.replace("/", "_")}_{pagamento.id}.pdf',
+        mimetype='application/pdf',
+    )
+
 @comercial_bp.route('/<int:venda_id>/recibo-data', methods=['GET'])
 @jwt_required()
 def get_venda_recibo_data(venda_id):
@@ -284,7 +299,14 @@ def register_pagamento(venda_id):
     data = request.json
     try:
         pagamento = comercial_service.add_pagamento(venda_id, data, user_id)
-        return jsonify(_serialize_venda_dict(pagamento.venda_rel)), 200
+        resposta = _serialize_venda_dict(pagamento.venda_rel)
+        # Preserve the venda response while identifying the exact settlement.
+        resposta['ultimo_pagamento'] = {
+            'id': pagamento.id,
+            'valor': float(pagamento.valor or 0),
+            'recibo_url': f'/api/v1/vendas/{pagamento.venda_id}/pagamentos/{pagamento.id}/recibo',
+        }
+        return jsonify(resposta), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
@@ -294,11 +316,17 @@ def get_pagamentos(venda_id):
     venda = comercial_service.get_venda(venda_id)
     if not venda:
         return jsonify({'error': 'Venda not found'}), 404
+    from app.models.financeiro import FormaPagamento
     return jsonify([{
         'id': p.id,
         'valor': float(p.valor or 0),
         'estado': p.estado.value,
-        'data_pagamento': p.data_pagamento.isoformat() if p.data_pagamento else None
+        'data_pagamento': p.data_pagamento.isoformat() if p.data_pagamento else None,
+        'forma_pagamento': (FormaPagamento.query.get(p.forma_pagamento_id).nome
+                            if p.forma_pagamento_id and FormaPagamento.query.get(p.forma_pagamento_id) else None),
+        'codigo_transferencia': p.codigo_transferencia,
+        'emissor': p.emissor,
+        'referencia': p.referencia,
     } for p in venda.pagamentos]), 200
 
 @comercial_bp.route('/<int:venda_id>/cancelar', methods=['POST'])
@@ -330,7 +358,10 @@ def checkout_pedido(pedido_id):
     from app.models.pedido import Pedido
     from app.models.comercial import Venda
     pedido = Pedido.query.get(pedido_id)
-    venda_existente = Venda.query.filter_by(pedido_id=pedido_id).order_by(Venda.id.asc()).first()
+    # Proformas are not payable; checkout must reuse only the FT of this pedido.
+    venda_existente = Venda.query.filter_by(
+        pedido_id=pedido_id, tipo_documento=TipoDocumento.FT
+    ).order_by(Venda.id.asc()).first()
     if pedido and venda_existente:
         venda, error = comercial_service.liquidar_pedido_faturado(pedido, venda_existente, data, user_id)
     else:
@@ -350,6 +381,36 @@ def checkout_pedido(pedido_id):
             db.session.commit()
     except Exception as e:
         return jsonify({'error': str(e)}), 400
+
+    # Send the document after all split payments have been applied.  This must
+    # stay inside the checkout handler; otherwise a successful checkout reaches
+    # the next route declaration without returning an HTTP response.
+    try:
+        from app.services.notification_service import NotificationService
+        v_dict = _serialize_venda_dict(venda)
+        c_email = v_dict.get('cliente', {}).get('email')
+        c_phone = v_dict.get('cliente', {}).get('telefone')
+        if c_email:
+            NotificationService.send_invoice_async(venda.id, c_email, method='email')
+        elif c_phone:
+            NotificationService.send_invoice_async(venda.id, c_phone, method='whatsapp')
+    except Exception as e:
+        print('Erro ao disparar fatura automática no checkout:', e)
+    return jsonify(_serialize_venda_dict(venda)), 200
+
+
+@comercial_bp.route('/pedidos/<int:pedido_id>/documentos', methods=['POST'])
+@jwt_required()
+@requires_roles('Administrador', 'Atendimento', 'Financeiro', 'Caixa')
+def emitir_documento_pedido(pedido_id):
+    from flask_jwt_extended import get_jwt_identity
+    try:
+        venda = comercial_service.emitir_documento_pedido(
+            pedido_id, (request.json or {}).get('tipo_documento'), get_jwt_identity()
+        )
+        return jsonify(_serialize_venda_dict(venda)), 201
+    except ValueError as exc:
+        return jsonify({'error': str(exc)}), 400
 
     # Disparar envio de fatura automática do checkout do pedido
     try:

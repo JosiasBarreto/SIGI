@@ -167,6 +167,16 @@ def get_venda_receipt_data(venda):
     troco_venda = max(0.0, pago_venda - total_venda)
 
     tipo_doc_str = venda.tipo_documento.value if hasattr(venda.tipo_documento, 'value') else str(venda.tipo_documento)
+    from app.models.financeiro import FormaPagamento
+    pagamentos_data = []
+    for pagamento in venda.pagamentos or []:
+        forma = FormaPagamento.query.get(pagamento.forma_pagamento_id)
+        pagamentos_data.append({
+            'valor': float(pagamento.valor or 0),
+            'forma_pagamento': forma.nome if forma else 'Pagamento',
+            'referencia': pagamento.referencia or pagamento.codigo_transferencia or '',
+            'emissor': pagamento.emissor or '',
+        })
 
     return {
         "empresa": empresa,
@@ -197,7 +207,8 @@ def get_venda_receipt_data(venda):
             "saldo": saldo_venda,
             "troco": troco_venda,
             "moeda": moeda
-        }
+        },
+        "pagamentos": pagamentos_data,
     }
 
 def get_pedido_receipt_data(pedido):
@@ -324,6 +335,27 @@ def generate_venda_receipt(venda):
     return _build_thermal_receipt_pdf(data)
 
 
+def generate_pagamento_receipt(venda, pagamento):
+    """Create a receipt for a payment made against an existing FT."""
+    data = get_venda_receipt_data(venda)
+    from app.models.financeiro import FormaPagamento
+    forma_db = FormaPagamento.query.get(pagamento.forma_pagamento_id)
+    forma = forma_db.nome if forma_db else 'Pagamento'
+    data['documento'].update({
+        'tipo': 'RECIBO DE LIQUIDAÇÃO',
+        'numero': f'REC-{venda.numero_documento}-{pagamento.id}',
+        'forma_pagamento': forma,
+    })
+    data['pagamento'] = {
+        'valor': float(pagamento.valor or 0),
+        'forma_pagamento': forma,
+        'referencia': pagamento.referencia or pagamento.codigo_transferencia or '',
+        'emissor': pagamento.emissor or '',
+        'data': pagamento.data_pagamento.isoformat() if pagamento.data_pagamento else '',
+    }
+    return _build_a4_pdf(data)
+
+
 def generate_pedido_pdf(pedido):
     data = get_pedido_receipt_data(pedido)
     return _build_a4_pdf(data)
@@ -448,6 +480,33 @@ def _build_a4_pdf(rec_data):
     c.setFont("Helvetica", 9)
     c.drawString(footer_x, footer_y - 57, "Valor Pago:")
     c.drawRightString(width - 40, footer_y - 57, f"{totais['valor_pago']:.2f} {moeda}")
+
+    if rec_data.get('pagamento'):
+        pagamento = rec_data['pagamento']
+        c.setFont("Helvetica-Bold", 9)
+        c.drawString(40, footer_y - 57, f"Recebido nesta liquidação: {pagamento['valor']:.2f} {moeda}")
+        c.setFont("Helvetica", 8)
+        detalhe = f"{pagamento['forma_pagamento']}"
+        if pagamento.get('referencia'):
+            detalhe += f" | Ref.: {pagamento['referencia']}"
+        if pagamento.get('emissor'):
+            detalhe += f" | Emissor: {pagamento['emissor']}"
+        c.drawString(40, footer_y - 70, detalhe)
+
+    if rec_data.get('pagamentos'):
+        # Leave vertical room for the balance and the settlement heading.
+        y_pagamentos = footer_y - 95
+        c.setFont("Helvetica-Bold", 8)
+        c.drawString(40, y_pagamentos, "PAGAMENTOS REGISTADOS:")
+        c.setFont("Helvetica", 8)
+        for pagamento in rec_data['pagamentos']:
+            y_pagamentos -= 11
+            detalhe = f"{pagamento['forma_pagamento']}: {pagamento['valor']:.2f} {moeda}"
+            if pagamento.get('referencia'):
+                detalhe += f" | Ref.: {pagamento['referencia']}"
+            if pagamento.get('emissor'):
+                detalhe += f" | Emissor: {pagamento['emissor']}"
+            c.drawString(40, y_pagamentos, detalhe[:120])
     
     if totais["saldo"] > 0:
         c.drawString(footer_x, footer_y - 70, "Saldo Pendente:")
@@ -495,6 +554,18 @@ def _build_thermal_receipt_pdf(rec_data):
     c.setFont("Helvetica", 8)
     if empresa["localizacao"]:
         c.drawCentredString(width / 2, y, empresa["localizacao"])
+        y -= 10
+
+    if rec_data.get('pagamento'):
+        pagamento = rec_data['pagamento']
+        c.setFont("Helvetica-Bold", 8)
+        c.drawString(10, y, f"Recebido agora: {pagamento['valor']:.2f} {moeda}")
+        y -= 10
+        c.setFont("Helvetica", 7)
+        detalhe = pagamento['forma_pagamento']
+        if pagamento.get('referencia'):
+            detalhe += f" | Ref: {pagamento['referencia']}"
+        c.drawString(10, y, detalhe[:42])
         y -= 10
     if empresa["contacto_completo"]:
         c.drawCentredString(width / 2, y, empresa["contacto_completo"])

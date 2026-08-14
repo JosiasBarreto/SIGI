@@ -1,4 +1,4 @@
-from marshmallow import Schema, fields, validate
+from marshmallow import Schema, fields, validate, pre_load
 from app.models.produto import TipoProduto, ServicoEnum
 from app.models.material import TipoMaterial, EstadoMaterial
 from app.models.movimento_stock import TipoMovimento, OrigemMovimento, EntidadeMovimento
@@ -118,10 +118,28 @@ class MovimentoStockSchema(Schema):
     quantidade = fields.Decimal(required=True)
     quantidade_depois = fields.Decimal(dump_only=True)
     justificacao = fields.Str(required=False)
+    observacao = fields.Str(required=False, allow_none=True, load_only=True)
+    fornecedor_id = fields.Int(required=False, allow_none=True, load_only=True)
+    material_id = fields.Int(required=False, allow_none=True, load_only=True)
+    produto_id = fields.Int(required=False, allow_none=True, load_only=True)
     armazem_id = fields.Int(required=False, allow_none=True)
     created_at = fields.DateTime(dump_only=True)
     created_by = fields.Int(dump_only=True)
     created_by_nome = fields.Method("get_created_by_nome")
+
+    @pre_load
+    def normalizar_payload(self, data, **kwargs):
+        data = dict(data or {})
+        if not data.get('referencia_id'):
+            if data.get('material_id'):
+                data['referencia_id'] = data['material_id']
+                data['entidade_tipo'] = 'Material'
+            elif data.get('produto_id'):
+                data['referencia_id'] = data['produto_id']
+                data['entidade_tipo'] = 'Produto'
+        if data.get('observacao') and not data.get('justificacao'):
+            data['justificacao'] = data['observacao']
+        return data
 
     def get_created_by_nome(self, obj):
         from app.core.database import db
