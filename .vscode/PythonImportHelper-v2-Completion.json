@@ -352,6 +352,38 @@
         "documentation": {}
     },
     {
+        "label": "send_file",
+        "importPath": "flask",
+        "description": "flask",
+        "isExtraImport": true,
+        "detail": "flask",
+        "documentation": {}
+    },
+    {
+        "label": "Blueprint",
+        "importPath": "flask",
+        "description": "flask",
+        "isExtraImport": true,
+        "detail": "flask",
+        "documentation": {}
+    },
+    {
+        "label": "request",
+        "importPath": "flask",
+        "description": "flask",
+        "isExtraImport": true,
+        "detail": "flask",
+        "documentation": {}
+    },
+    {
+        "label": "jsonify",
+        "importPath": "flask",
+        "description": "flask",
+        "isExtraImport": true,
+        "detail": "flask",
+        "documentation": {}
+    },
+    {
         "label": "Blueprint",
         "importPath": "flask",
         "description": "flask",
@@ -585,6 +617,22 @@
     },
     {
         "label": "jwt_required",
+        "importPath": "flask_jwt_extended",
+        "description": "flask_jwt_extended",
+        "isExtraImport": true,
+        "detail": "flask_jwt_extended",
+        "documentation": {}
+    },
+    {
+        "label": "jwt_required",
+        "importPath": "flask_jwt_extended",
+        "description": "flask_jwt_extended",
+        "isExtraImport": true,
+        "detail": "flask_jwt_extended",
+        "documentation": {}
+    },
+    {
+        "label": "get_jwt_identity",
         "importPath": "flask_jwt_extended",
         "description": "flask_jwt_extended",
         "isExtraImport": true,
@@ -1040,6 +1088,14 @@
         "documentation": {}
     },
     {
+        "label": "requires_roles",
+        "importPath": "app.middleware.auth_middleware",
+        "description": "app.middleware.auth_middleware",
+        "isExtraImport": true,
+        "detail": "app.middleware.auth_middleware",
+        "documentation": {}
+    },
+    {
         "label": "ValidationError",
         "importPath": "marshmallow",
         "description": "marshmallow",
@@ -1365,6 +1421,14 @@
         "description": "marshmallow",
         "isExtraImport": true,
         "detail": "marshmallow",
+        "documentation": {}
+    },
+    {
+        "label": "db",
+        "importPath": "app.core.database",
+        "description": "app.core.database",
+        "isExtraImport": true,
+        "detail": "app.core.database",
         "documentation": {}
     },
     {
@@ -3994,6 +4058,14 @@
         "documentation": {}
     },
     {
+        "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
         "label": "timedelta",
         "importPath": "datetime",
         "description": "datetime",
@@ -4299,6 +4371,38 @@
     },
     {
         "label": "FechoDiario",
+        "importPath": "app.models.comercial",
+        "description": "app.models.comercial",
+        "isExtraImport": true,
+        "detail": "app.models.comercial",
+        "documentation": {}
+    },
+    {
+        "label": "Proforma",
+        "importPath": "app.models.comercial",
+        "description": "app.models.comercial",
+        "isExtraImport": true,
+        "detail": "app.models.comercial",
+        "documentation": {}
+    },
+    {
+        "label": "ProformaItem",
+        "importPath": "app.models.comercial",
+        "description": "app.models.comercial",
+        "isExtraImport": true,
+        "detail": "app.models.comercial",
+        "documentation": {}
+    },
+    {
+        "label": "TipoDocumento",
+        "importPath": "app.models.comercial",
+        "description": "app.models.comercial",
+        "isExtraImport": true,
+        "detail": "app.models.comercial",
+        "documentation": {}
+    },
+    {
+        "label": "SerieDocumento",
         "importPath": "app.models.comercial",
         "description": "app.models.comercial",
         "isExtraImport": true,
@@ -5009,6 +5113,22 @@
         "importPath": "uuid",
         "description": "uuid",
         "detail": "uuid",
+        "documentation": {}
+    },
+    {
+        "label": "ProformaService",
+        "importPath": "app.services.proforma_service",
+        "description": "app.services.proforma_service",
+        "isExtraImport": true,
+        "detail": "app.services.proforma_service",
+        "documentation": {}
+    },
+    {
+        "label": "_serialize_venda_dict",
+        "importPath": "app.api.v1.comercial_controller",
+        "description": "app.api.v1.comercial_controller",
+        "isExtraImport": true,
+        "detail": "app.api.v1.comercial_controller",
         "documentation": {}
     },
     {
@@ -7882,6 +8002,14 @@
         "documentation": {}
     },
     {
+        "label": "joinedload",
+        "importPath": "sqlalchemy.orm",
+        "description": "sqlalchemy.orm",
+        "isExtraImport": true,
+        "detail": "sqlalchemy.orm",
+        "documentation": {}
+    },
+    {
         "label": "RequisicaoRepository",
         "importPath": "app.repositories.requisicao_repos",
         "description": "app.repositories.requisicao_repos",
@@ -8898,7 +9026,7 @@
         "kind": 2,
         "importPath": "backend.app.api.v1.comercial_controller",
         "description": "backend.app.api.v1.comercial_controller",
-        "peekOfCode": "def emitir_documento_pedido(pedido_id):\n    from flask_jwt_extended import get_jwt_identity\n    try:\n        venda = comercial_service.emitir_documento_pedido(\n            pedido_id, (request.json or {}).get('tipo_documento'), get_jwt_identity()\n        )\n        return jsonify(_serialize_venda_dict(venda)), 201\n    except ValueError as exc:\n        return jsonify({'error': str(exc)}), 400\n    # Disparar envio de fatura automática do checkout do pedido",
+        "peekOfCode": "def emitir_documento_pedido(pedido_id):\n    from flask_jwt_extended import get_jwt_identity\n    try:\n        doc = comercial_service.emitir_documento_pedido(\n            pedido_id, (request.json or {}).get('tipo_documento'), get_jwt_identity()\n        )\n        if (request.json or {}).get('tipo_documento') == 'PROFORMA':\n            from app.api.v1.proforma_controller import _serialize_proforma\n            return jsonify(_serialize_proforma(doc)), 201\n        venda = doc",
         "detail": "backend.app.api.v1.comercial_controller",
         "documentation": {}
     },
@@ -8916,7 +9044,7 @@
         "kind": 5,
         "importPath": "backend.app.api.v1.comercial_controller",
         "description": "backend.app.api.v1.comercial_controller",
-        "peekOfCode": "fiscal_bp = Blueprint('fiscal', __name__)\nfrom app.services.comercial_service import ComercialService, StockInsuficienteError\nfrom flask_jwt_extended import jwt_required\nfrom app.middleware.auth_middleware import requires_roles\nfrom app.services.pdf_generator import generate_venda_pdf, generate_venda_receipt, generate_pagamento_receipt, get_venda_receipt_data\nfrom app.models.cliente import Cliente\nfrom app.models.comercial import Venda, EstadoVenda, TipoDocumento\ncomercial_service = ComercialService()\ndef _serialize_venda_dict(venda):\n    cliente_nome = \"Consumidor Final\"",
+        "peekOfCode": "fiscal_bp = Blueprint('fiscal', __name__)\nfrom app.services.comercial_service import ComercialService, StockInsuficienteError\nfrom flask_jwt_extended import jwt_required\nfrom app.middleware.auth_middleware import requires_roles\nfrom app.services.pdf_generator import generate_venda_pdf, generate_venda_receipt, generate_pagamento_receipt, get_venda_receipt_data\nfrom app.models.cliente import Cliente\nfrom app.models.comercial import Venda, EstadoVenda, TipoDocumento\ncomercial_service = ComercialService()\ndef _serialize_venda_dict(venda):\n    from app.models.financeiro import FormaPagamento as FinFormaPagamento",
         "detail": "backend.app.api.v1.comercial_controller",
         "documentation": {}
     },
@@ -8925,7 +9053,7 @@
         "kind": 5,
         "importPath": "backend.app.api.v1.comercial_controller",
         "description": "backend.app.api.v1.comercial_controller",
-        "peekOfCode": "comercial_service = ComercialService()\ndef _serialize_venda_dict(venda):\n    cliente_nome = \"Consumidor Final\"\n    cliente_nif = \"Consumidor Final\"\n    cliente_email = \"\"\n    cliente_telefone = \"\"\n    cliente_empresa = \"\"\n    cliente_morada = \"\"\n    c = None\n    if venda.pedido and venda.pedido.cliente:",
+        "peekOfCode": "comercial_service = ComercialService()\ndef _serialize_venda_dict(venda):\n    from app.models.financeiro import FormaPagamento as FinFormaPagamento\n    cliente_nome = \"Consumidor Final\"\n    cliente_nif = \"Consumidor Final\"\n    cliente_email = \"\"\n    cliente_telefone = \"\"\n    cliente_empresa = \"\"\n    cliente_morada = \"\"\n    c = None",
         "detail": "backend.app.api.v1.comercial_controller",
         "documentation": {}
     },
@@ -9776,6 +9904,114 @@
         "documentation": {}
     },
     {
+        "label": "build_pagination",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.proforma_controller",
+        "description": "backend.app.api.v1.proforma_controller",
+        "peekOfCode": "def build_pagination(repo, schema_obj, request):\n    page = request.args.get('page', 1, type=int)\n    per_page = request.args.get('per_page', 10, type=int)\n    items = repo.get_all(request.args)\n    total = len(items)\n    start = (page - 1) * per_page\n    end = start + per_page\n    paginated_items = items[start:end]\n    return jsonify({\n        \"items\": schema_obj.dump(paginated_items),",
+        "detail": "backend.app.api.v1.proforma_controller",
+        "documentation": {}
+    },
+    {
+        "label": "handle_proforma_root",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.proforma_controller",
+        "description": "backend.app.api.v1.proforma_controller",
+        "peekOfCode": "def handle_proforma_root():\n    if request.method == 'OPTIONS':\n        return jsonify({'status': 'ok'}), 200\n    if request.method == 'POST':\n        return create_proforma()\n    return listar_proformas()\n@jwt_required()\ndef listar_proformas():\n    class DummyRepo:\n        def get_all(self, args):",
+        "detail": "backend.app.api.v1.proforma_controller",
+        "documentation": {}
+    },
+    {
+        "label": "listar_proformas",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.proforma_controller",
+        "description": "backend.app.api.v1.proforma_controller",
+        "peekOfCode": "def listar_proformas():\n    class DummyRepo:\n        def get_all(self, args):\n            return proforma_service.get_proformas(args)\n    class ProformaSchemaObj:\n        def dump(self, obj):\n            if isinstance(obj, list):\n                return [_serialize_proforma(o) for o in obj]\n            return _serialize_proforma(obj)\n    return build_pagination(DummyRepo(), ProformaSchemaObj(), request)",
+        "detail": "backend.app.api.v1.proforma_controller",
+        "documentation": {}
+    },
+    {
+        "label": "get_proforma",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.proforma_controller",
+        "description": "backend.app.api.v1.proforma_controller",
+        "peekOfCode": "def get_proforma(id):\n    proforma = proforma_service.get_proforma(id)\n    if not proforma:\n        return jsonify({'error': 'Proforma não encontrada'}), 404\n    return jsonify(_serialize_proforma(proforma)), 200\n@jwt_required()\ndef create_proforma():\n    try:\n        user_id = get_jwt_identity()\n        data = request.json",
+        "detail": "backend.app.api.v1.proforma_controller",
+        "documentation": {}
+    },
+    {
+        "label": "create_proforma",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.proforma_controller",
+        "description": "backend.app.api.v1.proforma_controller",
+        "peekOfCode": "def create_proforma():\n    try:\n        user_id = get_jwt_identity()\n        data = request.json\n        proforma = proforma_service.create_proforma(data, user_id)\n        return jsonify(_serialize_proforma(proforma)), 201\n    except Exception as e:\n        return jsonify({'error': str(e)}), 400\n@proforma_bp.route('/<int:id>', methods=['DELETE'])\n@jwt_required()",
+        "detail": "backend.app.api.v1.proforma_controller",
+        "documentation": {}
+    },
+    {
+        "label": "delete_proforma",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.proforma_controller",
+        "description": "backend.app.api.v1.proforma_controller",
+        "peekOfCode": "def delete_proforma(id):\n    try:\n        proforma_service.delete_proforma(id)\n        return jsonify({'msg': 'Proforma eliminada com sucesso'}), 200\n    except Exception as e:\n        return jsonify({'error': str(e)}), 400\n@proforma_bp.route('/<int:id>/faturar', methods=['POST'])\n@jwt_required()\ndef faturar_proforma(id):\n    try:",
+        "detail": "backend.app.api.v1.proforma_controller",
+        "documentation": {}
+    },
+    {
+        "label": "faturar_proforma",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.proforma_controller",
+        "description": "backend.app.api.v1.proforma_controller",
+        "peekOfCode": "def faturar_proforma(id):\n    try:\n        user_id = get_jwt_identity()\n        venda = proforma_service.faturar_proforma(id, user_id)\n        return jsonify(_serialize_venda_dict(venda)), 201\n    except Exception as e:\n        return jsonify({'error': str(e)}), 400\n@proforma_bp.route('/<int:id>/pdf', methods=['GET'])\n@jwt_required()\ndef get_proforma_pdf(id):",
+        "detail": "backend.app.api.v1.proforma_controller",
+        "documentation": {}
+    },
+    {
+        "label": "get_proforma_pdf",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.proforma_controller",
+        "description": "backend.app.api.v1.proforma_controller",
+        "peekOfCode": "def get_proforma_pdf(id):\n    # PDF gen\n    proforma = proforma_service.get_proforma(id)\n    if not proforma:\n        return jsonify({'error': 'Proforma não encontrada'}), 404\n    try:\n        from app.services.pdf_generator import get_venda_receipt_data, _build_a4_pdf\n        # Hacky way to reuse pdf generation\n        data = get_venda_receipt_data(proforma) # Might need adjustments since proforma is not Venda, but has similar fields\n        data['documento']['tipo'] = 'Fatura Pró-Forma'",
+        "detail": "backend.app.api.v1.proforma_controller",
+        "documentation": {}
+    },
+    {
+        "label": "send_proforma",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.proforma_controller",
+        "description": "backend.app.api.v1.proforma_controller",
+        "peekOfCode": "def send_proforma(id):\n    proforma = proforma_service.get_proforma(id)\n    if not proforma:\n        return jsonify({'error': 'Proforma não encontrada'}), 404\n    data = request.json or {}\n    method = data.get('method', 'email')\n    contact = data.get('contact')\n    if not contact:\n        return jsonify({'error': 'Contacto obrigatório'}), 400\n    try:",
+        "detail": "backend.app.api.v1.proforma_controller",
+        "documentation": {}
+    },
+    {
+        "label": "get_proforma_recibo_termico",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.proforma_controller",
+        "description": "backend.app.api.v1.proforma_controller",
+        "peekOfCode": "def get_proforma_recibo_termico(id):\n    proforma = proforma_service.get_proforma(id)\n    if not proforma:\n        return jsonify({'error': 'Proforma não encontrada'}), 404\n    try:\n        from app.services.pdf_generator import get_venda_receipt_data, _build_thermal_receipt\n        data = get_venda_receipt_data(proforma)\n        data['documento']['tipo'] = 'Fatura Pró-Forma'\n        data['documento']['numero'] = proforma.numero_documento\n        pdf_buffer = _build_thermal_receipt(data)",
+        "detail": "backend.app.api.v1.proforma_controller",
+        "documentation": {}
+    },
+    {
+        "label": "proforma_bp",
+        "kind": 5,
+        "importPath": "backend.app.api.v1.proforma_controller",
+        "description": "backend.app.api.v1.proforma_controller",
+        "peekOfCode": "proforma_bp = Blueprint('proforma_bp', __name__)\nproforma_service = ProformaService()\ndef build_pagination(repo, schema_obj, request):\n    page = request.args.get('page', 1, type=int)\n    per_page = request.args.get('per_page', 10, type=int)\n    items = repo.get_all(request.args)\n    total = len(items)\n    start = (page - 1) * per_page\n    end = start + per_page\n    paginated_items = items[start:end]",
+        "detail": "backend.app.api.v1.proforma_controller",
+        "documentation": {}
+    },
+    {
+        "label": "proforma_service",
+        "kind": 5,
+        "importPath": "backend.app.api.v1.proforma_controller",
+        "description": "backend.app.api.v1.proforma_controller",
+        "peekOfCode": "proforma_service = ProformaService()\ndef build_pagination(repo, schema_obj, request):\n    page = request.args.get('page', 1, type=int)\n    per_page = request.args.get('per_page', 10, type=int)\n    items = repo.get_all(request.args)\n    total = len(items)\n    start = (page - 1) * per_page\n    end = start + per_page\n    paginated_items = items[start:end]\n    return jsonify({",
+        "detail": "backend.app.api.v1.proforma_controller",
+        "documentation": {}
+    },
+    {
         "label": "get_receitas",
         "kind": 2,
         "importPath": "backend.app.api.v1.receita_controller",
@@ -10401,7 +10637,7 @@
         "kind": 6,
         "importPath": "backend.app.models.comercial",
         "description": "backend.app.models.comercial",
-        "peekOfCode": "class VendaItem(BaseModel):\n    __tablename__ = 'venda_itens'\n    venda_id = db.Column(db.Integer, db.ForeignKey('vendas.id'), nullable=False)\n    item_tipo = db.Column(db.String(50), nullable=False) # 'Produto', 'Servico', 'Aluguer', etc.\n    item_id = db.Column(db.Integer, nullable=True) # ForeignKey could vary, thus Integer\n    descricao = db.Column(db.String(255), nullable=False)\n    quantidade = db.Column(db.Numeric(10, 2), nullable=False)\n    preco_unitario = db.Column(db.Numeric(12, 2), nullable=False)\n    desconto = db.Column(db.Numeric(12, 2), default=0)\n    taxa_iva_id = db.Column(db.Integer, db.ForeignKey('taxas_iva.id'), nullable=True)",
+        "peekOfCode": "class VendaItem(BaseModel):\n    __tablename__ = 'venda_itens'\n    venda_id = db.Column(db.Integer, db.ForeignKey('vendas.id'), nullable=False)\n    item_tipo = db.Column(db.String(50), nullable=False)\n    item_id = db.Column(db.Integer, nullable=True)\n    descricao = db.Column(db.String(255), nullable=False)\n    quantidade = db.Column(db.Numeric(10, 2), nullable=False)\n    preco_unitario = db.Column(db.Numeric(12, 2), nullable=False)\n    desconto = db.Column(db.Numeric(12, 2), default=0)\n    taxa_iva_id = db.Column(db.Integer, db.ForeignKey('taxas_iva.id'), nullable=True)",
         "detail": "backend.app.models.comercial",
         "documentation": {}
     },
@@ -12503,6 +12739,15 @@
         "documentation": {}
     },
     {
+        "label": "ProformaService",
+        "kind": 6,
+        "importPath": "backend.app.services.proforma_service",
+        "description": "backend.app.services.proforma_service",
+        "peekOfCode": "class ProformaService:\n    def get_proformas(self, args):\n        query = Proforma.query.options(joinedload(Proforma.itens))\n        # Filtros básicos\n        cliente_id = args.get('cliente_id')\n        if cliente_id:\n            query = query.filter_by(cliente_id=cliente_id)\n        estado = args.get('estado')\n        if estado:\n            query = query.filter_by(estado=estado)",
+        "detail": "backend.app.services.proforma_service",
+        "documentation": {}
+    },
+    {
         "label": "ReceitaService",
         "kind": 6,
         "importPath": "backend.app.services.receita_service",
@@ -13452,7 +13697,7 @@
         "kind": 2,
         "importPath": "backend.apply_migration",
         "description": "backend.apply_migration",
-        "peekOfCode": "def run_migrations():\n    queries = [\n        \"ALTER TABLE receitas_producao ADD COLUMN IF NOT EXISTS custo_gas NUMERIC(10,2) DEFAULT 0;\",\n        \"ALTER TABLE receitas_producao ADD COLUMN IF NOT EXISTS custo_energia NUMERIC(10,2) DEFAULT 0;\",\n        \"ALTER TABLE receitas_producao ADD COLUMN IF NOT EXISTS custo_pessoal NUMERIC(10,2) DEFAULT 0;\",\n        \"ALTER TABLE receitas_producao ADD COLUMN IF NOT EXISTS custo_outros NUMERIC(10,2) DEFAULT 0;\",\n        \"ALTER TABLE receitas_producao ADD COLUMN IF NOT EXISTS setor VARCHAR(50) NOT NULL DEFAULT 'Cozinha';\",\n        \"ALTER TABLE consumos_ingredientes MODIFY COLUMN ingrediente_id INTEGER NULL;\",\n        \"ALTER TABLE consumos_ingredientes ADD COLUMN IF NOT EXISTS produto_consumivel_id INTEGER NULL;\",\n        # Remove ENUMs legados e normaliza grafias antigas antes de o ORM ler pedidos.",
+        "peekOfCode": "def run_migrations():\n    queries = [\n        # Atualizar ENUM tipo_item na tabela itens_pedido para incluir 'Produto'\n        \"ALTER TABLE itens_pedido MODIFY COLUMN tipo_item ENUM('Produto', 'Produto Acabado', 'Produto Revenda', 'Servico', 'Aluguer') NOT NULL;\",\n        # Garantir todas as colunas de valor/desconto e totais na tabela itens_pedido\n        \"ALTER TABLE itens_pedido ADD COLUMN IF NOT EXISTS subtotal NUMERIC(10,2) DEFAULT 0;\",\n        \"ALTER TABLE itens_pedido ADD COLUMN IF NOT EXISTS total NUMERIC(10,2) DEFAULT 0;\",\n        \"ALTER TABLE itens_pedido ADD COLUMN IF NOT EXISTS desconto NUMERIC(10,2) DEFAULT 0;\",\n        \"ALTER TABLE itens_pedido ADD COLUMN IF NOT EXISTS taxa_iva_id INTEGER NULL;\",\n        \"ALTER TABLE itens_pedido ADD COLUMN IF NOT EXISTS taxa_iva NUMERIC(5,2) DEFAULT 0;\",",
         "detail": "backend.apply_migration",
         "documentation": {}
     },

@@ -6,6 +6,8 @@ import {
   orderService,
   documentService,
   vendaService,
+  proformaService,
+  ProformaCreatePayload,
 } from "../services";
 import { useComercial } from "../hooks";
 import {
@@ -64,6 +66,7 @@ export default function CaixaPOS() {
   const [selectedClient, setSelectedClient] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("Dinheiro");
   const [tipoDocumento, setTipoDocumento] = useState<"FR" | "PROFORMA">("FR");
+  const isProforma = tipoDocumento === "PROFORMA";
   const [step, setStep] = useState(1);
   const [amountReceived, setAmountReceived] = useState<number>(0);
   const [showPriceWithIva] = useState(true);
@@ -206,9 +209,53 @@ export default function CaixaPOS() {
     setStep(2);
   };
 
+  const handleGerarProformaDirect = async () => {
+    if (cart.length === 0) {
+      toast.error("Adicione produtos ao carrinho para gerar Pró-Forma.");
+      return;
+    }
+    try {
+      const payload: ProformaCreatePayload = {
+        cliente_id: selectedClient ? Number(selectedClient) : null,
+        pedido_id: null,
+        evento_id: null,
+        origem: "POS",
+        observacoes: "Orçamento emitido no Caixa POS",
+        itens: cart.map((i) => {
+          let tipoItem = "Produto";
+          const cat = String(i.category || i.categoria || "").toLowerCase();
+          if (cat.includes("servi") || cat.includes("servic")) {
+            tipoItem = "Servico";
+          }
+          const preco = Number(i.preco_venda_com_iva || i.salePrice || i.preco_venda || 0);
+          return {
+            item_id: Number(i.id) || null,
+            item_tipo: tipoItem,
+            descricao: i.name || i.nome || "Item de Venda",
+            preco_unitario: preco,
+            quantidade: Number(i.qty || 1),
+            desconto: Number(i.desconto_valor || 0),
+            taxa_iva: Number(i.taxa_iva ?? i.iva_taxa ?? i.iva ?? 15),
+          };
+        }),
+      };
+      const res = await proformaService.create(payload);
+      setCreatedVenda({
+        ...res,
+        isProforma: true,
+        id: res.id,
+        numero: res.numero_documento || `PROFORMA/${res.id}`,
+        total: res.total || total,
+      });
+      setStep(3);
+      toast.success(res.msg || "Fatura Pró-Forma gerada com sucesso!");
+    } catch (err: any) {
+      toast.error(err?.message || "Erro ao gerar Fatura Pró-Forma.");
+    }
+  };
+
   const confirmPayment = async () => {
     const isAgendado = tipoPedido === "Agendado";
-    const isProforma = tipoDocumento === "PROFORMA";
 
     // 1. Client obligation rule:
     if (isAgendado && !selectedClient) {
@@ -394,7 +441,39 @@ export default function CaixaPOS() {
         })(),
       };
 
-      if (tipoPedido === "Imediato") {
+      if (isProforma) {
+        // Direct Pro-Forma Creation (POST /api/v1/proformas/)
+        const proformaPayload: ProformaCreatePayload = {
+          cliente_id: selectedClient ? Number(selectedClient) : null,
+          pedido_id: null,
+          evento_id: null,
+          origem: "POS",
+          observacoes: "Orçamento para cliente balcão",
+          itens: cart.map((i) => {
+            const cat = String(i.category || i.categoria || "").toLowerCase();
+            const isServ = cat.includes("servi") || cat.includes("servic");
+            return {
+              item_tipo: isServ ? "Servico" : "Produto",
+              item_id: isNaN(Number(i.id)) ? null : Number(i.id),
+              descricao: i.name || i.nome || "Item de Venda",
+              quantidade: Number(i.qty || 1),
+              preco_unitario: Number(i.price || 0),
+              desconto: Number(i.discount || 0),
+              taxa_iva: Number(i.taxa_iva ?? i.iva_taxa ?? i.iva ?? 15),
+            };
+          }),
+        };
+
+        const proformaRes = await proformaService.create(proformaPayload);
+        setCreatedVenda({
+          ...proformaRes,
+          isProforma: true,
+          id: proformaRes.id,
+          numero: proformaRes.numero_documento || `PROFORMA 2026/${proformaRes.id}`,
+          total: proformaRes.total || total,
+        });
+        toast.success(proformaRes.msg || "Pró-Forma criada com sucesso!");
+      } else if (tipoPedido === "Imediato") {
         // Venda Direta (Balcão)
         const vendaPayload = buildVendaPayload(false, valorPagoNum);
         const vendaRes = await createVenda.mutateAsync(vendaPayload);
@@ -404,11 +483,29 @@ export default function CaixaPOS() {
         const createdOrder: any = await orderService.create(orderPayload);
         
         if (valorPagoNum > 0) {
+          const serverSaldo = Number(createdOrder.saldo ?? createdOrder.total ?? createdOrder.valor_total ?? valorPagoNum);
+          const safePayVal = Number(Math.min(valorPagoNum, serverSaldo).toFixed(2));
+
+          let payloadPagamento: any;
+          if (pagamentos.length === 1) {
+            payloadPagamento = {
+              ...pagamentos[0],
+              valor: Number(Math.min(pagamentos[0].valor, safePayVal).toFixed(2)),
+              observacoes: "Liquidação em caixa",
+            };
+          } else {
+            payloadPagamento = {
+              pagamentos: pagamentos.map((p) => ({
+                ...p,
+                valor: Number(p.valor.toFixed(2)),
+              })),
+              observacoes: "Liquidação mista em caixa",
+            };
+          }
+
           const vendaRes = await checkoutPedido.mutateAsync({
             pedido_id: createdOrder.id,
-            pagamento: pagamentos.length === 1
-              ? { ...pagamentos[0], observacoes: "Liquidação em caixa" } as any
-              : { pagamentos, observacoes: "Liquidação mista em caixa" } as any,
+            pagamento: payloadPagamento,
           });
           setCreatedVenda(vendaRes);
         } else {
@@ -720,30 +817,23 @@ export default function CaixaPOS() {
                 </div>
               </div>
 
-              <button
-                onClick={handleCheckout}
-                disabled={cart.length === 0}
-                className="
-    w-full
-    bg-primary
-    hover:bg-primary-hover
-    disabled:opacity-50
-    disabled:cursor-not-allowed
-    text-white
-    font-semibold
-    py-3.5
-    rounded-xl
-    transition-all
-    shadow-lg
-    shadow-primary/20
-    flex
-    justify-center
-    items-center
-    gap-2
-  "
-              >
-                PROSSEGUIR PARA PAGAMENTO
-              </button>
+              <div className="flex flex-col gap-2">
+                <button
+                  onClick={handleCheckout}
+                  disabled={cart.length === 0}
+                  className="w-full bg-primary hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3.5 rounded-xl transition-all shadow-lg shadow-primary/20 flex justify-center items-center gap-2"
+                >
+                  PROSSEGUIR PARA PAGAMENTO
+                </button>
+                <button
+                  type="button"
+                  onClick={handleGerarProformaDirect}
+                  disabled={cart.length === 0}
+                  className="w-full bg-amber-600 hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-2.5 rounded-xl transition-all shadow flex justify-center items-center gap-2 text-sm"
+                >
+                  📄 GERAR PRÓ-FORMA
+                </button>
+              </div>
             </div>
           </>
         )}
@@ -895,7 +985,13 @@ export default function CaixaPOS() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4">
                   <button
                     type="button"
-                    onClick={() => printThermalReceipt(createdVenda)}
+                    onClick={() => {
+                      if (createdVenda?.isProforma || isProforma) {
+                        proformaService.openRecibo(createdVenda.id);
+                      } else {
+                        printThermalReceipt(createdVenda);
+                      }
+                    }}
                     className="px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors flex items-center justify-center gap-1.5"
                   >
                     <Printer size={14} /> Recibo Térmico (80mm)
@@ -903,23 +999,12 @@ export default function CaixaPOS() {
                   <button
                     type="button"
                     onClick={() => {
-                      documentService.vendaPdf(createdVenda.id).catch((err) =>
-                        toast.error(err.message || "Erro ao abrir PDF.")
-                      );
-                      return;
-                      const docId = createdVenda.pedido_id || createdVenda.id;
-                      if (!createdVenda.id) {
-                        documentService.pedidoPdf(docId).catch(() => {
-                          documentService.vendaPdf(createdVenda.id).catch((err) =>
-                            toast.error(err.message || "Erro ao abrir PDF.")
-                          );
-                        });
+                      if (createdVenda?.isProforma || isProforma) {
+                        proformaService.openPdf(createdVenda.id);
                       } else {
-                        documentService.vendaPdf(createdVenda.id).catch(() => {
-                          documentService.pedidoPdf(docId).catch((err) =>
-                            toast.error(err.message || "Erro ao abrir PDF.")
-                          );
-                        });
+                        documentService.vendaPdf(createdVenda.id).catch((err) =>
+                          toast.error(err.message || "Erro ao abrir PDF.")
+                        );
                       }
                     }}
                     className="px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors flex items-center justify-center gap-1.5"
@@ -929,23 +1014,12 @@ export default function CaixaPOS() {
                   <button
                     type="button"
                     onClick={() => {
-                      documentService.vendaRecibo(createdVenda.id).catch((err) =>
-                        toast.error(err.message || "Erro ao descarregar recibo.")
-                      );
-                      return;
-                      const docId = createdVenda.pedido_id || createdVenda.id;
-                      if (!createdVenda.id) {
-                        documentService.pedidoRecibo(docId).catch(() => {
-                          documentService.vendaRecibo(createdVenda.id).catch((err) =>
-                            toast.error(err.message || "Erro ao descarregar recibo.")
-                          );
-                        });
+                      if (createdVenda?.isProforma || isProforma) {
+                        proformaService.openPdf(createdVenda.id);
                       } else {
-                        documentService.vendaRecibo(createdVenda.id).catch(() => {
-                          documentService.pedidoRecibo(docId).catch((err) =>
-                            toast.error(err.message || "Erro ao descarregar recibo.")
-                          );
-                        });
+                        documentService.vendaRecibo(createdVenda.id).catch((err) =>
+                          toast.error(err.message || "Erro ao descarregar recibo.")
+                        );
                       }
                     }}
                     className="px-3 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-white text-xs font-bold transition-colors flex items-center justify-center gap-1.5"
@@ -954,40 +1028,50 @@ export default function CaixaPOS() {
                   </button>
                 </div>
                 <h3 className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-3">
-                  Enviar Fatura ao Cliente
+                  Enviar {createdVenda?.isProforma || isProforma ? "Pró-Forma" : "Fatura"} ao Cliente
                 </h3>
 
                 {invoiceSent ? (
                   <div className="text-center py-2 text-xs text-indigo-600 dark:text-indigo-400 font-semibold">
-                    ✓ Fatura enviada com sucesso para processamento!
+                    ✓ Documento enviado com sucesso!
                   </div>
                 ) : (
                   <form
-                    onSubmit={(e) => {
+                    onSubmit={async (e) => {
                       e.preventDefault();
                       if (!sendContact) {
                         toast.error("Por favor, introduza o contacto.");
                         return;
                       }
-                      enviarFatura.mutate(
-                        {
-                          id: Number(createdVenda.id),
-                          data: {
-                            method: sendMethod,
-                            contact: sendContact,
-                          },
-                        },
-                        {
-                          onSuccess: () => {
-                            setInvoiceSent(true);
-                            toast.success(
-                              `Fatura solicitada para envio via ${
-                                sendMethod === "email" ? "E-mail" : "WhatsApp"
-                              }!`
-                            );
-                          },
+                      if (createdVenda?.isProforma || isProforma) {
+                        try {
+                          const res = await proformaService.send(createdVenda.id, sendMethod, sendContact);
+                          setInvoiceSent(true);
+                          toast.success(res.msg || `Pró-Forma enviada com sucesso para ${sendContact} via ${sendMethod}!`);
+                        } catch (err: any) {
+                          toast.error(err?.message || "Erro ao enviar Pró-Forma.");
                         }
-                      );
+                      } else {
+                        enviarFatura.mutate(
+                          {
+                            id: Number(createdVenda.id),
+                            data: {
+                              method: sendMethod,
+                              contact: sendContact,
+                            },
+                          },
+                          {
+                            onSuccess: () => {
+                              setInvoiceSent(true);
+                              toast.success(
+                                `Fatura solicitada para envio via ${
+                                  sendMethod === "email" ? "E-mail" : "WhatsApp"
+                                }!`
+                              );
+                            },
+                          }
+                        );
+                      }
                     }}
                     className="space-y-3"
                   >

@@ -734,7 +734,7 @@ export default function ServicosEDiversos() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase">Preço Sugerido (Kz)</label>
+                  <label className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase">Preço Sugerido</label>
                   <input
                     type="number"
                     step="0.01"
@@ -785,7 +785,7 @@ export default function ServicosEDiversos() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase">Custo Sugerido (Kz)</label>
+                  <label className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase">Custo Sugerido</label>
                   <input
                     type="number"
                     step="0.01"
@@ -796,7 +796,7 @@ export default function ServicosEDiversos() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase">Preço Venda (Kz)</label>
+                  <label className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase">Preço Venda</label>
                   <input
                     type="number"
                     step="0.01"
@@ -848,7 +848,7 @@ export default function ServicosEDiversos() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase">Preço Aluguer Base (Kz)</label>
+                  <label className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase">Preço Aluguer Base</label>
                   <input
                     type="number"
                     step="0.01"
@@ -955,7 +955,7 @@ export default function ServicosEDiversos() {
             </div>
 
             <div>
-              <label className="text-[10px] font-bold text-gray-500 uppercase">Valor Sugerido (Kz) *</label>
+              <label className="text-[10px] font-bold text-gray-500 uppercase">Valor Sugerido *</label>
               <input type="number" step="0.01" name="valor_sugerido" required placeholder="0.00" className="w-full p-2 text-xs bg-white dark:bg-gray-900 border rounded font-bold text-primary" />
             </div>
           </div>

@@ -48,8 +48,14 @@ export default function PedidoCheckoutForm({
       toast.success("Pagamento registado e fatura emitida com sucesso!");
       onSuccess?.(response);
     },
-    onError: () => {
-      toast.error("Erro ao liquidar o saldo.");
+    onError: (err: any) => {
+      const msg =
+        err?.response?.data?.error ||
+        err?.response?.data?.message ||
+        err?.response?.data?.msg ||
+        err?.message ||
+        "Erro ao liquidar o saldo.";
+      toast.error(msg);
     },
   });
 
@@ -62,11 +68,20 @@ export default function PedidoCheckoutForm({
       return;
     }
 
-    const parsedValue = parseFloat(valor);
+    let parsedValue = parseFloat(valor);
     if (Number.isNaN(parsedValue) || parsedValue <= 0) {
       toast.error("Introduza um valor válido.");
       return;
     }
+
+    if (defaultAmount && !Number.isNaN(Number(defaultAmount))) {
+      const maxAllowed = Number(defaultAmount);
+      if (parsedValue > maxAllowed) {
+        parsedValue = maxAllowed;
+      }
+    }
+
+    parsedValue = Number(parsedValue.toFixed(2));
 
     checkoutMutation.mutate({
       forma_pagamento_id: paymentMethod === "Transferência" ? 2 : paymentMethod === "TPA / POS" ? 3 : 1,

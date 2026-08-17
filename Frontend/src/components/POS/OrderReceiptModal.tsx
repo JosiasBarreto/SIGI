@@ -24,7 +24,7 @@ export const OrderReceiptModal: React.FC<OrderReceiptModalProps> = ({
   currencySymbol: propCurrencySymbol,
 }) => {
   const config = JSON.parse(localStorage.getItem("sigi_config") || "{}");
-  const currencySymbol = propCurrencySymbol || config?.moeda || "Kz";
+  const currencySymbol = propCurrencySymbol || config?.moeda || "";
   const [isPrinting, setIsPrinting] = useState(false);
 
   if (!isOpen || !documentData) return null;

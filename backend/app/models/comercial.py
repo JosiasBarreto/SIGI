@@ -50,7 +50,6 @@ class Venda(BaseModel):
     
     itens = db.relationship('VendaItem', backref='venda', lazy='selectin', cascade='all, delete-orphan')
 
-    # Link back to Pedido (already implicitly backreffed by Venda in some places, but good to have explicit property)
     @property
     def pedido(self):
         from app.models.pedido import Pedido
@@ -105,14 +104,15 @@ class Venda(BaseModel):
         return self._saldo if self._saldo is not None else (self.pedido.saldo if self.pedido else 0)
     @saldo.setter
     def saldo(self, value): self._saldo = value
+
     pagamentos = db.relationship('Pagamento', backref='venda_rel', lazy='selectin')
     contas_receber = db.relationship('ContaReceber', backref='venda_rel', lazy='selectin')
 
 class VendaItem(BaseModel):
     __tablename__ = 'venda_itens'
     venda_id = db.Column(db.Integer, db.ForeignKey('vendas.id'), nullable=False)
-    item_tipo = db.Column(db.String(50), nullable=False) # 'Produto', 'Servico', 'Aluguer', etc.
-    item_id = db.Column(db.Integer, nullable=True) # ForeignKey could vary, thus Integer
+    item_tipo = db.Column(db.String(50), nullable=False)
+    item_id = db.Column(db.Integer, nullable=True)
     descricao = db.Column(db.String(255), nullable=False)
     quantidade = db.Column(db.Numeric(10, 2), nullable=False)
     preco_unitario = db.Column(db.Numeric(12, 2), nullable=False)
@@ -124,7 +124,6 @@ class VendaItem(BaseModel):
     
     subtotal = db.Column(db.Numeric(12, 2), nullable=False)
     total = db.Column(db.Numeric(12, 2), nullable=False)
-
 
 class Proforma(BaseModel):
     """Documento comercial não fiscal, separado de vendas e pagamentos."""
@@ -142,6 +141,31 @@ class Proforma(BaseModel):
     criado_por = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     itens = db.relationship('ProformaItem', backref='proforma', lazy='selectin', cascade='all, delete-orphan')
 
+    @property
+    def pedido(self):
+        from app.models.pedido import Pedido
+        if not self.pedido_id: return None
+        return Pedido.query.get(self.pedido_id)
+
+    @property
+    def tipo_documento(self):
+        return "PROFORMA"
+
+    @property
+    def pagamentos(self):
+        return []
+
+    @property
+    def valor_pago(self):
+        return 0
+
+    @property
+    def saldo(self):
+        return self.total
+
+    @property
+    def troco(self):
+        return 0
 
 class ProformaItem(BaseModel):
     __tablename__ = 'proforma_itens'

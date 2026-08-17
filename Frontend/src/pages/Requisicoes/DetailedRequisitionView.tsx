@@ -26,7 +26,7 @@ export function DetailedRequisitionView({
     const companyNif = config.nif || "500123456";
     const companyLocation = config.endereco || config.localizacao || "Luanda, Angola";
     const companyContact = config.telefone || config.contacto || "+244 923 456 789";
-    const currencySym = config.moeda_simbolo || "Kz";
+    const currencySym = config.moeda_simbolo || config.moeda || "";
 
     // Determine occurrences
     const occurrences = req.itens?.filter(

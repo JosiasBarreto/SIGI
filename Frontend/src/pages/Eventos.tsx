@@ -157,6 +157,61 @@ export default function Eventos() {
     });
   };
 
+  const handleGerarProformaDirect = async (record: any) => {
+    try {
+      const proformaPayload: allServices.ProformaCreatePayload = {
+        cliente_id: record.cliente_id ? Number(record.cliente_id) : null,
+        pedido_id: null,
+        evento_id: record.id ? Number(record.id) : null,
+        origem: 'Eventos',
+        observacoes: `Orçamento Evento ${record.numero || record.titulo || record.nome || ''}`.trim(),
+        itens: Array.isArray(record.servicos) && record.servicos.length > 0
+          ? record.servicos.map((s: any) => ({
+              item_tipo: 'Servico',
+              item_id: isNaN(Number(s.id || s.servico_id)) ? null : Number(s.id || s.servico_id),
+              descricao: s.nome || s.descricao || s.titulo || 'Serviço de Evento',
+              quantidade: Number(s.quantidade || s.qtd || 1),
+              preco_unitario: Number(s.preco || s.preco_unitario || s.valor || 0),
+              desconto: Number(s.desconto || 0),
+              taxa_iva: Number(s.taxa_iva ?? s.iva ?? 0),
+            }))
+          : [
+              {
+                item_tipo: 'Servico',
+                item_id: record.id ? Number(record.id) : null,
+                descricao: record.titulo || record.nome || 'Serviço de Evento',
+                quantidade: 1,
+                preco_unitario: Number(record.valor_total || record.orcamento || 0),
+                desconto: 0,
+                taxa_iva: 0,
+              }
+            ]
+      };
+
+      const proformaRes = await allServices.proformaService.create(proformaPayload);
+      toast.success(proformaRes.msg || 'Pró-Forma emitida com sucesso!');
+
+      Swal.fire({
+        title: 'Pró-Forma Gerada com Sucesso!',
+        text: proformaRes.numero_documento ? `Documento: ${proformaRes.numero_documento}` : 'Escolha a opção para visualização:',
+        icon: 'success',
+        showCancelButton: true,
+        showDenyButton: true,
+        confirmButtonText: '🖨️ Recibo Térmico (80mm)',
+        denyButtonText: '📄 Documento A4 (PDF)',
+        cancelButtonText: 'Concluir'
+      }).then((choice) => {
+        if (choice.isConfirmed) {
+          allServices.proformaService.openRecibo(proformaRes.id);
+        } else if (choice.isDenied) {
+          allServices.proformaService.openPdf(proformaRes.id);
+        }
+      });
+    } catch (err: any) {
+      toast.error(err?.message || 'Erro ao gerar Pró-Forma para o evento.');
+    }
+  };
+
   const handleFaturarEvento = async () => {
     if (!currentRecord?.id) return;
     const rf = currentRecord.resumo_financeiro;
@@ -220,7 +275,62 @@ export default function Eventos() {
     });
 
     if (result.isConfirmed && result.value) {
-      faturarMutation.mutate({ id: currentRecord.id, pagamento: result.value as any });
+      if ((result.value as any).tipo_documento === 'PROFORMA') {
+        try {
+          const proformaPayload: allServices.ProformaCreatePayload = {
+            cliente_id: currentRecord.cliente_id ? Number(currentRecord.cliente_id) : null,
+            pedido_id: null,
+            evento_id: currentRecord.id ? Number(currentRecord.id) : null,
+            origem: 'Eventos',
+            observacoes: `Orçamento Evento ${currentRecord.numero || currentRecord.titulo || currentRecord.nome || ''}`.trim(),
+            itens: Array.isArray(currentRecord.servicos) && currentRecord.servicos.length > 0
+              ? currentRecord.servicos.map((s: any) => ({
+                  item_tipo: 'Servico',
+                  item_id: isNaN(Number(s.id || s.servico_id)) ? null : Number(s.id || s.servico_id),
+                  descricao: s.nome || s.descricao || s.titulo || 'Serviço de Evento',
+                  quantidade: Number(s.quantidade || s.qtd || 1),
+                  preco_unitario: Number(s.preco || s.preco_unitario || s.valor || 0),
+                  desconto: Number(s.desconto || 0),
+                  taxa_iva: Number(s.taxa_iva ?? s.iva ?? 0),
+                }))
+              : [
+                  {
+                    item_tipo: 'Servico',
+                    item_id: currentRecord.id ? Number(currentRecord.id) : null,
+                    descricao: currentRecord.titulo || currentRecord.nome || 'Serviço de Evento',
+                    quantidade: 1,
+                    preco_unitario: Number(currentRecord.valor_total || currentRecord.orcamento || 0),
+                    desconto: 0,
+                    taxa_iva: 0,
+                  }
+                ]
+          };
+
+          const proformaRes = await allServices.proformaService.create(proformaPayload);
+          toast.success(proformaRes.msg || 'Pró-Forma emitida com sucesso!');
+
+          Swal.fire({
+            title: 'Pró-Forma Gerada com Sucesso!',
+            text: proformaRes.numero_documento ? `Documento: ${proformaRes.numero_documento}` : 'Escolha a opção para visualização:',
+            icon: 'success',
+            showCancelButton: true,
+            showDenyButton: true,
+            confirmButtonText: '🖨️ Recibo Térmico (80mm)',
+            denyButtonText: '📄 Documento A4 (PDF)',
+            cancelButtonText: 'Concluir'
+          }).then((choice) => {
+            if (choice.isConfirmed) {
+              allServices.proformaService.openRecibo(proformaRes.id);
+            } else if (choice.isDenied) {
+              allServices.proformaService.openPdf(proformaRes.id);
+            }
+          });
+        } catch (err: any) {
+          toast.error(err?.message || 'Erro ao gerar Pró-Forma para o evento.');
+        }
+      } else {
+        faturarMutation.mutate({ id: currentRecord.id, pagamento: result.value as any });
+      }
     }
   };
 
@@ -465,6 +575,12 @@ export default function Eventos() {
             </div>
 
             <div className="flex items-center gap-2">
+              <button 
+                onClick={() => handleGerarProformaDirect(currentRecord)} 
+                className="px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 shadow transition-all active:scale-95"
+              >
+                <FileText size={14} /> Emitir Pró-Forma
+              </button>
               {(() => {
                 const resumo = currentRecord?.resumo_financeiro;
                 const saldo = Number(resumo?.saldo ?? currentRecord?.saldo ?? 0);

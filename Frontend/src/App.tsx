@@ -115,13 +115,21 @@ export default function App() {
                       <Route path="/recuperar-senha" element={<RecuperarSenha />} />
                       <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
                         {/* Shared routes */}
-                        <Route index element={<Dashboard />} />
                         <Route path="perfil" element={<Perfil />} />
-                        <Route path="turnos" element={<Turnos />} />
-                        <Route path="calendario" element={<Calendario />} />
 
-                        {/* Admin-only routes */}
+                        {/* Executive Dashboard */}
+                        <Route element={<RoleRoute roles={["Administrador", "Atendimento"]} />}>
+                          <Route index element={<Dashboard />} />
+                        </Route>
+
+                        {/* Calendar */}
+                        <Route element={<RoleRoute roles={["Administrador", "Atendimento", "Cozinha", "Pastelaria"]} />}>
+                          <Route path="calendario" element={<Calendario />} />
+                        </Route>
+
+                        {/* Turnos */}
                         <Route element={<RoleRoute roles={["Administrador"]} />}>
+                          <Route path="turnos" element={<Turnos />} />
                           <Route path="utilizadores" element={<Utilizadores />} />
                           <Route path="auditoria" element={<Auditoria />} />
                           <Route path="configuracoes" element={<Configuracoes />} />

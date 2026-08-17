@@ -16,9 +16,10 @@ migrate = Migrate()
 def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
+    app.url_map.strict_slashes = False
 
     # Initialize extensions
-    CORS(app)
+    CORS(app, resources={r"/api/*": {"origins": "*"}})
     db.init_app(app)
     jwt.init_app(app)
     socketio.init_app(
@@ -61,8 +62,13 @@ def create_app(config_class=Config):
         return redirect('/swagger/', code=302)
 
     # Register blueprints safely
-   # Register blueprints safely
-    from app.models.comercial import Venda, VendaItem, TaxaIVA, SerieDocumento, FechoDiario
+    from app.models.comercial import Venda, VendaItem, TaxaIVA, SerieDocumento, FechoDiario, Proforma, ProformaItem
+    with app.app_context():
+        try:
+            db.create_all()
+        except Exception as e:
+            app.logger.warning(f"db.create_all warning: {e}")
+
     from app.api.v1.auth_controller import auth_bp
     from app.api.v1.user_controller import user_bp
     from app.api.v1.armazem_controller import armazem_bp
@@ -78,6 +84,7 @@ def create_app(config_class=Config):
     from app.api.v1.auditoria_controller import auditoria_bp
     
     from app.api.v1.comercial_controller import comercial_bp, fiscal_bp
+    from app.api.v1.proforma_controller import proforma_bp
     from app.api.v1.producao_nova_controller import producao_lote_bp
     from app.api.v1.turno_controller import turno_bp
     from app.api.v1.receita_controller import receita_bp
@@ -105,6 +112,7 @@ def create_app(config_class=Config):
     app.register_blueprint(producao_lote_bp, url_prefix='/api/v1/producao_nova')
     app.register_blueprint(receita_bp, url_prefix='/api/v1/receitas')
     app.register_blueprint(turno_bp, url_prefix='/api/v1/turnos')
+    app.register_blueprint(proforma_bp, url_prefix='/api/v1/proformas')
 
     Swagger(app, config=swagger_config, template=build_swagger_template(app))
     

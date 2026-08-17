@@ -510,6 +510,30 @@ class ComercialService:
         pedido = Pedido.query.get(pedido_id)
         if not pedido:
             raise ValueError('Pedido não encontrado.')
+
+        if tipo == TipoDocumento.PROFORMA:
+            from app.services.proforma_service import ProformaService
+            proforma_service = ProformaService()
+            data = {
+                'pedido_id': pedido.id,
+                'cliente_id': pedido.cliente_id,
+                'origem': 'Pedido',
+                'observacoes': f'Fatura Pró-Forma emitida a partir do pedido {pedido.numero}.',
+                'itens': []
+            }
+            for item in pedido.itens:
+                data['itens'].append({
+                    'item_tipo': item.tipo_item.value if hasattr(item.tipo_item, 'value') else item.tipo_item,
+                    'item_id': item.produto_id,
+                    'descricao': item.descricao or (item.produto.nome if item.produto else 'Item'),
+                    'quantidade': float(item.quantidade),
+                    'preco_unitario': float(item.preco_unitario),
+                    'desconto': float(item.desconto or 0),
+                    'taxa_iva': float(item.taxa_iva or 0)
+                })
+            
+            return proforma_service.create_proforma(data, user_id)
+            
         existente = Venda.query.filter_by(pedido_id=pedido.id, tipo_documento=tipo).first()
         if existente:
             return existente
@@ -671,11 +695,13 @@ class ComercialService:
                 return None, "Emissor/Remetente da operação de pagamento é obrigatório."
                 
         # A pedido is billed as FT. FR remains exclusive to direct, fully paid POS sales.
-        numero_doc = self.generate_numero_documento('FT')
+        is_fully_paid = abs(valor_pagar - float(pedido.saldo or 0)) < 0.01
+        tipo_doc = 'FR' if is_fully_paid else 'FT'
+        numero_doc = self.generate_numero_documento(tipo_doc)
         
         venda = Venda(
             numero_documento=numero_doc,
-            tipo_documento='FT',
+            tipo_documento=tipo_doc,
             cliente_id=pedido.cliente_id,
             pedido_id=pedido.id,
             estado='Pendente',

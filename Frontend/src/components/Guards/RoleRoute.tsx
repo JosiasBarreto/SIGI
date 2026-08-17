@@ -1,6 +1,7 @@
 import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
+import { getDefaultRouteForRole } from '../../lib/roleRoutes';
 
 interface RoleRouteProps {
   roles: string[];
@@ -20,7 +21,7 @@ export function RoleRoute({ roles }: RoleRouteProps) {
   }
 
   if (!roles.includes(user.role)) {
-    return <Navigate to="/" replace />; // Or to a 'unauthorized' page
+    return <Navigate to={getDefaultRouteForRole(user.role)} replace />;
   }
 
   return <Outlet />;

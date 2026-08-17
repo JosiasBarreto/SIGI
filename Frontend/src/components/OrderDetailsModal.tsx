@@ -20,8 +20,8 @@ export default function OrderDetailsModal({ order, isOpen, onClose, onUpdateStat
     queryFn: () => clientService.getAll({ per_page: 5000 }) 
   });
   const { data: productsResponse } = useQuery({ 
-    queryKey: ["products"], 
-    queryFn: () => productService.getAll({ per_page: 5000 }) 
+    queryKey: ["products-comerciais"], 
+    queryFn: () => productService.getProdutosComerciais({ per_page: 5000 }) 
   });
 
   const clients = clientsResponse?.items || [];

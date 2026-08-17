@@ -30,7 +30,7 @@ export const OrderPaymentModal: React.FC<OrderPaymentModalProps> = ({
   currencySymbol: propCurrencySymbol,
 }) => {
   const config = JSON.parse(localStorage.getItem("sigi_config") || "{}");
-  const currencySymbol = propCurrencySymbol || config?.moeda || "Kz";
+  const currencySymbol = propCurrencySymbol || config?.moeda || "";
   const queryClient = useQueryClient();
   const [paymentFormState, setPaymentFormState] = useState<PaymentFormState | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);

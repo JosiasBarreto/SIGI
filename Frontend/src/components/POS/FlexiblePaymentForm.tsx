@@ -28,7 +28,7 @@ interface FlexiblePaymentFormProps {
 
 export const FlexiblePaymentForm: React.FC<FlexiblePaymentFormProps> = ({
   total,
-  currencySymbol = "Kz",
+  currencySymbol = "",
   isAgendado = false,
   disableDeferredAndInstallments = false,
   onPaymentStateChange,

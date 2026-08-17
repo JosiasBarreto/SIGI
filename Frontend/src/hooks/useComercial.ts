@@ -24,7 +24,13 @@ export const useComercial = () => {
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Erro ao realizar venda');
+      const msg =
+        error?.response?.data?.error ||
+        error?.response?.data?.message ||
+        error?.response?.data?.msg ||
+        error.message ||
+        'Erro ao realizar venda';
+      toast.error(msg);
     }
   });
 
@@ -40,7 +46,13 @@ export const useComercial = () => {
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Erro ao faturar pedido');
+      const msg =
+        error?.response?.data?.error ||
+        error?.response?.data?.message ||
+        error?.response?.data?.msg ||
+        error.message ||
+        'Erro ao faturar pedido';
+      toast.error(msg);
     }
   });
 

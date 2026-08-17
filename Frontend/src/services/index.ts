@@ -166,6 +166,71 @@ const baseProductService = createService<ProdutoDTO>('/v1/armazem/produtos', 'pr
 
 export const productService = {
   ...baseProductService,
+  async getProdutosComerciais(params?: BaseServiceParams): Promise<PaginatedData<ProdutoDTO>> {
+    const page = params?.page || 1;
+    const perPage = params?.per_page || 1000;
+    const search = params?.search || '';
+
+    const extractItemsFromRes = (val: any): ProdutoDTO[] => {
+      if (!val) return [];
+      if (Array.isArray(val)) return val;
+      if (Array.isArray(val.items)) return val.items;
+      if (Array.isArray(val.data)) return val.data;
+      if (Array.isArray(val.data?.items)) return val.data.items;
+      return [];
+    };
+
+    try {
+      // Execute requests for both Revenda and Acabado
+      const [revendaRes, acabadoRes, revendaCapsRes, acabadoCapsRes] = await Promise.allSettled([
+        baseProductService.getAll({ ...params, page, per_page: perPage, search, tipo: 'Revenda', ativo: true }),
+        baseProductService.getAll({ ...params, page, per_page: perPage, search, tipo: 'Acabado', ativo: true }),
+        baseProductService.getAll({ ...params, page, per_page: perPage, search, tipo: 'REVENDA', ativo: true }),
+        baseProductService.getAll({ ...params, page, per_page: perPage, search, tipo: 'ACABADO', ativo: true }),
+      ]);
+
+      const revendaItems = revendaRes.status === 'fulfilled' ? extractItemsFromRes(revendaRes.value) : [];
+      const acabadoItems = acabadoRes.status === 'fulfilled' ? extractItemsFromRes(acabadoRes.value) : [];
+      const revendaCapsItems = revendaCapsRes.status === 'fulfilled' ? extractItemsFromRes(revendaCapsRes.value) : [];
+      const acabadoCapsItems = acabadoCapsRes.status === 'fulfilled' ? extractItemsFromRes(acabadoCapsRes.value) : [];
+
+      const map = new Map<string | number, ProdutoDTO>();
+      [...revendaItems, ...acabadoItems, ...revendaCapsItems, ...acabadoCapsItems].forEach((item) => {
+        if (item && (item.id != null || (item as any).nome || (item as any).name)) {
+          const key = item.id != null ? item.id : (item as any).nome || (item as any).name;
+          map.set(key, item);
+        }
+      });
+
+      let combined = Array.from(map.values());
+
+      // If specific type requests yielded no items (e.g. backend doesn't filter by `tipo`), fallback to general query
+      if (combined.length === 0) {
+        try {
+          const fallbackRes = await baseProductService.getAll({ ...params, page, per_page: perPage, search });
+          const allItems = extractItemsFromRes(fallbackRes);
+          
+          combined = allItems.filter((p: any) => {
+            if (!p) return false;
+            const t = String(p.tipo || p.type || p.tipo_produto || '').toUpperCase().trim();
+            return t !== 'CONSUMIVEL' && t !== 'CONSUMÍVEL' && t !== 'MATERIAL' && t !== 'INGREDIENTE' && t !== 'MATERIA_PRIMA';
+          });
+        } catch (e) {
+          console.warn('Fallback ao buscar produtos gerais falhou:', e);
+        }
+      }
+
+      return {
+        items: combined,
+        total: combined.length,
+        pages: 1,
+        page: page,
+      };
+    } catch (err) {
+      console.error('Erro ao carregar produtos comerciais:', err);
+      return { items: [], total: 0, pages: 1, page: 1 };
+    }
+  },
   async create(data: Partial<ProdutoDTO>): Promise<ProdutoDTO> {
     const payload: any = { ...data };
     if (payload.tipo === 'Consumivel') {
@@ -440,6 +505,23 @@ export const orderService = {
   },
   async create(data: Partial<PedidoDTO>): Promise<PedidoDTO> {
     const payload: any = { ...data };
+    
+    // Map legacy or unaccepted top-level fields
+    if (payload.tipo_pedido) {
+      payload.tipo = payload.tipo || payload.tipo_pedido;
+      delete payload.tipo_pedido;
+    }
+    if (payload.data_entrega_prevista) {
+      if (typeof payload.data_entrega_prevista === 'string' && payload.data_entrega_prevista.includes('T')) {
+        const [d, t] = payload.data_entrega_prevista.split('T');
+        payload.data_entrega = payload.data_entrega || d;
+        payload.hora_entrega = payload.hora_entrega || (t ? t.substring(0, 8) : '12:00:00');
+      }
+      delete payload.data_entrega_prevista;
+    }
+    delete payload.desconto;
+    delete payload.estado_pagamento;
+
     if (payload.estado) {
       payload.estado = normalizePedidoEstado(payload.estado);
     } else {
@@ -514,7 +596,7 @@ const getCompanyConfig = () => {
       email: 'comercial@saborimbativel.co.ao',
       endereco: 'Luanda, Angola',
       licenca: '001/SIGI/2026',
-      moeda: 'Kz'
+      moeda: ''
     };
   }
 };
@@ -627,7 +709,7 @@ function printHtmlThermalReceipt(raw: any) {
   const saldo = Number(d.saldo || (total > valorPago ? total - valorPago : 0));
   const formaPagamento = d.forma_pagamento || d.pagamento_forma || 'Dinheiro';
 
-  const moeda = company.moeda || 'Kz';
+  const moeda = company.moeda || '';
 
   const itemsHtml = items.map((it: any) => {
     const qtd = it.quantidade || it.qty || 1;
@@ -774,7 +856,7 @@ function downloadJsPdfReceipt(raw: any, filename: string) {
   const troco = Number(d.troco || (valorPago > total ? valorPago - total : 0));
   const saldo = Number(d.saldo || (total > valorPago ? total - valorPago : 0));
   const formaPagamento = d.forma_pagamento || d.pagamento_forma || 'Dinheiro';
-  const moeda = company.moeda || 'Kz';
+  const moeda = company.moeda || '';
 
   const doc = new jsPDF();
 
@@ -1681,6 +1763,115 @@ export const financeiroService = {
 
   createCreditoDireto: async (data: any): Promise<any> => {
     return apiClient.post<any, any>('/v1/financeiro/contas-receber', data);
+  }
+};
+
+export interface ProformaItemPayload {
+  item_tipo: 'Produto' | 'Servico';
+  item_id?: number | null;
+  descricao: string;
+  quantidade: number;
+  preco_unitario: number;
+  desconto?: number;
+  taxa_iva?: number;
+}
+
+export interface ProformaCreatePayload {
+  cliente_id?: number | null;
+  pedido_id?: number | null;
+  evento_id?: number | null;
+  origem: string;
+  observacoes?: string;
+  itens: ProformaItemPayload[];
+}
+
+export interface ProformaResponse {
+  id: number;
+  numero_documento?: string;
+  cliente_id?: number;
+  estado?: string;
+  total?: number;
+  msg?: string;
+  [key: string]: any;
+}
+
+export const proformaService = {
+  getAll: async (params?: any) => {
+    try {
+      return await apiClient.get<any, any>('/v1/proformas/', { params });
+    } catch {
+      try {
+        return await apiClient.get<any, any>('/v1/proformas', { params });
+      } catch {
+        return await apiClient.get<any, any>('/proformas/', { params });
+      }
+    }
+  },
+
+  getById: async (id: string | number) => {
+    try {
+      return await apiClient.get<any, any>(`/v1/proformas/${id}`);
+    } catch {
+      return await apiClient.get<any, any>(`/proformas/${id}`);
+    }
+  },
+
+  create: async (payload: ProformaCreatePayload): Promise<ProformaResponse> => {
+    try {
+      return await apiClient.post<any, ProformaResponse>('/v1/proformas/', payload);
+    } catch {
+      try {
+        return await apiClient.post<any, ProformaResponse>('/v1/proformas', payload);
+      } catch {
+        return await apiClient.post<any, ProformaResponse>('/proformas/', payload);
+      }
+    }
+  },
+
+  delete: async (id: string | number) => {
+    try {
+      return await apiClient.delete<any, any>(`/v1/proformas/${id}`);
+    } catch {
+      return await apiClient.delete<any, any>(`/proformas/${id}`);
+    }
+  },
+
+  faturar: async (id: string | number) => {
+    try {
+      return await apiClient.post<any, any>(`/v1/proformas/${id}/faturar`);
+    } catch {
+      return await apiClient.post<any, any>(`/proformas/${id}/faturar`);
+    }
+  },
+
+  openRecibo: (id: string | number) => {
+    const token = localStorage.getItem('access_token') || '';
+    let baseUrl = apiClient.defaults.baseURL || '/api';
+    if (!baseUrl.startsWith('http')) {
+      baseUrl = window.location.origin + (baseUrl.startsWith('/') ? '' : '/') + baseUrl;
+    }
+    const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+    const url = `${cleanBaseUrl}/v1/proformas/${id}/recibo?token=${encodeURIComponent(token)}`;
+    window.open(url, '_blank');
+  },
+
+  openPdf: (id: string | number) => {
+    const token = localStorage.getItem('access_token') || '';
+    let baseUrl = apiClient.defaults.baseURL || '/api';
+    if (!baseUrl.startsWith('http')) {
+      baseUrl = window.location.origin + (baseUrl.startsWith('/') ? '' : '/') + baseUrl;
+    }
+    const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+    const url = `${cleanBaseUrl}/v1/proformas/${id}/pdf?token=${encodeURIComponent(token)}`;
+    window.open(url, '_blank');
+  },
+
+  send: async (id: string | number, method: 'email' | 'whatsapp', contact: string): Promise<{ msg?: string }> => {
+    try {
+      return await apiClient.post<any, { msg?: string }>(`/v1/proformas/${id}/send`, { method, contact });
+    } catch {
+      return await apiClient.post<any, { msg?: string }>(`/proformas/${id}/send`, { method, contact });
+    }
   }
 };
 

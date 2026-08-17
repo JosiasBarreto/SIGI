@@ -5,6 +5,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { Mail, Lock, AlertCircle, Sun, Moon, LogIn } from "lucide-react";
 import { toast } from "react-toastify";
 
+import { getDefaultRouteForRole } from "../lib/roleRoutes";
+
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -27,7 +29,10 @@ export default function Login() {
     const success = await login(email, password);
     if (success) {
       toast.success("Login efetuado com sucesso!");
-      navigate("/");
+      const storedUserStr = localStorage.getItem("user");
+      const userObj = storedUserStr ? JSON.parse(storedUserStr) : null;
+      const targetPath = getDefaultRouteForRole(userObj?.role);
+      navigate(targetPath);
     } else {
       const msg = "Credenciais inválidas. Verifique seu email e senha.";
       setError(msg);

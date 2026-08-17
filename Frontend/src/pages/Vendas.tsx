@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { vendaService, clientService, documentService, productService } from '../services';
+import { vendaService, clientService, documentService, productService, proformaService } from '../services';
 import { useComercial } from '../hooks';
-import { Filter, Eye, Printer, FileText, Ban, DollarSign, RefreshCw, Save, Send, Download } from 'lucide-react';
+import { Filter, Eye, Printer, FileText, Ban, DollarSign, RefreshCw, Save, Send, Download, CheckCircle, Trash2 } from 'lucide-react';
 import { formatCurrency, cn } from '../lib/utils';
 import { toast } from 'react-toastify';
 import Swal from 'sweetalert2';
@@ -14,6 +14,9 @@ export default function Vendas() {
   const queryClient = useQueryClient();
   const { adicionarPagamento, enviarFatura } = useComercial();
   
+  // Tab State: fiscal vs proforma (não fiscal)
+  const [activeTab, setActiveTab] = useState<'fiscal' | 'proforma'>('fiscal');
+
   // Search & Filter State
   const [search, setSearch] = useState('');
   const [estado, setEstado] = useState('');
@@ -31,6 +34,12 @@ export default function Vendas() {
   // Selected Sale for detail view
   const [selectedVenda, setSelectedVenda] = useState<any>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+
+  // Selected Proforma for detail view
+  const [selectedProforma, setSelectedProforma] = useState<any>(null);
+  const [isProformaDetailOpen, setIsProformaDetailOpen] = useState(false);
+  const [isSendProformaOpen, setIsSendProformaOpen] = useState(false);
+  const [proformaToSend, setProformaToSend] = useState<any>(null);
   
   // Register Payment Modal State
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
@@ -50,7 +59,7 @@ export default function Vendas() {
   const [viewItemDetails, setViewItemDetails] = useState<any>(null);
 
   // Fetch Sales
-  const { data: vendasResponse, isLoading, refetch } = useQuery({
+  const { data: vendasResponse, isLoading, refetch: refetchVendas } = useQuery({
     queryKey: ['vendas', paginationState.pageIndex + 1, paginationState.pageSize, search, estado, tipoDocumento, clienteId, dataInicio, dataFim],
     queryFn: () => vendaService.getAll({ 
       page: paginationState.pageIndex + 1, 
@@ -61,7 +70,23 @@ export default function Vendas() {
       tipo_documento: tipoDocumento, 
       data_inicio: dataInicio, 
       data_fim: dataFim 
-    })
+    }),
+    enabled: activeTab === 'fiscal'
+  });
+
+  // Fetch Proformas (Não Fiscal) directly from backend API
+  const { data: proformasResponse, isLoading: isLoadingProformas, refetch: refetchProformas } = useQuery({
+    queryKey: ['proformas', paginationState.pageIndex + 1, paginationState.pageSize, search, estado, clienteId, dataInicio, dataFim],
+    queryFn: () => proformaService.getAll({
+      page: paginationState.pageIndex + 1,
+      per_page: paginationState.pageSize,
+      search,
+      estado,
+      cliente_id: clienteId,
+      data_inicio: dataInicio,
+      data_fim: dataFim,
+    }),
+    enabled: activeTab === 'proforma'
   });
 
   // Fetch Clients for filter selection
@@ -73,7 +98,7 @@ export default function Vendas() {
   // Fetch Products to resolve names in table
   const { data: productsResponse } = useQuery({
     queryKey: ['products-vendas'],
-    queryFn: () => productService.getAll({ per_page: 1000 }).catch(() => ({ items: [] }))
+    queryFn: () => productService.getProdutosComerciais({ per_page: 1000 }).catch(() => ({ items: [] }))
   });
 
   const clients = clientsResponse?.items || [];
@@ -86,6 +111,7 @@ export default function Vendas() {
     });
     return map;
   }, [productsList]);
+
   const vendasRaw = (vendasResponse as any)?.items || [];
   const normalizeVenda = (venda: any) => ({
     ...venda,
@@ -103,8 +129,223 @@ export default function Vendas() {
     grupos[chave].valor += Number(item.valor_iva ?? 0);
     return grupos;
   }, {} as Record<string, { taxa: number; valor: number }>));
+  
   const vendas = vendasRaw.map(normalizeVenda);
   const paginationInfo = (vendasResponse as any)?.pagination || vendasResponse || { page: 1, per_page: 10, total: 0, pages: 0 };
+
+  const proformasRaw = (proformasResponse as any)?.items || (Array.isArray(proformasResponse) ? proformasResponse : []);
+  const proformaPaginationInfo = (proformasResponse as any)?.pages ? proformasResponse : { page: 1, per_page: 10, total: proformasRaw.length, pages: 1 };
+
+  const clearFilters = () => {
+    setSearch('');
+    setEstado('');
+    setTipoDocumento('');
+    setClienteId('');
+    setDataInicio('');
+    setDataFim('');
+    setPaginationState({ pageIndex: 0, pageSize: 10 });
+  };
+
+  const handleOpenProformaDetail = async (p: any) => {
+    try {
+      const fresh = await proformaService.getById(p.id);
+      setSelectedProforma(fresh || p);
+    } catch {
+      setSelectedProforma(p);
+    }
+    setIsProformaDetailOpen(true);
+  };
+
+  const handleOpenSendProforma = (p: any) => {
+    setProformaToSend(p);
+    setSendMethod('email');
+    const client = clients.find((c: any) => String(c.id) === String(p.cliente_id));
+    if (client) {
+      setSendContact(client.email || client.telefone || '');
+    } else {
+      setSendContact('');
+    }
+    setIsSendProformaOpen(true);
+  };
+
+  const handleSendProformaSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!proformaToSend || !sendContact.trim()) {
+      toast.error('Informe o contacto do destinatário.');
+      return;
+    }
+    try {
+      const res = await proformaService.send(proformaToSend.id, sendMethod, sendContact.trim());
+      toast.success(res.msg || `Pró-Forma enviada com sucesso via ${sendMethod}!`);
+      setIsSendProformaOpen(false);
+    } catch (err: any) {
+      toast.error(err?.message || 'Erro ao enviar Pró-Forma.');
+    }
+  };
+
+  const handleFaturarProforma = async (proforma: any) => {
+    const result = await Swal.fire({
+      title: 'Converter em Fatura Comercial (FT)?',
+      text: `A Pró-Forma ${proforma.numero_documento || `#${proforma.id}`} será convertida numa Fatura Comercial e o stock será abatido.`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Sim, Converter e Faturar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#10B981',
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const res = await proformaService.faturar(proforma.id);
+        toast.success(res.msg || 'Pró-Forma convertida em Fatura com sucesso!');
+        queryClient.invalidateQueries({ queryKey: ['proformas'] });
+        queryClient.invalidateQueries({ queryKey: ['vendas'] });
+      } catch (err: any) {
+        toast.error(err?.response?.data?.error || err?.message || 'Erro ao faturar Pró-Forma.');
+      }
+    }
+  };
+
+  const handleDeleteProforma = async (proforma: any) => {
+    const result = await Swal.fire({
+      title: 'Eliminar Pró-Forma?',
+      text: `A Pró-Forma ${proforma.numero_documento || `#${proforma.id}`} será eliminada permanentemente.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#EF4444',
+      confirmButtonText: 'Sim, Eliminar',
+      cancelButtonText: 'Cancelar',
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const res = await proformaService.delete(proforma.id);
+        toast.success(res.msg || 'Pró-Forma eliminada com sucesso!');
+        queryClient.invalidateQueries({ queryKey: ['proformas'] });
+      } catch (err: any) {
+        toast.error(err?.response?.data?.error || err?.message || 'Erro ao eliminar Pró-Forma.');
+      }
+    }
+  };
+
+  const proformaColumns = useMemo<ColumnDef<any>[]>(() => [
+    {
+      accessorKey: 'numero_documento',
+      header: 'Nº Documento',
+      cell: (info) => (
+        <div className="font-bold text-gray-900 dark:text-gray-100 font-mono text-xs">
+          {info.getValue<string>() || `PROFORMA #${info.row.original.id}`}
+        </div>
+      )
+    },
+    {
+      accessorKey: 'cliente_id',
+      header: 'Cliente',
+      cell: (info) => {
+        const item = info.row.original;
+        const client = clients.find((c: any) => String(c.id) === String(item.cliente_id));
+        const clientName = client?.nome || client?.name || item.cliente?.nome || item.cliente_nome || 'Consumidor Final';
+        return <span className="font-semibold text-xs text-gray-800 dark:text-gray-200">{clientName}</span>;
+      }
+    },
+    {
+      accessorKey: 'origem',
+      header: 'Origem',
+      cell: (info) => (
+        <span className="px-2 py-0.5 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded text-[11px] font-bold uppercase">
+          {info.getValue<string>() || 'POS'}
+        </span>
+      )
+    },
+    {
+      accessorKey: 'total',
+      header: () => <div className="text-right">Total</div>,
+      cell: (info) => (
+        <div className="text-right font-bold text-xs text-emerald-600 dark:text-emerald-400 font-mono">
+          {formatCurrency(Number(info.getValue<number>() || 0))}
+        </div>
+      )
+    },
+    {
+      accessorKey: 'estado',
+      header: 'Estado',
+      cell: (info) => {
+        const st = info.getValue<string>() || 'Emitida';
+        return (
+          <span className={cn(
+            "inline-block rounded-full px-2.5 py-1 text-xs font-bold leading-none uppercase",
+            st === 'Emitida' && "bg-amber-100 text-amber-800 dark:bg-amber-900/20 dark:text-amber-400",
+            st === 'Faturada' && "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400",
+            st === 'Cancelada' && "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+          )}>
+            {st}
+          </span>
+        );
+      }
+    },
+    {
+      accessorKey: 'created_at',
+      header: 'Data de Emissão',
+      cell: (info) => <span className="text-xs text-gray-500 font-mono">{info.getValue<string>() ? new Date(info.getValue<string>()).toLocaleString('pt-PT') : '-'}</span>
+    },
+    {
+      id: 'actions',
+      header: () => <div className="text-right">Ações</div>,
+      cell: (info) => {
+        const item = info.row.original;
+        return (
+          <div className="flex items-center justify-end gap-1.5">
+            <button
+              onClick={() => handleOpenProformaDetail(item)}
+              className="p-1.5 text-gray-500 hover:text-primary dark:hover:text-white rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              title="Ver Detalhes"
+            >
+              <Eye size={15} />
+            </button>
+            <button
+              onClick={() => proformaService.openRecibo(item.id)}
+              className="p-1.5 text-gray-500 hover:text-emerald-600 rounded hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors"
+              title="Recibo Térmico (80mm)"
+            >
+              <Printer size={15} />
+            </button>
+            <button
+              onClick={() => proformaService.openPdf(item.id)}
+              className="p-1.5 text-gray-500 hover:text-blue-500 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+              title="Fatura Pró-Forma A4 (PDF)"
+            >
+              <FileText size={15} />
+            </button>
+            <button
+              onClick={() => handleOpenSendProforma(item)}
+              className="p-1.5 text-gray-500 hover:text-indigo-500 rounded hover:bg-indigo-50 dark:hover:bg-indigo-900/10 transition-colors"
+              title="Enviar por E-mail / WhatsApp"
+            >
+              <Send size={15} />
+            </button>
+            {item.estado === 'Emitida' && (
+              <button
+                onClick={() => handleFaturarProforma(item)}
+                className="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded font-bold text-[11px] flex items-center gap-1 shadow-sm transition-all"
+                title="Converter em Fatura Comercial (FT)"
+              >
+                <RefreshCw size={13} /> Converter p/ FT
+              </button>
+            )}
+            {item.estado === 'Emitida' && (
+              <button
+                onClick={() => handleDeleteProforma(item)}
+                className="p-1.5 text-gray-500 hover:text-red-500 rounded hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors"
+                title="Eliminar Pró-Forma"
+              >
+                <Trash2 size={15} />
+              </button>
+            )}
+          </div>
+        );
+      }
+    }
+  ], [clients]);
 
   // Mutations
   const refundMutation = useMutation({
@@ -404,16 +645,6 @@ export default function Vendas() {
     });
   };
 
-  const clearFilters = () => {
-    setEstado('');
-    setTipoDocumento('');
-    setClienteId('');
-    setDataInicio('');
-    setDataFim('');
-    setSearch('');
-    setPaginationState(prev => ({ ...prev, pageIndex: 0 }));
-  };
-
   const columns = useMemo<ColumnDef<any>[]>(
     () => [
       {
@@ -650,65 +881,144 @@ export default function Vendas() {
         </button>
       </div>
 
-      <DataTable
-        data={vendas}
-        columns={columns}
-        isLoading={isLoading}
-        searchPlaceholder="Pesquisar por número ou cliente..."
-        onClearFilters={clearFilters}
-        manualPagination={true}
-        pageCount={paginationInfo.pages}
-        paginationState={paginationState}
-        onPaginationChange={setPaginationState}
-        searchValue={search}
-        onSearchChange={(value) => { setSearch(value); setPaginationState(p => ({...p, pageIndex: 0})); }}
-        renderFilters={() => (
-          <>
-            <select 
-              value={estado} 
-              onChange={(e) => { setEstado(e.target.value); setPaginationState(p => ({...p, pageIndex: 0})); }}
-              className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-gray-100 outline-none focus:ring-2 focus:ring-primary/50"
-            >
-              <option value="">Qualquer Estado</option>
-              <option value="Pago">Pago</option>
-              <option value="Parcialmente Pago">Liquidação Parcial</option>
-              <option value="Pendente">Pendente de Cobrança</option>
-              <option value="Cancelado">Retificado / Cancelado</option>
-            </select>
+      {/* Tabs Selector */}
+      <div className="flex border-b border-gray-200 dark:border-gray-800 gap-2 text-sm font-bold">
+        <button
+          type="button"
+          onClick={() => { setActiveTab('fiscal'); setPaginationState(p => ({ ...p, pageIndex: 0 })); }}
+          className={cn(
+            "pb-3 px-4 border-b-2 flex items-center gap-2 transition-all",
+            activeTab === 'fiscal'
+              ? "border-primary text-primary font-extrabold"
+              : "border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+          )}
+        >
+          <FileText size={16} />
+          <span>Vendas & Documentos Fiscais (FT / FR / NC)</span>
+        </button>
 
-            <select 
-              value={tipoDocumento} 
-              onChange={(e) => { setTipoDocumento(e.target.value); setPaginationState(p => ({...p, pageIndex: 0})); }}
-              className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-gray-100 outline-none focus:ring-2 focus:ring-primary/50"
-            >
-              <option value="">Qualquer Documento</option>
-              <option value="FR">FR (Fatura-Recibo)</option>
-              <option value="FT">FT (Fatura)</option>
-              <option value="PROFORMA">Proforma</option>
-              <option value="NC">NC (Nota de Crédito)</option>
-              <option value="ND">ND (Nota de Débito)</option>
-            </select>
+        <button
+          type="button"
+          onClick={() => { setActiveTab('proforma'); setPaginationState(p => ({ ...p, pageIndex: 0 })); }}
+          className={cn(
+            "pb-3 px-4 border-b-2 flex items-center gap-2 transition-all",
+            activeTab === 'proforma'
+              ? "border-amber-500 text-amber-600 dark:text-amber-400 font-extrabold"
+              : "border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+          )}
+        >
+          <FileText size={16} className="text-amber-500" />
+          <span>Faturas Pró-Forma / Orçamentos (Não Fiscal)</span>
+        </button>
+      </div>
 
-            <div className="flex items-center gap-2">
-              <input 
-                type="date"
-                value={dataInicio}
-                onChange={(e) => { setDataInicio(e.target.value); setPaginationState(p => ({...p, pageIndex: 0})); }}
-                title="Data Início"
+      {activeTab === 'fiscal' ? (
+        <DataTable
+          data={vendas}
+          columns={columns}
+          isLoading={isLoading}
+          searchPlaceholder="Pesquisar por número ou cliente..."
+          onClearFilters={clearFilters}
+          manualPagination={true}
+          pageCount={paginationInfo.pages}
+          paginationState={paginationState}
+          onPaginationChange={setPaginationState}
+          searchValue={search}
+          onSearchChange={(value) => { setSearch(value); setPaginationState(p => ({...p, pageIndex: 0})); }}
+          renderFilters={() => (
+            <>
+              <select 
+                value={estado} 
+                onChange={(e) => { setEstado(e.target.value); setPaginationState(p => ({...p, pageIndex: 0})); }}
                 className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-gray-100 outline-none focus:ring-2 focus:ring-primary/50"
-              />
-              <span className="text-gray-400">até</span>
-              <input 
-                type="date"
-                value={dataFim}
-                onChange={(e) => { setDataFim(e.target.value); setPaginationState(p => ({...p, pageIndex: 0})); }}
-                title="Data Fim"
+              >
+                <option value="">Qualquer Estado</option>
+                <option value="Pago">Pago</option>
+                <option value="Parcialmente Pago">Liquidação Parcial</option>
+                <option value="Pendente">Pendente de Cobrança</option>
+                <option value="Cancelado">Retificado / Cancelado</option>
+              </select>
+
+              <select 
+                value={tipoDocumento} 
+                onChange={(e) => { setTipoDocumento(e.target.value); setPaginationState(p => ({...p, pageIndex: 0})); }}
                 className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-gray-100 outline-none focus:ring-2 focus:ring-primary/50"
-              />
-            </div>
-          </>
-        )}
-      />
+              >
+                <option value="">Qualquer Documento</option>
+                <option value="FR">FR (Fatura-Recibo)</option>
+                <option value="FT">FT (Fatura)</option>
+                <option value="PROFORMA">Proforma</option>
+                <option value="NC">NC (Nota de Crédito)</option>
+                <option value="ND">ND (Nota de Débito)</option>
+              </select>
+
+              <div className="flex items-center gap-2">
+                <input 
+                  type="date"
+                  value={dataInicio}
+                  onChange={(e) => { setDataInicio(e.target.value); setPaginationState(p => ({...p, pageIndex: 0})); }}
+                  title="Data Início"
+                  className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-gray-100 outline-none focus:ring-2 focus:ring-primary/50"
+                />
+                <span className="text-gray-400">até</span>
+                <input 
+                  type="date"
+                  value={dataFim}
+                  onChange={(e) => { setDataFim(e.target.value); setPaginationState(p => ({...p, pageIndex: 0})); }}
+                  title="Data Fim"
+                  className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-gray-100 outline-none focus:ring-2 focus:ring-primary/50"
+                />
+              </div>
+            </>
+          )}
+        />
+      ) : (
+        <DataTable
+          data={proformasRaw}
+          columns={proformaColumns}
+          isLoading={isLoadingProformas}
+          searchPlaceholder="Pesquisar pró-formas por número ou cliente..."
+          onClearFilters={clearFilters}
+          manualPagination={true}
+          pageCount={proformaPaginationInfo.pages || 1}
+          paginationState={paginationState}
+          onPaginationChange={setPaginationState}
+          searchValue={search}
+          onSearchChange={(value) => { setSearch(value); setPaginationState(p => ({...p, pageIndex: 0})); }}
+          renderFilters={() => (
+            <>
+              <select 
+                value={estado} 
+                onChange={(e) => { setEstado(e.target.value); setPaginationState(p => ({...p, pageIndex: 0})); }}
+                className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-gray-100 outline-none focus:ring-2 focus:ring-primary/50"
+              >
+                <option value="">Qualquer Estado</option>
+                <option value="Emitida">Emitida</option>
+                <option value="Faturada">Faturada</option>
+                <option value="Cancelada">Cancelada</option>
+              </select>
+
+              <div className="flex items-center gap-2">
+                <input 
+                  type="date"
+                  value={dataInicio}
+                  onChange={(e) => { setDataInicio(e.target.value); setPaginationState(p => ({...p, pageIndex: 0})); }}
+                  title="Data Início"
+                  className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-gray-100 outline-none focus:ring-2 focus:ring-primary/50"
+                />
+                <span className="text-gray-400">até</span>
+                <input 
+                  type="date"
+                  value={dataFim}
+                  onChange={(e) => { setDataFim(e.target.value); setPaginationState(p => ({...p, pageIndex: 0})); }}
+                  title="Data Fim"
+                  className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-gray-100 outline-none focus:ring-2 focus:ring-primary/50"
+                />
+              </div>
+            </>
+          )}
+        />
+      )}
 
       {/* Sale Detail slide-over or Modal */}
       <Modal
@@ -1169,6 +1479,178 @@ export default function Vendas() {
             </div>
           </div>
         )}
+      </Modal>
+
+      {/* Proforma Detail Modal */}
+      <Modal
+        isOpen={isProformaDetailOpen}
+        onClose={() => setIsProformaDetailOpen(false)}
+        title={selectedProforma ? `Pró-Forma: ${selectedProforma.numero_documento || `#${selectedProforma.id}`}` : 'Detalhes da Pró-Forma'}
+        maxWidth="max-w-3xl"
+        footer={
+          <div className="flex justify-between w-full">
+            <div className="flex gap-2">
+              {selectedProforma?.estado === 'Emitida' && (
+                <button
+                  type="button"
+                  onClick={() => { setIsProformaDetailOpen(false); handleFaturarProforma(selectedProforma); }}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 transition-colors"
+                >
+                  <RefreshCw size={14} /> Converter em Fatura (FT)
+                </button>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => proformaService.openRecibo(selectedProforma.id)}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1 transition-colors"
+              >
+                <Printer size={14} /> Recibo Térmico (80mm)
+              </button>
+              <button
+                type="button"
+                onClick={() => proformaService.openPdf(selectedProforma.id)}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1 transition-colors"
+              >
+                <FileText size={14} /> Fatura A4 (PDF)
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsProformaDetailOpen(false)}
+                className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg text-xs font-bold"
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        }
+      >
+        {selectedProforma && (
+          <div className="space-y-4 text-sm">
+            <div className="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+              <div>
+                <span className="text-gray-400 font-medium block">Nº Documento</span>
+                <span className="font-bold text-gray-900 dark:text-white font-mono">{selectedProforma.numero_documento || `#${selectedProforma.id}`}</span>
+              </div>
+              <div>
+                <span className="text-gray-400 font-medium block">Cliente</span>
+                <span className="font-bold text-gray-900 dark:text-white">
+                  {clients.find((c: any) => String(c.id) === String(selectedProforma.cliente_id))?.nome || 'Consumidor Final'}
+                </span>
+              </div>
+              <div>
+                <span className="text-gray-400 font-medium block">Origem</span>
+                <span className="font-bold text-gray-900 dark:text-white uppercase">{selectedProforma.origem || 'POS'}</span>
+              </div>
+              <div>
+                <span className="text-gray-400 font-medium block">Estado</span>
+                <span className="font-bold text-amber-600 dark:text-amber-400 uppercase">{selectedProforma.estado || 'Emitida'}</span>
+              </div>
+            </div>
+
+            <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+              <table className="w-full text-xs text-left">
+                <thead className="bg-gray-100 dark:bg-gray-800 font-bold text-gray-700 dark:text-gray-300">
+                  <tr>
+                    <th className="p-2.5">Descrição</th>
+                    <th className="p-2.5 text-right">Qtd</th>
+                    <th className="p-2.5 text-right">Preço Unit.</th>
+                    <th className="p-2.5 text-right">Desconto</th>
+                    <th className="p-2.5 text-right">Subtotal</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                  {(selectedProforma.itens || []).map((item: any, idx: number) => (
+                    <tr key={idx}>
+                      <td className="p-2.5 font-semibold text-gray-900 dark:text-gray-100">{item.descricao || item.nome}</td>
+                      <td className="p-2.5 text-right font-mono">{item.quantidade}</td>
+                      <td className="p-2.5 text-right font-mono">{formatCurrency(Number(item.preco_unitario || 0))}</td>
+                      <td className="p-2.5 text-right font-mono text-red-500">{formatCurrency(Number(item.desconto || 0))}</td>
+                      <td className="p-2.5 text-right font-bold text-gray-900 dark:text-white font-mono">{formatCurrency(Number(item.subtotal || (item.quantidade * item.preco_unitario - item.desconto)))}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="flex justify-end pt-2 text-right">
+              <div className="space-y-1">
+                <div className="text-xs text-gray-500">Subtotal: <span className="font-mono font-semibold">{formatCurrency(Number(selectedProforma.subtotal || selectedProforma.total))}</span></div>
+                <div className="text-base font-extrabold text-primary">Total Orçamento: <span className="font-mono">{formatCurrency(Number(selectedProforma.total))}</span></div>
+              </div>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Proforma Send Modal */}
+      <Modal
+        isOpen={isSendProformaOpen}
+        onClose={() => setIsSendProformaOpen(false)}
+        title="Enviar Fatura Pró-Forma"
+        footer={
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setIsSendProformaOpen(false)}
+              className="px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg text-xs font-bold"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              form="send-proforma-form"
+              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5"
+            >
+              <Send size={14} /> Enviar Pró-Forma
+            </button>
+          </div>
+        }
+      >
+        <form id="send-proforma-form" onSubmit={handleSendProformaSubmit} className="space-y-4">
+          <div>
+            <label className="text-xs font-bold text-gray-500 uppercase block mb-2">Canal de Envio</label>
+            <div className="flex gap-4">
+              <label className="flex items-center gap-2 cursor-pointer font-medium text-xs text-gray-700 dark:text-gray-300">
+                <input
+                  type="radio"
+                  name="proformaSendMethod"
+                  value="email"
+                  checked={sendMethod === 'email'}
+                  onChange={() => setSendMethod('email')}
+                  className="accent-indigo-600"
+                />
+                Correio Eletrónico (E-mail)
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer font-medium text-xs text-gray-700 dark:text-gray-300">
+                <input
+                  type="radio"
+                  name="proformaSendMethod"
+                  value="whatsapp"
+                  checked={sendMethod === 'whatsapp'}
+                  onChange={() => setSendMethod('whatsapp')}
+                  className="accent-indigo-600"
+                />
+                WhatsApp Directo (Telemóvel)
+              </label>
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs font-bold text-gray-500 uppercase block mb-1">
+              {sendMethod === 'email' ? 'Endereço de E-mail' : 'Número de Telemóvel / WhatsApp'} *
+            </label>
+            <input
+              type={sendMethod === 'email' ? 'email' : 'text'}
+              required
+              placeholder={sendMethod === 'email' ? 'exemplo@cliente.com' : '+244 9XX XXX XXX'}
+              value={sendContact}
+              onChange={(e) => setSendContact(e.target.value)}
+              className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+            />
+          </div>
+        </form>
       </Modal>
 
     </div>

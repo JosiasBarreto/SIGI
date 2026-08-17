@@ -50,7 +50,7 @@ export function Sidebar({
       name: "Caixa / POS",
       icon: Computer,
       path: "/caixa",
-      roles: ["Administrador", "Atendimento"],
+      roles: ["Administrador", "Atendimento", "Financeiro"],
     },
     {
       name: "Utilizadores",
@@ -68,6 +68,12 @@ export function Sidebar({
       name: "Produtos",
       icon: Package,
       path: "/produtos",
+      roles: ["Administrador", "Armazém"],
+    },
+    {
+      name: "Stock / Inventário",
+      icon: Box,
+      path: "/armazem",
       roles: ["Administrador", "Armazém"],
     },
     {
@@ -117,7 +123,7 @@ export function Sidebar({
       name: "Armazéns",
       icon: Warehouse,
       path: "/armazens",
-      roles: ["Administrador", "Armazém"],
+      roles: ["Administrador", "Gerente", "Armazém"],
     },
     {
       name: "Logística",
@@ -141,7 +147,7 @@ export function Sidebar({
       name: "Financeiro",
       icon: Wallet,
       path: "/financeiro",
-      roles: ["Administrador"],
+      roles: ["Administrador", "Financeiro"],
     },
     {
       name: "Vendas",
@@ -180,30 +186,17 @@ export function Sidebar({
   );
 
   const handleLogout = async () => {
+    const isCaixaRole = ["Administrador", "Atendimento", "Financeiro"].includes(user?.role || "");
+    if (!isCaixaRole) {
+      logout();
+      return;
+    }
+
     try {
-      const SwalModule = await import('sweetalert2');
-      const Swal = SwalModule.default;
-
-      // Mostrar um indicador de carregamento enquanto fazemos a chamada
-      Swal.fire({
-        title: 'A processar...',
-        text: 'A verificar estado do caixa...',
-        allowOutsideClick: false,
-        didOpen: () => {
-          Swal.showLoading();
-        }
-      });
-
-      const { financialService } = await import('../../services');
-      const caixasResponse = await financialService.getAll();
-      const caixas = caixasResponse?.items || caixasResponse || [];
-      const openCaixa = Array.isArray(caixas)
-        ? caixas.find((caixa: any) => caixa.estado === "Aberto")
-        : null;
-
-      Swal.close();
-
-      if (openCaixa) {
+      const isCaixaAbertaFallback = localStorage.getItem('isCaixaAberta') === 'true';
+      if (isCaixaAbertaFallback) {
+        const SwalModule = await import('sweetalert2');
+        const Swal = SwalModule.default;
         Swal.fire({
           icon: 'warning',
           title: 'Caixa em Execução',
@@ -215,18 +208,6 @@ export function Sidebar({
       }
     } catch (err) {
       console.error("Erro ao verificar caixa no logout:", err);
-      const isCaixaAbertaFallback = localStorage.getItem('isCaixaAberta') === 'true';
-      if (isCaixaAbertaFallback) {
-        const SwalModule = await import('sweetalert2');
-        const Swal = SwalModule.default;
-        Swal.fire({
-          icon: 'warning',
-          title: 'Caixa em Execução',
-          text: 'Você tem um turno de caixa aberto. Complete o fecho diário ou feche a sua caixa antes de terminar sessão.',
-          confirmButtonText: 'Entendi'
-        });
-        return;
-      }
     }
     logout();
   };

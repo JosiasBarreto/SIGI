@@ -15,6 +15,7 @@ from app.models.comercial import Venda, EstadoVenda, TipoDocumento
 comercial_service = ComercialService()
 
 def _serialize_venda_dict(venda):
+    from app.models.financeiro import FormaPagamento as FinFormaPagamento
     cliente_nome = "Consumidor Final"
     cliente_nif = "Consumidor Final"
     cliente_email = ""
@@ -98,6 +99,18 @@ def _serialize_venda_dict(venda):
         'created_at': venda.created_at.isoformat() if venda.created_at else None,
         'observacoes': venda.observacoes,
         
+        'pagamentos': [{
+            'id': p.id,
+            'valor': float(p.valor or 0),
+            'forma_pagamento_id': p.forma_pagamento_id,
+            'forma_pagamento_nome': (FinFormaPagamento.query.get(p.forma_pagamento_id).nome if getattr(p, 'forma_pagamento_id', None) and FinFormaPagamento.query.get(p.forma_pagamento_id) else 'Desconhecido'),
+            'data_pagamento': p.data_pagamento.isoformat() if p.data_pagamento else None,
+            'codigo_transferencia': p.codigo_transferencia,
+            'emissor': p.emissor,
+            'referencia': p.referencia,
+            'recibo_url': f'/api/v1/vendas/{venda.id}/pagamentos/{p.id}/recibo',
+            'numero_recibo': f'REC-{venda.numero_documento}-{p.id}'
+        } for p in venda.pagamentos],
         'itens': [{
             'id': getattr(i, 'id', None),
             'item_tipo': getattr(i, 'item_tipo', 'Produto'),
@@ -405,9 +418,14 @@ def checkout_pedido(pedido_id):
 def emitir_documento_pedido(pedido_id):
     from flask_jwt_extended import get_jwt_identity
     try:
-        venda = comercial_service.emitir_documento_pedido(
+        doc = comercial_service.emitir_documento_pedido(
             pedido_id, (request.json or {}).get('tipo_documento'), get_jwt_identity()
         )
+        if (request.json or {}).get('tipo_documento') == 'PROFORMA':
+            from app.api.v1.proforma_controller import _serialize_proforma
+            return jsonify(_serialize_proforma(doc)), 201
+        
+        venda = doc
         return jsonify(_serialize_venda_dict(venda)), 201
     except ValueError as exc:
         return jsonify({'error': str(exc)}), 400
@@ -415,15 +433,20 @@ def emitir_documento_pedido(pedido_id):
     # Disparar envio de fatura automática do checkout do pedido
     try:
         from app.services.notification_service import NotificationService
-        v_dict = _serialize_venda_dict(venda)
-        c_email = v_dict.get('cliente', {}).get('email')
-        c_phone = v_dict.get('cliente', {}).get('telefone')
-        if c_email:
-            NotificationService.send_invoice_async(venda.id, c_email, method='email')
-        elif c_phone:
-            NotificationService.send_invoice_async(venda.id, c_phone, method='whatsapp')
+        if (request.json or {}).get('tipo_documento') != 'PROFORMA':
+            v_dict = _serialize_venda_dict(venda)
+            c_email = v_dict.get('cliente', {}).get('email')
+            c_phone = v_dict.get('cliente', {}).get('telefone')
+            if c_email:
+                NotificationService.send_invoice_async(venda.id, c_email, method='email')
+            elif c_phone:
+                NotificationService.send_invoice_async(venda.id, c_phone, method='whatsapp')
     except Exception as e:
         print('⚠ Erro ao disparar fatura automática no checkout:', e)
+
+    if (request.json or {}).get('tipo_documento') == 'PROFORMA':
+        from app.api.v1.proforma_controller import _serialize_proforma
+        return jsonify(_serialize_proforma(doc)), 200
 
     return jsonify(_serialize_venda_dict(venda)), 200
 
