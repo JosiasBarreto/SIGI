@@ -325,6 +325,119 @@ def get_pedido_receipt_data(pedido):
     }
 
 
+def get_proforma_receipt_data(proforma):
+    empresa = _get_empresa_info()
+    moeda = empresa["moeda"]
+
+    operador_nome = "Sistema / Atendimento"
+    operador_id = getattr(proforma, 'criado_por', None) or getattr(proforma, 'created_by', None)
+    if operador_id:
+        u = User.query.get(operador_id)
+        if u:
+            operador_nome = u.name
+
+    cliente_nome = "Consumidor Final"
+    cliente_nif = "Consumidor Final"
+    cliente_telefone = ""
+    cliente_email = ""
+    cliente_empresa = ""
+    cliente_morada = ""
+
+    c = None
+    if getattr(proforma, 'cliente', None):
+        c = proforma.cliente
+    elif getattr(proforma, 'cliente_id', None):
+        c = Cliente.query.get(proforma.cliente_id)
+
+    if c:
+        cliente_nome = c.nome or "Consumidor Final"
+        cliente_nif = c.nif or ""
+        cliente_telefone = c.telefone or c.whatsapp or ""
+        cliente_email = c.email or ""
+        cliente_empresa = c.empresa or ""
+        cliente_morada = c.morada or ""
+
+    if not cliente_nif and cliente_nome == "Consumidor Final":
+        cliente_nif = "Consumidor Final"
+
+    dt_op = proforma.created_at.strftime("%d/%m/%Y %H:%M") if proforma.created_at else "N/A"
+
+    itens_data = []
+    for item in (proforma.itens or []):
+        unidade = "un"
+        if getattr(item, 'item_tipo', 'Produto') == 'Produto' and getattr(item, 'item_id', None):
+            p = Produto.query.get(item.item_id)
+            if p and p.unidade_medida:
+                unidade = p.unidade_medida.sigla
+
+        preco_u = float(item.preco_unitario or 0)
+        desc = float(item.desconto or 0)
+        iva_perc = float(item.taxa_iva or 0)
+        subt = float(item.subtotal) if item.subtotal is not None else (float(item.quantidade or 0) * preco_u - desc)
+        val_iva = float(item.valor_iva) if item.valor_iva is not None else (subt * (iva_perc / 100))
+        tot = float(item.total) if item.total is not None else (subt + val_iva)
+
+        itens_data.append({
+            "descricao": item.descricao,
+            "quantidade": float(item.quantidade or 1),
+            "unidade": unidade,
+            "preco_unitario": preco_u,
+            "desconto": desc,
+            "taxa_iva": iva_perc,
+            "valor_iva": val_iva,
+            "subtotal": subt,
+            "total": tot
+        })
+
+    subt_p = float(proforma.subtotal or 0)
+    desc_p = float(proforma.desconto_total or 0)
+    iva_p = float(proforma.total_iva or 0)
+    tot_p = float(proforma.total or 0)
+
+    return {
+        "empresa": empresa,
+        "documento": {
+            "tipo": "FATURA PRÓ-FORMA",
+            "numero": proforma.numero_documento,
+            "estado": proforma.estado or "Emitida",
+            "data_hora_operacao": dt_op,
+            "data_hora_entrega": None,
+            "operador": operador_nome,
+            "forma_pagamento": "N/A (Proforma)"
+        },
+        "cliente": {
+            "nome": cliente_nome,
+            "nif": cliente_nif,
+            "telefone": cliente_telefone,
+            "email": cliente_email,
+            "empresa": cliente_empresa,
+            "morada": cliente_morada
+        },
+        "itens": itens_data,
+        "totais": {
+            "subtotal": subt_p,
+            "desconto_total": desc_p,
+            "total_iva": iva_p,
+            "total_geral": tot_p,
+            "valor_pago": 0.0,
+            "saldo": tot_p,
+            "troco": 0.0,
+            "moeda": moeda
+        },
+        "pagamentos": []
+    }
+
+
+def generate_proforma_pdf(proforma):
+    data = get_proforma_receipt_data(proforma)
+    return _build_a4_pdf(data)
+
+
+def generate_proforma_receipt(proforma):
+    data = get_proforma_receipt_data(proforma)
+    return _build_thermal_receipt_pdf(data)
+
+
 def generate_venda_pdf(venda):
     data = get_venda_receipt_data(venda)
     return _build_a4_pdf(data)
@@ -332,6 +445,10 @@ def generate_venda_pdf(venda):
 
 def generate_venda_receipt(venda):
     data = get_venda_receipt_data(venda)
+    return _build_thermal_receipt_pdf(data)
+
+
+def _build_thermal_receipt(data):
     return _build_thermal_receipt_pdf(data)
 
 

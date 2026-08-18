@@ -8,6 +8,10 @@ class ProformaService:
         query = Proforma.query.options(joinedload(Proforma.itens))
         
         # Filtros básicos
+        search = args.get('search')
+        if search:
+            query = query.filter(Proforma.numero_documento.ilike(f"%{search}%") | Proforma.observacoes.ilike(f"%{search}%"))
+
         cliente_id = args.get('cliente_id')
         if cliente_id:
             query = query.filter_by(cliente_id=cliente_id)
@@ -24,7 +28,7 @@ class ProformaService:
         if data_fim:
             query = query.filter(Proforma.created_at <= f"{data_fim} 23:59:59")
             
-        return query.order_by(Proforma.created_at.desc())
+        return list(query.order_by(Proforma.created_at.desc()).all())
 
     def get_proforma(self, proforma_id: int):
         return Proforma.query.options(joinedload(Proforma.itens)).get(proforma_id)

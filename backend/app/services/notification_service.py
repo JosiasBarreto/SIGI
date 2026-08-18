@@ -356,6 +356,104 @@ class NotificationService:
         except Exception as e:
             logger.error(f"[NOTIFICAÇÃO ERROR] Erro no processamento da fatura {venda_id}: {e}")
 
+    # --- ENVIO DE PROFORMAS ---
+    @staticmethod
+    def send_proforma_async(proforma_id, client_contact, method="email"):
+        """
+        Envia Fatura Pró-Forma de forma assíncrona com PDF anexo via email ou SMS/WhatsApp.
+        """
+        app = NotificationService._get_app()
+
+        def task():
+            if app:
+                with app.app_context():
+                    NotificationService._execute_send_proforma(proforma_id, client_contact, method)
+            else:
+                NotificationService._execute_send_proforma(proforma_id, client_contact, method)
+
+        thread = threading.Thread(target=task)
+        thread.start()
+
+    @staticmethod
+    def _execute_send_proforma(proforma_id, client_contact, method="email"):
+        try:
+            from app.services.proforma_service import ProformaService
+            from app.services.pdf_generator import generate_proforma_pdf
+
+            proforma_service = ProformaService()
+            proforma = proforma_service.get_proforma(proforma_id)
+            if not proforma:
+                logger.error(f"[NOTIFICAÇÃO] Proforma {proforma_id} não encontrada para envio.")
+                return
+
+            cliente_nome = "Estimado Cliente"
+            if getattr(proforma, 'cliente', None):
+                cliente_nome = proforma.cliente.nome
+            elif getattr(proforma, 'cliente_id', None):
+                from app.models.cliente import Cliente
+                c = Cliente.query.get(proforma.cliente_id)
+                if c: cliente_nome = c.nome
+
+            doc_numero = proforma.numero_documento or f"PRO-{proforma.id}"
+            total_formatted = f"{float(proforma.total or 0):.2f} STN"
+
+            if method == "email":
+                pdf_buffer = generate_proforma_pdf(proforma)
+                pdf_bytes = pdf_buffer.getvalue()
+                filename = f"Proforma_{doc_numero.replace('/', '_')}.pdf"
+
+                subject = f"Sabor Imbatível - Fatura Pró-Forma {doc_numero}"
+
+                html_content = f"""
+                <!DOCTYPE html>
+                <html>
+                <head>
+                  <meta charset="utf-8">
+                  <style>
+                    body {{ font-family: Arial, sans-serif; background-color: #f8fafc; color: #1e293b; padding: 20px; }}
+                    .card {{ max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; border: 1px solid #e2e8f0; overflow: hidden; }}
+                    .top {{ background-color: #0284c7; color: white; padding: 20px; text-align: center; }}
+                    .body {{ padding: 24px; }}
+                    .total-box {{ background-color: #f0f9ff; border: 1px solid #bae6fd; padding: 16px; border-radius: 6px; margin: 16px 0; font-size: 18px; font-weight: bold; color: #0369a1; }}
+                    .footer {{ background: #f1f5f9; padding: 12px; text-align: center; font-size: 12px; color: #64748b; }}
+                  </style>
+                </head>
+                <body>
+                  <div class="card">
+                    <div class="top">
+                      <h2 style="margin:0;">Sabor Imbatível</h2>
+                      <p style="margin:4px 0 0 0;">Fatura Pró-Forma / Cotação</p>
+                    </div>
+                    <div class="body">
+                      <p>Olá <strong>{cliente_nome}</strong>,</p>
+                      <p>Enviamos em anexo a sua Fatura Pró-Forma <strong>{doc_numero}</strong> solicitada.</p>
+                      
+                      <div class="total-box">
+                        Valor Total: {total_formatted}
+                      </div>
+
+                      <p>O documento em formato PDF encontra-se anexado a esta mensagem.</p>
+                    </div>
+                    <div class="footer">
+                      Sabor Imbatível - Pastelaria, Padaria & Restauração | Todos os direitos reservados.
+                    </div>
+                  </div>
+                </body>
+                </html>
+                """
+
+                text_content = f"Olá {cliente_nome},\n\nSua Fatura Pró-Forma {doc_numero} no valor de {total_formatted} está em anexo em formato PDF."
+                attachments = [(filename, pdf_bytes, 'application/pdf')]
+
+                NotificationService.send_email_smtp(client_contact, subject, html_content, text_content, attachments)
+
+            else:
+                msg_txt = f"Olá {cliente_nome}, a sua Fatura Pró-Forma {doc_numero} da Sabor Imbatível no valor de {total_formatted} foi emitida com sucesso. Obrigado pela preferência!"
+                NotificationService.send_sms_whatsapp(client_contact, msg_txt, channel=method)
+
+        except Exception as e:
+            logger.error(f"[NOTIFICAÇÃO ERROR] Erro no envio da proforma {proforma_id}: {e}")
+
     # --- ENVIO DE PEDIDOS ---
     @staticmethod
     def send_pedido_async(pedido_id, client_contact, method="email", trigger="creation"):

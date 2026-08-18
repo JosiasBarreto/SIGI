@@ -15,7 +15,7 @@ export interface PaginatedData<T> {
 }
 
 const apiClient: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://192.168.100.141:8000/api',
+  baseURL: import.meta.env.VITE_API_URL || 'https://6420-197-159-166-222.ngrok-free.app/api',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -26,7 +26,7 @@ const apiClient: AxiosInstance = axios.create({
 // Request Interceptor
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const token = localStorage.getItem('access_token');
+    const token = localStorage.getItem('access_token') || localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }

@@ -653,6 +653,16 @@ function downloadBlob(blob: Blob, filename: string) {
   setTimeout(() => URL.revokeObjectURL(url), 30000);
 }
 
+function openBlobInTab(blob: Blob) {
+  const url = URL.createObjectURL(blob);
+  const win = window.open(url, '_blank');
+  if (!win) {
+    downloadBlob(blob, 'documento.pdf');
+  } else {
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  }
+}
+
 function printBlob(blob: Blob) {
   const url = URL.createObjectURL(blob);
   const iframe = document.createElement('iframe');
@@ -1837,33 +1847,64 @@ export const proformaService = {
   },
 
   faturar: async (id: string | number) => {
+    let result: any;
     try {
-      return await apiClient.post<any, any>(`/v1/proformas/${id}/faturar`);
+      result = await apiClient.post<any, any>(`/v1/proformas/${id}/faturar`);
     } catch {
-      return await apiClient.post<any, any>(`/proformas/${id}/faturar`);
+      result = await apiClient.post<any, any>(`/proformas/${id}/faturar`);
+    }
+    const vendaId = result?.id || result?.venda_id;
+    if (vendaId) {
+      documentService.vendaPdf(vendaId).catch(() => {});
+    }
+    return result;
+  },
+
+  openRecibo: async (id: string | number) => {
+    try {
+      const blob = await fetchBlobWithFallbacks([
+        `/v1/proformas/${id}/recibo`,
+        `/proformas/${id}/recibo`,
+        `/v1/proformas/${id}/pdf`,
+        `/proformas/${id}/pdf`
+      ]);
+      printBlob(blob);
+    } catch {
+      try {
+        const data = await proformaService.getReciboData(id);
+        printHtmlThermalReceipt(data);
+      } catch (err: any) {
+        toast.error(err?.message || 'Erro ao gerar recibo da Pró-Forma.');
+      }
     }
   },
 
-  openRecibo: (id: string | number) => {
-    const token = localStorage.getItem('access_token') || '';
-    let baseUrl = apiClient.defaults.baseURL || '/api';
-    if (!baseUrl.startsWith('http')) {
-      baseUrl = window.location.origin + (baseUrl.startsWith('/') ? '' : '/') + baseUrl;
+  openPdf: async (id: string | number) => {
+    const filename = `proforma_${id}.pdf`;
+    try {
+      const blob = await fetchBlobWithFallbacks([
+        `/v1/proformas/${id}/pdf`,
+        `/proformas/${id}/pdf`,
+        `/v1/proformas/${id}/recibo`,
+        `/proformas/${id}/recibo`
+      ]);
+      openBlobInTab(blob);
+    } catch {
+      try {
+        const data = await proformaService.getReciboData(id);
+        downloadJsPdfReceipt(data, filename);
+      } catch (err: any) {
+        toast.error(err?.message || 'Erro ao abrir PDF da Pró-Forma.');
+      }
     }
-    const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
-    const url = `${cleanBaseUrl}/v1/proformas/${id}/recibo?token=${encodeURIComponent(token)}`;
-    window.open(url, '_blank');
   },
 
-  openPdf: (id: string | number) => {
-    const token = localStorage.getItem('access_token') || '';
-    let baseUrl = apiClient.defaults.baseURL || '/api';
-    if (!baseUrl.startsWith('http')) {
-      baseUrl = window.location.origin + (baseUrl.startsWith('/') ? '' : '/') + baseUrl;
+  getReciboData: async (id: string | number) => {
+    try {
+      return await apiClient.get<any, any>(`/v1/proformas/${id}/recibo-data`);
+    } catch {
+      return await apiClient.get<any, any>(`/proformas/${id}/recibo-data`);
     }
-    const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
-    const url = `${cleanBaseUrl}/v1/proformas/${id}/pdf?token=${encodeURIComponent(token)}`;
-    window.open(url, '_blank');
   },
 
   send: async (id: string | number, method: 'email' | 'whatsapp', contact: string): Promise<{ msg?: string }> => {

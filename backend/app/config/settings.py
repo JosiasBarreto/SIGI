@@ -23,6 +23,8 @@ class Config:
     JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY')
     JWT_ACCESS_TOKEN_EXPIRES = 3600  # 1 hour
     JWT_REFRESH_TOKEN_EXPIRES = 86400 * 30  # 30 days
+    JWT_TOKEN_LOCATION = ['headers', 'query_string']
+    JWT_QUERY_STRING_NAME = 'token'
 
     # SMTP / Email Configuration
     SMTP_SERVER = os.environ.get('SMTP_SERVER', 'smtp.gmail.com')

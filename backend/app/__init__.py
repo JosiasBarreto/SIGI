@@ -61,13 +61,22 @@ def create_app(config_class=Config):
     def swagger_redirect():
         return redirect('/swagger/', code=302)
 
-    # Register blueprints safely
+    # Register blueprints and models safely
+    from app.models.user import User
+    from app.models.cliente import Cliente
+    from app.models.pedido import Pedido
+    from app.models.item_pedido import ItemPedido
+    from app.models.evento import Evento
+    from app.models.produto import Produto
     from app.models.comercial import Venda, VendaItem, TaxaIVA, SerieDocumento, FechoDiario, Proforma, ProformaItem
+    
     with app.app_context():
         try:
             db.create_all()
+            from apply_migration import run_migrations
+            run_migrations()
         except Exception as e:
-            app.logger.warning(f"db.create_all warning: {e}")
+            app.logger.warning(f"Migration/db.create_all warning: {e}")
 
     from app.api.v1.auth_controller import auth_bp
     from app.api.v1.user_controller import user_bp

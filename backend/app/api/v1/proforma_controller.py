@@ -8,11 +8,27 @@ import io
 proforma_bp = Blueprint('proforma_bp', __name__)
 proforma_service = ProformaService()
 
-def build_pagination(repo, schema_obj, request):
-    page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 10, type=int)
-    items = repo.get_all(request.args)
+def build_pagination(repo_or_query, schema_obj, request):
+    page = request.args.get('page', 1, type=int) or 1
+    per_page = request.args.get('per_page', 10, type=int) or 10
     
+    if hasattr(repo_or_query, 'get_all'):
+        raw = repo_or_query.get_all(request.args)
+    elif callable(repo_or_query):
+        raw = repo_or_query(request.args)
+    else:
+        raw = repo_or_query
+
+    if hasattr(raw, 'all') and callable(getattr(raw, 'all')):
+        items = raw.all()
+    elif isinstance(raw, list):
+        items = raw
+    else:
+        try:
+            items = list(raw) if raw else []
+        except Exception:
+            items = []
+
     total = len(items)
     start = (page - 1) * per_page
     end = start + per_page
@@ -24,7 +40,7 @@ def build_pagination(repo, schema_obj, request):
         "pages": (total + per_page - 1) // per_page if per_page else 1,
         "page": page,
         "per_page": per_page
-    })
+    }), 200
 
 def _serialize_proforma(proforma):
     return {
@@ -66,17 +82,30 @@ def handle_proforma_root():
 
 @jwt_required()
 def listar_proformas():
-    class DummyRepo:
-        def get_all(self, args):
-            return proforma_service.get_proformas(args)
-    
-    class ProformaSchemaObj:
-        def dump(self, obj):
-            if isinstance(obj, list):
-                return [_serialize_proforma(o) for o in obj]
-            return _serialize_proforma(obj)
+    try:
+        page = request.args.get('page', 1, type=int) or 1
+        per_page = request.args.get('per_page', 10, type=int) or 10
+        
+        proformas = proforma_service.get_proformas(request.args)
+        if not isinstance(proformas, list):
+            proformas = list(proformas) if proformas else []
             
-    return build_pagination(DummyRepo(), ProformaSchemaObj(), request)
+        total = len(proformas)
+        start = (page - 1) * per_page
+        end = start + per_page
+        paginated_items = proformas[start:end]
+        
+        return jsonify({
+            "items": [_serialize_proforma(p) for p in paginated_items],
+            "total": total,
+            "pages": (total + per_page - 1) // per_page if per_page else 1,
+            "page": page,
+            "per_page": per_page
+        }), 200
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
 
 @proforma_bp.route('/<int:id>', methods=['GET'])
 @jwt_required()
@@ -118,18 +147,13 @@ def faturar_proforma(id):
 @proforma_bp.route('/<int:id>/pdf', methods=['GET'])
 @jwt_required()
 def get_proforma_pdf(id):
-    # PDF gen
     proforma = proforma_service.get_proforma(id)
     if not proforma:
         return jsonify({'error': 'Proforma não encontrada'}), 404
         
     try:
-        from app.services.pdf_generator import get_venda_receipt_data, _build_a4_pdf
-        # Hacky way to reuse pdf generation
-        data = get_venda_receipt_data(proforma) # Might need adjustments since proforma is not Venda, but has similar fields
-        data['documento']['tipo'] = 'Fatura Pró-Forma'
-        data['documento']['numero'] = proforma.numero_documento
-        pdf_buffer = _build_a4_pdf(data)
+        from app.services.pdf_generator import generate_proforma_pdf
+        pdf_buffer = generate_proforma_pdf(proforma)
         
         return send_file(
             pdf_buffer,
@@ -137,6 +161,40 @@ def get_proforma_pdf(id):
             download_name=f"proforma_{proforma.numero_documento.replace('/', '_')}.pdf",
             mimetype='application/pdf'
         )
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+@proforma_bp.route('/<int:id>/recibo', methods=['GET'])
+@jwt_required()
+def get_proforma_recibo_termico(id):
+    proforma = proforma_service.get_proforma(id)
+    if not proforma:
+        return jsonify({'error': 'Proforma não encontrada'}), 404
+        
+    try:
+        from app.services.pdf_generator import generate_proforma_receipt
+        pdf_buffer = generate_proforma_receipt(proforma)
+        
+        return send_file(
+            pdf_buffer,
+            as_attachment=False,
+            download_name=f"proforma_termico_{proforma.numero_documento.replace('/', '_')}.pdf",
+            mimetype='application/pdf'
+        )
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+@proforma_bp.route('/<int:id>/recibo-data', methods=['GET'])
+@jwt_required()
+def get_proforma_recibo_data_route(id):
+    proforma = proforma_service.get_proforma(id)
+    if not proforma:
+        return jsonify({'error': 'Proforma não encontrada'}), 404
+        
+    try:
+        from app.services.pdf_generator import get_proforma_receipt_data
+        data = get_proforma_receipt_data(proforma)
+        return jsonify(data), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
@@ -156,34 +214,7 @@ def send_proforma(id):
         
     try:
         from app.services.notification_service import NotificationService
-        # If NotificationService doesn't have send_proforma_async, fallback to print
-        if hasattr(NotificationService, 'send_proforma_async'):
-            NotificationService.send_proforma_async(proforma.id, contact, method)
-        else:
-            print(f"Mock: Enviando Proforma {proforma.numero_documento} para {contact} via {method}")
+        NotificationService.send_proforma_async(proforma.id, contact, method)
         return jsonify({'msg': f'Pró-Forma enviada com sucesso para {contact} via {method}'}), 200
-    except Exception as e:
-        return jsonify({'error': str(e)}), 400
-
-@proforma_bp.route('/<int:id>/recibo', methods=['GET'])
-@jwt_required()
-def get_proforma_recibo_termico(id):
-    proforma = proforma_service.get_proforma(id)
-    if not proforma:
-        return jsonify({'error': 'Proforma não encontrada'}), 404
-        
-    try:
-        from app.services.pdf_generator import get_venda_receipt_data, _build_thermal_receipt
-        data = get_venda_receipt_data(proforma)
-        data['documento']['tipo'] = 'Fatura Pró-Forma'
-        data['documento']['numero'] = proforma.numero_documento
-        pdf_buffer = _build_thermal_receipt(data)
-        
-        return send_file(
-            pdf_buffer,
-            as_attachment=False,
-            download_name=f"proforma_termico_{proforma.numero_documento.replace('/', '_')}.pdf",
-            mimetype='application/pdf'
-        )
     except Exception as e:
         return jsonify({'error': str(e)}), 400

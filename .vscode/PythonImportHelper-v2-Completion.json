@@ -9908,7 +9908,7 @@
         "kind": 2,
         "importPath": "backend.app.api.v1.proforma_controller",
         "description": "backend.app.api.v1.proforma_controller",
-        "peekOfCode": "def build_pagination(repo, schema_obj, request):\n    page = request.args.get('page', 1, type=int)\n    per_page = request.args.get('per_page', 10, type=int)\n    items = repo.get_all(request.args)\n    total = len(items)\n    start = (page - 1) * per_page\n    end = start + per_page\n    paginated_items = items[start:end]\n    return jsonify({\n        \"items\": schema_obj.dump(paginated_items),",
+        "peekOfCode": "def build_pagination(repo_or_query, schema_obj, request):\n    page = request.args.get('page', 1, type=int) or 1\n    per_page = request.args.get('per_page', 10, type=int) or 10\n    if hasattr(repo_or_query, 'get_all'):\n        raw = repo_or_query.get_all(request.args)\n    elif callable(repo_or_query):\n        raw = repo_or_query(request.args)\n    else:\n        raw = repo_or_query\n    if hasattr(raw, 'all') and callable(getattr(raw, 'all')):",
         "detail": "backend.app.api.v1.proforma_controller",
         "documentation": {}
     },
@@ -9917,7 +9917,7 @@
         "kind": 2,
         "importPath": "backend.app.api.v1.proforma_controller",
         "description": "backend.app.api.v1.proforma_controller",
-        "peekOfCode": "def handle_proforma_root():\n    if request.method == 'OPTIONS':\n        return jsonify({'status': 'ok'}), 200\n    if request.method == 'POST':\n        return create_proforma()\n    return listar_proformas()\n@jwt_required()\ndef listar_proformas():\n    class DummyRepo:\n        def get_all(self, args):",
+        "peekOfCode": "def handle_proforma_root():\n    if request.method == 'OPTIONS':\n        return jsonify({'status': 'ok'}), 200\n    if request.method == 'POST':\n        return create_proforma()\n    return listar_proformas()\n@jwt_required()\ndef listar_proformas():\n    try:\n        page = request.args.get('page', 1, type=int) or 1",
         "detail": "backend.app.api.v1.proforma_controller",
         "documentation": {}
     },
@@ -9926,7 +9926,7 @@
         "kind": 2,
         "importPath": "backend.app.api.v1.proforma_controller",
         "description": "backend.app.api.v1.proforma_controller",
-        "peekOfCode": "def listar_proformas():\n    class DummyRepo:\n        def get_all(self, args):\n            return proforma_service.get_proformas(args)\n    class ProformaSchemaObj:\n        def dump(self, obj):\n            if isinstance(obj, list):\n                return [_serialize_proforma(o) for o in obj]\n            return _serialize_proforma(obj)\n    return build_pagination(DummyRepo(), ProformaSchemaObj(), request)",
+        "peekOfCode": "def listar_proformas():\n    try:\n        page = request.args.get('page', 1, type=int) or 1\n        per_page = request.args.get('per_page', 10, type=int) or 10\n        proformas = proforma_service.get_proformas(request.args)\n        if not isinstance(proformas, list):\n            proformas = list(proformas) if proformas else []\n        total = len(proformas)\n        start = (page - 1) * per_page\n        end = start + per_page",
         "detail": "backend.app.api.v1.proforma_controller",
         "documentation": {}
     },
@@ -9971,7 +9971,25 @@
         "kind": 2,
         "importPath": "backend.app.api.v1.proforma_controller",
         "description": "backend.app.api.v1.proforma_controller",
-        "peekOfCode": "def get_proforma_pdf(id):\n    # PDF gen\n    proforma = proforma_service.get_proforma(id)\n    if not proforma:\n        return jsonify({'error': 'Proforma não encontrada'}), 404\n    try:\n        from app.services.pdf_generator import get_venda_receipt_data, _build_a4_pdf\n        # Hacky way to reuse pdf generation\n        data = get_venda_receipt_data(proforma) # Might need adjustments since proforma is not Venda, but has similar fields\n        data['documento']['tipo'] = 'Fatura Pró-Forma'",
+        "peekOfCode": "def get_proforma_pdf(id):\n    proforma = proforma_service.get_proforma(id)\n    if not proforma:\n        return jsonify({'error': 'Proforma não encontrada'}), 404\n    try:\n        from app.services.pdf_generator import generate_proforma_pdf\n        pdf_buffer = generate_proforma_pdf(proforma)\n        return send_file(\n            pdf_buffer,\n            as_attachment=False,",
+        "detail": "backend.app.api.v1.proforma_controller",
+        "documentation": {}
+    },
+    {
+        "label": "get_proforma_recibo_termico",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.proforma_controller",
+        "description": "backend.app.api.v1.proforma_controller",
+        "peekOfCode": "def get_proforma_recibo_termico(id):\n    proforma = proforma_service.get_proforma(id)\n    if not proforma:\n        return jsonify({'error': 'Proforma não encontrada'}), 404\n    try:\n        from app.services.pdf_generator import generate_proforma_receipt\n        pdf_buffer = generate_proforma_receipt(proforma)\n        return send_file(\n            pdf_buffer,\n            as_attachment=False,",
+        "detail": "backend.app.api.v1.proforma_controller",
+        "documentation": {}
+    },
+    {
+        "label": "get_proforma_recibo_data_route",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.proforma_controller",
+        "description": "backend.app.api.v1.proforma_controller",
+        "peekOfCode": "def get_proforma_recibo_data_route(id):\n    proforma = proforma_service.get_proforma(id)\n    if not proforma:\n        return jsonify({'error': 'Proforma não encontrada'}), 404\n    try:\n        from app.services.pdf_generator import get_proforma_receipt_data\n        data = get_proforma_receipt_data(proforma)\n        return jsonify(data), 200\n    except Exception as e:\n        return jsonify({'error': str(e)}), 400",
         "detail": "backend.app.api.v1.proforma_controller",
         "documentation": {}
     },
@@ -9985,20 +10003,11 @@
         "documentation": {}
     },
     {
-        "label": "get_proforma_recibo_termico",
-        "kind": 2,
-        "importPath": "backend.app.api.v1.proforma_controller",
-        "description": "backend.app.api.v1.proforma_controller",
-        "peekOfCode": "def get_proforma_recibo_termico(id):\n    proforma = proforma_service.get_proforma(id)\n    if not proforma:\n        return jsonify({'error': 'Proforma não encontrada'}), 404\n    try:\n        from app.services.pdf_generator import get_venda_receipt_data, _build_thermal_receipt\n        data = get_venda_receipt_data(proforma)\n        data['documento']['tipo'] = 'Fatura Pró-Forma'\n        data['documento']['numero'] = proforma.numero_documento\n        pdf_buffer = _build_thermal_receipt(data)",
-        "detail": "backend.app.api.v1.proforma_controller",
-        "documentation": {}
-    },
-    {
         "label": "proforma_bp",
         "kind": 5,
         "importPath": "backend.app.api.v1.proforma_controller",
         "description": "backend.app.api.v1.proforma_controller",
-        "peekOfCode": "proforma_bp = Blueprint('proforma_bp', __name__)\nproforma_service = ProformaService()\ndef build_pagination(repo, schema_obj, request):\n    page = request.args.get('page', 1, type=int)\n    per_page = request.args.get('per_page', 10, type=int)\n    items = repo.get_all(request.args)\n    total = len(items)\n    start = (page - 1) * per_page\n    end = start + per_page\n    paginated_items = items[start:end]",
+        "peekOfCode": "proforma_bp = Blueprint('proforma_bp', __name__)\nproforma_service = ProformaService()\ndef build_pagination(repo_or_query, schema_obj, request):\n    page = request.args.get('page', 1, type=int) or 1\n    per_page = request.args.get('per_page', 10, type=int) or 10\n    if hasattr(repo_or_query, 'get_all'):\n        raw = repo_or_query.get_all(request.args)\n    elif callable(repo_or_query):\n        raw = repo_or_query(request.args)\n    else:",
         "detail": "backend.app.api.v1.proforma_controller",
         "documentation": {}
     },
@@ -10007,7 +10016,7 @@
         "kind": 5,
         "importPath": "backend.app.api.v1.proforma_controller",
         "description": "backend.app.api.v1.proforma_controller",
-        "peekOfCode": "proforma_service = ProformaService()\ndef build_pagination(repo, schema_obj, request):\n    page = request.args.get('page', 1, type=int)\n    per_page = request.args.get('per_page', 10, type=int)\n    items = repo.get_all(request.args)\n    total = len(items)\n    start = (page - 1) * per_page\n    end = start + per_page\n    paginated_items = items[start:end]\n    return jsonify({",
+        "peekOfCode": "proforma_service = ProformaService()\ndef build_pagination(repo_or_query, schema_obj, request):\n    page = request.args.get('page', 1, type=int) or 1\n    per_page = request.args.get('per_page', 10, type=int) or 10\n    if hasattr(repo_or_query, 'get_all'):\n        raw = repo_or_query.get_all(request.args)\n    elif callable(repo_or_query):\n        raw = repo_or_query(request.args)\n    else:\n        raw = repo_or_query",
         "detail": "backend.app.api.v1.proforma_controller",
         "documentation": {}
     },
@@ -12667,11 +12676,38 @@
         "documentation": {}
     },
     {
+        "label": "get_proforma_receipt_data",
+        "kind": 2,
+        "importPath": "backend.app.services.pdf_generator",
+        "description": "backend.app.services.pdf_generator",
+        "peekOfCode": "def get_proforma_receipt_data(proforma):\n    empresa = _get_empresa_info()\n    moeda = empresa[\"moeda\"]\n    operador_nome = \"Sistema / Atendimento\"\n    operador_id = getattr(proforma, 'criado_por', None) or getattr(proforma, 'created_by', None)\n    if operador_id:\n        u = User.query.get(operador_id)\n        if u:\n            operador_nome = u.name\n    cliente_nome = \"Consumidor Final\"",
+        "detail": "backend.app.services.pdf_generator",
+        "documentation": {}
+    },
+    {
+        "label": "generate_proforma_pdf",
+        "kind": 2,
+        "importPath": "backend.app.services.pdf_generator",
+        "description": "backend.app.services.pdf_generator",
+        "peekOfCode": "def generate_proforma_pdf(proforma):\n    data = get_proforma_receipt_data(proforma)\n    return _build_a4_pdf(data)\ndef generate_proforma_receipt(proforma):\n    data = get_proforma_receipt_data(proforma)\n    return _build_thermal_receipt_pdf(data)\ndef generate_venda_pdf(venda):\n    data = get_venda_receipt_data(venda)\n    return _build_a4_pdf(data)\ndef generate_venda_receipt(venda):",
+        "detail": "backend.app.services.pdf_generator",
+        "documentation": {}
+    },
+    {
+        "label": "generate_proforma_receipt",
+        "kind": 2,
+        "importPath": "backend.app.services.pdf_generator",
+        "description": "backend.app.services.pdf_generator",
+        "peekOfCode": "def generate_proforma_receipt(proforma):\n    data = get_proforma_receipt_data(proforma)\n    return _build_thermal_receipt_pdf(data)\ndef generate_venda_pdf(venda):\n    data = get_venda_receipt_data(venda)\n    return _build_a4_pdf(data)\ndef generate_venda_receipt(venda):\n    data = get_venda_receipt_data(venda)\n    return _build_thermal_receipt_pdf(data)\ndef _build_thermal_receipt(data):",
+        "detail": "backend.app.services.pdf_generator",
+        "documentation": {}
+    },
+    {
         "label": "generate_venda_pdf",
         "kind": 2,
         "importPath": "backend.app.services.pdf_generator",
         "description": "backend.app.services.pdf_generator",
-        "peekOfCode": "def generate_venda_pdf(venda):\n    data = get_venda_receipt_data(venda)\n    return _build_a4_pdf(data)\ndef generate_venda_receipt(venda):\n    data = get_venda_receipt_data(venda)\n    return _build_thermal_receipt_pdf(data)\ndef generate_pagamento_receipt(venda, pagamento):\n    \"\"\"Create a receipt for a payment made against an existing FT.\"\"\"\n    data = get_venda_receipt_data(venda)\n    from app.models.financeiro import FormaPagamento",
+        "peekOfCode": "def generate_venda_pdf(venda):\n    data = get_venda_receipt_data(venda)\n    return _build_a4_pdf(data)\ndef generate_venda_receipt(venda):\n    data = get_venda_receipt_data(venda)\n    return _build_thermal_receipt_pdf(data)\ndef _build_thermal_receipt(data):\n    return _build_thermal_receipt_pdf(data)\ndef generate_pagamento_receipt(venda, pagamento):\n    \"\"\"Create a receipt for a payment made against an existing FT.\"\"\"",
         "detail": "backend.app.services.pdf_generator",
         "documentation": {}
     },
@@ -12680,7 +12716,7 @@
         "kind": 2,
         "importPath": "backend.app.services.pdf_generator",
         "description": "backend.app.services.pdf_generator",
-        "peekOfCode": "def generate_venda_receipt(venda):\n    data = get_venda_receipt_data(venda)\n    return _build_thermal_receipt_pdf(data)\ndef generate_pagamento_receipt(venda, pagamento):\n    \"\"\"Create a receipt for a payment made against an existing FT.\"\"\"\n    data = get_venda_receipt_data(venda)\n    from app.models.financeiro import FormaPagamento\n    forma_db = FormaPagamento.query.get(pagamento.forma_pagamento_id)\n    forma = forma_db.nome if forma_db else 'Pagamento'\n    data['documento'].update({",
+        "peekOfCode": "def generate_venda_receipt(venda):\n    data = get_venda_receipt_data(venda)\n    return _build_thermal_receipt_pdf(data)\ndef _build_thermal_receipt(data):\n    return _build_thermal_receipt_pdf(data)\ndef generate_pagamento_receipt(venda, pagamento):\n    \"\"\"Create a receipt for a payment made against an existing FT.\"\"\"\n    data = get_venda_receipt_data(venda)\n    from app.models.financeiro import FormaPagamento\n    forma_db = FormaPagamento.query.get(pagamento.forma_pagamento_id)",
         "detail": "backend.app.services.pdf_generator",
         "documentation": {}
     },
@@ -12743,7 +12779,7 @@
         "kind": 6,
         "importPath": "backend.app.services.proforma_service",
         "description": "backend.app.services.proforma_service",
-        "peekOfCode": "class ProformaService:\n    def get_proformas(self, args):\n        query = Proforma.query.options(joinedload(Proforma.itens))\n        # Filtros básicos\n        cliente_id = args.get('cliente_id')\n        if cliente_id:\n            query = query.filter_by(cliente_id=cliente_id)\n        estado = args.get('estado')\n        if estado:\n            query = query.filter_by(estado=estado)",
+        "peekOfCode": "class ProformaService:\n    def get_proformas(self, args):\n        query = Proforma.query.options(joinedload(Proforma.itens))\n        # Filtros básicos\n        search = args.get('search')\n        if search:\n            query = query.filter(Proforma.numero_documento.ilike(f\"%{search}%\") | Proforma.observacoes.ilike(f\"%{search}%\"))\n        cliente_id = args.get('cliente_id')\n        if cliente_id:\n            query = query.filter_by(cliente_id=cliente_id)",
         "detail": "backend.app.services.proforma_service",
         "documentation": {}
     },

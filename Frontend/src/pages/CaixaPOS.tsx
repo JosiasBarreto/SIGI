@@ -967,186 +967,195 @@ export default function CaixaPOS() {
           </>
         )}
 
-        {step === 3 && (
-          <div className="p-6 flex-1 flex flex-col items-center justify-center text-center animate-fade-in-up">
-            <div className="w-16 h-16 bg-success/10 rounded-full flex items-center justify-center mb-4">
-              <CheckCircle size={32} className="text-success" />
-            </div>
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
-              Sucesso!
-            </h2>
-            <p className="text-xs text-gray-500 mb-6 max-w-[250px]">
-              Venda registada com sucesso{" "}
-              {createdVenda?.numero ? `(#${createdVenda.numero})` : ""}.
-            </p>
+        {step === 3 && (() => {
+          const isProformaDoc = Boolean(
+            createdVenda?.isProforma ||
+            isProforma ||
+            (createdVenda?.numero_documento && String(createdVenda.numero_documento).toUpperCase().includes("PROFORMA"))
+          );
 
-            {createdVenda && (
-              <div className="w-full p-4 mb-6 border border-gray-150 dark:border-border-dark bg-gray-50 dark:bg-gray-900/40 rounded-xl text-left">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (createdVenda?.isProforma || isProforma) {
-                        proformaService.openRecibo(createdVenda.id);
-                      } else {
-                        printThermalReceipt(createdVenda);
-                      }
-                    }}
-                    className="px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors flex items-center justify-center gap-1.5"
-                  >
-                    <Printer size={14} /> Recibo Térmico (80mm)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (createdVenda?.isProforma || isProforma) {
-                        proformaService.openPdf(createdVenda.id);
-                      } else {
-                        documentService.vendaPdf(createdVenda.id).catch((err) =>
-                          toast.error(err.message || "Erro ao abrir PDF.")
-                        );
-                      }
-                    }}
-                    className="px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors flex items-center justify-center gap-1.5"
-                  >
-                    <FileText size={14} /> Fatura A4
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (createdVenda?.isProforma || isProforma) {
-                        proformaService.openPdf(createdVenda.id);
-                      } else {
-                        documentService.vendaRecibo(createdVenda.id).catch((err) =>
-                          toast.error(err.message || "Erro ao descarregar recibo.")
-                        );
-                      }
-                    }}
-                    className="px-3 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-white text-xs font-bold transition-colors flex items-center justify-center gap-1.5"
-                  >
-                    <Download size={14} /> Descarregar PDF
-                  </button>
-                </div>
-                <h3 className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-3">
-                  Enviar {createdVenda?.isProforma || isProforma ? "Pró-Forma" : "Fatura"} ao Cliente
-                </h3>
-
-                {invoiceSent ? (
-                  <div className="text-center py-2 text-xs text-indigo-600 dark:text-indigo-400 font-semibold">
-                    ✓ Documento enviado com sucesso!
-                  </div>
-                ) : (
-                  <form
-                    onSubmit={async (e) => {
-                      e.preventDefault();
-                      if (!sendContact) {
-                        toast.error("Por favor, introduza o contacto.");
-                        return;
-                      }
-                      if (createdVenda?.isProforma || isProforma) {
-                        try {
-                          const res = await proformaService.send(createdVenda.id, sendMethod, sendContact);
-                          setInvoiceSent(true);
-                          toast.success(res.msg || `Pró-Forma enviada com sucesso para ${sendContact} via ${sendMethod}!`);
-                        } catch (err: any) {
-                          toast.error(err?.message || "Erro ao enviar Pró-Forma.");
-                        }
-                      } else {
-                        enviarFatura.mutate(
-                          {
-                            id: Number(createdVenda.id),
-                            data: {
-                              method: sendMethod,
-                              contact: sendContact,
-                            },
-                          },
-                          {
-                            onSuccess: () => {
-                              setInvoiceSent(true);
-                              toast.success(
-                                `Fatura solicitada para envio via ${
-                                  sendMethod === "email" ? "E-mail" : "WhatsApp"
-                                }!`
-                              );
-                            },
-                          }
-                        );
-                      }
-                    }}
-                    className="space-y-3"
-                  >
-                    <div className="flex gap-3">
-                      <label className="flex items-center gap-1.5 cursor-pointer text-xs text-gray-600 dark:text-gray-400 font-medium">
-                        <input
-                          type="radio"
-                          name="posSendMethod"
-                          value="email"
-                          checked={sendMethod === "email"}
-                          onChange={() => {
-                            setSendMethod("email");
-                            const client = clients.find(
-                              (c: any) =>
-                                String(c.id) === String(selectedClient)
-                            );
-                            setSendContact(client?.email || "");
-                          }}
-                          className="accent-indigo-600"
-                        />
-                        E-mail
-                      </label>
-                      <label className="flex items-center gap-1.5 cursor-pointer text-xs text-gray-600 dark:text-gray-400 font-medium">
-                        <input
-                          type="radio"
-                          name="posSendMethod"
-                          value="whatsapp"
-                          checked={sendMethod === "whatsapp"}
-                          onChange={() => {
-                            setSendMethod("whatsapp");
-                            const client = clients.find(
-                              (c: any) =>
-                                String(c.id) === String(selectedClient)
-                            );
-                            setSendContact(client?.telefone || "");
-                          }}
-                          className="accent-indigo-600"
-                        />
-                        WhatsApp
-                      </label>
-                    </div>
-
-                    <div className="flex gap-2">
-                      <input
-                        type={sendMethod === "email" ? "email" : "text"}
-                        placeholder={
-                          sendMethod === "email"
-                            ? "exemplo@cliente.com"
-                            : "Telemóvel"
-                        }
-                        value={sendContact}
-                        onChange={(e) => setSendContact(e.target.value)}
-                        className="flex-1 px-3 py-1.5 text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
-                      />
-                      <button
-                        type="submit"
-                        disabled={enviarFatura.isPending}
-                        className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-lg transition-colors disabled:opacity-50"
-                      >
-                        {enviarFatura.isPending ? "..." : "Enviar"}
-                      </button>
-                    </div>
-                  </form>
-                )}
+          return (
+            <div className="p-6 flex-1 flex flex-col items-center justify-center text-center animate-fade-in-up">
+              <div className="w-16 h-16 bg-success/10 rounded-full flex items-center justify-center mb-4">
+                <CheckCircle size={32} className="text-success" />
               </div>
-            )}
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
+                {isProformaDoc ? "Pró-Forma Emitida!" : "Sucesso!"}
+              </h2>
+              <p className="text-xs text-gray-500 mb-6 max-w-[280px]">
+                {isProformaDoc
+                  ? `Fatura Pró-Forma emitida com sucesso (${createdVenda?.numero_documento || createdVenda?.numero || `#${createdVenda?.id}`}).`
+                  : `Venda registada com sucesso ${createdVenda?.numero ? `(#${createdVenda.numero})` : ""}.`}
+              </p>
 
-            <button
-              onClick={finishSale}
-              className="w-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-900 dark:text-white font-bold py-3.5 rounded-xl transition-all text-sm"
-            >
-              Novo Atendimento
-            </button>
-          </div>
-        )}
+              {createdVenda && (
+                <div className="w-full p-4 mb-6 border border-gray-150 dark:border-border-dark bg-gray-50 dark:bg-gray-900/40 rounded-xl text-left">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (isProformaDoc) {
+                          proformaService.openRecibo(createdVenda.id);
+                        } else {
+                          printThermalReceipt(createdVenda);
+                        }
+                      }}
+                      className="px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors flex items-center justify-center gap-1.5"
+                    >
+                      <Printer size={14} /> Recibo Térmico (80mm)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (isProformaDoc) {
+                          proformaService.openPdf(createdVenda.id);
+                        } else {
+                          documentService.vendaPdf(createdVenda.id).catch((err) =>
+                            toast.error(err.message || "Erro ao abrir PDF.")
+                          );
+                        }
+                      }}
+                      className="px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors flex items-center justify-center gap-1.5"
+                    >
+                      <FileText size={14} /> {isProformaDoc ? "Pró-Forma A4" : "Fatura A4"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (isProformaDoc) {
+                          proformaService.openPdf(createdVenda.id);
+                        } else {
+                          documentService.vendaRecibo(createdVenda.id).catch((err) =>
+                            toast.error(err.message || "Erro ao descarregar recibo.")
+                          );
+                        }
+                      }}
+                      className="px-3 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-white text-xs font-bold transition-colors flex items-center justify-center gap-1.5"
+                    >
+                      <Download size={14} /> Descarregar PDF
+                    </button>
+                  </div>
+                  <h3 className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-3">
+                    Enviar {isProformaDoc ? "Pró-Forma" : "Fatura"} ao Cliente
+                  </h3>
+
+                  {invoiceSent ? (
+                    <div className="text-center py-2 text-xs text-indigo-600 dark:text-indigo-400 font-semibold">
+                      ✓ Documento enviado com sucesso!
+                    </div>
+                  ) : (
+                    <form
+                      onSubmit={async (e) => {
+                        e.preventDefault();
+                        if (!sendContact) {
+                          toast.error("Por favor, introduza o contacto.");
+                          return;
+                        }
+                        if (isProformaDoc) {
+                          try {
+                            const res = await proformaService.send(createdVenda.id, sendMethod, sendContact);
+                            setInvoiceSent(true);
+                            toast.success(res.msg || `Pró-Forma enviada com sucesso para ${sendContact} via ${sendMethod}!`);
+                          } catch (err: any) {
+                            toast.error(err?.message || "Erro ao enviar Pró-Forma.");
+                          }
+                        } else {
+                          enviarFatura.mutate(
+                            {
+                              id: Number(createdVenda.id),
+                              data: {
+                                method: sendMethod,
+                                contact: sendContact,
+                              },
+                            },
+                            {
+                              onSuccess: () => {
+                                setInvoiceSent(true);
+                                toast.success(
+                                  `Fatura solicitada para envio via ${
+                                    sendMethod === "email" ? "E-mail" : "WhatsApp"
+                                  }!`
+                                );
+                              },
+                            }
+                          );
+                        }
+                      }}
+                      className="space-y-3"
+                    >
+                      <div className="flex gap-3">
+                        <label className="flex items-center gap-1.5 cursor-pointer text-xs text-gray-600 dark:text-gray-400 font-medium">
+                          <input
+                            type="radio"
+                            name="posSendMethod"
+                            value="email"
+                            checked={sendMethod === "email"}
+                            onChange={() => {
+                              setSendMethod("email");
+                              const client = clients.find(
+                                (c: any) =>
+                                  String(c.id) === String(selectedClient)
+                              );
+                              setSendContact(client?.email || "");
+                            }}
+                            className="accent-indigo-600"
+                          />
+                          E-mail
+                        </label>
+                        <label className="flex items-center gap-1.5 cursor-pointer text-xs text-gray-600 dark:text-gray-400 font-medium">
+                          <input
+                            type="radio"
+                            name="posSendMethod"
+                            value="whatsapp"
+                            checked={sendMethod === "whatsapp"}
+                            onChange={() => {
+                              setSendMethod("whatsapp");
+                              const client = clients.find(
+                                (c: any) =>
+                                  String(c.id) === String(selectedClient)
+                              );
+                              setSendContact(client?.telefone || "");
+                            }}
+                            className="accent-indigo-600"
+                          />
+                          WhatsApp
+                        </label>
+                      </div>
+
+                      <div className="flex gap-2">
+                        <input
+                          type={sendMethod === "email" ? "email" : "text"}
+                          placeholder={
+                            sendMethod === "email"
+                              ? "exemplo@cliente.com"
+                              : "Telemóvel"
+                          }
+                          value={sendContact}
+                          onChange={(e) => setSendContact(e.target.value)}
+                          className="flex-1 px-3 py-1.5 text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                        />
+                        <button
+                          type="submit"
+                          disabled={enviarFatura.isPending}
+                          className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-lg transition-colors disabled:opacity-50"
+                        >
+                          {enviarFatura.isPending ? "..." : "Enviar"}
+                        </button>
+                      </div>
+                    </form>
+                  )}
+                </div>
+              )}
+
+              <button
+                onClick={finishSale}
+                className="w-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-900 dark:text-white font-bold py-3.5 rounded-xl transition-all text-sm"
+              >
+                Novo Atendimento
+              </button>
+            </div>
+          );
+        })()}
       </div>
     </div>
 
