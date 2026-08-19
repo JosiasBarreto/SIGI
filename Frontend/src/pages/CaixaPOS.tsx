@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   productService,
@@ -11,8 +11,6 @@ import {
 } from "../services";
 import { useComercial } from "../hooks";
 import {
-  Calculator,
-  ShoppingCart,
   Search,
   CreditCard,
   Banknote,
@@ -20,49 +18,65 @@ import {
   CheckCircle,
   Store,
   Lock,
+  Unlock,
   Printer,
   Download,
-  AlertTriangle,
-  Clock,
+  SlidersHorizontal,
+  Bookmark,
+  Trash2,
+  ArrowRight,
+  ArrowDownRight,
+  ArrowUpRight,
+  Filter,
+  Check,
+  Receipt,
+  ShoppingCart
 } from "lucide-react";
 import { formatCurrency, cn } from "../lib/utils";
-import Swal from "sweetalert2";
 import { toast } from "react-toastify";
+import SearchableClientSelect from "../components/Common/SearchableClientSelect";
 import ProductGrid from "./CaixaPOS/ProductGrid";
 import CartList from "./CaixaPOS/CartList";
 import { useCaixaCart } from "./CaixaPOS/useCaixaCart";
 import { useCaixaSession } from "./CaixaPOS/useCaixaSession";
 import CaixaSessionModals from "../components/CaixaSessionModals";
 import StockWarningModal from "../components/POS/StockWarningModal";
-import FlexiblePaymentForm, { PaymentFormState } from "../components/POS/FlexiblePaymentForm";
 import OrderReceiptModal from "../components/POS/OrderReceiptModal";
+import CaixaAdvancedFilterModal from "./CaixaPOS/CaixaAdvancedFilterModal";
+import CaixaDraftsModal, { CaixaDraft } from "./CaixaPOS/CaixaDraftsModal";
+import CaixaPOSPaymentModal from "./CaixaPOS/CaixaPOSPaymentModal";
+import CaixaCartModal from "./CaixaPOS/CaixaCartModal";
 
 export default function CaixaPOS() {
   const { createVenda, checkoutPedido, enviarFatura } = useComercial();
-  const [activeCategory, setActiveCategory] = useState<string>("Revenda");
   const config = JSON.parse(localStorage.getItem("sigi_config") || "{}");
+
+  // Category Tab Selection
+  const [activeCategory, setActiveCategory] = useState<string>("Revenda");
+
+  // Fetch Products
   const { data: productsResponse } = useQuery({
     queryKey: ["products", activeCategory],
     queryFn: () => {
       const params: any = {
         per_page: 5000,
         include_iva: true,
-        tipo :activeCategory,
+        tipo: activeCategory,
       };
-  
-      // Apenas produtos de revenda com stock
       if (activeCategory === "Revenda") {
         params.have_stock = true;
       }
-  
       return productService.getAll(params);
     },
   });
 
+  // Fetch Clients
   const { data: clientsResponse } = useQuery({
     queryKey: ["clients"],
     queryFn: () => clientService.getAll({ per_page: 1000 }),
   });
+
+  // Sales & POS States
   const [selectedClient, setSelectedClient] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("Dinheiro");
   const [tipoDocumento, setTipoDocumento] = useState<"FR" | "PROFORMA">("FR");
@@ -72,25 +86,40 @@ export default function CaixaPOS() {
   const [showPriceWithIva] = useState(true);
 
   // Scheduled order options
-  const [tipoPedido, setTipoPedido] = useState<"Imediato" | "Agendado">(
-    "Imediato"
-  );
-  // pegar a data de hoje mais 3 horas acima
+  const [tipoPedido, setTipoPedido] = useState<"Imediato" | "Agendado">("Imediato");
   const [dataEntrega, setDataEntrega] = useState("");
-  const [valorPago, setValorPago] = useState(""); // deposit
+  const [valorPago, setValorPago] = useState("");
   const [codigoTransferencia, setCodigoTransferencia] = useState("");
   const [emissor, setEmissor] = useState("");
+  const [valorCashMixto, setValorCashMixto] = useState(0);
+  const [valorPosMixto, setValorPosMixto] = useState(0);
 
-  // Invoice sending states
+  // Advanced Filter Modal States
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [selectedFilterCategory, setSelectedFilterCategory] = useState("");
+  const [selectedFilterType, setSelectedFilterType] = useState("TODOS");
+  const [onlyInStockFilter, setOnlyInStockFilter] = useState(false);
+  const [minPriceFilter, setMinPriceFilter] = useState("");
+  const [maxPriceFilter, setMaxPriceFilter] = useState("");
+  const [sortByFilter, setSortByFilter] = useState("NOME_ASC");
+
+  // Drafts Modal State
+  const [isDraftsModalOpen, setIsDraftsModalOpen] = useState(false);
+  const [draftsCount, setDraftsCount] = useState(0);
+
+  // Payment Modal State
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+
+  // Cart Table Modal State
+  const [isCartModalOpen, setIsCartModalOpen] = useState(false);
+
+  // Invoice sending & Receipt modal states
   const [createdVenda, setCreatedVenda] = useState<any>(null);
   const [sendMethod, setSendMethod] = useState<"email" | "whatsapp">("email");
   const [sendContact, setSendContact] = useState("");
   const [invoiceSent, setInvoiceSent] = useState(false);
-
-  // Stock warning & Receipt Modal states
   const [stockWarningOpen, setStockWarningOpen] = useState(false);
   const [stockWarningItems, setStockWarningItems] = useState<any[]>([]);
-  const [paymentFormState, setPaymentFormState] = useState<PaymentFormState | null>(null);
   const [receiptModalOpen, setReceiptModalOpen] = useState(false);
   const [receiptDocData, setReceiptDocData] = useState<any>(null);
 
@@ -102,19 +131,15 @@ export default function CaixaPOS() {
   const descontoClientePercent = Number(
     selectedClientObj?.percentagem_desconto_padrao || 0
   );
+
   const {
     cart,
     searchTerm,
     setSearchTerm,
-    selectedServico,
-    setSelectedServico,
-    displayProducts,
     subtotal,
-    totalComIva,
     Iva,
     descontoAutomatico,
     descontoManual,
-    setDescontoManual,
     total,
     isOnlyRevendaCart,
     hasZeroStockItem,
@@ -138,14 +163,190 @@ export default function CaixaPOS() {
     "abrir" | "fechar" | "sangria" | "reforco" | null
   >(null);
 
+  // Update drafts count
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("sigi_caixa_drafts");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        setDraftsCount(Array.isArray(parsed) ? parsed.length : 0);
+      } else {
+        setDraftsCount(0);
+      }
+    } catch {
+      setDraftsCount(0);
+    }
+  }, [isDraftsModalOpen, cart]);
+
+  // Extract all available product categories dynamically (excluding Consumivel & Abastecimento)
+  const allCategories = useMemo(() => {
+    const set = new Set<string>();
+    products.forEach((p: any) => {
+      const cat = p.category || p.categoria;
+      const catLower = String(cat || "").toLowerCase();
+      const tipoUpper = String(p.tipo || p.type || "").toUpperCase();
+      if (
+        cat &&
+        tipoUpper !== "CONSUMIVEL" &&
+        tipoUpper !== "ABASTECIMENTO" &&
+        tipoUpper !== "MATERIA_PRIMA" &&
+        !catLower.includes("consumivel") &&
+        !catLower.includes("consumível") &&
+        !catLower.includes("abastecimento") &&
+        !catLower.includes("materia-prima") &&
+        !catLower.includes("matéria-prima")
+      ) {
+        set.add(cat);
+      }
+    });
+    return Array.from(set).sort();
+  }, [products]);
+
+  // Count active filters for badge
+  const activeFiltersCount = useMemo(() => {
+    let count = 0;
+    if (selectedFilterCategory) count++;
+    if (selectedFilterType !== "TODOS") count++;
+    if (onlyInStockFilter) count++;
+    if (minPriceFilter) count++;
+    if (maxPriceFilter) count++;
+    if (sortByFilter !== "NOME_ASC") count++;
+    return count;
+  }, [
+    selectedFilterCategory,
+    selectedFilterType,
+    onlyInStockFilter,
+    minPriceFilter,
+    maxPriceFilter,
+    sortByFilter,
+  ]);
+
+  // Filter products list based on search, category tab, and filter modal criteria
+  const filteredProducts = useMemo(() => {
+    return products
+      .filter((p: any) => {
+        // 0. EXCLUDE Consumível, Abastecimento, Matéria-Prima from Caixa POS
+        const pCatLower = String(p.category || p.categoria || p.tipo || "").toLowerCase();
+        const pTipoUpper = String(p.tipo || p.type || "").toUpperCase();
+        if (
+          pTipoUpper === "CONSUMIVEL" ||
+          pTipoUpper === "ABASTECIMENTO" ||
+          pTipoUpper === "MATERIA_PRIMA" ||
+          pCatLower.includes("consumivel") ||
+          pCatLower.includes("consumível") ||
+          pCatLower.includes("abastecimento") ||
+          pCatLower.includes("materia-prima") ||
+          pCatLower.includes("matéria-prima")
+        ) {
+          return false;
+        }
+
+        // 1. Global Search Term
+        if (searchTerm.trim()) {
+          const term = searchTerm.toLowerCase();
+          const name = String(p.name || p.nome || "").toLowerCase();
+          const code = String(p.codigo || p.id || "").toLowerCase();
+          const cat = String(p.category || p.categoria || "").toLowerCase();
+          if (!name.includes(term) && !code.includes(term) && !cat.includes(term)) {
+            return false;
+          }
+        }
+
+        // 2. Active Sector/Tab Category
+        if (activeCategory && activeCategory !== "TODOS") {
+          const pCat = String(p.category || p.categoria || p.tipo || "").toLowerCase();
+          const pTipo = String(p.tipo || p.type || "").toUpperCase();
+          if (
+            activeCategory === "Revenda" &&
+            !pCat.includes("revenda") &&
+            pTipo !== "REVENDA" &&
+            !p.is_revenda
+          ) {
+            return false;
+          }
+        }
+
+        // 3. Filter Modal Category
+        if (selectedFilterCategory) {
+          const cat = p.category || p.categoria;
+          if (cat !== selectedFilterCategory) return false;
+        }
+
+        // 4. Filter Modal Product Type
+        if (selectedFilterType && selectedFilterType !== "TODOS") {
+          const tipoUpper = String(p.tipo || p.type || "").toUpperCase();
+          if (selectedFilterType === "REVENDA" && tipoUpper !== "REVENDA" && !p.is_revenda)
+            return false;
+          if (selectedFilterType === "ACABADO" && tipoUpper !== "ACABADO") return false;
+          if (selectedFilterType === "CONSUMIVEL" && tipoUpper !== "CONSUMIVEL") return false;
+          if (selectedFilterType === "SERVICO" && tipoUpper !== "SERVICO") return false;
+        }
+
+        // 5. Stock Filter
+        const stock = Number(p.stock_atual ?? p.quantity ?? p.stock ?? 0);
+        if (onlyInStockFilter && stock <= 0) return false;
+
+        // 6. Price Range Filter
+        const price = Number(p.salePrice || p.preco_venda || 0);
+        if (minPriceFilter && price < parseFloat(minPriceFilter)) return false;
+        if (maxPriceFilter && price > parseFloat(maxPriceFilter)) return false;
+
+        return true;
+      })
+      .sort((a: any, b: any) => {
+        if (sortByFilter === "NOME_ASC") {
+          return String(a.name || a.nome || "").localeCompare(String(b.name || b.nome || ""));
+        }
+        if (sortByFilter === "NOME_DESC") {
+          return String(b.name || b.nome || "").localeCompare(String(a.name || a.nome || ""));
+        }
+        if (sortByFilter === "PRECO_ASC") {
+          return Number(a.salePrice || a.preco_venda || 0) - Number(b.salePrice || b.preco_venda || 0);
+        }
+        if (sortByFilter === "PRECO_DESC") {
+          return Number(b.salePrice || b.preco_venda || 0) - Number(a.salePrice || a.preco_venda || 0);
+        }
+        if (sortByFilter === "STOCK_DESC") {
+          return Number(b.stock_atual ?? b.quantity ?? 0) - Number(a.stock_atual ?? a.quantity ?? 0);
+        }
+        return 0;
+      });
+  }, [
+    products,
+    searchTerm,
+    activeCategory,
+    selectedFilterCategory,
+    selectedFilterType,
+    onlyInStockFilter,
+    minPriceFilter,
+    maxPriceFilter,
+    sortByFilter,
+  ]);
+
+  const handleResetFilters = () => {
+    setSelectedFilterCategory("");
+    setSelectedFilterType("TODOS");
+    setOnlyInStockFilter(false);
+    setMinPriceFilter("");
+    setMaxPriceFilter("");
+    setSortByFilter("NOME_ASC");
+  };
+
   const handleAddToCartWrapper = (product: any) => {
     const stock = Number(product.stock_atual ?? product.stock ?? product.quantidade_atual ?? 0);
     const tipoUpper = String(product.tipo || product.type || "").toUpperCase();
-    const isRevenda = tipoUpper === "REVENDA" || tipoUpper === "PRODUTO_REVENDA" || product.is_revenda === true;
+    const isRevenda =
+      tipoUpper === "REVENDA" || tipoUpper === "PRODUTO_REVENDA" || product.is_revenda === true;
 
     if (stock <= 0) {
-      if (isRevenda && (cart.length === 0 || cart.every(it => String(it.tipo || it.type || "").toUpperCase() === "REVENDA"))) {
-        toast.error(`O produto de revenda "${product.name || product.nome}" está sem stock e não pode ser encomendado.`);
+      if (
+        isRevenda &&
+        (cart.length === 0 ||
+          cart.every((it) => String(it.tipo || it.type || "").toUpperCase() === "REVENDA"))
+      ) {
+        toast.error(
+          `O produto de revenda "${product.name || product.nome}" está sem stock e não pode ser encomendado.`
+        );
         return;
       }
 
@@ -158,28 +359,33 @@ export default function CaixaPOS() {
       }
 
       if (!selectedClient) {
-        toast.warn(`Produto "${product.name || product.nome}" sem stock selecionado. É OBRIGATÓRIO selecionar um Cliente no topo do carrinho!`, { autoClose: 6000 });
+        toast.warn(
+          `Produto "${product.name || product.nome}" sem stock selecionado. É OBRIGATÓRIO selecionar um Cliente no topo do carrinho!`,
+          { autoClose: 6000 }
+        );
       } else {
-        toast.info(`Produto "${product.name || product.nome}" sem stock adicionado como Pedido de Produção (Agendado).`);
+        toast.info(
+          `Produto "${product.name || product.nome}" sem stock adicionado como Pedido de Produção (Agendado).`
+        );
       }
     }
 
     handleAddToCart(product);
   };
 
-  const handleCheckout = () => {
+  const handleOpenPaymentModal = () => {
     if (cart.length === 0) {
       toast.error("Adicione produtos para continuar.");
       return;
     }
 
-    // Rule: Standalone Revenda items cannot be ordered if out of stock
     if (isOnlyRevendaCart && hasZeroStockItem) {
-      toast.error("Produtos de revenda solteiros sem stock não podem ser encomendados. Reduza a quantidade ou adicione um produto de fabrico.");
+      toast.error(
+        "Produtos de revenda solteiros sem stock não podem ser encomendados. Reduza a quantidade ou adicione um produto de fabrico."
+      );
       return;
     }
 
-    // Rule: Zero-stock items convert sale to Pedido de Produção and REQUIRE a client
     if (hasZeroStockItem) {
       if (tipoPedido !== "Agendado") {
         setTipoPedido("Agendado");
@@ -192,21 +398,14 @@ export default function CaixaPOS() {
       }
 
       if (!selectedClient) {
-        toast.error("Para produtos sem stock (Pedido de Produção), é OBRIGATÓRIO selecionar um Cliente antes de avançar!");
+        toast.error(
+          "Para produtos sem stock (Pedido de Produção), é OBRIGATÓRIO selecionar um Cliente antes de avançar!"
+        );
         return;
       }
     }
 
-    setStep(2);
-  };
-
-  const handleConvertToOrderFromModal = () => {
-    setTipoPedido("Agendado");
-    const future = new Date(Date.now() + 3 * 3600 * 1000);
-    const tzOffset = future.getTimezoneOffset() * 60000;
-    const localISOTime = new Date(future.getTime() - tzOffset).toISOString().slice(0, 16);
-    setDataEntrega(localISOTime);
-    setStep(2);
+    setIsPaymentModalOpen(true);
   };
 
   const handleGerarProformaDirect = async () => {
@@ -247,6 +446,7 @@ export default function CaixaPOS() {
         numero: res.numero_documento || `PROFORMA/${res.id}`,
         total: res.total || total,
       });
+      setIsPaymentModalOpen(false);
       setStep(3);
       toast.success(res.msg || "Fatura Pró-Forma gerada com sucesso!");
     } catch (err: any) {
@@ -257,22 +457,22 @@ export default function CaixaPOS() {
   const confirmPayment = async () => {
     const isAgendado = tipoPedido === "Agendado";
 
-    // 1. Client obligation rule:
     if (isAgendado && !selectedClient) {
-      toast.error(
-        "Para pedidos agendados, a seleção de um cliente é obrigatória."
-      );
+      toast.error("Para pedidos agendados, a seleção de um cliente é obrigatória.");
       return;
     }
 
-    // 2. Scheduled date validation:
     if (isAgendado && !dataEntrega) {
       toast.error("Selecione uma data e hora para a entrega.");
       return;
     }
 
-    // 3. Payment method mandatory fields:
-    if (!isProforma && (paymentMethod === "Transferência" || paymentMethod === "TPA / POS" || paymentMethod === "Mixto")) {
+    if (
+      !isProforma &&
+      (paymentMethod === "Transferência" ||
+        paymentMethod === "TPA / POS" ||
+        paymentMethod === "Mixto")
+    ) {
       if (!codigoTransferencia.trim()) {
         toast.error("Código de transferência / comprovativo é obrigatório.");
         return;
@@ -283,46 +483,65 @@ export default function CaixaPOS() {
       }
     }
 
-    const valorPagoNum = isProforma ? 0 : (isAgendado && valorPago !== "" ? parseFloat(valorPago) : total);
+    const valorPagoNum = isProforma
+      ? 0
+      : isAgendado && valorPago !== ""
+      ? parseFloat(valorPago)
+      : total;
 
-    const valorDinheiroMixto = Number(paymentFormState?.valorCashMixto || 0);
-    const valorPosMixto = Number(paymentFormState?.valorPosMixto || 0);
-    if (!isProforma && paymentMethod === "Mixto" && Math.abs(valorDinheiroMixto + valorPosMixto - valorPagoNum) > 0.01) {
+    if (
+      !isProforma &&
+      paymentMethod === "Mixto" &&
+      Math.abs(valorCashMixto + valorPosMixto - valorPagoNum) > 0.01
+    ) {
       toast.error("No pagamento misto, a soma de Dinheiro e POS deve ser igual ao valor a liquidar.");
       return;
     }
 
-    const minimoDinheiroRecebido = paymentMethod === "Mixto" ? valorDinheiroMixto : valorPagoNum;
-    if (!isProforma && (paymentMethod === "Dinheiro" || paymentMethod === "Mixto") && amountReceived < minimoDinheiroRecebido) {
+    const minimoDinheiroRecebido = paymentMethod === "Mixto" ? valorCashMixto : valorPagoNum;
+    if (
+      !isProforma &&
+      (paymentMethod === "Dinheiro" || paymentMethod === "Mixto") &&
+      amountReceived < minimoDinheiroRecebido
+    ) {
       toast.error("Valor recebido insuficiente.");
       return;
     }
 
     try {
-      const saldoRestante = Math.max(0, total - valorPagoNum);
       const paymentMethodId =
-        paymentMethod === "Transferência"
-          ? 2
-          : paymentMethod === "TPA / POS"
-          ? 3
-          : 1;
+        paymentMethod === "Transferência" ? 2 : paymentMethod === "TPA / POS" ? 3 : 1;
 
-      const pagamentos = valorPagoNum <= 0 ? [] : paymentMethod === "Mixto"
-        ? [
-            { forma_pagamento_id: 1, valor: valorDinheiroMixto },
-            { forma_pagamento_id: 3, valor: valorPosMixto, codigo_transferencia: codigoTransferencia || null, emissor: emissor || null },
-          ].filter((pagamento) => pagamento.valor > 0)
-        : [{
-            forma_pagamento_id: paymentMethodId,
-            valor: valorPagoNum,
-            codigo_transferencia: paymentMethod !== "Dinheiro" ? (codigoTransferencia || null) : null,
-            emissor: paymentMethod !== "Dinheiro" ? (emissor || null) : null,
-          }];
+      const pagamentos =
+        valorPagoNum <= 0
+          ? []
+          : paymentMethod === "Mixto"
+          ? [
+              { forma_pagamento_id: 1, valor: valorCashMixto },
+              {
+                forma_pagamento_id: 3,
+                valor: valorPosMixto,
+                codigo_transferencia: codigoTransferencia || null,
+                emissor: emissor || null,
+              },
+            ].filter((p) => p.valor > 0)
+          : [
+              {
+                forma_pagamento_id: paymentMethodId,
+                valor: valorPagoNum,
+                codigo_transferencia:
+                  paymentMethod !== "Dinheiro" ? codigoTransferencia || null : null,
+                emissor: paymentMethod !== "Dinheiro" ? emissor || null : null,
+              },
+            ];
 
-      const mapCartToVendaItens = (
-        quantidadesDisponiveis?: Record<number, number>
-      ) => {
-        const cartTotalValue = cart.reduce((acc, it) => acc + Number(it.preco_venda_com_iva || it.salePrice || it.preco_venda || 0) * Number(quantidadesDisponiveis?.[Number(it.id)] ?? it.qty), 0);
+      const mapCartToVendaItens = () => {
+        const cartTotalValue = cart.reduce(
+          (acc, it) =>
+            acc +
+            Number(it.preco_venda_com_iva || it.salePrice || it.preco_venda || 0) * Number(it.qty),
+          0
+        );
         return cart.map((i) => {
           let tipoItem = "Produto";
           const cat = String(i.category || i.categoria || "").toLowerCase();
@@ -331,10 +550,9 @@ export default function CaixaPOS() {
           }
           const preco = Number(i.preco_venda_com_iva || i.salePrice || i.preco_venda || 0);
           const itemId = Number(i.id);
-          const quantidade = quantidadesDisponiveis?.[itemId] ?? Number(i.qty);
+          const quantidade = Number(i.qty);
           const grossItemTotal = preco * quantidade;
 
-          // Item specific discount
           const descValor = Number(i.desconto_valor || 0);
           const descTipo = i.desconto_tipo || "percentual";
           let itemSpecificDiscount = 0;
@@ -348,11 +566,12 @@ export default function CaixaPOS() {
 
           let totalDescontoItem = itemSpecificDiscount;
           if (descontoClientePercent > 0) {
-            totalDescontoItem += ((grossItemTotal - itemSpecificDiscount) * descontoClientePercent) / 100;
+            totalDescontoItem +=
+              ((grossItemTotal - itemSpecificDiscount) * descontoClientePercent) / 100;
           }
           if (descontoManual > 0 && cartTotalValue > 0) {
-             const proportionalRatio = grossItemTotal / cartTotalValue;
-             totalDescontoItem += (descontoManual * proportionalRatio);
+            const proportionalRatio = grossItemTotal / cartTotalValue;
+            totalDescontoItem += descontoManual * proportionalRatio;
           }
           return {
             item_id: itemId,
@@ -365,10 +584,7 @@ export default function CaixaPOS() {
         });
       };
 
-      const buildVendaPayload = (
-        converterStockInsuficiente = false,
-        valorPagamento = valorPagoNum
-      ) => ({
+      const buildVendaPayload = (valorPagamento = valorPagoNum) => ({
         tipo_documento: tipoDocumento,
         cliente_id: selectedClient ? Number(selectedClient) : undefined,
         observacoes: "Venda direta via POS",
@@ -380,9 +596,6 @@ export default function CaixaPOS() {
       const current_date = d.toISOString().split("T")[0];
       const current_time = d.toTimeString().split(" ")[0];
 
-      // Build a strictly valid order creation payload
-      const strFormaPagamento = paymentMethod === "Transferência" ? "Transferencia" : (paymentMethod === "TPA / POS" ? "POS" : "Dinheiro");
-
       const orderPayload: any = {
         cliente_id: selectedClient ? Number(selectedClient) : undefined,
         tipo: "Simples",
@@ -393,12 +606,15 @@ export default function CaixaPOS() {
           : current_time,
         estado: "Agendado",
         observacoes: `Pedido ${tipoPedido}. Caixa: #${caixaId}`,
-        // O pedido não movimenta caixa. O checkout abaixo regista o pagamento
-        // e gera a venda/recibo numa única transação.
         valor_pago: 0,
         forma_pagamento: "Dinheiro",
         itens: (() => {
-          const cartTotalValue = cart.reduce((acc, it) => acc + Number(it.preco_venda_com_iva || it.salePrice || it.preco_venda || 0) * Number(it.qty), 0);
+          const cartTotalValue = cart.reduce(
+            (acc, it) =>
+              acc +
+              Number(it.preco_venda_com_iva || it.salePrice || it.preco_venda || 0) * Number(it.qty),
+            0
+          );
           return cart.map((i) => {
             const preco = Number(i.preco_venda_com_iva || i.salePrice || i.preco_venda || 0);
             const quantidade = Number(i.qty);
@@ -417,11 +633,12 @@ export default function CaixaPOS() {
 
             let totalDescontoItem = itemSpecificDiscount;
             if (descontoClientePercent > 0) {
-              totalDescontoItem += ((grossItemTotal - itemSpecificDiscount) * descontoClientePercent) / 100;
+              totalDescontoItem +=
+                ((grossItemTotal - itemSpecificDiscount) * descontoClientePercent) / 100;
             }
             if (descontoManual > 0 && cartTotalValue > 0) {
-               const proportionalRatio = grossItemTotal / cartTotalValue;
-               totalDescontoItem += (descontoManual * proportionalRatio);
+              const proportionalRatio = grossItemTotal / cartTotalValue;
+              totalDescontoItem += descontoManual * proportionalRatio;
             }
             let tipoItem = "Produto";
             const cat = String(i.category || i.categoria || "").toLowerCase();
@@ -442,48 +659,18 @@ export default function CaixaPOS() {
       };
 
       if (isProforma) {
-        // Direct Pro-Forma Creation (POST /api/v1/proformas/)
-        const proformaPayload: ProformaCreatePayload = {
-          cliente_id: selectedClient ? Number(selectedClient) : null,
-          pedido_id: null,
-          evento_id: null,
-          origem: "POS",
-          observacoes: "Orçamento para cliente balcão",
-          itens: cart.map((i) => {
-            const cat = String(i.category || i.categoria || "").toLowerCase();
-            const isServ = cat.includes("servi") || cat.includes("servic");
-            return {
-              item_tipo: isServ ? "Servico" : "Produto",
-              item_id: isNaN(Number(i.id)) ? null : Number(i.id),
-              descricao: i.name || i.nome || "Item de Venda",
-              quantidade: Number(i.qty || 1),
-              preco_unitario: Number(i.price || 0),
-              desconto: Number(i.discount || 0),
-              taxa_iva: Number(i.taxa_iva ?? i.iva_taxa ?? i.iva ?? 15),
-            };
-          }),
-        };
-
-        const proformaRes = await proformaService.create(proformaPayload);
-        setCreatedVenda({
-          ...proformaRes,
-          isProforma: true,
-          id: proformaRes.id,
-          numero: proformaRes.numero_documento || `PROFORMA 2026/${proformaRes.id}`,
-          total: proformaRes.total || total,
-        });
-        toast.success(proformaRes.msg || "Pró-Forma criada com sucesso!");
+        await handleGerarProformaDirect();
+        return;
       } else if (tipoPedido === "Imediato") {
-        // Venda Direta (Balcão)
-        const vendaPayload = buildVendaPayload(false, valorPagoNum);
+        const vendaPayload = buildVendaPayload(valorPagoNum);
         const vendaRes = await createVenda.mutateAsync(vendaPayload);
         setCreatedVenda(vendaRes);
       } else {
-        // Create the order first (Passo 1: POST /api/v1/pedidos)
         const createdOrder: any = await orderService.create(orderPayload);
-        
         if (valorPagoNum > 0) {
-          const serverSaldo = Number(createdOrder.saldo ?? createdOrder.total ?? createdOrder.valor_total ?? valorPagoNum);
+          const serverSaldo = Number(
+            createdOrder.saldo ?? createdOrder.total ?? createdOrder.valor_total ?? valorPagoNum
+          );
           const safePayVal = Number(Math.min(valorPagoNum, serverSaldo).toFixed(2));
 
           let payloadPagamento: any;
@@ -509,28 +696,26 @@ export default function CaixaPOS() {
           });
           setCreatedVenda(vendaRes);
         } else {
-          // Pedido and venda identifiers are distinct. Issue the FT first so
-          // printing always uses a real commercial-document identifier.
-          const vendaRes = await vendaService.emitirDocumentoPedido(createdOrder.id, isProforma ? "PROFORMA" : "FT");
+          const vendaRes = await vendaService.emitirDocumentoPedido(
+            createdOrder.id,
+            isProforma ? "PROFORMA" : "FT"
+          );
           setCreatedVenda(vendaRes);
         }
       }
 
-      // Pre-fill contact details if client is selected
       if (selectedClient) {
-        const client = clients.find(
-          (c: any) => String(c.id) === String(selectedClient)
-        );
+        const client = clients.find((c: any) => String(c.id) === String(selectedClient));
         if (client) {
           setSendContact(client.email || client.telefone || "");
           setSendMethod(client.email ? "email" : "whatsapp");
         }
       }
 
+      setIsPaymentModalOpen(false);
       setStep(3);
     } catch (err: any) {
       console.error(err);
-      // Errors are already handled by the useComercial hook's onError callback
     }
   };
 
@@ -551,7 +736,18 @@ export default function CaixaPOS() {
     setSendMethod("email");
     setSendContact("");
     setInvoiceSent(false);
-    setStep(1);
+    setIsPaymentModalOpen(false);
+  };
+
+  const handleLoadDraft = (draft: CaixaDraft) => {
+    clearCart();
+    if (draft.cart && draft.cart.length > 0) {
+      draft.cart.forEach((item: any) => handleAddToCart(item));
+    }
+    if (draft.clientId) setSelectedClient(draft.clientId);
+    if (draft.tipoDocumento) setTipoDocumento(draft.tipoDocumento);
+    if (draft.tipoPedido) setTipoPedido(draft.tipoPedido);
+    if (draft.dataEntrega) setDataEntrega(draft.dataEntrega);
   };
 
   const printThermalReceipt = (venda: any) => {
@@ -559,26 +755,9 @@ export default function CaixaPOS() {
       toast.error("Documento não encontrado para impressão.");
       return;
     }
-    // Never fall back to a pedido URL with a venda identifier: matching ids
-    // can point to a different historical document.
     documentService.imprimirReciboVenda(venda.id).catch((err) => {
       toast.error(err?.message || "Erro ao gerar recibo térmico.");
     });
-    return;
-    const targetId = venda.pedido_id || venda.id;
-    if (!venda.id) {
-      documentService.imprimirReciboPedido(targetId).catch(() => {
-        documentService.imprimirReciboVenda(venda.id).catch((err) => {
-          toast.error(err?.message || "Erro ao gerar recibo térmico.");
-        });
-      });
-    } else {
-      documentService.imprimirReciboVenda(venda.id).catch(() => {
-        documentService.imprimirReciboPedido(venda.id).catch((err) => {
-          toast.error(err?.message || "Erro ao gerar recibo térmico no backend.");
-        });
-      });
-    }
   };
 
   if (!isCaixaAberta) {
@@ -589,15 +768,15 @@ export default function CaixaPOS() {
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
             Caixa Fechado
           </h2>
-          <p className="text-gray-500 mb-8 text-center max-w-md">
+          <p className="text-gray-500 mb-8 text-center max-w-md text-sm">
             O caixa encontra-se fechado. Para registar vendas e operações ao
             balcão, inicie o turno preenchendo o fundo de maneio.
           </p>
           <button
             onClick={() => setActiveSessionModal("abrir")}
-            className="bg-primary hover:bg-primary-hover text-white font-bold py-3 px-8 rounded-xl shadow-lg shadow-primary/20 transition-all flex items-center gap-2"
+            className="bg-primary hover:bg-primary-hover text-white font-bold py-3 px-8 rounded-xl shadow-lg shadow-primary/20 transition-all flex items-center gap-2 text-sm"
           >
-            <Lock size={18} /> Abrir Caixa
+            <Unlock size={18} /> Abrir Turno de Caixa
           </button>
         </div>
 
@@ -616,362 +795,167 @@ export default function CaixaPOS() {
 
   return (
     <>
-      <div className="min-h-[calc(100vh-8rem)] xl:h-[calc(100vh-8rem)] flex flex-col xl:flex-row gap-4 xl:gap-6 overflow-auto xl:overflow-hidden animate-fade-in">
-      <div className="flex-1 min-h-[32rem] bg-surface dark:bg-surface-dark border border-gray-200 dark:border-border-dark rounded-xl flex flex-col overflow-hidden shadow-sm">
-        <div className="p-3 sm:p-4 border-b border-gray-200 dark:border-border-dark flex flex-col 2xl:flex-row 2xl:items-center 2xl:justify-between gap-3 bg-white dark:bg-surface-dark z-10 shrink-0">
-          <div className="flex flex-wrap items-center gap-2 sm:gap-4">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-              <Calculator size={20} className="text-primary" />
-              Produtos
-            </h2>
-            <div className="relative w-full sm:w-56 sm:ml-2">
-              <input
-                type="text"
-                placeholder="Pesquisar produto..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-gray-50 border border-gray-200 dark:border-gray-700 dark:bg-gray-800 rounded-lg pl-10 pr-4 py-2 text-sm focus:border-primary outline-none"
-              />
+      <div className="flex flex-col flex-1 h-full w-full bg-white dark:bg-background-dark overflow-hidden relative">
+        {/* Top Cash Control & Search Header */}
+        <div className="p-3 sm:p-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 flex flex-wrap items-center justify-between gap-3 shrink-0">
+          {/* Search Bar + Advanced Filters */}
+          <div className="flex items-center gap-2 flex-1 min-w-[260px] max-w-xl">
+            <div className="relative flex-1">
               <Search
                 size={16}
-                className="absolute left-3 top-2.5 text-gray-400"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              />
+              <input
+                type="text"
+                placeholder="Pesquisar produto por nome, código ou categoria..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl pl-9 pr-3 py-2 text-xs font-semibold text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/50"
               />
             </div>
-            <select
-              value={selectedServico}
-              onChange={(e) => setSelectedServico(e.target.value)}
-              className="bg-gray-50 border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm font-semibold focus:border-primary outline-none"
-            >
-              <option value="all">Todos os Serviços</option>
-              <option value="COZINHA">Cozinha (COZINHA)</option>
-              <option value="PASTELARIA">Pastelaria (PASTELARIA)</option>
-              <option value="BAR">Bar (BAR)</option>
-              <option value="ABASTECIMENTO">Abastecimento (ABASTECIMENTO)</option>
-            </select>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => setActiveSessionModal("sangria")}
-              className="text-sm font-medium px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-200 rounded-lg transition-colors border border-gray-200 dark:border-gray-700 flex items-center gap-2"
-            >
-              Sangria
-            </button>
-            <button
-              onClick={() => setActiveSessionModal("reforco")}
-              className="text-sm font-medium px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-200 rounded-lg transition-colors border border-gray-200 dark:border-gray-700 flex items-center gap-2"
-            >
-              Reforço
-            </button>
-            <button
-              onClick={() => setActiveSessionModal("fechar")}
-              className="text-sm font-medium px-4 py-2 bg-error/10 text-error hover:bg-error/20 rounded-lg transition-colors border border-error/20 flex items-center gap-2"
-            >
-              <Lock size={16} /> Fechar Caixa
-            </button>
-          </div>
-        </div>
 
-        <div className="bg-white dark:bg-surface-dark border-b border-gray-200 dark:border-border-dark px-4 py-2 shrink-0 flex gap-2 overflow-x-auto">
-          {[
-            "Tudo",
-            "Acabado",
-            "Revenda",
-            "Material",
-            "Menu Eventos",
-            "Espaço",
-          ].map((cat) => (
             <button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              className={cn(
-                "px-3 py-1.5 text-sm font-medium rounded-full whitespace-nowrap transition-colors border",
-                activeCategory === cat
-                  ? "bg-primary text-white border-primary"
-                  : "bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700"
+              type="button"
+              onClick={() => setIsFilterModalOpen(true)}
+              className="px-3 py-2 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-300 transition-all flex items-center gap-1.5 shrink-0"
+              title="Filtros avançados do catálogo"
+            >
+              <SlidersHorizontal size={15} />
+              <span className="hidden sm:inline">Filtros</span>
+              {activeFiltersCount > 0 && (
+                <span className="px-1.5 py-0.2 bg-primary text-white text-[10px] font-extrabold rounded-full">
+                  {activeFiltersCount}
+                </span>
               )}
-            >
-              {cat}
             </button>
-          ))}
+          </div>
+
+          {/* Cash Control Actions Group */}
+          <div className="flex items-center gap-2 flex-wrap justify-end">
+            {/* Session Pill */}
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl text-xs font-bold text-emerald-700 dark:text-emerald-400">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>Caixa Aberto {caixaId ? `(#${caixaId})` : ""}</span>
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
+              <button
+                type="button"
+                onClick={() => setActiveSessionModal("reforco")}
+                className="px-2.5 py-1.5 bg-white dark:bg-gray-700 hover:bg-emerald-500 hover:text-white text-gray-700 dark:text-gray-200 rounded-lg text-xs font-bold transition-all flex items-center gap-1 shadow-sm"
+                title="Registar Entrada de Dinheiro / Suprimento"
+              >
+                <ArrowDownRight size={14} className="text-emerald-500" />
+                <span className="hidden md:inline">Reforço</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveSessionModal("sangria")}
+                className="px-2.5 py-1.5 bg-white dark:bg-gray-700 hover:bg-amber-500 hover:text-white text-gray-700 dark:text-gray-200 rounded-lg text-xs font-bold transition-all flex items-center gap-1 shadow-sm"
+                title="Registar Retirada de Dinheiro / Sangria"
+              >
+                <ArrowUpRight size={14} className="text-amber-500" />
+                <span className="hidden md:inline">Sangria</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveSessionModal("fechar")}
+                className="px-2.5 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1 shadow-sm"
+                title="Fechar Turno de Caixa"
+              >
+                <Lock size={14} />
+                <span>Fechar Caixa</span>
+              </button>
+            </div>
+          </div>
         </div>
 
-        <ProductGrid
-          displayProductslist={displayProducts}
-          showPriceWithIva={true}
-          handleAddToCart={handleAddToCartWrapper}
-          formatCurrency={(val) =>
-            new Intl.NumberFormat("pt-PT", {
-              style: "currency",
-              currency: config.moeda,
-            }).format(val)
-          }
-        />
-      </div>
-
-      <div className="w-full xl:w-96 xl:max-w-96 min-h-[28rem] xl:min-h-0 xl:h-full bg-surface dark:bg-surface-dark border border-gray-200 dark:border-border-dark rounded-xl flex flex-col shrink-0 shadow-sm overflow-hidden">
+        {/* Main Content View */}
         {step === 1 && (
-          <>
-            <div className="p-4 border-b border-gray-200 dark:border-border-dark shrink-0">
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                <ShoppingCart size={20} />
-                Carrinho Atendimento
-              </h2>
-            </div>
-
-            <div className={`p-4 border-b shrink-0 transition-all ${
-              (hasZeroStockItem && !selectedClient)
-                ? "bg-amber-50 dark:bg-amber-950/30 border-amber-300 dark:border-amber-800 ring-2 ring-amber-400/50"
-                : "border-gray-200 dark:border-border-dark"
-            }`}>
-              <div className="flex items-center justify-between mb-1">
-                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300">
-                  Cliente {hasZeroStockItem ? "(OBRIGATÓRIO p/ Pedido Produção)" : "(Opcional)"}
-                </label>
-                {hasZeroStockItem && !selectedClient && (
-                  <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 flex items-center gap-1 animate-pulse">
-                    <AlertTriangle size={12} /> Requerido
-                  </span>
-                )}
-              </div>
-              
-              <select
-                value={selectedClient}
-                onChange={(e) => setSelectedClient(e.target.value)}
-                className={`w-full bg-white dark:bg-gray-800 rounded-lg px-3 py-2 text-sm outline-none font-semibold ${
-                  (hasZeroStockItem && !selectedClient)
-                    ? "border-2 border-amber-500 text-amber-900 dark:text-amber-200"
-                    : "border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white focus:border-primary"
-                }`}
-              >
-                <option value="">-- {hasZeroStockItem ? "Selecionar Cliente (Obrigatório)" : "Cliente ao Balcão"} --</option>
-                {clients.map((c: any) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name || c.nome} {c.nif ? `(${c.nif})` : ""}
-                  </option>
+          <div className="flex-1 flex flex-col md:flex-row overflow-hidden min-h-0">
+            {/* Catalog Column */}
+            <div className="flex-1 flex flex-col min-w-0 border-b md:border-b-0 md:border-r border-gray-200 dark:border-gray-800">
+              {/* Category Sector Pills */}
+              <div className="px-4 py-2 bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-800 flex items-center gap-1.5 overflow-x-auto shrink-0">
+                {["Revenda", "Acabado", "Serviço", "TODOS"].map((cat) => (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setActiveCategory(cat)}
+                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
+                      activeCategory === cat
+                        ? "bg-primary text-white shadow-sm"
+                        : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-100"
+                    }`}
+                  >
+                    {cat === "TODOS" ? "Todos os Setores" : cat}
+                  </button>
                 ))}
-              </select>
+              </div>
+
+              {/* Product Grid */}
+              <ProductGrid
+                displayProductslist={filteredProducts}
+                showPriceWithIva={showPriceWithIva}
+                handleAddToCart={handleAddToCartWrapper}
+                formatCurrency={formatCurrency}
+              />
             </div>
 
-            <CartList
-              cart={cart}
-              showPriceWithIva={true}
-              currencySymbol={config.moeda}
-              formatCurrency={(val) =>
-                new Intl.NumberFormat("pt-PT", {
-                  style: "currency",
-                  currency: config.moeda,
-                }).format(val)
-              }
-              removeItem={removeItem}
-              updateQty={updateQty}
-              updateItemDiscount={updateItemDiscount}
-            />
-
-            <div className="p-4 border-t border-gray-200 dark:border-border-dark shrink-0 bg-gray-50 dark:bg-gray-800/30">
-              {/* Resumo */}
-              <div className="space-y-2 mb-4 text-sm">
-                <div className="flex justify-between text-gray-600 dark:text-gray-400">
-                  <span>{"Subtotal (s/ IVA)"}</span>
-                  <span>{formatCurrency(subtotal)}</span>
-                </div>
-
-                {descontoAutomatico > 0 && (
-                  <div className="flex justify-between text-red-500">
-                    <span>Desconto Cliente ({descontoClientePercent}%)</span>
-                    <span>- {formatCurrency(descontoAutomatico)}</span>
-                  </div>
-                )}
-                
-                <div className="flex justify-between items-center text-gray-600 dark:text-gray-400">
-                  <span className="flex items-center gap-1">Desconto Extra (Valor)</span>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    className="w-24 px-2 py-1 text-right text-sm border rounded dark:bg-gray-800 dark:border-gray-700 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary"
-                    placeholder="0.00"
-                    value={descontoManual || ""}
-                    onChange={(e) => setDescontoManual(Math.max(0, parseFloat(e.target.value) || 0))}
+            {/* Cart Column */}
+            <div className="w-full md:w-[380px] lg:w-[420px] flex flex-col shrink-0 bg-white dark:bg-gray-900">
+              {/* Client Selector inside Cart Top Header */}
+              <div className="p-3 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-800 flex items-center gap-2">
+                <div className="flex-1 space-y-1">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase block">
+                    Cliente Atribuído
+                  </label>
+                  <SearchableClientSelect
+                    clients={clients}
+                    selectedClientId={selectedClient}
+                    onSelectClient={(id) => setSelectedClient(id)}
                   />
                 </div>
-                {descontoManual > 0 && (
-                  <div className="flex justify-between text-red-500">
-                    <span>Desconto Extra Aplicado</span>
-                    <span>- {formatCurrency(descontoManual)}</span>
-                  </div>
-                )}
-                {/* IVA */}
-                <div className="flex justify-between text-gray-600 dark:text-gray-400">
-                  <span>{"IVA"}</span>
-                  <span>{formatCurrency(Iva)}</span>
-                </div>
 
-                <div className="border-t border-dashed border-gray-300 dark:border-gray-700 pt-2 flex justify-between items-center">
-                  <span className="font-semibold tracking-wide text-gray-700 dark:text-gray-300">
-                    TOTAL A PAGAR
-                  </span>
-
-                  <span className="text-2xl font-bold text-primary">
-                    {formatCurrency(total)}
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <button
-                  onClick={handleCheckout}
-                  disabled={cart.length === 0}
-                  className="w-full bg-primary hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3.5 rounded-xl transition-all shadow-lg shadow-primary/20 flex justify-center items-center gap-2"
-                >
-                  PROSSEGUIR PARA PAGAMENTO
-                </button>
                 <button
                   type="button"
-                  onClick={handleGerarProformaDirect}
-                  disabled={cart.length === 0}
-                  className="w-full bg-amber-600 hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-2.5 rounded-xl transition-all shadow flex justify-center items-center gap-2 text-sm"
+                  onClick={() => setIsCartModalOpen(true)}
+                  className="mt-4 px-3 py-1.5 bg-primary/10 hover:bg-primary text-primary hover:text-white border border-primary/20 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 shadow-sm"
+                  title="Ver todos os produtos do carrinho em tabela"
                 >
-                  📄 GERAR PRÓ-FORMA
+                  <span>Ver Todos</span>
+                  {cart.length > 0 && (
+                    <span className="px-1.5 py-0.2 bg-primary text-white font-extrabold text-[10px] rounded-full">
+                      {cart.length}
+                    </span>
+                  )}
                 </button>
               </div>
-            </div>
-          </>
-        )}
 
-        {step === 2 && (
-          <>
-            <div className="p-4 border-b border-gray-200 dark:border-border-dark flex items-center justify-between shrink-0">
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white">
-                Pagamento / Encomenda
-              </h2>
-              <button
-                onClick={() => setStep(1)}
-                className="text-sm text-gray-500 hover:text-primary font-bold"
-              >
-                Voltar
-              </button>
-            </div>
-
-            <div className="p-5 flex-1 overflow-y-auto space-y-4">
-              {/* Tipo de Pedido: Imediato vs Agendado */}
-              <div>
-                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">
-                  Tipo de Atendimento
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    disabled={hasZeroStockItem}
-                    onClick={() => !hasZeroStockItem && setTipoPedido("Imediato")}
-                    className={cn(
-                      "py-2 rounded-lg text-xs font-bold border transition-all",
-                      hasZeroStockItem
-                        ? "opacity-50 cursor-not-allowed bg-gray-100 text-gray-400 dark:bg-gray-800"
-                        : tipoPedido === "Imediato"
-                        ? "bg-primary text-white border-primary shadow-sm"
-                        : "bg-white text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 hover:bg-gray-50"
-                    )}
-                  >
-                    Levantamento Imediato
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setTipoPedido("Agendado");
-                      if (!dataEntrega) {
-                        const future = new Date(Date.now() + 3 * 3600 * 1000);
-                        const tzOffset = future.getTimezoneOffset() * 60000;
-                        const localISOTime = new Date(future.getTime() - tzOffset).toISOString().slice(0, 16);
-                        setDataEntrega(localISOTime);
-                      }
-                    }}
-                    className={cn(
-                      "py-2 rounded-lg text-xs font-bold border transition-all",
-                      tipoPedido === "Agendado"
-                        ? "bg-primary text-white border-primary shadow-sm"
-                        : "bg-white text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 hover:bg-gray-50"
-                    )}
-                  >
-                    Pedido de Produção (Agendado)
-                  </button>
-                </div>
-              </div>
-
-              {/* Conditional Scheduled fields */}
-              {tipoPedido === "Agendado" && (
-                <div className="p-3 bg-blue-50/70 dark:bg-blue-950/20 rounded-xl border border-blue-200 dark:border-blue-900/30 space-y-3">
-                  <h3 className="text-xs font-bold text-primary uppercase flex items-center gap-1.5">
-                    <Clock size={16} /> Configurações do Pedido de Produção
-                  </h3>
-                  <div>
-                    <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">
-                      Data e Hora da Entrega *
-                    </label>
-                    <input
-                      type="datetime-local"
-                      value={dataEntrega}
-                      onChange={(e) => setDataEntrega(e.target.value)}
-                      className="w-full text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-2 font-medium text-gray-800 dark:text-gray-100 outline-none"
-                    />
-                  </div>
-                </div>
-              )}
-
-              <div className="p-3 rounded-xl border border-gray-200 dark:border-gray-700 space-y-1">
-                <label className="block text-[10px] font-bold text-gray-500 uppercase">Documento comercial</label>
-                <select
-                  value={tipoDocumento}
-                  onChange={(e) => setTipoDocumento(e.target.value as "FR" | "PROFORMA")}
-                  className="w-full text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-2"
-                >
-                  <option value="FR">FR — Venda direta paga</option>
-                  <option value="PROFORMA">Pró-Forma — sem pagamento</option>
-                </select>
-                {tipoDocumento === "PROFORMA" && <p className="text-[10px] text-amber-600">A Pró-Forma não movimenta caixa nem regista pagamento.</p>}
-              </div>
-
-              {/* Flexible Multi-Method Payment Form */}
-              <FlexiblePaymentForm
-                total={total}
+              {/* Cart List Items */}
+              <CartList
+                cart={cart}
+                showPriceWithIva={showPriceWithIva}
                 currencySymbol={config.moeda}
-                isAgendado={tipoPedido === "Agendado"}
-                disableDeferredAndInstallments={isOnlyRevendaCart}
-                onPaymentStateChange={(state) => {
-                  setPaymentFormState(state);
-                  setPaymentMethod(state.method);
-                  setCodigoTransferencia(state.codigoTransferencia);
-                  setEmissor(state.emissor);
-                  setAmountReceived(state.amountReceived);
-                  if (state.settlementMode === "deferido") {
-                    setValorPago("0");
-                  } else if (state.settlementMode === "parcelas") {
-                    setValorPago(String(state.valorPago));
-                  } else {
-                    setValorPago(String(total));
-                  }
-                }}
+                formatCurrency={formatCurrency}
+                removeItem={removeItem}
+                updateQty={updateQty}
+                updateItemDiscount={updateItemDiscount}
               />
             </div>
-
-            <div className="p-4 border-t border-gray-200 dark:border-border-dark shrink-0">
-              <button
-                onClick={confirmPayment}
-                disabled={checkoutPedido.isPending || createVenda.isPending}
-                className="w-full bg-success hover:bg-success/90 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-success/20 flex justify-center items-center gap-2 text-base disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {checkoutPedido.isPending || createVenda.isPending
-                  ? "A PROCESSAR..."
-                  : "CONFIRMAR E REGISTAR"}
-              </button>
-            </div>
-          </>
+          </div>
         )}
 
+        {/* Step 3 Success View */}
         {step === 3 && (() => {
           const isProformaDoc = Boolean(
             createdVenda?.isProforma ||
-            isProforma ||
-            (createdVenda?.numero_documento && String(createdVenda.numero_documento).toUpperCase().includes("PROFORMA"))
+              isProforma ||
+              (createdVenda?.numero_documento &&
+                String(createdVenda.numero_documento).toUpperCase().includes("PROFORMA"))
           );
 
           return (
@@ -989,7 +973,7 @@ export default function CaixaPOS() {
               </p>
 
               {createdVenda && (
-                <div className="w-full p-4 mb-6 border border-gray-150 dark:border-border-dark bg-gray-50 dark:bg-gray-900/40 rounded-xl text-left">
+                <div className="w-full max-w-lg p-4 mb-6 border border-gray-150 dark:border-border-dark bg-gray-50 dark:bg-gray-900/40 rounded-xl text-left">
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4">
                     <button
                       type="button"
@@ -1035,6 +1019,7 @@ export default function CaixaPOS() {
                       <Download size={14} /> Descarregar PDF
                     </button>
                   </div>
+
                   <h3 className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-3">
                     Enviar {isProformaDoc ? "Pró-Forma" : "Fatura"} ao Cliente
                   </h3>
@@ -1053,9 +1038,16 @@ export default function CaixaPOS() {
                         }
                         if (isProformaDoc) {
                           try {
-                            const res = await proformaService.send(createdVenda.id, sendMethod, sendContact);
+                            const res = await proformaService.send(
+                              createdVenda.id,
+                              sendMethod,
+                              sendContact
+                            );
                             setInvoiceSent(true);
-                            toast.success(res.msg || `Pró-Forma enviada com sucesso para ${sendContact} via ${sendMethod}!`);
+                            toast.success(
+                              res.msg ||
+                                `Pró-Forma enviada com sucesso para ${sendContact} via ${sendMethod}!`
+                            );
                           } catch (err: any) {
                             toast.error(err?.message || "Erro ao enviar Pró-Forma.");
                           }
@@ -1093,8 +1085,7 @@ export default function CaixaPOS() {
                             onChange={() => {
                               setSendMethod("email");
                               const client = clients.find(
-                                (c: any) =>
-                                  String(c.id) === String(selectedClient)
+                                (c: any) => String(c.id) === String(selectedClient)
                               );
                               setSendContact(client?.email || "");
                             }}
@@ -1111,8 +1102,7 @@ export default function CaixaPOS() {
                             onChange={() => {
                               setSendMethod("whatsapp");
                               const client = clients.find(
-                                (c: any) =>
-                                  String(c.id) === String(selectedClient)
+                                (c: any) => String(c.id) === String(selectedClient)
                               );
                               setSendContact(client?.telefone || "");
                             }}
@@ -1126,9 +1116,7 @@ export default function CaixaPOS() {
                         <input
                           type={sendMethod === "email" ? "email" : "text"}
                           placeholder={
-                            sendMethod === "email"
-                              ? "exemplo@cliente.com"
-                              : "Telemóvel"
+                            sendMethod === "email" ? "exemplo@cliente.com" : "Telemóvel"
                           }
                           value={sendContact}
                           onChange={(e) => setSendContact(e.target.value)}
@@ -1149,32 +1137,240 @@ export default function CaixaPOS() {
 
               <button
                 onClick={finishSale}
-                className="w-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-900 dark:text-white font-bold py-3.5 rounded-xl transition-all text-sm"
+                className="w-full max-w-lg bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-900 dark:text-white font-bold py-3.5 rounded-xl transition-all text-sm"
               >
                 Novo Atendimento
               </button>
             </div>
           );
         })()}
+
+        {/* Fixed Bottom Footer Bar */}
+        {step === 1 && (
+          <div className="sticky bottom-0 z-20 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 p-3 sm:p-4 shrink-0 shadow-lg">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-3">
+              {/* Financial Metrics */}
+              <div className="flex flex-wrap items-center gap-4 sm:gap-6 w-full md:w-auto">
+                <div>
+                  <span className="text-[10px] text-gray-400 font-semibold uppercase block">
+                    Subtotal
+                  </span>
+                  <span className="text-xs font-bold text-gray-700 dark:text-gray-300">
+                    {formatCurrency(subtotal)}
+                  </span>
+                </div>
+
+                {(descontoAutomatico > 0 || descontoManual > 0) && (
+                  <div>
+                    <span className="text-[10px] text-emerald-500 font-semibold uppercase block">
+                      Desconto
+                    </span>
+                    <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                      -{formatCurrency(descontoAutomatico + descontoManual)}
+                    </span>
+                  </div>
+                )}
+
+                <div>
+                  <span className="text-[10px] text-gray-400 font-semibold uppercase block">
+                    IVA (15% Incl.)
+                  </span>
+                  <span className="text-xs font-bold text-gray-600 dark:text-gray-400">
+                    {formatCurrency(Iva)}
+                  </span>
+                </div>
+
+                <div className="h-8 w-px bg-gray-200 dark:bg-gray-800 hidden sm:block" />
+
+                <div>
+                  <span className="text-[10px] text-primary font-black uppercase tracking-wider block">
+                    TOTAL A PAGAR
+                  </span>
+                  <span className="text-xl sm:text-2xl font-black text-primary">
+                    {formatCurrency(total)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center gap-2 w-full md:w-auto justify-end flex-wrap">
+                {/* Ver Produtos do Carrinho */}
+                <button
+                  type="button"
+                  onClick={() => setIsCartModalOpen(true)}
+                  className="px-3.5 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
+                  title="Ver lista em tabela de todos os produtos do carrinho"
+                >
+                  <ShoppingCart size={15} className="text-primary" />
+                  <span className="hidden sm:inline">Ver Carrinho</span>
+                  {cart.length > 0 && (
+                    <span className="px-1.5 py-0.2 bg-primary text-white text-[10px] font-extrabold rounded-full">
+                      {cart.length}
+                    </span>
+                  )}
+                </button>
+
+                {/* Clear Cart */}
+                <button
+                  type="button"
+                  disabled={cart.length === 0}
+                  onClick={clearCart}
+                  className="px-3 py-2 bg-gray-100 hover:bg-red-50 dark:bg-gray-800 dark:hover:bg-red-950/30 text-gray-600 dark:text-gray-300 hover:text-red-600 rounded-xl text-xs font-bold transition-all flex items-center gap-1 disabled:opacity-40"
+                  title="Esvaziar o carrinho"
+                >
+                  <Trash2 size={14} />
+                  <span className="hidden sm:inline">Limpar</span>
+                </button>
+
+                {/* Rascunhos */}
+                <button
+                  type="button"
+                  onClick={() => setIsDraftsModalOpen(true)}
+                  className="px-3.5 py-2 bg-amber-50 dark:bg-amber-950/20 hover:bg-amber-100 border border-amber-200 dark:border-amber-900/40 text-amber-900 dark:text-amber-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
+                  title="Gerir rascunhos de atendimento"
+                >
+                  <Bookmark size={15} className="text-amber-500" />
+                  <span>Rascunhos</span>
+                  {draftsCount > 0 && (
+                    <span className="px-1.5 py-0.2 bg-amber-500 text-white text-[10px] font-extrabold rounded-full">
+                      {draftsCount}
+                    </span>
+                  )}
+                </button>
+
+                {/* Emitir Pró-Forma */}
+                <button
+                  type="button"
+                  disabled={cart.length === 0}
+                  onClick={handleGerarProformaDirect}
+                  className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-md disabled:opacity-50"
+                >
+                  <FileText size={15} />
+                  <span className="hidden sm:inline">Emitir Pró-Forma</span>
+                  <span className="sm:hidden">Pró-Forma</span>
+                </button>
+
+                {/* Finalizar / Pagar */}
+                <button
+                  type="button"
+                  disabled={cart.length === 0}
+                  onClick={handleOpenPaymentModal}
+                  className="px-6 py-2 bg-primary hover:bg-primary-hover text-white rounded-xl text-xs font-black transition-all flex items-center gap-2 shadow-lg shadow-primary/25 disabled:opacity-50 active:scale-95"
+                >
+                  <CreditCard size={16} />
+                  <span>FINALIZAR / PAGAR</span>
+                  <ArrowRight size={16} />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
-    </div>
 
-    <CaixaSessionModals
-      type={activeSessionModal}
-      onClose={() => setActiveSessionModal(null)}
-      caixaId={caixaId}
-      openCaixa={openCaixa}
-      abrirMutation={abrirMutation}
-      fecharMutation={fecharMutation}
-      movimentoMutation={movimentoMutation}
-    />
+      {/* Advanced Filters Modal */}
+      <CaixaAdvancedFilterModal
+        isOpen={isFilterModalOpen}
+        onClose={() => setIsFilterModalOpen(false)}
+        categories={allCategories}
+        selectedCategory={selectedFilterCategory}
+        setSelectedCategory={setSelectedFilterCategory}
+        selectedType={selectedFilterType}
+        setSelectedType={setSelectedFilterType}
+        onlyInStock={onlyInStockFilter}
+        setOnlyInStock={setOnlyInStockFilter}
+        minPrice={minPriceFilter}
+        setMinPrice={setMinPriceFilter}
+        maxPrice={maxPriceFilter}
+        setMaxPrice={setMaxPriceFilter}
+        sortBy={sortByFilter}
+        setSortBy={setSortByFilter}
+        onReset={handleResetFilters}
+      />
 
-    {/* Order & Sales Receipt / PDF Modal */}
-    <OrderReceiptModal
-      isOpen={receiptModalOpen}
-      onClose={() => setReceiptModalOpen(false)}
-      documentData={receiptDocData}
-    />
-  </>
+      {/* Drafts Modal */}
+      <CaixaDraftsModal
+        isOpen={isDraftsModalOpen}
+        onClose={() => setIsDraftsModalOpen(false)}
+        currentCart={cart}
+        currentClientName={selectedClientObj?.nome}
+        currentClientId={selectedClient}
+        currentTotal={total}
+        currentTipoDocumento={tipoDocumento}
+        currentTipoPedido={tipoPedido}
+        currentDataEntrega={dataEntrega}
+        onLoadDraft={handleLoadDraft}
+      />
+
+      {/* Payment / Checkout Modal */}
+      <CaixaPOSPaymentModal
+        isOpen={isPaymentModalOpen}
+        onClose={() => setIsPaymentModalOpen(false)}
+        total={total}
+        subtotal={subtotal}
+        desconto={descontoAutomatico + descontoManual}
+        totalIva={Iva}
+        cartCount={cart.reduce((acc, i) => acc + Number(i.qty || 1), 0)}
+        clients={clients}
+        selectedClient={selectedClient}
+        setSelectedClient={setSelectedClient}
+        tipoDocumento={tipoDocumento}
+        setTipoDocumento={setTipoDocumento}
+        paymentMethod={paymentMethod}
+        setPaymentMethod={setPaymentMethod}
+        amountReceived={amountReceived}
+        setAmountReceived={setAmountReceived}
+        tipoPedido={tipoPedido}
+        setTipoPedido={setTipoPedido}
+        dataEntrega={dataEntrega}
+        setDataEntrega={setDataEntrega}
+        valorPago={valorPago}
+        setValorPago={setValorPago}
+        codigoTransferencia={codigoTransferencia}
+        setCodigoTransferencia={setCodigoTransferencia}
+        emissor={emissor}
+        setEmissor={setEmissor}
+        valorCashMixto={valorCashMixto}
+        setValorCashMixto={setValorCashMixto}
+        valorPosMixto={valorPosMixto}
+        setValorPosMixto={setValorPosMixto}
+        isSubmitting={createVenda.isPending || checkoutPedido.isPending}
+        onConfirm={confirmPayment}
+        onEmitirProforma={handleGerarProformaDirect}
+      />
+
+      {/* Cart Items Table Modal */}
+      <CaixaCartModal
+        isOpen={isCartModalOpen}
+        onClose={() => setIsCartModalOpen(false)}
+        cart={cart}
+        formatCurrency={formatCurrency}
+        updateQty={updateQty}
+        updateItemDiscount={updateItemDiscount}
+        removeItem={removeItem}
+        clearCart={clearCart}
+        subtotal={subtotal}
+        Iva={Iva}
+        descontoTotal={descontoAutomatico + descontoManual}
+        total={total}
+      />
+
+      {/* Cash Session Modals (Abrir, Fechar, Sangria, Reforço) */}
+      <CaixaSessionModals
+        type={activeSessionModal}
+        onClose={() => setActiveSessionModal(null)}
+        caixaId={caixaId}
+        openCaixa={openCaixa}
+        abrirMutation={abrirMutation}
+        fecharMutation={fecharMutation}
+        movimentoMutation={movimentoMutation}
+      />
+
+      {/* Order & Sales Receipt Modal */}
+      <OrderReceiptModal
+        isOpen={receiptModalOpen}
+        onClose={() => setReceiptModalOpen(false)}
+        documentData={receiptDocData}
+      />
+    </>
   );
 }

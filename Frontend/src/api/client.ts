@@ -15,7 +15,7 @@ export interface PaginatedData<T> {
 }
 
 const apiClient: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'https://6420-197-159-166-222.ngrok-free.app/api',
+  baseURL: import.meta.env.VITE_API_URL || 'http://192.168.100.141:8000/api',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { 
   eventService, 
@@ -14,7 +14,7 @@ import { format, parse, startOfWeek, getDay } from "date-fns";
 import { pt } from "date-fns/locale";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import Swal from "sweetalert2";
-import { Filter, Calendar as CalendarIcon, Plus, CheckCircle2, AlertCircle, RefreshCw, ShoppingBag, Truck, Users } from "lucide-react";
+import { Filter, Calendar as CalendarIcon, Plus, CheckCircle2, AlertCircle, RefreshCw, ShoppingBag, Truck, Users, Clock } from "lucide-react";
 import { formatCurrency, cn } from "../lib/utils";
 import { toast } from "react-toastify";
 
@@ -29,6 +29,93 @@ const localizer = dateFnsLocalizer({
   getDay,
   locales,
 });
+
+// Helper to get printable string from client object or string
+function getClientDisplayName(clientVal: any): string {
+  if (!clientVal) return "";
+  if (typeof clientVal === "string") return clientVal;
+  if (typeof clientVal === "object") {
+    return clientVal.nome || clientVal.empresa || clientVal.name || clientVal.email || "";
+  }
+  return String(clientVal);
+}
+
+// Helper to parse Pedido delivery date & time
+function parsePedidoDateTime(o: any) {
+  const rawDate = o.data_entrega || o.dueDate || o.data_pedido || o.created_at;
+  if (!rawDate) return { start: new Date(), timeStr: "12:00", dateStr: format(new Date(), "yyyy-MM-dd") };
+
+  let onlyDate = "";
+  let timeStr = o.hora_entrega || o.hora || "12:00";
+
+  if (String(rawDate).includes("T")) {
+    const parts = String(rawDate).split("T");
+    onlyDate = parts[0];
+    if (parts[1] && parts[1].length >= 5 && (!o.hora_entrega || o.hora_entrega === "12:00")) {
+      timeStr = parts[1].slice(0, 5);
+    }
+  } else {
+    onlyDate = String(rawDate).split(" ")[0];
+  }
+
+  const cleanTime = timeStr.length === 5 ? `${timeStr}:00` : timeStr;
+  const isoCandidate = `${onlyDate}T${cleanTime}`;
+  const startDate = new Date(isoCandidate);
+
+  if (!isNaN(startDate.getTime())) {
+    return { start: startDate, timeStr, dateStr: onlyDate };
+  }
+
+  const fallback = new Date(rawDate);
+  const validFallback = !isNaN(fallback.getTime()) ? fallback : new Date();
+  return {
+    start: validFallback,
+    timeStr: timeStr || "12:00",
+    dateStr: format(validFallback, "yyyy-MM-dd")
+  };
+}
+
+// Helper to parse Evento start & end date & time
+function parseEventoDateTime(e: any) {
+  const rawDate = e.data_evento || e.date || e.created_at;
+  if (!rawDate) {
+    const now = new Date();
+    return { 
+      start: now, 
+      end: new Date(now.getTime() + 4 * 3600000), 
+      startTimeStr: "09:00", 
+      endTimeStr: "13:00",
+      dateStr: format(now, "yyyy-MM-dd")
+    };
+  }
+
+  let onlyDate = "";
+  let startTimeStr = e.hora_inicio || e.startTime || "09:00";
+  let endTimeStr = e.hora_fim || e.endTime || "13:00";
+
+  if (String(rawDate).includes("T")) {
+    const parts = String(rawDate).split("T");
+    onlyDate = parts[0];
+    if (parts[1] && parts[1].length >= 5 && (!e.hora_inicio || e.hora_inicio === "09:00")) {
+      startTimeStr = parts[1].slice(0, 5);
+    }
+  } else {
+    onlyDate = String(rawDate).split(" ")[0];
+  }
+
+  const cleanStartTime = startTimeStr.length === 5 ? `${startTimeStr}:00` : startTimeStr;
+  const startDate = new Date(`${onlyDate}T${cleanStartTime}`);
+
+  const cleanEndTime = endTimeStr.length === 5 ? `${endTimeStr}:00` : endTimeStr;
+  const endDateCandidate = new Date(`${onlyDate}T${cleanEndTime}`);
+
+  const start = !isNaN(startDate.getTime()) ? startDate : new Date(rawDate);
+  const end = !isNaN(endDateCandidate.getTime()) && endDateCandidate > start 
+    ? endDateCandidate 
+    : new Date(start.getTime() + 4 * 3600000);
+
+  return { start, end, startTimeStr, endTimeStr, dateStr: onlyDate };
+}
 
 export default function Calendario() {
   const queryClient = useQueryClient();
@@ -72,45 +159,77 @@ export default function Calendario() {
 
   const isLoading = isLoadingEvents || isLoadingOrders || isLoadingProd || isLoadingDeliv || isLoadingShifts;
 
-  if (isLoading) {
-    return (
-      <div className="p-8 text-center text-gray-500 animate-fade-in flex flex-col items-center justify-center min-h-[400px]">
-        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
-        A carregar calendário operativo...
-      </div>
-    );
-  }
-
   const events = eventsResp?.items || [];
   const orders = ordersResp?.items || [];
   const production = productionResp?.items || [];
   const deliveries = deliveriesResp?.items || [];
   const shifts = shiftsResp?.items || [];
-  const shiftDates = Array.from(
+  const shiftDates = useMemo(() => Array.from(
     { length: new Date(currentYear, currentMonth, 0).getDate() },
     (_, index) => new Date(currentYear, currentMonth - 1, index + 1)
-  );
+  ), [currentYear, currentMonth]);
+
+  // Memoized day orders & events for the right drawer (Called before any return)
+  const selectedDayOrders = useMemo(() => {
+    const fromApi = dayDetails?.pedidos || [];
+    const fromList = orders.filter((o: any) => {
+      const { dateStr } = parsePedidoDateTime(o);
+      return dateStr === selectedDayStr;
+    });
+
+    const map = new Map<string | number, any>();
+    [...fromApi, ...fromList].forEach((o) => {
+      if (o && (o.id != null)) map.set(o.id, o);
+    });
+    return Array.from(map.values());
+  }, [dayDetails?.pedidos, orders, selectedDayStr]);
+
+  const selectedDayEventos = useMemo(() => {
+    const fromApi = dayDetails?.eventos || [];
+    const fromList = events.filter((e: any) => {
+      const { dateStr } = parseEventoDateTime(e);
+      return dateStr === selectedDayStr;
+    });
+
+    const map = new Map<string | number, any>();
+    [...fromApi, ...fromList].forEach((e) => {
+      if (e && (e.id != null)) map.set(e.id, e);
+    });
+    return Array.from(map.values());
+  }, [dayDetails?.eventos, events, selectedDayStr]);
 
   // Helper to map and colorize calendar events
-  const calendarEvents = [
-    ...events.map((e: any) => ({
-      id: `e-${e.id}`,
-      title: `EVENTO: ${e.name || e.titulo || e.numero}${(e.location || e.local) ? ` @ ${e.location || e.local}` : ''}`,
-      start: new Date((e.date || e.data_evento) + 'T' + (e.startTime || e.hora_inicio || '09:00')),
-      end: new Date((e.date || e.data_evento) + 'T' + (e.endTime || e.hora_fim || '13:00')),
-      color: '#FF6B00', // primary orange
-      type: 'EVENTO',
-      resource: e
-    })),
-    ...orders.map((o: any) => ({
-      id: `o-${o.id}`,
-      title: `PEDIDO: #${o.id} - ${o.type}`,
-      start: new Date(o.dueDate || o.data_entrega || o.data_pedido),
-      end: new Date(new Date(o.dueDate || o.data_entrega || o.data_pedido).getTime() + 3600000), // 1h duration
-      color: '#3B82F6', // blue
-      type: 'PEDIDO',
-      resource: o
-    })),
+  const calendarEvents = useMemo(() => [
+    ...events.map((e: any) => {
+      const { start, end, startTimeStr, endTimeStr } = parseEventoDateTime(e);
+      const eventName = e.name || e.nome || e.titulo || `Evento #${e.id}`;
+      const localStr = e.location || e.local || "";
+
+      return {
+        id: `e-${e.id}`,
+        title: `🎉 EVENTO: ${eventName} | 🕒 ${startTimeStr}${endTimeStr ? `-${endTimeStr}` : ""}${localStr ? ` @ ${localStr}` : ""}`,
+        start,
+        end,
+        color: '#FF6B00', // primary orange
+        type: 'EVENTO',
+        resource: { ...e, startTimeStr, endTimeStr, formattedDate: format(start, "dd/MM/yyyy") }
+      };
+    }),
+    ...orders.map((o: any) => {
+      const { start, timeStr } = parsePedidoDateTime(o);
+      const end = new Date(start.getTime() + 3600000); // 1h duration
+      const clientName = getClientDisplayName(o.cliente) || getClientDisplayName(o.cliente_nome) || getClientDisplayName(o.client?.nome) || "";
+
+      return {
+        id: `o-${o.id}`,
+        title: `📦 PEDIDO #${o.id}${clientName ? ` - ${clientName}` : ""} | 🕒 ${timeStr}`,
+        start,
+        end,
+        color: '#2563EB', // blue
+        type: 'PEDIDO',
+        resource: { ...o, formattedTime: timeStr, formattedDate: format(start, "dd/MM/yyyy") }
+      };
+    }),
     ...production.map((p: any) => ({
       id: `p-${p.id}`,
       title: `PROD: ${p.numero || `#${p.id}`} — ${p.estado || p.status || 'Pendente'}`,
@@ -164,31 +283,76 @@ export default function Calendario() {
           resource: s
         };
       }))
-  ];
+  ], [events, orders, production, deliveries, shifts, shiftDates]);
+
+  if (isLoading) {
+    return (
+      <div className="p-8 text-center text-gray-500 animate-fade-in flex flex-col items-center justify-center min-h-[400px]">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
+        A carregar calendário operativo...
+      </div>
+    );
+  }
 
   const handleSelectEvent = (event: any) => {
     const raw = event.resource;
+    setSelectedDayStr(format(new Date(event.start), "yyyy-MM-dd"));
+
     if (event.type === 'EVENTO') {
       Swal.fire({
-        title: raw.name,
+        title: `🎉 ${raw.name || raw.nome || raw.titulo || 'Evento'}`,
         html: `
-          <div class="text-left p-3 bg-gray-50 dark:bg-gray-800 rounded-lg text-sm space-y-2">
-             <p><strong>Ação:</strong> ${raw.name}</p>
-             <p><strong>Local:</strong> ${raw.location || 'Sem local'}</p>
-             <p><strong>Pax:</strong> ${raw.guests || 0}</p>
-             <p><strong>Estado:</strong> <span class="px-2 py-0.5 rounded text-xs bg-primary/20 text-primary font-bold">${raw.status}</span></p>
-             <hr class="my-2 border-gray-200 dark:border-gray-700"/>
-             <p class="text-xs text-gray-500">${raw.notes || "Sem observações adicionais."}</p>
+          <div class="text-left p-3.5 bg-gray-50 dark:bg-gray-800/80 rounded-xl text-sm space-y-2 border border-gray-200 dark:border-gray-700">
+             <p><strong>Cliente / Organizador:</strong> ${getClientDisplayName(raw.cliente_nome) || getClientDisplayName(raw.cliente) || 'Não especificado'}</p>
+             <p><strong>Data:</strong> ${raw.formattedDate || format(event.start, 'dd/MM/yyyy')}</p>
+             <p><strong>Horário do Evento:</strong> <span class="font-bold text-orange-600 dark:text-orange-400">${raw.startTimeStr || format(event.start, 'HH:mm')}${raw.endTimeStr ? ` - ${raw.endTimeStr}` : ''}</span></p>
+             <p><strong>Localização:</strong> ${raw.location || raw.local || 'Não especificado'}</p>
+             <p><strong>N.º de Convidados (Pax):</strong> ${raw.guests || raw.num_pessoas || 0} pessoas</p>
+             <p><strong>Estado:</strong> <span class="px-2 py-0.5 rounded text-xs bg-orange-100 text-orange-800 font-bold">${raw.status || raw.estado || 'Confirmado'}</span></p>
+             ${raw.notes || raw.observacoes ? `<hr class="my-2 border-gray-200 dark:border-gray-700"/><p class="text-xs text-gray-500"><strong>Notas:</strong> ${raw.notes || raw.observacoes}</p>` : ''}
           </div>
         `,
-        showCancelButton: true,
-        confirmButtonText: "Fechar",
-        cancelButtonText: "Ver Agenda",
+        confirmButtonText: "Ver no Painel do Dia",
         confirmButtonColor: "var(--color-primary)"
       });
     } else if (event.type === 'PEDIDO') {
-      setSelectedDayStr(format(new Date(event.start), "yyyy-MM-dd"));
-      toast.info(`Selecionou o pedido #${raw.id} no painel de dia.`);
+      const total = Number(raw.valor_total || raw.total || 0);
+      const pago = Number(raw.valor_pago || 0);
+      const restante = Math.max(0, total - pago);
+      const isPaid = restante <= 0;
+
+      Swal.fire({
+        title: `📦 Pedido #${raw.id}`,
+        html: `
+          <div class="text-left p-3.5 bg-gray-50 dark:bg-gray-800/80 rounded-xl text-sm space-y-2 border border-gray-200 dark:border-gray-700">
+            <p><strong>Cliente:</strong> ${getClientDisplayName(raw.cliente) || getClientDisplayName(raw.cliente_nome) || "Consumidor Final"}</p>
+            <p><strong>Data & Hora de Entrega:</strong> <span class="font-bold text-blue-600 dark:text-blue-400">${raw.formattedDate || format(event.start, 'dd/MM/yyyy')} às ${raw.formattedTime || format(event.start, 'HH:mm')}</span></p>
+            <p><strong>Modalidade:</strong> ${raw.type || raw.tipo_pedido || "Agendado"}</p>
+            <p><strong>Estado:</strong> <span class="px-2 py-0.5 rounded text-xs ${isPaid ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"} font-bold">${raw.estado || raw.status || "Pendente"}</span></p>
+            <hr class="my-2 border-gray-200 dark:border-gray-700"/>
+            <div class="flex justify-between text-xs">
+              <span>Total do Pedido:</span>
+              <strong>${formatCurrency(total)}</strong>
+            </div>
+            <div class="flex justify-between text-xs">
+              <span>Sinal / Valor Pago:</span>
+              <strong class="text-emerald-600">${formatCurrency(pago)}</strong>
+            </div>
+            <div class="flex justify-between text-xs pt-1 border-t border-gray-200 dark:border-gray-700 font-bold">
+              <span>Saldo Restante:</span>
+              <strong class="${restante > 0 ? "text-red-600" : "text-emerald-600"}">${formatCurrency(restante)}</strong>
+            </div>
+          </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: restante > 0 ? `Faturar Restante (${formatCurrency(restante)})` : "Ver no Painel do Dia",
+        cancelButtonText: "Fechar",
+        confirmButtonColor: restante > 0 ? "var(--color-primary)" : "#2563EB"
+      }).then((res) => {
+        if (res.isConfirmed && restante > 0) {
+          handleLiquidateBalance(raw);
+        }
+      });
     } else {
       Swal.fire({
         title: event.title,
@@ -483,44 +647,84 @@ export default function Calendario() {
               <>
                 <div>
                   <h4 className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                    <CalendarIcon size={12} className="text-primary" /> Eventos
+                    <CalendarIcon size={12} className="text-orange-500" /> Eventos do Dia
                   </h4>
-                  {(!dayDetails?.eventos || dayDetails.eventos.length === 0) ? <p className="text-[10px] text-gray-400 italic">Sem eventos para este dia.</p> : (
-                    <div className="space-y-1.5">{dayDetails.eventos.map((e: any) => <div key={e.id} className="p-2 rounded-lg bg-primary/5 border border-primary/15 text-[11px]"><b>{e.numero || `Evento #${e.id}`}</b><span className="block text-gray-500">{e.titulo} · {e.estado}</span></div>)}</div>
+                  {selectedDayEventos.length === 0 ? (
+                    <p className="text-[10px] text-gray-400 italic">Sem eventos para este dia.</p>
+                  ) : (
+                    <div className="space-y-1.5">
+                      {selectedDayEventos.map((e: any) => {
+                        const { startTimeStr, endTimeStr } = parseEventoDateTime(e);
+                        return (
+                          <div key={e.id} className="p-2.5 rounded-xl bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-900/40 text-xs space-y-1">
+                            <div className="flex justify-between items-start font-bold text-gray-900 dark:text-white">
+                              <span>{e.name || e.nome || e.titulo || `Evento #${e.id}`}</span>
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-orange-200 dark:bg-orange-900 text-orange-800 dark:text-orange-200 font-extrabold">
+                                {e.status || e.estado || 'Confirmado'}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between text-[11px] text-orange-700 dark:text-orange-300 font-semibold">
+                              <span className="flex items-center gap-1">
+                                <Clock size={11} /> {startTimeStr}{endTimeStr ? ` - ${endTimeStr}` : ''}
+                              </span>
+                              {(e.guests || e.num_pessoas) && (
+                                <span>{e.guests || e.num_pessoas} pax</span>
+                              )}
+                            </div>
+                            {(e.location || e.local) && (
+                              <p className="text-[10px] text-gray-500 truncate">📍 {e.location || e.local}</p>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
                   )}
                 </div>
+
                 {/* 1. Pedidos Agendados a levantar/faturar */}
                 <div>
                   <h4 className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-widest mb-2 flex items-center gap-1.5">
                     <ShoppingBag size={12} className="text-blue-500" />
                     Pedidos Agendados
                   </h4>
-                  {(!dayDetails?.pedidos || dayDetails.pedidos.length === 0) ? (
+                  {selectedDayOrders.length === 0 ? (
                     <p className="text-[10px] text-gray-400 italic">Sem pedidos para este dia.</p>
                   ) : (
                     <div className="space-y-2">
-                      {dayDetails.pedidos.map((o: any) => {
-                        const total = Number(o.valor_total || 0);
+                      {selectedDayOrders.map((o: any) => {
+                        const { timeStr } = parsePedidoDateTime(o);
+                        const total = Number(o.valor_total || o.total || 0);
                         const pago = Number(o.valor_pago || 0);
                         const diff = Math.max(0, total - pago);
                         const isPaid = diff <= 0;
 
                         return (
-                          <div key={o.id} className="p-2.5 rounded-lg border border-gray-150 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/40 text-xs">
-                            <div className="flex justify-between font-bold text-gray-800 dark:text-gray-100 mb-1">
-                              <span>#{o.id} - {o.cliente || "Balcão"}</span>
-                              <span className={isPaid ? "text-success" : "text-amber-600"}>
+                          <div key={o.id} className="p-2.5 rounded-xl border border-blue-200 dark:border-blue-900/40 bg-blue-50/50 dark:bg-blue-950/20 text-xs space-y-1.5">
+                            <div className="flex justify-between font-bold text-gray-900 dark:text-gray-100">
+                              <span>#{o.id} - {getClientDisplayName(o.cliente) || getClientDisplayName(o.cliente_nome) || "Balcão"}</span>
+                              <span className={isPaid ? "text-emerald-600 font-extrabold" : "text-amber-600 font-extrabold"}>
                                 {isPaid ? "Pago" : "Sinalizado"}
                               </span>
                             </div>
-                            <div className="flex justify-between text-[10px] text-gray-500 mb-2">
+
+                            <div className="flex items-center justify-between text-[11px] font-bold text-blue-700 dark:text-blue-300">
+                              <span className="flex items-center gap-1">
+                                <Clock size={11} /> Hora Entrega: {timeStr}
+                              </span>
+                              <span className="text-[10px] bg-blue-100 dark:bg-blue-900/60 px-1.5 py-0.2 rounded text-blue-800 dark:text-blue-200 font-semibold">
+                                {o.type || o.tipo_pedido || "Agendado"}
+                              </span>
+                            </div>
+
+                            <div className="flex justify-between text-[10px] text-gray-500 pt-0.5">
                               <span>Total: {formatCurrency(total)}</span>
                               <span>Sinal: {formatCurrency(pago)}</span>
                             </div>
+
                             {!isPaid && (
                               <button
                                 onClick={() => handleLiquidateBalance(o)}
-                                className="w-full bg-primary hover:bg-primary-hover text-white text-[10px] font-bold py-1 px-2 rounded-md transition-colors flex justify-center items-center gap-1"
+                                className="w-full mt-1 bg-primary hover:bg-primary-hover text-white text-[10px] font-extrabold py-1.5 px-2 rounded-lg transition-colors flex justify-center items-center gap-1 shadow-sm"
                               >
                                 Faturar Restante ({formatCurrency(diff)})
                               </button>
@@ -595,7 +799,7 @@ export default function Calendario() {
                     <div className="space-y-1 bg-purple-500/5 p-2 rounded-lg border border-purple-500/15">
                       {dayDetails.turnos.map((t: any, idx: number) => (
                         <div key={idx} className="text-[10px] flex justify-between py-0.5 font-medium text-gray-700 dark:text-gray-300">
-                          <span>{t.operador || t.nome || 'Operador'}</span>
+                          <span>{getClientDisplayName(t.operador) || getClientDisplayName(t.nome) || 'Operador'}</span>
                           <span className="text-purple-600 font-bold">{t.estado || 'Activo'}</span>
                         </div>
                       ))}
