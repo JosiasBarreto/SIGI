@@ -63,6 +63,7 @@ export default function NovoPedidoForm({ onSuccessRedirect }: NovoPedidoFormProp
   const [isQuickClient, setIsQuickClient] = useState(false);
   const [newClientName, setNewClientName] = useState("");
   const [newClientPhone, setNewClientPhone] = useState("");
+  const [newClientNif, setNewClientNif] = useState("");
   const [newClientAddress, setNewClientAddress] = useState("");
 
   // Order Details
@@ -325,7 +326,7 @@ export default function NovoPedidoForm({ onSuccessRedirect }: NovoPedidoFormProp
         numero: proformaRes.numero_documento || `PROFORMA 2026/${proformaRes.id}`,
         isProforma: true,
         cliente: selectedClientObj || (isQuickClient ? { nome: newClientName, telefone: newClientPhone } : null),
-        total: proformaRes.total || totalCalculated,
+        total: proformaRes.total || totalFinal,
       });
       setCreatedVenda({ ...proformaRes, isProforma: true });
       setIsPaymentModalOpen(false);

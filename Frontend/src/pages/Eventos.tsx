@@ -225,10 +225,11 @@ export default function Eventos() {
       title: 'Faturar Evento (Converter em Venda)',
       html: `
         <div class="space-y-3 text-left">
-          <label class="block text-xs font-bold uppercase text-gray-500">Documento comercial</label>
+          <label class="block text-xs font-bold uppercase text-gray-500">Tipo de Documento</label>
           <select id="evento-documento" class="swal2-select w-full m-0">
-            <option value="FR">FR — Fatura-Recibo (pagamento total)</option>
-            <option value="PROFORMA">Pró-Forma (sem pagamento)</option>
+            <option value="FT">FT — Fatura (com prestação / pagamento inicial)</option>
+            <option value="FR">FR — Fatura-Recibo (pagamento integral 100%)</option>
+            <option value="PROFORMA">FP — Pró-Forma (apenas cotação / orçamento)</option>
           </select>
           <label class="block text-xs font-bold uppercase text-gray-500">Valor a receber (${moeda})</label>
           <input id="evento-valor" type="number" min="0.01" step="0.01" class="swal2-input w-full m-0" value="${valorPadrao}">
@@ -264,7 +265,13 @@ export default function Eventos() {
           return false;
         }
         return {
-          tipo_documento: 'FR',
+          tipo_documento: tipoDocumento,
+          pagamento_inicial: valor > 0 ? {
+            valor,
+            forma_pagamento_id: forma,
+            codigo_transferencia: forma === 2 || forma === 3 ? codigo : null,
+            emissor: forma === 2 || forma === 3 ? emissor : null
+          } : null,
           valor,
           forma_pagamento_id: forma,
           codigo_transferencia: forma === 2 || forma === 3 ? codigo : null,

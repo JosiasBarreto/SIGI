@@ -453,10 +453,23 @@ def gerar_planeamento(id):
 @jwt_required()
 def gerar_documento(id, doc_type):
     from flask import send_file
-    buffer = io.BytesIO()
-    buffer.write(f"DOCUMENTO {doc_type.upper()} PARA EVENTO {id}".encode('utf-8'))
-    buffer.seek(0)
-    ext = 'pdf' if doc_type != 'word' else 'docx'
-    mimetype = 'application/pdf' if doc_type != 'word' else 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-    return send_file(buffer, as_attachment=True, download_name=f"{doc_type}_{id}.{ext}", mimetype=mimetype)
+    from app.models.evento import Evento
+    from app.services.pdf_generator import generate_evento_pdf, generate_evento_receipt
+    
+    evento = Evento.query.get(id)
+    if not evento:
+        return jsonify({"msg": "Evento não encontrado"}), 404
+        
+    doc_type_lower = doc_type.lower()
+    if 'termico' in doc_type_lower or 'receipt' in doc_type_lower:
+        pdf_buffer = generate_evento_receipt(evento, doc_type_lower)
+    else:
+        pdf_buffer = generate_evento_pdf(evento, doc_type_lower)
+        
+    return send_file(
+        pdf_buffer,
+        as_attachment=True,
+        download_name=f"evento_{evento.numero}_{doc_type}.pdf",
+        mimetype='application/pdf'
+    )
 

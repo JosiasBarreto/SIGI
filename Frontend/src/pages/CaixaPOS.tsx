@@ -421,7 +421,7 @@ export default function CaixaPOS() {
         origem: "POS",
         observacoes: "Orçamento emitido no Caixa POS",
         itens: cart.map((i) => {
-          let tipoItem = "Produto";
+          let tipoItem: 'Servico' | 'Produto' = "Produto";
           const cat = String(i.category || i.categoria || "").toLowerCase();
           if (cat.includes("servi") || cat.includes("servic")) {
             tipoItem = "Servico";
@@ -434,7 +434,7 @@ export default function CaixaPOS() {
             preco_unitario: preco,
             quantidade: Number(i.qty || 1),
             desconto: Number(i.desconto_valor || 0),
-            taxa_iva: Number(i.taxa_iva ?? i.iva_taxa ?? i.iva ?? 15),
+            taxa_iva: Number(i.taxa_iva ?? (i as any).iva_taxa ?? (i as any).iva ?? 15),
           };
         }),
       };
@@ -898,7 +898,12 @@ export default function CaixaPOS() {
 
               {/* Product Grid */}
               <ProductGrid
-                displayProductslist={filteredProducts}
+                displayProductslist={filteredProducts.map(p => ({
+                  ...p,
+                  preco_venda: Number(p.preco_venda || 0),
+                  stock_atual: Number(p.stock_atual || 0),
+                  stock_minimo: Number(p.stock_minimo || 0)
+                }))}
                 showPriceWithIva={showPriceWithIva}
                 handleAddToCart={handleAddToCartWrapper}
                 formatCurrency={formatCurrency}

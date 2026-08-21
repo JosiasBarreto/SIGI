@@ -428,6 +428,148 @@ def get_proforma_receipt_data(proforma):
     }
 
 
+def get_evento_receipt_data(evento, doc_type='FP'):
+    empresa = _get_empresa_info()
+    moeda = empresa["moeda"]
+
+    operador_nome = "Sistema / Atendimento"
+    if getattr(evento, 'responsavel_id', None):
+        u = User.query.get(evento.responsavel_id)
+        if u:
+            operador_nome = u.name
+
+    cliente_nome = "Consumidor Final"
+    cliente_nif = "Consumidor Final"
+    cliente_telefone = ""
+    cliente_email = ""
+    cliente_empresa = ""
+    cliente_morada = ""
+
+    if getattr(evento, 'cliente_id', None):
+        c = Cliente.query.get(evento.cliente_id)
+        if c:
+            cliente_nome = c.nome or "Consumidor Final"
+            cliente_nif = c.nif or ""
+            cliente_telefone = c.telefone or c.whatsapp or ""
+            cliente_email = c.email or ""
+            cliente_empresa = c.empresa or ""
+            cliente_morada = c.morada or ""
+
+    dt_op = evento.created_at.strftime("%d/%m/%Y %H:%M") if getattr(evento, 'created_at', None) else "N/A"
+    dt_entrega = None
+    if getattr(evento, 'data_evento', None):
+        d_str = evento.data_evento.strftime('%d/%m/%Y')
+        h_str = f" ({evento.hora_inicio.strftime('%H:%M')} - {evento.hora_fim.strftime('%H:%M')})" if getattr(evento, 'hora_inicio', None) and getattr(evento, 'hora_fim', None) else ""
+        dt_entrega = f"{d_str}{h_str}"
+
+    resumo = evento.calcular_resumo_financeiro()
+
+    itens_data = []
+    if evento.itens:
+        for item in evento.itens:
+            q = float(item.quantidade or 1)
+            pu = float(item.preco_unitario or 0)
+            desc = float(item.valor_desconto or 0)
+            iva_perc = float(item.taxa_iva or 0)
+            subt = float(item.subtotal if item.subtotal is not None else (q * pu - desc))
+            val_iva = float(item.valor_iva if item.valor_iva is not None else (subt * (iva_perc / 100)))
+            tot = float(item.total if item.total is not None else (subt + val_iva))
+
+            itens_data.append({
+                "descricao": item.descricao,
+                "quantidade": q,
+                "unidade": "un",
+                "preco_unitario": pu,
+                "desconto": desc,
+                "taxa_iva": iva_perc,
+                "valor_iva": val_iva,
+                "subtotal": subt,
+                "total": tot
+            })
+    else:
+        for s in (evento.servicos or []):
+            q = float(s.quantidade or 1)
+            pu = float(s.valor_unitario or 0)
+            subt = q * pu
+            tot = subt
+            itens_data.append({
+                "descricao": f"Serviço: {s.descricao or s.tipo}",
+                "quantidade": q,
+                "unidade": "serv",
+                "preco_unitario": pu,
+                "desconto": 0.0,
+                "taxa_iva": float(resumo['taxa_iva_servicos']),
+                "valor_iva": subt * (float(resumo['taxa_iva_servicos']) / 100) if resumo['cobrar_iva_servicos'] else 0.0,
+                "subtotal": subt,
+                "total": tot
+            })
+        for r in (evento.reservas_espaco or []):
+            pu = float(r.valor_aluguer or 0)
+            esp_nome = r.espaco.nome if hasattr(r, 'espaco') and r.espaco else "Espaço"
+            itens_data.append({
+                "descricao": f"Aluguer Espaço: {esp_nome}",
+                "quantidade": 1.0,
+                "unidade": "alug",
+                "preco_unitario": pu,
+                "desconto": 0.0,
+                "taxa_iva": float(resumo['taxa_iva_servicos']),
+                "valor_iva": pu * (float(resumo['taxa_iva_servicos']) / 100) if resumo['cobrar_iva_servicos'] else 0.0,
+                "subtotal": pu,
+                "total": pu
+            })
+
+    doc_type_upper = str(doc_type).upper()
+    if 'PROFORMA' in doc_type_upper or 'FP' in doc_type_upper:
+        tipo_doc_label = "FATURA PRÓ-FORMA (EVENTO)"
+    elif 'FT' in doc_type_upper or 'FATURA' in doc_type_upper:
+        tipo_doc_label = "FATURA (EVENTO)"
+    else:
+        tipo_doc_label = "FATURA-RECIBO (EVENTO)"
+
+    return {
+        "empresa": empresa,
+        "documento": {
+            "tipo": tipo_doc_label,
+            "numero": evento.numero,
+            "estado": str(evento.estado.value if hasattr(evento.estado, 'value') else evento.estado),
+            "data_hora_operacao": dt_op,
+            "data_hora_entrega": dt_entrega,
+            "operador": operador_nome,
+            "forma_pagamento": "N/A"
+        },
+        "cliente": {
+            "nome": cliente_nome,
+            "nif": cliente_nif,
+            "telefone": cliente_telefone,
+            "email": cliente_email,
+            "empresa": cliente_empresa,
+            "morada": cliente_morada
+        },
+        "itens": itens_data,
+        "totais": {
+            "subtotal": float(resumo['subtotal_geral']),
+            "desconto_total": float(resumo['desconto_total']),
+            "total_iva": float(resumo['total_iva_geral']),
+            "total_geral": float(resumo['total_geral']),
+            "valor_pago": float(evento.valor_pago or 0),
+            "saldo": float(evento.saldo or 0),
+            "troco": 0.0,
+            "moeda": moeda
+        },
+        "pagamentos": []
+    }
+
+
+def generate_evento_pdf(evento, doc_type='FP'):
+    data = get_evento_receipt_data(evento, doc_type)
+    return _build_a4_pdf(data)
+
+
+def generate_evento_receipt(evento, doc_type='FP'):
+    data = get_evento_receipt_data(evento, doc_type)
+    return _build_thermal_receipt_pdf(data)
+
+
 def generate_proforma_pdf(proforma):
     data = get_proforma_receipt_data(proforma)
     return _build_a4_pdf(data)

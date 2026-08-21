@@ -1073,8 +1073,9 @@ export const documentService = {
     }
   },
 
-  async eventoDocumento(id: string | number, tipo: 'proforma' | 'pdf' | 'word' = 'proforma') {
-    const filename = `evento_${id}_${tipo}.${tipo === 'word' ? 'docx' : 'pdf'}`;
+  async eventoDocumento(id: string | number, tipo: 'proforma' | 'pdf' | 'word' | 'termico' = 'proforma') {
+    const ext = tipo === 'word' ? 'docx' : 'pdf';
+    const filename = `evento_${id}_${tipo}.${ext}`;
     try {
       const blob = await fetchBlobWithFallbacks([
         `/v1/eventos/${id}/documento/${tipo}`,
@@ -1084,6 +1085,31 @@ export const documentService = {
     } catch {
       const data = await fetchJsonWithFallbacks([`/v1/eventos/${id}`]);
       downloadJsPdfReceipt(data, filename);
+    }
+  },
+
+  async eventoPdf(id: string | number) {
+    return this.eventoDocumento(id, 'pdf');
+  },
+
+  async eventoProforma(id: string | number) {
+    return this.eventoDocumento(id, 'proforma');
+  },
+
+  async eventoTermico(id: string | number) {
+    return this.eventoDocumento(id, 'termico');
+  },
+
+  async imprimirEventoTermico(id: string | number) {
+    try {
+      const blob = await fetchBlobWithFallbacks([
+        `/v1/eventos/${id}/documento/termico`,
+        `/v1/eventos/${id}/termico`
+      ]);
+      printBlob(blob);
+    } catch {
+      const data = await fetchJsonWithFallbacks([`/v1/eventos/${id}`]);
+      printHtmlThermalReceipt(data);
     }
   }
 };
@@ -1115,44 +1141,219 @@ const normalizeEspacoPayload = (data: any) => {
   return payload;
 };
 
+const normalizeEventoPayload = (data: Partial<EventoDTO>): any => {
+  const input: any = { ...data };
+
+  // Mandatory / Core fields
+  const payload: any = {
+    titulo: String(input.titulo || 'Novo Evento').trim(),
+    tipo_evento: String(input.tipo_evento || 'Casamento').trim(),
+    data_evento: input.data_evento ? String(input.data_evento).split('T')[0] : new Date().toISOString().split('T')[0],
+  };
+
+  // Optional client_id
+  if (input.cliente_id != null && String(input.cliente_id).trim() !== '' && !isNaN(Number(input.cliente_id)) && Number(input.cliente_id) > 0) {
+    payload.cliente_id = Number(input.cliente_id);
+  } else {
+    payload.cliente_id = null;
+  }
+
+  // Location
+  if (input.local_evento != null) {
+    payload.local_evento = String(input.local_evento);
+  }
+
+  // Times (HH:MM)
+  if (input.hora_inicio && String(input.hora_inicio).trim() !== '') {
+    payload.hora_inicio = String(input.hora_inicio).trim().slice(0, 5);
+  } else {
+    payload.hora_inicio = '12:00';
+  }
+
+  if (input.hora_fim && String(input.hora_fim).trim() !== '') {
+    payload.hora_fim = String(input.hora_fim).trim().slice(0, 5);
+  } else {
+    payload.hora_fim = '22:00';
+  }
+
+  // Guest count: Backend expects `numero_convidados` ONLY (NOT `num_pessoas`)
+  const numConvidados = Number(input.numero_convidados ?? input.num_pessoas ?? 100);
+  payload.numero_convidados = isNaN(numConvidados) || numConvidados <= 0 ? 100 : numConvidados;
+
+  // Financial fields:
+  // Backend expects `desconto_total` ONLY (NOT `desconto_global`)
+  const descontoVal = Number(input.desconto_total ?? input.desconto_global ?? 0);
+  payload.desconto_total = isNaN(descontoVal) ? 0 : descontoVal;
+
+  // Backend expects `valor_deslocacao` ONLY (NOT `custo_deslocacao`)
+  const deslocVal = Number(input.valor_deslocacao ?? input.custo_deslocacao ?? 0);
+  payload.valor_deslocacao = isNaN(deslocVal) ? 0 : deslocVal;
+
+  if (input.outros_encargos != null) {
+    payload.outros_encargos = Number(input.outros_encargos) || 0;
+  }
+
+  payload.cobrar_iva_servicos = Boolean(input.cobrar_iva_servicos ?? true);
+  payload.taxa_iva_servicos = Number(input.taxa_iva_servicos ?? 15);
+  if (input.observacoes != null) {
+    payload.observacoes = String(input.observacoes);
+  }
+
+  // State
+  if (input.estado) {
+    payload.estado = String(input.estado);
+  }
+
+  // Espaco ID: Backend expects `espaco_id` (integer or null, NOT `espacos_ids`)
+  if (input.espaco_id != null && !isNaN(Number(input.espaco_id)) && Number(input.espaco_id) > 0) {
+    payload.espaco_id = Number(input.espaco_id);
+  } else if (Array.isArray(input.espacos_ids) && input.espacos_ids.length > 0) {
+    const validEsp = Number(input.espacos_ids[0]);
+    if (!isNaN(validEsp) && validEsp > 0) {
+      payload.espaco_id = validEsp;
+    }
+  }
+
+  // Items processing:
+  // Each item MUST NOT contain `item_id` or `item_tipo`
+  // It MUST contain `tipo_item`, `produto_id` or `referencia_id`, `descricao`, `quantidade`, `preco_unitario`, `taxa_iva`
+  const rawItens = Array.isArray(input.itens) ? input.itens : [];
+  const normalizedItens: any[] = [];
+
+  rawItens.forEach((it: any) => {
+    if (!it || typeof it !== 'object') return;
+
+    let tipoItem = String(it.tipo_item || it.item_tipo || 'Produto').trim();
+    if (['Servico', 'Serviço', 'SERVICO', 'Service'].includes(tipoItem)) {
+      tipoItem = 'Servico';
+    } else {
+      tipoItem = 'Produto';
+    }
+
+    const rawId = it.produto_id ?? it.referencia_id ?? it.item_id ?? it.id;
+    const numericId = Number(rawId);
+    const validId = !isNaN(numericId) && numericId > 0 ? numericId : null;
+
+    const itemObj: any = {
+      tipo_item: tipoItem,
+      descricao: String(it.descricao || it.nome || 'Item do Evento').trim(),
+      quantidade: Math.max(1, Number(it.quantidade || it.qty || 1)),
+      preco_unitario: Number(it.preco_unitario || it.preco || 0),
+      taxa_iva: Number(it.taxa_iva ?? it.iva ?? 15)
+    };
+
+    if (validId) {
+      itemObj.produto_id = validId;
+      itemObj.referencia_id = validId;
+    }
+
+    if (it.unidade) {
+      itemObj.unidade = String(it.unidade);
+    }
+    if (it.observacoes) {
+      itemObj.observacoes = String(it.observacoes);
+    }
+
+    normalizedItens.push(itemObj);
+  });
+
+  payload.itens = normalizedItens;
+
+  // Servicos list if provided
+  if (Array.isArray(input.servicos) && input.servicos.length > 0) {
+    payload.servicos = input.servicos.map((s: any) => ({
+      tipo: String(s.tipo || s.nome || 'Serviço').trim(),
+      descricao: String(s.descricao || s.tipo || s.nome || 'Serviço de Evento').trim(),
+      quantidade: Math.max(1, Number(s.quantidade || s.qty || 1)),
+      valor_unitario: Number(s.valor_unitario || s.preco || s.valor || 0)
+    }));
+  }
+
+  return payload;
+};
+
 export const eventService = {
   ...baseEventService,
   async create(data: Partial<EventoDTO>): Promise<EventoDTO> {
-    const payload: any = { ...data };
-    delete payload.espaco_id;
-    if (Array.isArray(payload.itens)) {
-      payload.itens = payload.itens.map((it: any) => {
-        let normalizedTipo = it.tipo_item || 'Servico';
-        if (['ProdutoCozinha', 'ProdutoPastelaria', 'ProdutoRevenda', 'PRODUTO'].includes(it.tipo_item) || (typeof it.tipo_item === 'string' && it.tipo_item.startsWith('Produto'))) {
-          normalizedTipo = 'Produto';
-        }
-        return {
-          ...it,
-          tipo_item: normalizedTipo
-        };
-      });
-    }
+    const payload = normalizeEventoPayload(data);
     return baseEventService.create(payload);
   },
   async update(id: string | number, data: Partial<EventoDTO>): Promise<EventoDTO> {
-    const payload: any = { ...data };
-    delete payload.espaco_id;
-    if (Array.isArray(payload.itens)) {
-      payload.itens = payload.itens.map((it: any) => {
-        let normalizedTipo = it.tipo_item || 'Servico';
-        if (['ProdutoCozinha', 'ProdutoPastelaria', 'ProdutoRevenda', 'PRODUTO'].includes(it.tipo_item) || (typeof it.tipo_item === 'string' && it.tipo_item.startsWith('Produto'))) {
-          normalizedTipo = 'Produto';
-        }
-        return {
-          ...it,
-          tipo_item: normalizedTipo
-        };
-      });
-    }
+    const payload = normalizeEventoPayload(data);
     return baseEventService.update(String(id), payload);
   },
-  faturar: async (id: string | number, pagamento?: { valor: number; forma_pagamento_id: number; codigo_transferencia?: string | null; emissor?: string | null; observacoes?: string }): Promise<any> => {
-    return apiClient.post<any, any>(`/v1/eventos/${id}/faturar`, { pagamento: pagamento || {} });
+  faturar: async (
+    id: string | number,
+    payload: {
+      tipo_documento?: 'FT' | 'FR' | 'PROFORMA' | string;
+      pagamento_inicial?: {
+        valor: number;
+        forma_pagamento_id: number;
+        codigo_transferencia?: string | null;
+        emissor?: string | null;
+      };
+      pagamento?: any;
+    }
+  ): Promise<any> => {
+    let tipoDoc = payload.tipo_documento || 'FT';
+    let pagInicial = payload.pagamento_inicial;
+
+    if (!pagInicial && payload.pagamento) {
+      if (payload.pagamento.tipo_documento) {
+        tipoDoc = payload.pagamento.tipo_documento;
+      }
+      if (payload.pagamento.valor != null) {
+        pagInicial = {
+          valor: Number(payload.pagamento.valor),
+          forma_pagamento_id: Number(payload.pagamento.forma_pagamento_id || 1),
+          codigo_transferencia: payload.pagamento.codigo_transferencia || null,
+          emissor: payload.pagamento.emissor || null,
+        };
+      }
+    }
+
+    const body: any = {
+      tipo_documento: tipoDoc,
+      pagamento_inicial: pagInicial || null,
+      pagamento: pagInicial || {}
+    };
+
+    return apiClient.post<any, any>(`/v1/eventos/${id}/faturar`, body);
+  },
+  registarPagamentoVenda: async (
+    vendaId: string | number,
+    data: {
+      valor: number;
+      forma_pagamento_id: number;
+      codigo_transferencia?: string | null;
+      emissor?: string | null;
+      observacoes?: string;
+    }
+  ): Promise<any> => {
+    try {
+      return await apiClient.post<any, any>(`/v1/vendas/${vendaId}/pagamentos`, data);
+    } catch {
+      return await apiClient.post<any, any>(`/v1/comercial/vendas/${vendaId}/pagamentos`, data);
+    }
+  },
+  materiaisReservar: async (id: string | number, data: { material_id: number; quantidade: number } | { itens: any[] }): Promise<any> => {
+    return apiClient.post<any, any>(`/v1/eventos/${id}/materiais/reservar`, data);
+  },
+  materiaisSaida: async (id: string | number, data: { material_id?: number; quantidade?: number; itens?: any[] }): Promise<any> => {
+    return apiClient.post<any, any>(`/v1/eventos/${id}/materiais/saida`, data);
+  },
+  materiaisDevolucao: async (
+    id: string | number,
+    data: {
+      itens: Array<{
+        material_id: number;
+        quantidade_devolvida: number;
+        quantidade_danificada_perdida?: number;
+        observacao?: string;
+      }>;
+    }
+  ): Promise<any> => {
+    return apiClient.post<any, any>(`/v1/eventos/${id}/materiais/devolucao`, data);
   },
   gerarPlaneamento: async (id: string | number): Promise<any> => {
     return apiClient.post<any, any>(`/v1/eventos/${id}/gerar-planeamento`, {});

@@ -14,11 +14,11 @@ export default function Layout() {
   });
 
   const location = useLocation();
-  const isCaixaPOS =
-    location.pathname === "/caixa" ||
-    location.pathname === "/pos" ||
+  const isFullWidthPage =
     location.pathname.startsWith("/caixa") ||
-    location.pathname.startsWith("/pos");
+    location.pathname.startsWith("/pos") ||
+    location.pathname.startsWith("/eventos/novo") ||
+    location.pathname.includes("/eventos/editar");
 
   return (
     <div className="h-screen w-screen flex bg-background dark:bg-background-dark overflow-hidden">
@@ -45,7 +45,7 @@ export default function Layout() {
         <main
           className={cn(
             "flex-1 relative flex flex-col min-h-0 min-w-0",
-            isCaixaPOS ? "p-0 overflow-hidden" : "p-4 lg:p-8 overflow-y-auto"
+            isFullWidthPage ? "p-0 overflow-hidden" : "p-4 lg:p-8 overflow-y-auto"
           )}
         >
           <Outlet />

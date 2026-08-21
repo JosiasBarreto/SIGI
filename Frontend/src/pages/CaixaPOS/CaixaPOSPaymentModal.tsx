@@ -108,7 +108,7 @@ export default function CaixaPOSPaymentModal({
     if (addedValue === 0) {
       setAmountReceived(valorALiquidar);
     } else {
-      setAmountReceived((prev) => prev + addedValue);
+      setAmountReceived(amountReceived + addedValue);
     }
   };
 

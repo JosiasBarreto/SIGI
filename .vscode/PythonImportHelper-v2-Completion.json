@@ -9359,7 +9359,7 @@
         "kind": 2,
         "importPath": "backend.app.api.v1.evento_controller",
         "description": "backend.app.api.v1.evento_controller",
-        "peekOfCode": "def gerar_documento(id, doc_type):\n    from flask import send_file\n    buffer = io.BytesIO()\n    buffer.write(f\"DOCUMENTO {doc_type.upper()} PARA EVENTO {id}\".encode('utf-8'))\n    buffer.seek(0)\n    ext = 'pdf' if doc_type != 'word' else 'docx'\n    mimetype = 'application/pdf' if doc_type != 'word' else 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'\n    return send_file(buffer, as_attachment=True, download_name=f\"{doc_type}_{id}.{ext}\", mimetype=mimetype)",
+        "peekOfCode": "def gerar_documento(id, doc_type):\n    from flask import send_file\n    from app.models.evento import Evento\n    from app.services.pdf_generator import generate_evento_pdf, generate_evento_receipt\n    evento = Evento.query.get(id)\n    if not evento:\n        return jsonify({\"msg\": \"Evento não encontrado\"}), 404\n    doc_type_lower = doc_type.lower()\n    if 'termico' in doc_type_lower or 'receipt' in doc_type_lower:\n        pdf_buffer = generate_evento_receipt(evento, doc_type_lower)",
         "detail": "backend.app.api.v1.evento_controller",
         "documentation": {}
     },
@@ -12681,6 +12681,33 @@
         "importPath": "backend.app.services.pdf_generator",
         "description": "backend.app.services.pdf_generator",
         "peekOfCode": "def get_proforma_receipt_data(proforma):\n    empresa = _get_empresa_info()\n    moeda = empresa[\"moeda\"]\n    operador_nome = \"Sistema / Atendimento\"\n    operador_id = getattr(proforma, 'criado_por', None) or getattr(proforma, 'created_by', None)\n    if operador_id:\n        u = User.query.get(operador_id)\n        if u:\n            operador_nome = u.name\n    cliente_nome = \"Consumidor Final\"",
+        "detail": "backend.app.services.pdf_generator",
+        "documentation": {}
+    },
+    {
+        "label": "get_evento_receipt_data",
+        "kind": 2,
+        "importPath": "backend.app.services.pdf_generator",
+        "description": "backend.app.services.pdf_generator",
+        "peekOfCode": "def get_evento_receipt_data(evento, doc_type='FP'):\n    empresa = _get_empresa_info()\n    moeda = empresa[\"moeda\"]\n    operador_nome = \"Sistema / Atendimento\"\n    if getattr(evento, 'responsavel_id', None):\n        u = User.query.get(evento.responsavel_id)\n        if u:\n            operador_nome = u.name\n    cliente_nome = \"Consumidor Final\"\n    cliente_nif = \"Consumidor Final\"",
+        "detail": "backend.app.services.pdf_generator",
+        "documentation": {}
+    },
+    {
+        "label": "generate_evento_pdf",
+        "kind": 2,
+        "importPath": "backend.app.services.pdf_generator",
+        "description": "backend.app.services.pdf_generator",
+        "peekOfCode": "def generate_evento_pdf(evento, doc_type='FP'):\n    data = get_evento_receipt_data(evento, doc_type)\n    return _build_a4_pdf(data)\ndef generate_evento_receipt(evento, doc_type='FP'):\n    data = get_evento_receipt_data(evento, doc_type)\n    return _build_thermal_receipt_pdf(data)\ndef generate_proforma_pdf(proforma):\n    data = get_proforma_receipt_data(proforma)\n    return _build_a4_pdf(data)\ndef generate_proforma_receipt(proforma):",
+        "detail": "backend.app.services.pdf_generator",
+        "documentation": {}
+    },
+    {
+        "label": "generate_evento_receipt",
+        "kind": 2,
+        "importPath": "backend.app.services.pdf_generator",
+        "description": "backend.app.services.pdf_generator",
+        "peekOfCode": "def generate_evento_receipt(evento, doc_type='FP'):\n    data = get_evento_receipt_data(evento, doc_type)\n    return _build_thermal_receipt_pdf(data)\ndef generate_proforma_pdf(proforma):\n    data = get_proforma_receipt_data(proforma)\n    return _build_a4_pdf(data)\ndef generate_proforma_receipt(proforma):\n    data = get_proforma_receipt_data(proforma)\n    return _build_thermal_receipt_pdf(data)\ndef generate_venda_pdf(venda):",
         "detail": "backend.app.services.pdf_generator",
         "documentation": {}
     },

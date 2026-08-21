@@ -244,7 +244,7 @@ export default function Vendas() {
       cell: (info) => {
         const item = info.row.original;
         const client = clients.find((c: any) => String(c.id) === String(item.cliente_id));
-        const clientName = client?.nome || client?.name || item.cliente?.nome || item.cliente_nome || 'Consumidor Final';
+        const clientName = (client as any)?.nome || (client as any)?.name || item.cliente?.nome || item.cliente_nome || 'Consumidor Final';
         return <span className="font-semibold text-xs text-gray-800 dark:text-gray-200">{clientName}</span>;
       }
     },
@@ -874,7 +874,7 @@ export default function Vendas() {
           </p>
         </div>
         <button 
-          onClick={() => refetch()} 
+          onClick={() => { refetchVendas(); refetchProformas(); }} 
           className="p-2 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-2 text-sm font-medium transition-colors"
         >
           <RefreshCw size={16} /> Atualizar Grelha
