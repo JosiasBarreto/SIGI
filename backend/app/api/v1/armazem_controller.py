@@ -14,23 +14,205 @@ from marshmallow import ValidationError
 armazem_bp = Blueprint('armazem', __name__)
 armazem_service = ArmazemService()
 
+from app.services.importacao import ImportacaoCatalogoService
+
+importacao_service = ImportacaoCatalogoService()
+
+
+def _extrair_linhas_payload(req) -> list:
+    dados = req.get_json(silent=True)
+    if isinstance(dados, list):
+        return dados
+    if isinstance(dados, dict):
+        return dados.get('linhas') or dados.get('itens') or dados.get('data') or []
+    return []
+
 @armazem_bp.route('/importacao/validar', methods=['POST'])
+@armazem_bp.route('/catalogo/validar', methods=['POST'])
 @jwt_required()
 @requires_roles('Administrador', 'Armazém')
 def validar_importacao_catalogo():
-    linhas = (request.get_json() or {}).get('linhas', [])
-    resultado = armazem_service.validar_importacao_catalogo(linhas)
-    return jsonify({'linhas': resultado, 'resumo': {'total': len(resultado), 'validos': sum(x['valido'] for x in resultado), 'invalidos': sum(not x['valido'] for x in resultado)}}), 200
+    """
+    Pré-validação e Normalização do Catálogo via Excel
+    ---
+    tags:
+      - Armazém - Importação
+    summary: Valida um lote de catálogo (produtos e materiais) sem persistir na base de dados
+    description: >
+      Analisa cada linha, normaliza textos e números, resolve referências humanas
+      (categorias, unidades de medida, taxas de IVA e armazéns) para IDs internos,
+      valida regras de negócio por tipo (Consumivel, Acabado, Revenda, Material)
+      e detecta duplicados dentro do próprio ficheiro e na base de dados.
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          required:
+            - linhas
+          properties:
+            linhas:
+              type: array
+              description: Lista de linhas extraídas da folha Excel
+              items:
+                type: object
+                required:
+                  - tipo
+                  - nome
+                properties:
+                  tipo:
+                    type: string
+                    enum: [Consumivel, Acabado, Revenda, Material]
+                    example: Consumivel
+                  codigo:
+                    type: string
+                    example: FAR-01
+                  nome:
+                    type: string
+                    example: Farinha de Trigo T65
+                  categoria:
+                    type: string
+                    example: Ingredientes
+                  unidade_medida:
+                    type: string
+                    example: KG
+                  servico:
+                    type: string
+                    enum: [ABASTECIMENTO, COZINHA, PASTELARIA, BAR]
+                    example: ABASTECIMENTO
+                  taxa_iva:
+                    type: string
+                    example: 15%
+                  preco_compra:
+                    type: number
+                    example: 25.50
+                  preco_venda:
+                    type: number
+                    example: 0.00
+                  tempo_producao:
+                    type: integer
+                    example: 0
+                  stock_minimo:
+                    type: number
+                    example: 10
+                  quantidade_inicial:
+                    type: number
+                    example: 50
+                  armazem:
+                    type: string
+                    example: Armazém Principal
+                  tipo_material:
+                    type: string
+                    enum: [Reutilizavel, Consumivel]
+                    example: Reutilizavel
+                  valor_unitario:
+                    type: number
+                    example: 150.00
+    responses:
+      200:
+        description: Resultado completo da pré-validação com relatório por linha
+      400:
+        description: Payload com formato inválido
+      401:
+        description: Não autenticado (Token JWT inválido ou ausente)
+      403:
+        description: Permissão insuficiente (Requer Administrador ou Armazém)
+    """
+    linhas = _extrair_linhas_payload(request)
+    resultado = importacao_service.validar_catalogo(linhas)
+    return jsonify(resultado), 200
+
 
 @armazem_bp.route('/importacao/confirmar', methods=['POST'])
+@armazem_bp.route('/catalogo/importar', methods=['POST'])
+@armazem_bp.route('/importar', methods=['POST'])
 @jwt_required()
 @requires_roles('Administrador', 'Armazém')
 def confirmar_importacao_catalogo():
-    linhas = (request.get_json() or {}).get('linhas', [])
-    resultado, erro = armazem_service.importar_catalogo(linhas, get_jwt_identity())
+    """
+    Confirmação e Gravação Transacional do Catálogo
+    ---
+    tags:
+      - Armazém - Importação
+    summary: Grava os produtos/materiais, gera movimentos de stock inicial e regista auditoria
+    description: >
+      Revalida todo o lote na base de dados para garantir integridade.
+      Se não houver nenhuma linha bloqueada, executa uma transação MySQL atómica
+      que cria os registos, atualiza os stocks nos armazéns, regista as movimentações
+      oficiais de entrada de stock e grava o evento de auditoria.
+      Em caso de qualquer falha, é executado rollback total.
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          required:
+            - linhas
+          properties:
+            linhas:
+              type: array
+              description: Linhas validadas a importar
+    responses:
+      201:
+        description: Catálogo importado com sucesso na base de dados
+      400:
+        description: Existem linhas inválidas ou erro durante a gravação
+      401:
+        description: Não autenticado
+      403:
+        description: Permissão insuficiente
+      500:
+        description: Erro inesperado do servidor
+    """
+    linhas = _extrair_linhas_payload(request)
+    user_id = get_jwt_identity()
+
+    resultado, erro = importacao_service.confirmar_importacao(linhas, user_id)
     if erro:
-        return jsonify(erro), 400
-    return jsonify({'msg': 'Importação concluída', 'itens': resultado}), 201
+        status_code = 400
+        return jsonify(erro), status_code
+    return jsonify(resultado), 201
+
+
+@armazem_bp.route('/importacao/template-info', methods=['GET'])
+@jwt_required()
+@requires_roles('Administrador', 'Armazém')
+def obter_template_info():
+    """
+    Informações para Modelos e Validação de Importação
+    ---
+    tags:
+      - Armazém - Importação
+    summary: Retorna as opções ativas do sistema (categorias, unidades, armazéns, taxas IVA)
+    description: Fornece ao frontend listas atualizadas para selects ou geração de folhas Excel dinâmicas.
+    responses:
+      200:
+        description: Listas do catálogo para preenchimento do modelo
+    """
+    return jsonify(importacao_service.get_template_info()), 200
+
+
+@armazem_bp.route('/dados-auxiliares', methods=['GET'])
+@armazem_bp.route('/opcoes', methods=['GET'])
+@armazem_bp.route('/auxiliares', methods=['GET'])
+@armazem_bp.route('/produtos/dados-auxiliares', methods=['GET'])
+@jwt_required(optional=True)
+def obter_dados_auxiliares():
+    """
+    Dados Auxiliares de Produtos e Armazém
+    ---
+    tags:
+      - Armazém
+    summary: Retorna unidades de medida, categorias, taxas de IVA, serviços de produtos e armazéns
+    description: Rota simples e consolidada para carregar opções de seleção do catálogo (unidades de medida, categorias, taxas de IVA, serviços de produtos, tipos e armazéns).
+    responses:
+      200:
+        description: Listas completas com unidades de medida, categorias, taxas de IVA, serviços e armazéns
+    """
+    return jsonify(armazem_service.get_dados_auxiliares()), 200
+
 
 def build_pagination(repo, schema, request):
     page = request.args.get('page', 1, type=int)

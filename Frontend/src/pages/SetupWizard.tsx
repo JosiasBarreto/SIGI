@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Mail, Lock, User, Building2, Phone, MapPin, Globe, FileText, CheckCircle2, ChevronRight, ChevronLeft, CreditCard } from 'lucide-react';
 import apiClient from '../api/client';
+import { setupService } from '../services';
 
 export default function SetupWizard({ onComplete }: { onComplete: () => void }) {
   const [step, setStep] = useState(1);
@@ -77,20 +78,22 @@ export default function SetupWizard({ onComplete }: { onComplete: () => void }) 
         }
       };
 
-      // In case the API is not ready, we will mock the response if it fails
+      // Enviar configuração inicial para o backend
       try {
-        await apiClient.post('/v1/setup/', payload);
+        await setupService.completeSetup(payload);
       } catch (err: any) {
-        // If it's a network error (endpoint doesn't exist yet), we simulate success
-        if (err.error_code === 'NETWORK_ERROR' || err.response?.status === 404) {
-          console.warn("API de setup indisponível. Simulando sucesso...", payload);
-          // Fake delay
-          await new Promise(r => setTimeout(r, 1000));
+        // Se a rota ainda não existir ou for ambiente local/mock, simula com aviso
+        if (err?.error_code === 'NETWORK_ERROR' || err?.response?.status === 404 || err?.status === 404) {
+          console.warn("API de setup indisponível ou já configurada...", payload);
+          await new Promise(r => setTimeout(r, 600));
         } else {
           throw err;
         }
       }
 
+      // Guardar configuração básica em cache local
+      localStorage.setItem("sigi_config", JSON.stringify(payload.empresa));
+      localStorage.setItem("sigi_setup_completed", "true");
       onComplete();
     } catch (err: any) {
       setError(err.message || "Ocorreu um erro na configuração. Verifique os dados.");

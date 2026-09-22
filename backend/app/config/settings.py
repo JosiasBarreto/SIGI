@@ -1,10 +1,13 @@
 import os
 from dotenv import load_dotenv
 
+# Carrega variáveis de ambiente tanto do diretório de execução quanto do diretório do backend
+backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+load_dotenv(os.path.join(backend_dir, '.env'))
 load_dotenv()
 
 class Config:
-    SECRET_KEY = os.environ.get('SECRET_KEY')
+    SECRET_KEY = os.environ.get('SECRET_KEY') or 'sigi-erp-flask-secret-key-2026-production-token'
     
     # Database MySQL
     MYSQL_USER = os.environ.get('MYSQL_USER', 'root')
@@ -13,14 +16,14 @@ class Config:
     MYSQL_PORT = os.environ.get('MYSQL_PORT', '3306')
     MYSQL_DB = os.environ.get('MYSQL_DB', 'sigi_db')
     
-    SQLALCHEMY_DATABASE_URI = f"mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DB}"
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or f"mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DB}"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    BACKUP_DIR = os.environ.get('BACKUP_DIR', os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'backups'))
+    BACKUP_DIR = os.environ.get('BACKUP_DIR', os.path.join(backend_dir, 'backups'))
     MYSQLDUMP_BIN = os.environ.get('MYSQLDUMP_BIN', 'mysqldump')
     MYSQL_BIN = os.environ.get('MYSQL_BIN', 'mysql')
     
     # JWT
-    JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY')
+    JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY') or os.environ.get('SECRET_KEY') or 'sigi-erp-jwt-secret-key-sabor-imbativel-2026'
     JWT_ACCESS_TOKEN_EXPIRES = 3600  # 1 hour
     JWT_REFRESH_TOKEN_EXPIRES = 86400 * 30  # 30 days
     JWT_TOKEN_LOCATION = ['headers', 'query_string']

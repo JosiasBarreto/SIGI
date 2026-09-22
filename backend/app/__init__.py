@@ -16,6 +16,13 @@ migrate = Migrate()
 def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
+
+    # Garantir que SECRET_KEY e JWT_SECRET_KEY nunca fiquem vazias
+    if not app.config.get('SECRET_KEY'):
+        app.config['SECRET_KEY'] = 'sigi-erp-flask-secret-key-2026-production-token'
+    if not app.config.get('JWT_SECRET_KEY'):
+        app.config['JWT_SECRET_KEY'] = app.config.get('SECRET_KEY') or 'sigi-erp-jwt-secret-key-sabor-imbativel-2026'
+
     app.url_map.strict_slashes = False
 
     # Initialize extensions
@@ -61,22 +68,9 @@ def create_app(config_class=Config):
     def swagger_redirect():
         return redirect('/swagger/', code=302)
 
-    # Register blueprints and models safely
-    from app.models.user import User
-    from app.models.cliente import Cliente
-    from app.models.pedido import Pedido
-    from app.models.item_pedido import ItemPedido
-    from app.models.evento import Evento
-    from app.models.produto import Produto
-    from app.models.comercial import Venda, VendaItem, TaxaIVA, SerieDocumento, FechoDiario, Proforma, ProformaItem
-    
-    with app.app_context():
-        try:
-            db.create_all()
-            from apply_migration import run_migrations
-            run_migrations()
-        except Exception as e:
-            app.logger.warning(f"Migration/db.create_all warning: {e}")
+    # Inicialização profissional e automática da base de dados
+    from app.core.db_initializer import ensure_database_ready
+    ensure_database_ready(app)
 
     from app.api.v1.auth_controller import auth_bp
     from app.api.v1.user_controller import user_bp
@@ -117,6 +111,7 @@ def create_app(config_class=Config):
     app.register_blueprint(financeiro_bp, url_prefix='/api/v1/financeiro')
     app.register_blueprint(relatorios_bp, url_prefix='/api/v1/relatorios')
     app.register_blueprint(inventario_bp, url_prefix='/api/v1/inventario')
+    app.register_blueprint(inventario_bp, url_prefix='/api/v1/armazem/inventarios', name='inventario_armazem_canonical')
     app.register_blueprint(auditoria_bp, url_prefix='/api/v1/auditoria')
     app.register_blueprint(producao_lote_bp, url_prefix='/api/v1/producao_nova')
     app.register_blueprint(receita_bp, url_prefix='/api/v1/receitas')

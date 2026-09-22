@@ -1474,6 +1474,36 @@ export const eventService = {
 
 export const warehouseService = {
   ...createService<any>('/v1/armazem/armazens', 'inventory'),
+  /**
+   * Obtém todos os dados auxiliares consolidados do armazém/catálogo:
+   * GET /api/v1/armazem/dados-auxiliares (e aliases: /opcoes, /auxiliares, /produtos/dados-auxiliares)
+   */
+  async getDadosAuxiliares() {
+    const endpoints = [
+      '/v1/armazem/dados-auxiliares',
+      '/api/v1/armazem/dados-auxiliares',
+      '/v1/armazem/opcoes',
+      '/api/v1/armazem/opcoes',
+      '/v1/armazem/auxiliares',
+      '/api/v1/armazem/auxiliares',
+      '/v1/armazem/produtos/dados-auxiliares',
+      '/api/v1/armazem/produtos/dados-auxiliares'
+    ];
+    for (const ep of endpoints) {
+      try {
+        const res: any = await apiClient.get(ep);
+        const data = res?.data && typeof res.data === 'object' && (res.data.categorias || res.data.unidades_medida)
+          ? res.data
+          : res;
+        if (data && (data.categorias || data.unidades_medida || data.taxas_iva || data.armazens)) {
+          return data;
+        }
+      } catch {
+        continue;
+      }
+    }
+    return null;
+  },
   async getStock(id: string | number, params?: any) {
     const res = await apiClient.get<any, any>(`/v1/armazem/armazens/${id}/stock`, { params });
     return res;
@@ -1493,6 +1523,15 @@ export const warehouseService = {
   async createMovimentacao(data: any) {
     const res = await apiClient.post<any, any>('/v1/armazem/movimentacoes', data);
     return res;
+  },
+  async getMovimentacoes(params?: any) {
+    try {
+      const res = await apiClient.get<any, any>('/v1/armazem/movimentacoes', { params });
+      return res?.items || (Array.isArray(res) ? res : (res?.data || []));
+    } catch (err) {
+      console.warn('Falha ao obter movimentações de armazém:', err);
+      return [];
+    }
   },
   async entradaStockLote(data: any) {
     const res = await apiClient.post<any, any>('/v1/armazem/produtos/entrada-stock-lote', data);
@@ -1711,6 +1750,194 @@ export const dashboardService = {
       kpis: { total_vendas: 0, total_eventos: 0, receita_estimada: 0, pedidos_pendentes: 0, ordens_ativas: 0 },
       graficos: { vendas_por_mes: [] }
     };
+  }
+};
+
+export const setupService = {
+  async checkStatus(): Promise<{ setup_required: boolean }> {
+    // Avaliador de respostas para determinar se existem utilizadores ou se o setup é necessário
+    const evaluateResponse = (data: any): { determined: boolean; setupRequired: boolean } => {
+      if (data === null || data === undefined) return { determined: false, setupRequired: false };
+
+      // Flags booleanas explícitas de setup ou utilizadores
+      if (typeof data.setup_required === 'boolean') return { determined: true, setupRequired: data.setup_required };
+      if (typeof data.is_setup === 'boolean') return { determined: true, setupRequired: !data.is_setup };
+      if (typeof data.setup_concluido === 'boolean') return { determined: true, setupRequired: !data.setup_concluido };
+      if (typeof data.setup_completo === 'boolean') return { determined: true, setupRequired: !data.setup_completo };
+      if (typeof data.setup_done === 'boolean') return { determined: true, setupRequired: !data.setup_done };
+      if (typeof data.is_configured === 'boolean') return { determined: true, setupRequired: !data.is_configured };
+      if (typeof data.configured === 'boolean') return { determined: true, setupRequired: !data.configured };
+      if (typeof data.has_users === 'boolean') return { determined: true, setupRequired: !data.has_users };
+      if (typeof data.has_admin === 'boolean') return { determined: true, setupRequired: !data.has_admin };
+
+      // Se a resposta for diretamente um Array (ex: GET /v1/users retornando [])
+      if (Array.isArray(data)) {
+        return { determined: true, setupRequired: data.length === 0 };
+      }
+
+      // Se data contiver lista de utilizadores ou items
+      if (typeof data === 'object') {
+        if (Array.isArray(data.users)) {
+          return { determined: true, setupRequired: data.users.length === 0 };
+        }
+        if (Array.isArray(data.utilizadores)) {
+          return { determined: true, setupRequired: data.utilizadores.length === 0 };
+        }
+        if (Array.isArray(data.items)) {
+          if (typeof data.total === 'number') {
+            return { determined: true, setupRequired: data.total === 0 };
+          }
+          return { determined: true, setupRequired: data.items.length === 0 };
+        }
+        if (Array.isArray(data.data)) {
+          if (typeof data.total === 'number') {
+            return { determined: true, setupRequired: data.total === 0 };
+          }
+          return { determined: true, setupRequired: data.data.length === 0 };
+        }
+
+        // Totais numéricos
+        if (typeof data.total_utilizadores === 'number') {
+          return { determined: true, setupRequired: data.total_utilizadores === 0 };
+        }
+        if (typeof data.total_users === 'number') {
+          return { determined: true, setupRequired: data.total_users === 0 };
+        }
+        if (typeof data.total === 'number') {
+          return { determined: true, setupRequired: data.total === 0 };
+        }
+        if (typeof data.count === 'number') {
+          return { determined: true, setupRequired: data.count === 0 };
+        }
+      }
+
+      return { determined: false, setupRequired: false };
+    };
+
+    // Endpoints ordenados por relevância:
+    // 1. Verificação direta de utilizadores existentes no backend
+    // 2. Endpoints dedicados de status de setup / autenticação
+    // 3. Endpoints de configuração de empresa
+    const endpoints = [
+      '/v1/users?per_page=1',
+      '/v1/utilizadores?per_page=1',
+      '/v1/setup/status',
+      '/setup/status',
+      '/v1/auth/setup-status',
+      '/v1/auth/status',
+      '/v1/setup/check',
+      '/setup/check',
+      '/v1/setup/empresa',
+      '/setup/empresa',
+      '/v1/empresa'
+    ];
+
+    for (const endpoint of endpoints) {
+      try {
+        const res = await apiClient.get<any, any>(endpoint);
+        const data = res?.data !== undefined ? res.data : res;
+
+        const evalResult = evaluateResponse(data);
+        if (evalResult.determined) {
+          console.info(`[SetupCheck] Verificação via ${endpoint}: setup_required = ${evalResult.setupRequired}`);
+          return { setup_required: evalResult.setupRequired };
+        }
+
+        // Caso especial para endpoints de empresa:
+        // Se retornar objeto vazio ou sem identificação de empresa, necessita de setup inicial
+        if (endpoint.includes('empresa') && typeof data === 'object') {
+          if (!data || Object.keys(data).length === 0 || (!data.nome && !data.id && !data.nif)) {
+            console.info(`[SetupCheck] Empresa não configurada em ${endpoint}: setup_required = true`);
+            return { setup_required: true };
+          } else if (data.nome || data.id) {
+            console.info(`[SetupCheck] Empresa já configurada em ${endpoint}: setup_required = false`);
+            return { setup_required: false };
+          }
+        }
+      } catch (err: any) {
+        const status = err?.status || err?.statusCode || err?.response?.status;
+        const errorMsg = String(err?.message || err?.detail || '').toLowerCase();
+
+        // Se o endpoint de utilizadores responder com 404 (rota não existente), continua para os próximos
+        if (endpoint.includes('users') || endpoint.includes('utilizadores')) {
+          // Se o erro indicar explicitamente que não existem utilizadores
+          if (errorMsg.includes('nenhum utilizador') || errorMsg.includes('no users') || errorMsg.includes('sem utilizador')) {
+            return { setup_required: true };
+          }
+          continue;
+        }
+
+        // Se o endpoint de empresa responder com 404 (empresa não existe na base de dados vazia)
+        if (status === 404 && endpoint.includes('empresa')) {
+          console.info(`[SetupCheck] Empresa retornou 404 (base de dados vazia): setup_required = true`);
+          return { setup_required: true };
+        }
+
+        if (errorMsg.includes('não configurad') || errorMsg.includes('nenhum utilizador') || errorMsg.includes('setup required') || errorMsg.includes('not configured')) {
+          console.info(`[SetupCheck] Erro indicou ausência de configuração: setup_required = true`);
+          return { setup_required: true };
+        }
+      }
+    }
+
+    // Se nenhum endpoint indicou necessidade de setup, padrão é falso
+    return { setup_required: false };
+  },
+
+  async completeSetup(payload: any): Promise<any> {
+    // 1. Tentar rota unificada de setup
+    try {
+      return await apiClient.post('/v1/setup/', payload);
+    } catch (e1: any) {
+      if (e1?.status !== 404 && e1?.statusCode !== 404) throw e1;
+      try {
+        return await apiClient.post('/v1/setup', payload);
+      } catch (e2: any) {
+        if (e2?.status !== 404 && e2?.statusCode !== 404) throw e2;
+        try {
+          return await apiClient.post('/setup/', payload);
+        } catch (e3: any) {
+          if (e3?.status !== 404 && e3?.statusCode !== 404) throw e3;
+
+          // 2. Se a rota de setup unificada não existir (404), registar através dos endpoints padrão:
+          // A. Criar utilizador Administrador
+          const adminPayload = {
+            name: payload.admin?.name,
+            email: payload.admin?.email,
+            password: payload.admin?.password,
+            role: 'Administrador',
+            is_active: true
+          };
+
+          try {
+            await apiClient.post('/v1/users', adminPayload);
+          } catch (uErr: any) {
+            try {
+              await apiClient.post('/v1/auth/register', adminPayload);
+            } catch (regErr: any) {
+              console.warn('[SetupComplete] Falha ao registar administrador via fallback:', regErr);
+            }
+          }
+
+          // B. Configurar Empresa
+          try {
+            await apiClient.put('/v1/setup/empresa', payload.empresa);
+          } catch {
+            try {
+              await apiClient.post('/v1/setup/empresa', payload.empresa);
+            } catch {
+              try {
+                await apiClient.put('/v1/empresa', payload.empresa);
+              } catch (empErr: any) {
+                console.warn('[SetupComplete] Falha ao gravar empresa via fallback:', empErr);
+              }
+            }
+          }
+
+          return { success: true };
+        }
+      }
+    }
   }
 };
 
@@ -2130,3 +2357,5 @@ export const calendarioService = {
 };
 
 export * from './commercial/commercialService';
+export * from './InventoryService';
+export * from './InventoryAuditService';

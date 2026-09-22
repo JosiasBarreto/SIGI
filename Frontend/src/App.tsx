@@ -54,6 +54,7 @@ import { RoleRoute } from "./components/Guards/RoleRoute";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 
 import { SocketListeners } from "./components/SocketListeners";
+import { setupService } from "./services";
 
 const queryClient = new QueryClient();
 
@@ -71,13 +72,33 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  const [isCheckingSetup, setIsCheckingSetup] = useState(false);
+  const [isCheckingSetup, setIsCheckingSetup] = useState(true);
   const [setupRequired, setSetupRequired] = useState(false);
 
   useEffect(() => {
-    // Backend verifications disabled in frontend-only mock environment
-    setIsCheckingSetup(false);
-    setSetupRequired(false);
+    let isMounted = true;
+    const verifyInitialSetup = async () => {
+      try {
+        const res = await setupService.checkStatus();
+        if (isMounted) {
+          setSetupRequired(Boolean(res?.setup_required));
+        }
+      } catch (err) {
+        console.warn("Verificação de setup falhou:", err);
+        if (isMounted) {
+          setSetupRequired(false);
+        }
+      } finally {
+        if (isMounted) {
+          setIsCheckingSetup(false);
+        }
+      }
+    };
+
+    verifyInitialSetup();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   if (isCheckingSetup) {
@@ -112,6 +133,8 @@ export default function App() {
                     <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} newestOnTop closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover theme="colored" />
                     <Routes>
                       <Route path="/login" element={<Login />} />
+                      <Route path="/setup" element={<SetupWizard onComplete={() => window.location.href = '/login'} />} />
+                      <Route path="/registo-inicial" element={<SetupWizard onComplete={() => window.location.href = '/login'} />} />
                       <Route path="/recuperar-senha" element={<RecuperarSenha />} />
                       <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
                         {/* Shared routes */}
@@ -165,6 +188,7 @@ export default function App() {
                           <Route path="produtos" element={<Produtos />} />
                           <Route path="produtos/:id/receita" element={<Receita />} />
                           <Route path="armazem" element={<Inventario />} />
+                          <Route path="inventario" element={<Inventario />} />
                         </Route>
 
                         {/* Reusable materials stock catalog */}

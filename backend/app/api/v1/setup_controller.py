@@ -75,6 +75,44 @@ def perform_setup():
             )
             db.session.add(new_empresa)
             
+        # Inicializa tabelas auxiliares essenciais caso ainda não existam
+        try:
+            from app.models.financeiro import FormaPagamento
+            from app.models.comercial import TaxaIVA, SerieDocumento, TipoDocumento
+            from app.models.turno import Turno
+            from app.models.armazem import Armazem
+            from datetime import datetime, time
+
+            if FormaPagamento.query.count() == 0:
+                for nome in ["Dinheiro", "Multicaixa", "Transferência Bancária", "TPA / POS"]:
+                    db.session.add(FormaPagamento(nome=nome, ativo=True))
+
+            if TaxaIVA.query.count() == 0:
+                for desc, perc in [("Isento (0%)", 0.0), ("IVA Normal (14%)", 14.0)]:
+                    db.session.add(TaxaIVA(descricao=desc, percentagem=perc, ativo=True))
+
+            ano_atual = datetime.now().year
+            for t_doc in [TipoDocumento.FT, TipoDocumento.FR, TipoDocumento.PROFORMA, TipoDocumento.NC, TipoDocumento.ND]:
+                if not SerieDocumento.query.filter_by(tipo_documento=t_doc, ano=ano_atual).first():
+                    db.session.add(SerieDocumento(tipo_documento=t_doc, ano=ano_atual, ultimo_numero=0))
+
+            if Turno.query.count() == 0:
+                db.session.add_all([
+                    Turno(nome="Manhã", hora_inicio=time(6, 0), hora_fim=time(14, 0)),
+                    Turno(nome="Tarde", hora_inicio=time(14, 0), hora_fim=time(22, 0))
+                ])
+
+            if Armazem.query.count() == 0:
+                db.session.add(Armazem(
+                    codigo="ARM-01",
+                    nome="Armazém Central",
+                    tipo="Principal",
+                    localizacao="Instalações Centrais",
+                    ativo=True
+                ))
+        except Exception:
+            pass
+
         db.session.commit()
         return jsonify({"message": "Configuração inicial concluída com sucesso."}), 201
         

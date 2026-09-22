@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useAuth } from "../components/AuthContext";
 import { useTheme } from "../components/Layout/ThemeContext";
 import { Link, useNavigate } from "react-router-dom";
-import { Mail, Lock, AlertCircle, Sun, Moon, LogIn } from "lucide-react";
+import { Mail, Lock, AlertCircle, Sun, Moon, LogIn, Sparkles } from "lucide-react";
 import { toast } from "react-toastify";
 
 import { getDefaultRouteForRole } from "../lib/roleRoutes";
@@ -144,13 +144,23 @@ export default function Login() {
         </form>
 
         {/* Links extras */}
-        <div className="mt-8 text-center">
+        <div className="mt-8 flex flex-col items-center gap-3 text-center">
           <Link 
             to="/recuperar-senha" 
             className="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-primary transition-colors"
           >
             Esqueceu sua senha?
           </Link>
+
+          <div className="w-full pt-4 mt-2 border-t border-gray-100 dark:border-neutral-800">
+            <Link
+              to="/setup"
+              className="inline-flex items-center gap-2 text-xs font-semibold text-primary hover:text-primary/80 transition-colors py-2 px-3 rounded-xl hover:bg-primary/5 dark:hover:bg-primary/10"
+            >
+              <Sparkles className="w-4 h-4 text-primary" />
+              Primeiro Acesso / Assistente de Registo Inicial
+            </Link>
+          </div>
         </div>
       </div>
     </div>

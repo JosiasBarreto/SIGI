@@ -15,7 +15,7 @@ export interface PaginatedData<T> {
 }
 
 const apiClient: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://192.168.100.141:8000/api',
+  baseURL: import.meta.env.VITE_API_URL || 'http://192.168.88.249:8000/api',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -85,11 +85,18 @@ apiClient.interceptors.response.use(
       }
     }
 
-    let standardError = error.response?.data || {
-      success: false,
-      message: error.message || 'Network error occurred',
-      error_code: error.response?.status?.toString() || 'NETWORK_ERROR',
-    };
+    let standardError: any = error.response?.data
+      ? (typeof error.response.data === 'object' ? { ...error.response.data } : { message: String(error.response.data) })
+      : {
+          success: false,
+          message: error.message || 'Network error occurred',
+          error_code: error.response?.status?.toString() || 'NETWORK_ERROR',
+        };
+
+    // Always preserve status and response object for error handlers
+    standardError.status = error.response?.status;
+    standardError.statusCode = error.response?.status;
+    standardError.response = error.response;
 
     if (error.response?.status) {
       const status = error.response.status;

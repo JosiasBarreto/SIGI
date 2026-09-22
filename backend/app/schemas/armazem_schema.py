@@ -1,4 +1,4 @@
-from marshmallow import Schema, fields, validate, pre_load
+from marshmallow import Schema, fields, validate, pre_load, EXCLUDE
 from app.models.produto import TipoProduto, ServicoEnum
 from app.models.material import TipoMaterial, EstadoMaterial
 from app.models.movimento_stock import TipoMovimento, OrigemMovimento, EntidadeMovimento
@@ -50,6 +50,9 @@ class IngredienteSchema(Schema):
     is_active = fields.Bool(dump_only=True)
 
 class ProdutoSchema(Schema):
+    class Meta:
+        unknown = EXCLUDE
+
     id = fields.Int(dump_only=True)
     codigo = fields.Str(dump_only=True)
     nome = fields.Str(required=True, validate=validate.Length(min=2))
@@ -86,6 +89,9 @@ class ProdutoSchema(Schema):
     is_active = fields.Bool(dump_only=True)
 
 class MaterialSchema(Schema):
+    class Meta:
+        unknown = EXCLUDE
+
     id = fields.Int(dump_only=True)
     codigo = fields.Str(required=False)
     nome = fields.Str(required=True)
