@@ -148,14 +148,15 @@ export default function Calendario() {
   const { data: deliveriesResp, isLoading: isLoadingDeliv } = useQuery({ queryKey: ["deliv-cal"], queryFn: () => deliveryService.getAll({ per_page: 1000 }) });
   const { data: shiftsResp, isLoading: isLoadingShifts } = useQuery({ queryKey: ["shifts-cal"], queryFn: () => shiftService.getAll({ per_page: 1000 }) });
 
-  // Cash Register State check to allow receiving payments
-  const { data: caixasResp } = useQuery({
-    queryKey: ["caixas"],
-    queryFn: () => financialService.getAll()
-  });
+  const userStr = typeof window !== "undefined" ? localStorage.getItem("user") : null;
+  const currentUser = userStr ? JSON.parse(userStr) : null;
+  const userId = currentUser?.id || currentUser?.email || "anonymous";
 
-  const caixas = caixasResp?.items || caixasResp || [];
-  const openCaixa = Array.isArray(caixas) ? caixas.find((c: any) => c.estado === 'Aberto') : null;
+  // Cash Register State check for current user to allow receiving payments
+  const { data: openCaixa = null } = useQuery({
+    queryKey: ["minha-sessao-caixa", userId],
+    queryFn: () => financialService.getMinhaSessao()
+  });
 
   const isLoading = isLoadingEvents || isLoadingOrders || isLoadingProd || isLoadingDeliv || isLoadingShifts;
 

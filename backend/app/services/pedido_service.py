@@ -242,8 +242,8 @@ class PedidoService:
         from app.models.caixa import Caixa, MovimentoCaixa, TipoMovimentoCaixa
         from app.models.financeiro import Pagamento, EstadoPagamento
         
-        caixa = Caixa.query.with_for_update().filter_by(estado='Aberto').first()
-        if not caixa: return None, "Não existe nenhum caixa aberto no momento."
+        caixa = Caixa.query.with_for_update().filter_by(estado='Aberto', utilizador_abertura_id=user_id).first()
+        if not caixa: return None, "Não possui nenhuma sessão de caixa aberta no momento. Abra a sua caixa primeiro para receber pagamentos."
         
         pagamento = Pagamento(
             pedido_id=pedido.id,

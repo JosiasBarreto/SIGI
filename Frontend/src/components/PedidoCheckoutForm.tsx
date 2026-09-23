@@ -45,6 +45,7 @@ export default function PedidoCheckoutForm({
       queryClient.invalidateQueries({ queryKey: ["orders"] });
       queryClient.invalidateQueries({ queryKey: ["orders-cal"] });
       queryClient.invalidateQueries({ queryKey: ["caixas"] });
+      queryClient.invalidateQueries({ queryKey: ["minha-sessao-caixa"] });
       toast.success("Pagamento registado e fatura emitida com sucesso!");
       onSuccess?.(response);
     },

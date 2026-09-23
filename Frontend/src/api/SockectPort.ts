@@ -1,1 +1,1 @@
-export const ApiSocket = "http://192.168.88.212:8000";
+export const ApiSocket = "http://192.168.100.141:8000";

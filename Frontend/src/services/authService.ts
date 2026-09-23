@@ -21,6 +21,7 @@ export const authService = {
     localStorage.removeItem('user');
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
+    localStorage.removeItem('isCaixaAberta');
     return { success: true };
   },
 

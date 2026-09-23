@@ -166,7 +166,10 @@ export default function CaixaPOS() {
   // Update drafts count
   useEffect(() => {
     try {
-      const saved = localStorage.getItem("sigi_caixa_drafts");
+      const userStr = localStorage.getItem("user");
+      const currentUser = userStr ? JSON.parse(userStr) : null;
+      const userId = currentUser?.id || currentUser?.email || "anonymous";
+      const saved = localStorage.getItem(`sigi_caixa_drafts_${userId}`);
       if (saved) {
         const parsed = JSON.parse(saved);
         setDraftsCount(Array.isArray(parsed) ? parsed.length : 0);
@@ -455,6 +458,11 @@ export default function CaixaPOS() {
   };
 
   const confirmPayment = async () => {
+    if (!isCaixaAberta || !caixaId) {
+      toast.error("É necessário abrir uma caixa antes de realizar esta operação.");
+      return;
+    }
+
     const isAgendado = tipoPedido === "Agendado";
 
     if (isAgendado && !selectedClient) {
@@ -766,17 +774,17 @@ export default function CaixaPOS() {
         <div className="flex flex-col items-center justify-center h-[calc(100vh-8rem)] bg-surface dark:bg-surface-dark border border-gray-200 dark:border-border-dark rounded-xl shadow-sm animate-fade-in-up">
           <Store size={64} className="text-gray-300 dark:text-gray-600 mb-6" />
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-            Caixa Fechado
+            Nenhuma caixa aberta
           </h2>
           <p className="text-gray-500 mb-8 text-center max-w-md text-sm">
-            O caixa encontra-se fechado. Para registar vendas e operações ao
-            balcão, inicie o turno preenchendo o fundo de maneio.
+            Não possui nenhuma sessão de caixa aberta. Para começar a realizar vendas e operações ao
+            balcão, abra uma sessão de caixa preenchendo o fundo de maneio.
           </p>
           <button
             onClick={() => setActiveSessionModal("abrir")}
-            className="bg-primary hover:bg-primary-hover text-white font-bold py-3 px-8 rounded-xl shadow-lg shadow-primary/20 transition-all flex items-center gap-2 text-sm"
+            className="bg-primary hover:bg-primary-hover text-white font-bold py-3 px-8 rounded-xl shadow-lg shadow-primary/20 transition-all flex items-center gap-2 text-sm cursor-pointer"
           >
-            <Unlock size={18} /> Abrir Turno de Caixa
+            <Unlock size={18} /> Abrir Caixa
           </button>
         </div>
 

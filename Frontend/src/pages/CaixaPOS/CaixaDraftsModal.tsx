@@ -53,9 +53,21 @@ export default function CaixaDraftsModal({
     }
   }, [isOpen]);
 
+  const getUserDraftsKey = () => {
+    try {
+      const userStr = localStorage.getItem("user");
+      const currentUser = userStr ? JSON.parse(userStr) : null;
+      const userId = currentUser?.id || currentUser?.email || "anonymous";
+      return `sigi_caixa_drafts_${userId}`;
+    } catch {
+      return "sigi_caixa_drafts_anonymous";
+    }
+  };
+
   const loadDraftsFromStorage = () => {
     try {
-      const saved = localStorage.getItem("sigi_caixa_drafts");
+      const key = getUserDraftsKey();
+      const saved = localStorage.getItem(key);
       if (saved) {
         setDrafts(JSON.parse(saved));
       } else {
@@ -67,7 +79,8 @@ export default function CaixaDraftsModal({
   };
 
   const saveDraftsToStorage = (updatedDrafts: CaixaDraft[]) => {
-    localStorage.setItem("sigi_caixa_drafts", JSON.stringify(updatedDrafts));
+    const key = getUserDraftsKey();
+    localStorage.setItem(key, JSON.stringify(updatedDrafts));
     setDrafts(updatedDrafts);
   };
 

@@ -27,13 +27,22 @@ class FinanceiroService:
 
     # --- CAIXA ---
     def abrir_caixa(self, valor_inicial, utilizador_id):
-        # Verifica se já existe caixa aberto
-        caixa_aberto = db.session.query(Caixa).filter_by(estado=EstadoCaixa.ABERTO).first()
+        # Verifica se O UTILIZADOR AUTENTICADO já possui uma caixa aberta
+        caixa_aberto = db.session.query(Caixa).filter_by(
+            estado=EstadoCaixa.ABERTO,
+            utilizador_abertura_id=utilizador_id
+        ).first()
         if caixa_aberto:
-            return None, "Já existe um caixa aberto."
+            return None, f"O utilizador já possui uma sessão de caixa aberta ({caixa_aberto.numero}). Feche a sessão atual antes de abrir uma nova."
             
         numero = f"CX-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
-        caixa = Caixa(numero=numero, valor_inicial=valor_inicial, utilizador_abertura_id=utilizador_id)
+        caixa = Caixa(
+            numero=numero,
+            valor_inicial=valor_inicial,
+            utilizador_abertura_id=utilizador_id,
+            estado=EstadoCaixa.ABERTO,
+            data_abertura=datetime.utcnow()
+        )
         self.caixa_repo.create(caixa)
         
         # Movimento de abertura
@@ -48,12 +57,21 @@ class FinanceiroService:
         AuditService.log_action(utilizador_id, "ABRIR", "caixas", caixa.id)
         return caixa, None
 
+    def obter_caixa_aberto(self, utilizador_id):
+        return db.session.query(Caixa).filter_by(
+            estado=EstadoCaixa.ABERTO,
+            utilizador_abertura_id=utilizador_id
+        ).first()
+
     def fechar_caixa(self, caixa_id, utilizador_id):
         caixa = self.caixa_repo.get_by_id(caixa_id)
-        if not caixa or caixa.estado == EstadoCaixa.FECHADO:
-            return None, "Caixa inválido ou já fechado."
+        if not caixa:
+            return None, "Caixa não encontrado."
+        if caixa.utilizador_abertura_id != utilizador_id:
+            return None, "Acesso negado: apenas o utilizador que abriu esta sessão de caixa pode fechá-la."
+        if caixa.estado == EstadoCaixa.FECHADO:
+            return None, "Caixa já se encontra fechado."
             
-        # Calcular valor final sum
         total_entradas = db.session.query(func.sum(MovimentoCaixa.valor)).filter(
             MovimentoCaixa.caixa_id == caixa.id,
             MovimentoCaixa.tipo.in_([TipoMovimentoCaixa.ABERTURA, TipoMovimentoCaixa.VENDA, TipoMovimentoCaixa.RECEBIMENTO, TipoMovimentoCaixa.REFORCO])
@@ -61,10 +79,9 @@ class FinanceiroService:
         
         total_saidas = db.session.query(func.sum(MovimentoCaixa.valor)).filter(
             MovimentoCaixa.caixa_id == caixa.id,
-            MovimentoCaixa.tipo.in_([TipoMovimentoCaixa.SANGRIA, TipoMovimentoCaixa.DEVOLUCAO, TipoMovimentoCaixa.AJUSTE]) # simplificando ajuste como saida ou podemos fazer pos/neg
+            MovimentoCaixa.tipo.in_([TipoMovimentoCaixa.SANGRIA, TipoMovimentoCaixa.DEVOLUCAO, TipoMovimentoCaixa.AJUSTE])
         ).scalar() or 0
 
-        # Para simplificar, assumimos valor positivo para entrada e negativo para saida no insert ou sum manual
         saldo = total_entradas - total_saidas
         
         caixa.valor_final = saldo
@@ -76,11 +93,12 @@ class FinanceiroService:
         AuditService.log_action(utilizador_id, "FECHAR", "caixas", caixa.id)
         return caixa, None
 
-
-    def get_valores_esperados(self, caixa_id):
+    def get_valores_esperados(self, caixa_id, utilizador_id=None):
         caixa = self.caixa_repo.get_by_id(caixa_id)
         if not caixa:
-            return None, "Caixa inválido."
+            return None, "Caixa não encontrado."
+        if utilizador_id and caixa.utilizador_abertura_id != utilizador_id:
+            return None, "Acesso negado: esta sessão de caixa pertence a outro utilizador."
 
         movimentos = db.session.query(MovimentoCaixa).filter_by(caixa_id=caixa.id).all()
         
@@ -102,7 +120,7 @@ class FinanceiroService:
                     esp_transferencia += v
                 elif is_exit:
                     esp_transferencia -= v
-            elif 'pos' in fp_nome:
+            elif 'pos' in fp_nome or 'multicaixa' in fp_nome or 'cartao' in fp_nome or 'cartão' in fp_nome:
                 if is_entry:
                     esp_pos += v
                 elif is_exit:
@@ -121,8 +139,12 @@ class FinanceiroService:
 
     def fechar_caixa_detalhado(self, caixa_id, dados_fecho, utilizador_id):
         caixa = self.caixa_repo.get_by_id(caixa_id)
-        if not caixa or caixa.estado == EstadoCaixa.FECHADO:
-            return None, "Caixa inválido ou já fechado."
+        if not caixa:
+            return None, "Caixa não encontrado."
+        if caixa.utilizador_abertura_id != utilizador_id:
+            return None, "Acesso negado: apenas o utilizador que abriu esta sessão de caixa pode fechá-la."
+        if caixa.estado == EstadoCaixa.FECHADO:
+            return None, "Caixa já se encontra fechado."
 
         val_declarado_dinheiro = float(dados_fecho.get('valor_declarado_dinheiro', 0))
         val_declarado_transferencia = float(dados_fecho.get('valor_declarado_transferencia', 0))
@@ -149,7 +171,7 @@ class FinanceiroService:
                     esp_transferencia += v
                 elif is_exit:
                     esp_transferencia -= v
-            elif 'pos' in fp_nome:
+            elif 'pos' in fp_nome or 'multicaixa' in fp_nome or 'cartao' in fp_nome or 'cartão' in fp_nome:
                 if is_entry:
                     esp_pos += v
                 elif is_exit:
@@ -192,7 +214,11 @@ class FinanceiroService:
 
     def registrar_movimento(self, caixa_id, data, utilizador_id):
         caixa = self.caixa_repo.get_by_id(caixa_id)
-        if not caixa or caixa.estado == EstadoCaixa.FECHADO:
+        if not caixa:
+            raise CaixaEncerradoException("Caixa não encontrado.")
+        if caixa.utilizador_abertura_id != utilizador_id:
+            raise CaixaEncerradoException("Acesso negado: esta sessão de caixa pertence a outro utilizador.")
+        if caixa.estado == EstadoCaixa.FECHADO:
             raise CaixaEncerradoException("Caixa precisa estar aberto para registrar movimentos.")
             
         data['caixa_id'] = caixa_id

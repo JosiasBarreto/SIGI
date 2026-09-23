@@ -35,13 +35,15 @@ interface NovoPedidoFormProps {
 export default function NovoPedidoForm({ onSuccessRedirect }: NovoPedidoFormProps) {
   const queryClient = useQueryClient();
 
-  // Active cashier session
-  const { data: caixasResponse } = useQuery({
-    queryKey: ["caixas"],
-    queryFn: () => financialService.getAll(),
+  const userStr = typeof window !== "undefined" ? localStorage.getItem("user") : null;
+  const currentUser = userStr ? JSON.parse(userStr) : null;
+  const userId = currentUser?.id || currentUser?.email || "anonymous";
+
+  // Active user cashier session
+  const { data: openCaixa = null } = useQuery({
+    queryKey: ["minha-sessao-caixa", userId],
+    queryFn: () => financialService.getMinhaSessao(),
   });
-  const openCaixa =
-    caixasResponse?.items?.find((c: any) => c.estado === "Aberto") || null;
 
   // Clients
   const { data: clientsResponse } = useQuery({
@@ -430,6 +432,7 @@ export default function NovoPedidoForm({ onSuccessRedirect }: NovoPedidoFormProp
 
       queryClient.invalidateQueries({ queryKey: ["orders"] });
       queryClient.invalidateQueries({ queryKey: ["caixas"] });
+      queryClient.invalidateQueries({ queryKey: ["minha-sessao-caixa"] });
 
       toast.success("Pedido registado com sucesso!");
       setCompletedOrder({

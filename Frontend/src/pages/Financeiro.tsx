@@ -12,11 +12,14 @@ import { useAuth } from '../components/AuthContext';
 // Sub-Tab 1: Reconciliação & Caixa Ativo
 function TabReconciliacao() {
   const { user } = useAuth();
+  const userId = user?.id || user?.email || "anonymous";
   const canEdit = ["Administrador", "Financeiro"].includes(user?.role || "");
   const queryClient = useQueryClient();
-  const { data: caixas } = useQuery({ queryKey: ["caixas"], queryFn: () => financialService.getAll() });
-  const caixasData = caixas?.items || (Array.isArray(caixas) ? caixas : []);
-  const openCaixa = caixasData.find((c: any) => c.estado === 'Aberto');
+
+  const { data: openCaixa = null } = useQuery({
+    queryKey: ["minha-sessao-caixa", userId],
+    queryFn: () => financialService.getMinhaSessao(),
+  });
 
   const [abrirVal, setAbrirVal] = useState("");
   
@@ -33,6 +36,7 @@ function TabReconciliacao() {
   const abrirMutation = useMutation({
     mutationFn: (val: number) => financialService.abrir(val),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["minha-sessao-caixa"] });
       queryClient.invalidateQueries({ queryKey: ["caixas"] });
       toast.success("Caixa aberto com sucesso!");
     },
@@ -42,6 +46,7 @@ function TabReconciliacao() {
   const fecharMutation = useMutation({
     mutationFn: (data: any) => financialService.fechar(openCaixa?.id, data),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["minha-sessao-caixa"] });
       queryClient.invalidateQueries({ queryKey: ["caixas"] });
       setModalType(null);
       toast.success("Caixa fechado com sucesso!");
@@ -54,6 +59,7 @@ function TabReconciliacao() {
   const movimentoMutation = useMutation({
     mutationFn: (data: any) => financialService.movimento(openCaixa?.id, data.tipo, data.valor, data.descricao),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["minha-sessao-caixa"] });
       queryClient.invalidateQueries({ queryKey: ["caixas"] });
       setModalType(null);
       setMovimentoVal("");
@@ -102,9 +108,10 @@ function TabReconciliacao() {
   }
 
   // Calculating total expected (can be more complex based on real API response)
-  const saldoDinheiroEsperado = parseFloat(openCaixa?.valor_esperado_dinheiro || "0") || parseFloat(openCaixa?.valor_inicial || "0");
-  const saldoPosEsperado = parseFloat(openCaixa?.valor_esperado_pos || "0");
-  const saldoTransferenciaEsperado = parseFloat(openCaixa?.valor_esperado_transferencia || "0");
+  const openCaixaAny = openCaixa as any;
+  const saldoDinheiroEsperado = parseFloat(openCaixaAny?.valor_esperado_dinheiro || "0") || parseFloat(String(openCaixaAny?.valor_inicial || "0"));
+  const saldoPosEsperado = parseFloat(openCaixaAny?.valor_esperado_pos || "0");
+  const saldoTransferenciaEsperado = parseFloat(openCaixaAny?.valor_esperado_transferencia || "0");
 
   const totalEsperado = saldoDinheiroEsperado + saldoPosEsperado + saldoTransferenciaEsperado;
   const totalDeclarado = parseFloat(fecharDinheiro || "0") + parseFloat(fecharTransferencia || "0") + parseFloat(fecharPos || "0");
@@ -151,7 +158,7 @@ function TabReconciliacao() {
             <div className="space-y-4">
               <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
                 <span className="font-medium text-gray-600 dark:text-gray-400">Fundo de Maneio</span>
-                <span className="font-bold text-gray-900 dark:text-white">{formatCurrency(openCaixa.valor_inicial)}</span>
+                <span className="font-bold text-gray-900 dark:text-white">{formatCurrency(Number(openCaixa.valor_inicial))}</span>
               </div>
               <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
                 <span className="font-medium text-gray-600 dark:text-gray-400">Dinheiro (Esperado)</span>

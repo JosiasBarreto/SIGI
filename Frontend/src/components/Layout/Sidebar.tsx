@@ -1,4 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
+import { financialService } from "../../services";
 import {
   LayoutDashboard,
   Users,
@@ -193,8 +194,8 @@ export function Sidebar({
     }
 
     try {
-      const isCaixaAbertaFallback = localStorage.getItem('isCaixaAberta') === 'true';
-      if (isCaixaAbertaFallback) {
+      const minhaSessao = await financialService.getMinhaSessao();
+      if (minhaSessao && (minhaSessao.estado === 'Aberto' || minhaSessao.estado === 'ABERTA')) {
         const SwalModule = await import('sweetalert2');
         const Swal = SwalModule.default;
         Swal.fire({

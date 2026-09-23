@@ -224,6 +224,22 @@
         "documentation": {}
     },
     {
+        "label": "jsonify",
+        "importPath": "flask",
+        "description": "flask",
+        "isExtraImport": true,
+        "detail": "flask",
+        "documentation": {}
+    },
+    {
+        "label": "send_file",
+        "importPath": "flask",
+        "description": "flask",
+        "isExtraImport": true,
+        "detail": "flask",
+        "documentation": {}
+    },
+    {
         "label": "Blueprint",
         "importPath": "flask",
         "description": "flask",
@@ -904,6 +920,14 @@
         "documentation": {}
     },
     {
+        "label": "ArmazemService",
+        "importPath": "app.services.armazem_service",
+        "description": "app.services.armazem_service",
+        "isExtraImport": true,
+        "detail": "app.services.armazem_service",
+        "documentation": {}
+    },
+    {
         "label": "armazem_service",
         "importPath": "app.services.armazem_service",
         "description": "app.services.armazem_service",
@@ -997,6 +1021,14 @@
         "description": "app.schemas.armazem_schema",
         "isExtraImport": true,
         "detail": "app.schemas.armazem_schema",
+        "documentation": {}
+    },
+    {
+        "label": "requires_roles",
+        "importPath": "app.middleware.auth_middleware",
+        "description": "app.middleware.auth_middleware",
+        "isExtraImport": true,
+        "detail": "app.middleware.auth_middleware",
         "documentation": {}
     },
     {
@@ -1200,6 +1232,14 @@
         "documentation": {}
     },
     {
+        "label": "EXCLUDE",
+        "importPath": "marshmallow",
+        "description": "marshmallow",
+        "isExtraImport": true,
+        "detail": "marshmallow",
+        "documentation": {}
+    },
+    {
         "label": "Schema",
         "importPath": "marshmallow",
         "description": "marshmallow",
@@ -1421,6 +1461,62 @@
         "description": "marshmallow",
         "isExtraImport": true,
         "detail": "marshmallow",
+        "documentation": {}
+    },
+    {
+        "label": "ImportacaoCatalogoService",
+        "importPath": "app.services.importacao",
+        "description": "app.services.importacao",
+        "isExtraImport": true,
+        "detail": "app.services.importacao",
+        "documentation": {}
+    },
+    {
+        "label": "db",
+        "importPath": "app.core.database",
+        "description": "app.core.database",
+        "isExtraImport": true,
+        "detail": "app.core.database",
+        "documentation": {}
+    },
+    {
+        "label": "db",
+        "importPath": "app.core.database",
+        "description": "app.core.database",
+        "isExtraImport": true,
+        "detail": "app.core.database",
+        "documentation": {}
+    },
+    {
+        "label": "db",
+        "importPath": "app.core.database",
+        "description": "app.core.database",
+        "isExtraImport": true,
+        "detail": "app.core.database",
+        "documentation": {}
+    },
+    {
+        "label": "db",
+        "importPath": "app.core.database",
+        "description": "app.core.database",
+        "isExtraImport": true,
+        "detail": "app.core.database",
+        "documentation": {}
+    },
+    {
+        "label": "db",
+        "importPath": "app.core.database",
+        "description": "app.core.database",
+        "isExtraImport": true,
+        "detail": "app.core.database",
+        "documentation": {}
+    },
+    {
+        "label": "db",
+        "importPath": "app.core.database",
+        "description": "app.core.database",
+        "isExtraImport": true,
+        "detail": "app.core.database",
         "documentation": {}
     },
     {
@@ -2064,19 +2160,19 @@
         "documentation": {}
     },
     {
-        "label": "swag_from",
-        "importPath": "flasgger",
-        "description": "flasgger",
-        "isExtraImport": true,
-        "detail": "flasgger",
-        "documentation": {}
-    },
-    {
         "label": "backup_service",
         "importPath": "app.services.backup_service",
         "description": "app.services.backup_service",
         "isExtraImport": true,
         "detail": "app.services.backup_service",
+        "documentation": {}
+    },
+    {
+        "label": "AuditService",
+        "importPath": "app.services.audit_service",
+        "description": "app.services.audit_service",
+        "isExtraImport": true,
+        "detail": "app.services.audit_service",
         "documentation": {}
     },
     {
@@ -3697,7 +3793,39 @@
         "documentation": {}
     },
     {
+        "label": "inspect",
+        "importPath": "sqlalchemy",
+        "description": "sqlalchemy",
+        "isExtraImport": true,
+        "detail": "sqlalchemy",
+        "documentation": {}
+    },
+    {
+        "label": "text",
+        "importPath": "sqlalchemy",
+        "description": "sqlalchemy",
+        "isExtraImport": true,
+        "detail": "sqlalchemy",
+        "documentation": {}
+    },
+    {
+        "label": "text",
+        "importPath": "sqlalchemy",
+        "description": "sqlalchemy",
+        "isExtraImport": true,
+        "detail": "sqlalchemy",
+        "documentation": {}
+    },
+    {
         "label": "func",
+        "importPath": "sqlalchemy",
+        "description": "sqlalchemy",
+        "isExtraImport": true,
+        "detail": "sqlalchemy",
+        "documentation": {}
+    },
+    {
+        "label": "or_",
         "importPath": "sqlalchemy",
         "description": "sqlalchemy",
         "isExtraImport": true,
@@ -3714,6 +3842,70 @@
     },
     {
         "label": "func",
+        "importPath": "sqlalchemy",
+        "description": "sqlalchemy",
+        "isExtraImport": true,
+        "detail": "sqlalchemy",
+        "documentation": {}
+    },
+    {
+        "label": "and_",
+        "importPath": "sqlalchemy",
+        "description": "sqlalchemy",
+        "isExtraImport": true,
+        "detail": "sqlalchemy",
+        "documentation": {}
+    },
+    {
+        "label": "func",
+        "importPath": "sqlalchemy",
+        "description": "sqlalchemy",
+        "isExtraImport": true,
+        "detail": "sqlalchemy",
+        "documentation": {}
+    },
+    {
+        "label": "or_",
+        "importPath": "sqlalchemy",
+        "description": "sqlalchemy",
+        "isExtraImport": true,
+        "detail": "sqlalchemy",
+        "documentation": {}
+    },
+    {
+        "label": "and_",
+        "importPath": "sqlalchemy",
+        "description": "sqlalchemy",
+        "isExtraImport": true,
+        "detail": "sqlalchemy",
+        "documentation": {}
+    },
+    {
+        "label": "desc",
+        "importPath": "sqlalchemy",
+        "description": "sqlalchemy",
+        "isExtraImport": true,
+        "detail": "sqlalchemy",
+        "documentation": {}
+    },
+    {
+        "label": "func",
+        "importPath": "sqlalchemy",
+        "description": "sqlalchemy",
+        "isExtraImport": true,
+        "detail": "sqlalchemy",
+        "documentation": {}
+    },
+    {
+        "label": "func",
+        "importPath": "sqlalchemy",
+        "description": "sqlalchemy",
+        "isExtraImport": true,
+        "detail": "sqlalchemy",
+        "documentation": {}
+    },
+    {
+        "label": "text",
         "importPath": "sqlalchemy",
         "description": "sqlalchemy",
         "isExtraImport": true,
@@ -3826,6 +4018,22 @@
         "documentation": {}
     },
     {
+        "label": "date",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
         "label": "datetime",
         "importPath": "datetime",
         "description": "datetime",
@@ -3875,6 +4083,22 @@
     },
     {
         "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "date",
         "importPath": "datetime",
         "description": "datetime",
         "isExtraImport": true,
@@ -4003,6 +4227,30 @@
     },
     {
         "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "date",
         "importPath": "datetime",
         "description": "datetime",
         "isExtraImport": true,
@@ -4322,6 +4570,14 @@
         "documentation": {}
     },
     {
+        "label": "TaxaIVA",
+        "importPath": "app.models.comercial",
+        "description": "app.models.comercial",
+        "isExtraImport": true,
+        "detail": "app.models.comercial",
+        "documentation": {}
+    },
+    {
         "label": "Venda",
         "importPath": "app.models.comercial",
         "description": "app.models.comercial",
@@ -4595,11 +4851,331 @@
         "documentation": {}
     },
     {
-        "label": "ApiResponse",
-        "importPath": "app.core.errors",
-        "description": "app.core.errors",
+        "label": "InventarioReportService",
+        "importPath": "app.services.inventario_report_service",
+        "description": "app.services.inventario_report_service",
         "isExtraImport": true,
-        "detail": "app.core.errors",
+        "detail": "app.services.inventario_report_service",
+        "documentation": {}
+    },
+    {
+        "label": "InventarioReportService",
+        "importPath": "app.services.inventario_report_service",
+        "description": "app.services.inventario_report_service",
+        "isExtraImport": true,
+        "detail": "app.services.inventario_report_service",
+        "documentation": {}
+    },
+    {
+        "label": "InventarioReportService",
+        "importPath": "app.services.inventario_report_service",
+        "description": "app.services.inventario_report_service",
+        "isExtraImport": true,
+        "detail": "app.services.inventario_report_service",
+        "documentation": {}
+    },
+    {
+        "label": "InventarioExcelService",
+        "importPath": "app.services.inventario_excel_service",
+        "description": "app.services.inventario_excel_service",
+        "isExtraImport": true,
+        "detail": "app.services.inventario_excel_service",
+        "documentation": {}
+    },
+    {
+        "label": "InventarioPdfService",
+        "importPath": "app.services.inventario_pdf_service",
+        "description": "app.services.inventario_pdf_service",
+        "isExtraImport": true,
+        "detail": "app.services.inventario_pdf_service",
+        "documentation": {}
+    },
+    {
+        "label": "User",
+        "importPath": "app.models.user",
+        "description": "app.models.user",
+        "isExtraImport": true,
+        "detail": "app.models.user",
+        "documentation": {}
+    },
+    {
+        "label": "User",
+        "importPath": "app.models.user",
+        "description": "app.models.user",
+        "isExtraImport": true,
+        "detail": "app.models.user",
+        "documentation": {}
+    },
+    {
+        "label": "RoleEnum",
+        "importPath": "app.models.user",
+        "description": "app.models.user",
+        "isExtraImport": true,
+        "detail": "app.models.user",
+        "documentation": {}
+    },
+    {
+        "label": "User",
+        "importPath": "app.models.user",
+        "description": "app.models.user",
+        "isExtraImport": true,
+        "detail": "app.models.user",
+        "documentation": {}
+    },
+    {
+        "label": "RoleEnum",
+        "importPath": "app.models.user",
+        "description": "app.models.user",
+        "isExtraImport": true,
+        "detail": "app.models.user",
+        "documentation": {}
+    },
+    {
+        "label": "User",
+        "importPath": "app.models.user",
+        "description": "app.models.user",
+        "isExtraImport": true,
+        "detail": "app.models.user",
+        "documentation": {}
+    },
+    {
+        "label": "User",
+        "importPath": "app.models.user",
+        "description": "app.models.user",
+        "isExtraImport": true,
+        "detail": "app.models.user",
+        "documentation": {}
+    },
+    {
+        "label": "RoleEnum",
+        "importPath": "app.models.user",
+        "description": "app.models.user",
+        "isExtraImport": true,
+        "detail": "app.models.user",
+        "documentation": {}
+    },
+    {
+        "label": "User",
+        "importPath": "app.models.user",
+        "description": "app.models.user",
+        "isExtraImport": true,
+        "detail": "app.models.user",
+        "documentation": {}
+    },
+    {
+        "label": "User",
+        "importPath": "app.models.user",
+        "description": "app.models.user",
+        "isExtraImport": true,
+        "detail": "app.models.user",
+        "documentation": {}
+    },
+    {
+        "label": "RoleEnum",
+        "importPath": "app.models.user",
+        "description": "app.models.user",
+        "isExtraImport": true,
+        "detail": "app.models.user",
+        "documentation": {}
+    },
+    {
+        "label": "User",
+        "importPath": "app.models.user",
+        "description": "app.models.user",
+        "isExtraImport": true,
+        "detail": "app.models.user",
+        "documentation": {}
+    },
+    {
+        "label": "RoleEnum",
+        "importPath": "app.models.user",
+        "description": "app.models.user",
+        "isExtraImport": true,
+        "detail": "app.models.user",
+        "documentation": {}
+    },
+    {
+        "label": "User",
+        "importPath": "app.models.user",
+        "description": "app.models.user",
+        "isExtraImport": true,
+        "detail": "app.models.user",
+        "documentation": {}
+    },
+    {
+        "label": "RoleEnum",
+        "importPath": "app.models.user",
+        "description": "app.models.user",
+        "isExtraImport": true,
+        "detail": "app.models.user",
+        "documentation": {}
+    },
+    {
+        "label": "User",
+        "importPath": "app.models.user",
+        "description": "app.models.user",
+        "isExtraImport": true,
+        "detail": "app.models.user",
+        "documentation": {}
+    },
+    {
+        "label": "RoleEnum",
+        "importPath": "app.models.user",
+        "description": "app.models.user",
+        "isExtraImport": true,
+        "detail": "app.models.user",
+        "documentation": {}
+    },
+    {
+        "label": "User",
+        "importPath": "app.models.user",
+        "description": "app.models.user",
+        "isExtraImport": true,
+        "detail": "app.models.user",
+        "documentation": {}
+    },
+    {
+        "label": "RoleEnum",
+        "importPath": "app.models.user",
+        "description": "app.models.user",
+        "isExtraImport": true,
+        "detail": "app.models.user",
+        "documentation": {}
+    },
+    {
+        "label": "User",
+        "importPath": "app.models.user",
+        "description": "app.models.user",
+        "isExtraImport": true,
+        "detail": "app.models.user",
+        "documentation": {}
+    },
+    {
+        "label": "RoleEnum",
+        "importPath": "app.models.user",
+        "description": "app.models.user",
+        "isExtraImport": true,
+        "detail": "app.models.user",
+        "documentation": {}
+    },
+    {
+        "label": "User",
+        "importPath": "app.models.user",
+        "description": "app.models.user",
+        "isExtraImport": true,
+        "detail": "app.models.user",
+        "documentation": {}
+    },
+    {
+        "label": "RoleEnum",
+        "importPath": "app.models.user",
+        "description": "app.models.user",
+        "isExtraImport": true,
+        "detail": "app.models.user",
+        "documentation": {}
+    },
+    {
+        "label": "User",
+        "importPath": "app.models.user",
+        "description": "app.models.user",
+        "isExtraImport": true,
+        "detail": "app.models.user",
+        "documentation": {}
+    },
+    {
+        "label": "RoleEnum",
+        "importPath": "app.models.user",
+        "description": "app.models.user",
+        "isExtraImport": true,
+        "detail": "app.models.user",
+        "documentation": {}
+    },
+    {
+        "label": "User",
+        "importPath": "app.models.user",
+        "description": "app.models.user",
+        "isExtraImport": true,
+        "detail": "app.models.user",
+        "documentation": {}
+    },
+    {
+        "label": "RoleEnum",
+        "importPath": "app.models.user",
+        "description": "app.models.user",
+        "isExtraImport": true,
+        "detail": "app.models.user",
+        "documentation": {}
+    },
+    {
+        "label": "User",
+        "importPath": "app.models.user",
+        "description": "app.models.user",
+        "isExtraImport": true,
+        "detail": "app.models.user",
+        "documentation": {}
+    },
+    {
+        "label": "User",
+        "importPath": "app.models.user",
+        "description": "app.models.user",
+        "isExtraImport": true,
+        "detail": "app.models.user",
+        "documentation": {}
+    },
+    {
+        "label": "RoleEnum",
+        "importPath": "app.models.user",
+        "description": "app.models.user",
+        "isExtraImport": true,
+        "detail": "app.models.user",
+        "documentation": {}
+    },
+    {
+        "label": "User",
+        "importPath": "app.models.user",
+        "description": "app.models.user",
+        "isExtraImport": true,
+        "detail": "app.models.user",
+        "documentation": {}
+    },
+    {
+        "label": "RoleEnum",
+        "importPath": "app.models.user",
+        "description": "app.models.user",
+        "isExtraImport": true,
+        "detail": "app.models.user",
+        "documentation": {}
+    },
+    {
+        "label": "User",
+        "importPath": "app.models.user",
+        "description": "app.models.user",
+        "isExtraImport": true,
+        "detail": "app.models.user",
+        "documentation": {}
+    },
+    {
+        "label": "RoleEnum",
+        "importPath": "app.models.user",
+        "description": "app.models.user",
+        "isExtraImport": true,
+        "detail": "app.models.user",
+        "documentation": {}
+    },
+    {
+        "label": "QuarentenaItem",
+        "importPath": "app.models.quarentena",
+        "description": "app.models.quarentena",
+        "isExtraImport": true,
+        "detail": "app.models.quarentena",
+        "documentation": {}
+    },
+    {
+        "label": "EstadoQuarentena",
+        "importPath": "app.models.quarentena",
+        "description": "app.models.quarentena",
+        "isExtraImport": true,
+        "detail": "app.models.quarentena",
         "documentation": {}
     },
     {
@@ -4859,63 +5435,7 @@
         "documentation": {}
     },
     {
-        "label": "Produto",
-        "importPath": "app.models.produto",
-        "description": "app.models.produto",
-        "isExtraImport": true,
-        "detail": "app.models.produto",
-        "documentation": {}
-    },
-    {
-        "label": "TipoProduto",
-        "importPath": "app.models.produto",
-        "description": "app.models.produto",
-        "isExtraImport": true,
-        "detail": "app.models.produto",
-        "documentation": {}
-    },
-    {
-        "label": "Produto",
-        "importPath": "app.models.produto",
-        "description": "app.models.produto",
-        "isExtraImport": true,
-        "detail": "app.models.produto",
-        "documentation": {}
-    },
-    {
-        "label": "Produto",
-        "importPath": "app.models.produto",
-        "description": "app.models.produto",
-        "isExtraImport": true,
-        "detail": "app.models.produto",
-        "documentation": {}
-    },
-    {
-        "label": "Produto",
-        "importPath": "app.models.produto",
-        "description": "app.models.produto",
-        "isExtraImport": true,
-        "detail": "app.models.produto",
-        "documentation": {}
-    },
-    {
-        "label": "Produto",
-        "importPath": "app.models.produto",
-        "description": "app.models.produto",
-        "isExtraImport": true,
-        "detail": "app.models.produto",
-        "documentation": {}
-    },
-    {
-        "label": "TipoProduto",
-        "importPath": "app.models.produto",
-        "description": "app.models.produto",
-        "isExtraImport": true,
-        "detail": "app.models.produto",
-        "documentation": {}
-    },
-    {
-        "label": "Produto",
+        "label": "ServicoEnum",
         "importPath": "app.models.produto",
         "description": "app.models.produto",
         "isExtraImport": true,
@@ -4971,7 +5491,15 @@
         "documentation": {}
     },
     {
-        "label": "TipoProduto",
+        "label": "Produto",
+        "importPath": "app.models.produto",
+        "description": "app.models.produto",
+        "isExtraImport": true,
+        "detail": "app.models.produto",
+        "documentation": {}
+    },
+    {
+        "label": "Produto",
         "importPath": "app.models.produto",
         "description": "app.models.produto",
         "isExtraImport": true,
@@ -4988,6 +5516,22 @@
     },
     {
         "label": "TipoProduto",
+        "importPath": "app.models.produto",
+        "description": "app.models.produto",
+        "isExtraImport": true,
+        "detail": "app.models.produto",
+        "documentation": {}
+    },
+    {
+        "label": "Produto",
+        "importPath": "app.models.produto",
+        "description": "app.models.produto",
+        "isExtraImport": true,
+        "detail": "app.models.produto",
+        "documentation": {}
+    },
+    {
+        "label": "Produto",
         "importPath": "app.models.produto",
         "description": "app.models.produto",
         "isExtraImport": true,
@@ -5072,6 +5616,110 @@
         "description": "app.models.produto",
         "isExtraImport": true,
         "detail": "app.models.produto",
+        "documentation": {}
+    },
+    {
+        "label": "Produto",
+        "importPath": "app.models.produto",
+        "description": "app.models.produto",
+        "isExtraImport": true,
+        "detail": "app.models.produto",
+        "documentation": {}
+    },
+    {
+        "label": "TipoProduto",
+        "importPath": "app.models.produto",
+        "description": "app.models.produto",
+        "isExtraImport": true,
+        "detail": "app.models.produto",
+        "documentation": {}
+    },
+    {
+        "label": "Produto",
+        "importPath": "app.models.produto",
+        "description": "app.models.produto",
+        "isExtraImport": true,
+        "detail": "app.models.produto",
+        "documentation": {}
+    },
+    {
+        "label": "TipoProduto",
+        "importPath": "app.models.produto",
+        "description": "app.models.produto",
+        "isExtraImport": true,
+        "detail": "app.models.produto",
+        "documentation": {}
+    },
+    {
+        "label": "Produto",
+        "importPath": "app.models.produto",
+        "description": "app.models.produto",
+        "isExtraImport": true,
+        "detail": "app.models.produto",
+        "documentation": {}
+    },
+    {
+        "label": "TipoProduto",
+        "importPath": "app.models.produto",
+        "description": "app.models.produto",
+        "isExtraImport": true,
+        "detail": "app.models.produto",
+        "documentation": {}
+    },
+    {
+        "label": "Produto",
+        "importPath": "app.models.produto",
+        "description": "app.models.produto",
+        "isExtraImport": true,
+        "detail": "app.models.produto",
+        "documentation": {}
+    },
+    {
+        "label": "TipoProduto",
+        "importPath": "app.models.produto",
+        "description": "app.models.produto",
+        "isExtraImport": true,
+        "detail": "app.models.produto",
+        "documentation": {}
+    },
+    {
+        "label": "StockMovement",
+        "importPath": "app.models.stock_movement",
+        "description": "app.models.stock_movement",
+        "isExtraImport": true,
+        "detail": "app.models.stock_movement",
+        "documentation": {}
+    },
+    {
+        "label": "TipoMovimentoStock",
+        "importPath": "app.models.stock_movement",
+        "description": "app.models.stock_movement",
+        "isExtraImport": true,
+        "detail": "app.models.stock_movement",
+        "documentation": {}
+    },
+    {
+        "label": "StockMovement",
+        "importPath": "app.models.stock_movement",
+        "description": "app.models.stock_movement",
+        "isExtraImport": true,
+        "detail": "app.models.stock_movement",
+        "documentation": {}
+    },
+    {
+        "label": "TipoMovimentoStock",
+        "importPath": "app.models.stock_movement",
+        "description": "app.models.stock_movement",
+        "isExtraImport": true,
+        "detail": "app.models.stock_movement",
+        "documentation": {}
+    },
+    {
+        "label": "StockMovement",
+        "importPath": "app.models.stock_movement",
+        "description": "app.models.stock_movement",
+        "isExtraImport": true,
+        "detail": "app.models.stock_movement",
         "documentation": {}
     },
     {
@@ -5204,267 +5852,11 @@
         "documentation": {}
     },
     {
-        "label": "User",
-        "importPath": "app.models.user",
-        "description": "app.models.user",
+        "label": "Empresa",
+        "importPath": "app.models.empresa",
+        "description": "app.models.empresa",
         "isExtraImport": true,
-        "detail": "app.models.user",
-        "documentation": {}
-    },
-    {
-        "label": "RoleEnum",
-        "importPath": "app.models.user",
-        "description": "app.models.user",
-        "isExtraImport": true,
-        "detail": "app.models.user",
-        "documentation": {}
-    },
-    {
-        "label": "User",
-        "importPath": "app.models.user",
-        "description": "app.models.user",
-        "isExtraImport": true,
-        "detail": "app.models.user",
-        "documentation": {}
-    },
-    {
-        "label": "RoleEnum",
-        "importPath": "app.models.user",
-        "description": "app.models.user",
-        "isExtraImport": true,
-        "detail": "app.models.user",
-        "documentation": {}
-    },
-    {
-        "label": "User",
-        "importPath": "app.models.user",
-        "description": "app.models.user",
-        "isExtraImport": true,
-        "detail": "app.models.user",
-        "documentation": {}
-    },
-    {
-        "label": "User",
-        "importPath": "app.models.user",
-        "description": "app.models.user",
-        "isExtraImport": true,
-        "detail": "app.models.user",
-        "documentation": {}
-    },
-    {
-        "label": "RoleEnum",
-        "importPath": "app.models.user",
-        "description": "app.models.user",
-        "isExtraImport": true,
-        "detail": "app.models.user",
-        "documentation": {}
-    },
-    {
-        "label": "User",
-        "importPath": "app.models.user",
-        "description": "app.models.user",
-        "isExtraImport": true,
-        "detail": "app.models.user",
-        "documentation": {}
-    },
-    {
-        "label": "User",
-        "importPath": "app.models.user",
-        "description": "app.models.user",
-        "isExtraImport": true,
-        "detail": "app.models.user",
-        "documentation": {}
-    },
-    {
-        "label": "RoleEnum",
-        "importPath": "app.models.user",
-        "description": "app.models.user",
-        "isExtraImport": true,
-        "detail": "app.models.user",
-        "documentation": {}
-    },
-    {
-        "label": "User",
-        "importPath": "app.models.user",
-        "description": "app.models.user",
-        "isExtraImport": true,
-        "detail": "app.models.user",
-        "documentation": {}
-    },
-    {
-        "label": "RoleEnum",
-        "importPath": "app.models.user",
-        "description": "app.models.user",
-        "isExtraImport": true,
-        "detail": "app.models.user",
-        "documentation": {}
-    },
-    {
-        "label": "User",
-        "importPath": "app.models.user",
-        "description": "app.models.user",
-        "isExtraImport": true,
-        "detail": "app.models.user",
-        "documentation": {}
-    },
-    {
-        "label": "RoleEnum",
-        "importPath": "app.models.user",
-        "description": "app.models.user",
-        "isExtraImport": true,
-        "detail": "app.models.user",
-        "documentation": {}
-    },
-    {
-        "label": "User",
-        "importPath": "app.models.user",
-        "description": "app.models.user",
-        "isExtraImport": true,
-        "detail": "app.models.user",
-        "documentation": {}
-    },
-    {
-        "label": "RoleEnum",
-        "importPath": "app.models.user",
-        "description": "app.models.user",
-        "isExtraImport": true,
-        "detail": "app.models.user",
-        "documentation": {}
-    },
-    {
-        "label": "User",
-        "importPath": "app.models.user",
-        "description": "app.models.user",
-        "isExtraImport": true,
-        "detail": "app.models.user",
-        "documentation": {}
-    },
-    {
-        "label": "RoleEnum",
-        "importPath": "app.models.user",
-        "description": "app.models.user",
-        "isExtraImport": true,
-        "detail": "app.models.user",
-        "documentation": {}
-    },
-    {
-        "label": "User",
-        "importPath": "app.models.user",
-        "description": "app.models.user",
-        "isExtraImport": true,
-        "detail": "app.models.user",
-        "documentation": {}
-    },
-    {
-        "label": "RoleEnum",
-        "importPath": "app.models.user",
-        "description": "app.models.user",
-        "isExtraImport": true,
-        "detail": "app.models.user",
-        "documentation": {}
-    },
-    {
-        "label": "User",
-        "importPath": "app.models.user",
-        "description": "app.models.user",
-        "isExtraImport": true,
-        "detail": "app.models.user",
-        "documentation": {}
-    },
-    {
-        "label": "RoleEnum",
-        "importPath": "app.models.user",
-        "description": "app.models.user",
-        "isExtraImport": true,
-        "detail": "app.models.user",
-        "documentation": {}
-    },
-    {
-        "label": "User",
-        "importPath": "app.models.user",
-        "description": "app.models.user",
-        "isExtraImport": true,
-        "detail": "app.models.user",
-        "documentation": {}
-    },
-    {
-        "label": "RoleEnum",
-        "importPath": "app.models.user",
-        "description": "app.models.user",
-        "isExtraImport": true,
-        "detail": "app.models.user",
-        "documentation": {}
-    },
-    {
-        "label": "User",
-        "importPath": "app.models.user",
-        "description": "app.models.user",
-        "isExtraImport": true,
-        "detail": "app.models.user",
-        "documentation": {}
-    },
-    {
-        "label": "RoleEnum",
-        "importPath": "app.models.user",
-        "description": "app.models.user",
-        "isExtraImport": true,
-        "detail": "app.models.user",
-        "documentation": {}
-    },
-    {
-        "label": "User",
-        "importPath": "app.models.user",
-        "description": "app.models.user",
-        "isExtraImport": true,
-        "detail": "app.models.user",
-        "documentation": {}
-    },
-    {
-        "label": "User",
-        "importPath": "app.models.user",
-        "description": "app.models.user",
-        "isExtraImport": true,
-        "detail": "app.models.user",
-        "documentation": {}
-    },
-    {
-        "label": "RoleEnum",
-        "importPath": "app.models.user",
-        "description": "app.models.user",
-        "isExtraImport": true,
-        "detail": "app.models.user",
-        "documentation": {}
-    },
-    {
-        "label": "User",
-        "importPath": "app.models.user",
-        "description": "app.models.user",
-        "isExtraImport": true,
-        "detail": "app.models.user",
-        "documentation": {}
-    },
-    {
-        "label": "RoleEnum",
-        "importPath": "app.models.user",
-        "description": "app.models.user",
-        "isExtraImport": true,
-        "detail": "app.models.user",
-        "documentation": {}
-    },
-    {
-        "label": "User",
-        "importPath": "app.models.user",
-        "description": "app.models.user",
-        "isExtraImport": true,
-        "detail": "app.models.user",
-        "documentation": {}
-    },
-    {
-        "label": "RoleEnum",
-        "importPath": "app.models.user",
-        "description": "app.models.user",
-        "isExtraImport": true,
-        "detail": "app.models.user",
+        "detail": "app.models.empresa",
         "documentation": {}
     },
     {
@@ -5732,11 +6124,36 @@
         "documentation": {}
     },
     {
+        "label": "load_dotenv",
+        "importPath": "dotenv",
+        "description": "dotenv",
+        "isExtraImport": true,
+        "detail": "dotenv",
+        "documentation": {}
+    },
+    {
+        "label": "load_dotenv",
+        "importPath": "dotenv",
+        "description": "dotenv",
+        "isExtraImport": true,
+        "detail": "dotenv",
+        "documentation": {}
+    },
+    {
         "label": "SQLAlchemy",
         "importPath": "flask_sqlalchemy",
         "description": "flask_sqlalchemy",
         "isExtraImport": true,
         "detail": "flask_sqlalchemy",
+        "documentation": {}
+    },
+    {
+        "label": "logging",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "logging",
+        "description": "logging",
+        "detail": "logging",
         "documentation": {}
     },
     {
@@ -5988,6 +6405,22 @@
         "documentation": {}
     },
     {
+        "label": "BaseModel",
+        "importPath": "app.models.base",
+        "description": "app.models.base",
+        "isExtraImport": true,
+        "detail": "app.models.base",
+        "documentation": {}
+    },
+    {
+        "label": "Enum",
+        "importPath": "enum",
+        "description": "enum",
+        "isExtraImport": true,
+        "detail": "enum",
+        "documentation": {}
+    },
+    {
         "label": "Enum",
         "importPath": "enum",
         "description": "enum",
@@ -6185,14 +6618,6 @@
         "description": "app.models.fornecedor",
         "isExtraImport": true,
         "detail": "app.models.fornecedor",
-        "documentation": {}
-    },
-    {
-        "label": "Ingrediente",
-        "importPath": "app.models.ingrediente",
-        "description": "app.models.ingrediente",
-        "isExtraImport": true,
-        "detail": "app.models.ingrediente",
         "documentation": {}
     },
     {
@@ -6285,6 +6710,38 @@
     },
     {
         "label": "EstadoMaterial",
+        "importPath": "app.models.material",
+        "description": "app.models.material",
+        "isExtraImport": true,
+        "detail": "app.models.material",
+        "documentation": {}
+    },
+    {
+        "label": "Material",
+        "importPath": "app.models.material",
+        "description": "app.models.material",
+        "isExtraImport": true,
+        "detail": "app.models.material",
+        "documentation": {}
+    },
+    {
+        "label": "TipoMaterial",
+        "importPath": "app.models.material",
+        "description": "app.models.material",
+        "isExtraImport": true,
+        "detail": "app.models.material",
+        "documentation": {}
+    },
+    {
+        "label": "EstadoMaterial",
+        "importPath": "app.models.material",
+        "description": "app.models.material",
+        "isExtraImport": true,
+        "detail": "app.models.material",
+        "documentation": {}
+    },
+    {
+        "label": "Material",
         "importPath": "app.models.material",
         "description": "app.models.material",
         "isExtraImport": true,
@@ -6485,6 +6942,14 @@
     },
     {
         "label": "EntidadeMovimento",
+        "importPath": "app.models.movimento_stock",
+        "description": "app.models.movimento_stock",
+        "isExtraImport": true,
+        "detail": "app.models.movimento_stock",
+        "documentation": {}
+    },
+    {
+        "label": "MovimentoStock",
         "importPath": "app.models.movimento_stock",
         "description": "app.models.movimento_stock",
         "isExtraImport": true,
@@ -6665,6 +7130,22 @@
         "description": "app.models.categoria_produto",
         "isExtraImport": true,
         "detail": "app.models.categoria_produto",
+        "documentation": {}
+    },
+    {
+        "label": "CategoriaProduto",
+        "importPath": "app.models.categoria_produto",
+        "description": "app.models.categoria_produto",
+        "isExtraImport": true,
+        "detail": "app.models.categoria_produto",
+        "documentation": {}
+    },
+    {
+        "label": "UnidadeMedida",
+        "importPath": "app.models.unidade_medida",
+        "description": "app.models.unidade_medida",
+        "isExtraImport": true,
+        "detail": "app.models.unidade_medida",
         "documentation": {}
     },
     {
@@ -6732,7 +7213,71 @@
         "documentation": {}
     },
     {
+        "label": "MaterialStockArmazem",
+        "importPath": "app.models.armazem",
+        "description": "app.models.armazem",
+        "isExtraImport": true,
+        "detail": "app.models.armazem",
+        "documentation": {}
+    },
+    {
+        "label": "Armazem",
+        "importPath": "app.models.armazem",
+        "description": "app.models.armazem",
+        "isExtraImport": true,
+        "detail": "app.models.armazem",
+        "documentation": {}
+    },
+    {
+        "label": "Armazem",
+        "importPath": "app.models.armazem",
+        "description": "app.models.armazem",
+        "isExtraImport": true,
+        "detail": "app.models.armazem",
+        "documentation": {}
+    },
+    {
+        "label": "ProdutoStockArmazem",
+        "importPath": "app.models.armazem",
+        "description": "app.models.armazem",
+        "isExtraImport": true,
+        "detail": "app.models.armazem",
+        "documentation": {}
+    },
+    {
         "label": "IngredienteStockArmazem",
+        "importPath": "app.models.armazem",
+        "description": "app.models.armazem",
+        "isExtraImport": true,
+        "detail": "app.models.armazem",
+        "documentation": {}
+    },
+    {
+        "label": "MaterialStockArmazem",
+        "importPath": "app.models.armazem",
+        "description": "app.models.armazem",
+        "isExtraImport": true,
+        "detail": "app.models.armazem",
+        "documentation": {}
+    },
+    {
+        "label": "Armazem",
+        "importPath": "app.models.armazem",
+        "description": "app.models.armazem",
+        "isExtraImport": true,
+        "detail": "app.models.armazem",
+        "documentation": {}
+    },
+    {
+        "label": "Armazem",
+        "importPath": "app.models.armazem",
+        "description": "app.models.armazem",
+        "isExtraImport": true,
+        "detail": "app.models.armazem",
+        "documentation": {}
+    },
+    {
+        "label": "ProdutoStockArmazem",
         "importPath": "app.models.armazem",
         "description": "app.models.armazem",
         "isExtraImport": true,
@@ -6861,6 +7406,214 @@
     },
     {
         "label": "Optional",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Optional",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Union",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Any",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "List",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Dict",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Any",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Tuple",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Optional",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "List",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Dict",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Any",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Tuple",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Set",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Optional",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Optional",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Dict",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Any",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Dict",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Any",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "List",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Optional",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Tuple",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Optional",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Dict",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Any",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "List",
         "importPath": "typing",
         "description": "typing",
         "isExtraImport": true,
@@ -7396,6 +8149,255 @@
         "documentation": {}
     },
     {
+        "label": "re",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "re",
+        "description": "re",
+        "detail": "re",
+        "documentation": {}
+    },
+    {
+        "label": "Decimal",
+        "importPath": "decimal",
+        "description": "decimal",
+        "isExtraImport": true,
+        "detail": "decimal",
+        "documentation": {}
+    },
+    {
+        "label": "Decimal",
+        "importPath": "decimal",
+        "description": "decimal",
+        "isExtraImport": true,
+        "detail": "decimal",
+        "documentation": {}
+    },
+    {
+        "label": "Decimal",
+        "importPath": "decimal",
+        "description": "decimal",
+        "isExtraImport": true,
+        "detail": "decimal",
+        "documentation": {}
+    },
+    {
+        "label": "Decimal",
+        "importPath": "decimal",
+        "description": "decimal",
+        "isExtraImport": true,
+        "detail": "decimal",
+        "documentation": {}
+    },
+    {
+        "label": "ROUND_HALF_UP",
+        "importPath": "decimal",
+        "description": "decimal",
+        "isExtraImport": true,
+        "detail": "decimal",
+        "documentation": {}
+    },
+    {
+        "label": "InvalidOperation",
+        "importPath": "decimal",
+        "description": "decimal",
+        "isExtraImport": true,
+        "detail": "decimal",
+        "documentation": {}
+    },
+    {
+        "label": "Decimal",
+        "importPath": "decimal",
+        "description": "decimal",
+        "isExtraImport": true,
+        "detail": "decimal",
+        "documentation": {}
+    },
+    {
+        "label": "Decimal",
+        "importPath": "decimal",
+        "description": "decimal",
+        "isExtraImport": true,
+        "detail": "decimal",
+        "documentation": {}
+    },
+    {
+        "label": "TIPOS_PRODUTO_PERMITIDOS",
+        "importPath": "app.services.importacao.importacao_constants",
+        "description": "app.services.importacao.importacao_constants",
+        "isExtraImport": true,
+        "detail": "app.services.importacao.importacao_constants",
+        "documentation": {}
+    },
+    {
+        "label": "TIPOS_MATERIAL_PERMITIDOS",
+        "importPath": "app.services.importacao.importacao_constants",
+        "description": "app.services.importacao.importacao_constants",
+        "isExtraImport": true,
+        "detail": "app.services.importacao.importacao_constants",
+        "documentation": {}
+    },
+    {
+        "label": "SERVICOS_PERMITIDOS",
+        "importPath": "app.services.importacao.importacao_constants",
+        "description": "app.services.importacao.importacao_constants",
+        "isExtraImport": true,
+        "detail": "app.services.importacao.importacao_constants",
+        "documentation": {}
+    },
+    {
+        "label": "ImportacaoErrorCode",
+        "importPath": "app.services.importacao.importacao_constants",
+        "description": "app.services.importacao.importacao_constants",
+        "isExtraImport": true,
+        "detail": "app.services.importacao.importacao_constants",
+        "documentation": {}
+    },
+    {
+        "label": "ImportacaoErrorCode",
+        "importPath": "app.services.importacao.importacao_constants",
+        "description": "app.services.importacao.importacao_constants",
+        "isExtraImport": true,
+        "detail": "app.services.importacao.importacao_constants",
+        "documentation": {}
+    },
+    {
+        "label": "ImportacaoWarningCode",
+        "importPath": "app.services.importacao.importacao_constants",
+        "description": "app.services.importacao.importacao_constants",
+        "isExtraImport": true,
+        "detail": "app.services.importacao.importacao_constants",
+        "documentation": {}
+    },
+    {
+        "label": "MAX_IMPORT_ROWS",
+        "importPath": "app.services.importacao.importacao_constants",
+        "description": "app.services.importacao.importacao_constants",
+        "isExtraImport": true,
+        "detail": "app.services.importacao.importacao_constants",
+        "documentation": {}
+    },
+    {
+        "label": "TIPOS_PRODUTO_PERMITIDOS",
+        "importPath": "app.services.importacao.importacao_constants",
+        "description": "app.services.importacao.importacao_constants",
+        "isExtraImport": true,
+        "detail": "app.services.importacao.importacao_constants",
+        "documentation": {}
+    },
+    {
+        "label": "TIPOS_MATERIAL_PERMITIDOS",
+        "importPath": "app.services.importacao.importacao_constants",
+        "description": "app.services.importacao.importacao_constants",
+        "isExtraImport": true,
+        "detail": "app.services.importacao.importacao_constants",
+        "documentation": {}
+    },
+    {
+        "label": "SERVICOS_PERMITIDOS",
+        "importPath": "app.services.importacao.importacao_constants",
+        "description": "app.services.importacao.importacao_constants",
+        "isExtraImport": true,
+        "detail": "app.services.importacao.importacao_constants",
+        "documentation": {}
+    },
+    {
+        "label": "ReferenceResolver",
+        "importPath": "app.services.importacao.reference_resolver",
+        "description": "app.services.importacao.reference_resolver",
+        "isExtraImport": true,
+        "detail": "app.services.importacao.reference_resolver",
+        "documentation": {}
+    },
+    {
+        "label": "ReferenceResolver",
+        "importPath": "app.services.importacao.reference_resolver",
+        "description": "app.services.importacao.reference_resolver",
+        "isExtraImport": true,
+        "detail": "app.services.importacao.reference_resolver",
+        "documentation": {}
+    },
+    {
+        "label": "ImportacaoValidator",
+        "importPath": "app.services.importacao.importacao_validator",
+        "description": "app.services.importacao.importacao_validator",
+        "isExtraImport": true,
+        "detail": "app.services.importacao.importacao_validator",
+        "documentation": {}
+    },
+    {
+        "label": "normalizar_texto",
+        "importPath": "app.services.importacao.importacao_normalizer",
+        "description": "app.services.importacao.importacao_normalizer",
+        "isExtraImport": true,
+        "detail": "app.services.importacao.importacao_normalizer",
+        "documentation": {}
+    },
+    {
+        "label": "normalizar_chave_busca",
+        "importPath": "app.services.importacao.importacao_normalizer",
+        "description": "app.services.importacao.importacao_normalizer",
+        "isExtraImport": true,
+        "detail": "app.services.importacao.importacao_normalizer",
+        "documentation": {}
+    },
+    {
+        "label": "normalizar_tipo",
+        "importPath": "app.services.importacao.importacao_normalizer",
+        "description": "app.services.importacao.importacao_normalizer",
+        "isExtraImport": true,
+        "detail": "app.services.importacao.importacao_normalizer",
+        "documentation": {}
+    },
+    {
+        "label": "normalizar_tipo_material",
+        "importPath": "app.services.importacao.importacao_normalizer",
+        "description": "app.services.importacao.importacao_normalizer",
+        "isExtraImport": true,
+        "detail": "app.services.importacao.importacao_normalizer",
+        "documentation": {}
+    },
+    {
+        "label": "normalizar_servico",
+        "importPath": "app.services.importacao.importacao_normalizer",
+        "description": "app.services.importacao.importacao_normalizer",
+        "isExtraImport": true,
+        "detail": "app.services.importacao.importacao_normalizer",
+        "documentation": {}
+    },
+    {
+        "label": "normalizar_numero",
+        "importPath": "app.services.importacao.importacao_normalizer",
+        "description": "app.services.importacao.importacao_normalizer",
+        "isExtraImport": true,
+        "detail": "app.services.importacao.importacao_normalizer",
+        "documentation": {}
+    },
+    {
+        "label": "normalizar_texto",
+        "importPath": "app.services.importacao.importacao_normalizer",
+        "description": "app.services.importacao.importacao_normalizer",
+        "isExtraImport": true,
+        "detail": "app.services.importacao.importacao_normalizer",
+        "documentation": {}
+    },
+    {
+        "label": "normalizar_chave_busca",
+        "importPath": "app.services.importacao.importacao_normalizer",
+        "description": "app.services.importacao.importacao_normalizer",
+        "isExtraImport": true,
+        "detail": "app.services.importacao.importacao_normalizer",
+        "documentation": {}
+    },
+    {
+        "label": "normalizar_taxa_iva",
+        "importPath": "app.services.importacao.importacao_normalizer",
+        "description": "app.services.importacao.importacao_normalizer",
+        "isExtraImport": true,
+        "detail": "app.services.importacao.importacao_normalizer",
+        "documentation": {}
+    },
+    {
         "label": "FornecedorRepository",
         "importPath": "app.repositories.armazem_repos",
         "description": "app.repositories.armazem_repos",
@@ -7524,60 +8526,20 @@
         "documentation": {}
     },
     {
+        "label": "Auditoria",
+        "importPath": "app.models.auditoria",
+        "description": "app.models.auditoria",
+        "isExtraImport": true,
+        "detail": "app.models.auditoria",
+        "documentation": {}
+    },
+    {
         "label": "traceback",
         "kind": 6,
         "isExtraImport": true,
         "importPath": "traceback",
         "description": "traceback",
         "detail": "traceback",
-        "documentation": {}
-    },
-    {
-        "label": "Decimal",
-        "importPath": "decimal",
-        "description": "decimal",
-        "isExtraImport": true,
-        "detail": "decimal",
-        "documentation": {}
-    },
-    {
-        "label": "Decimal",
-        "importPath": "decimal",
-        "description": "decimal",
-        "isExtraImport": true,
-        "detail": "decimal",
-        "documentation": {}
-    },
-    {
-        "label": "ROUND_HALF_UP",
-        "importPath": "decimal",
-        "description": "decimal",
-        "isExtraImport": true,
-        "detail": "decimal",
-        "documentation": {}
-    },
-    {
-        "label": "InvalidOperation",
-        "importPath": "decimal",
-        "description": "decimal",
-        "isExtraImport": true,
-        "detail": "decimal",
-        "documentation": {}
-    },
-    {
-        "label": "Decimal",
-        "importPath": "decimal",
-        "description": "decimal",
-        "isExtraImport": true,
-        "detail": "decimal",
-        "documentation": {}
-    },
-    {
-        "label": "Decimal",
-        "importPath": "decimal",
-        "description": "decimal",
-        "isExtraImport": true,
-        "detail": "decimal",
         "documentation": {}
     },
     {
@@ -7807,6 +8769,95 @@
         "documentation": {}
     },
     {
+        "label": "openpyxl",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "openpyxl",
+        "description": "openpyxl",
+        "detail": "openpyxl",
+        "documentation": {}
+    },
+    {
+        "label": "Font",
+        "importPath": "openpyxl.styles",
+        "description": "openpyxl.styles",
+        "isExtraImport": true,
+        "detail": "openpyxl.styles",
+        "documentation": {}
+    },
+    {
+        "label": "PatternFill",
+        "importPath": "openpyxl.styles",
+        "description": "openpyxl.styles",
+        "isExtraImport": true,
+        "detail": "openpyxl.styles",
+        "documentation": {}
+    },
+    {
+        "label": "Alignment",
+        "importPath": "openpyxl.styles",
+        "description": "openpyxl.styles",
+        "isExtraImport": true,
+        "detail": "openpyxl.styles",
+        "documentation": {}
+    },
+    {
+        "label": "Border",
+        "importPath": "openpyxl.styles",
+        "description": "openpyxl.styles",
+        "isExtraImport": true,
+        "detail": "openpyxl.styles",
+        "documentation": {}
+    },
+    {
+        "label": "Side",
+        "importPath": "openpyxl.styles",
+        "description": "openpyxl.styles",
+        "isExtraImport": true,
+        "detail": "openpyxl.styles",
+        "documentation": {}
+    },
+    {
+        "label": "get_column_letter",
+        "importPath": "openpyxl.utils",
+        "description": "openpyxl.utils",
+        "isExtraImport": true,
+        "detail": "openpyxl.utils",
+        "documentation": {}
+    },
+    {
+        "label": "Inventario",
+        "importPath": "app.models.inventario",
+        "description": "app.models.inventario",
+        "isExtraImport": true,
+        "detail": "app.models.inventario",
+        "documentation": {}
+    },
+    {
+        "label": "SituacaoDivergencia",
+        "importPath": "app.models.inventario",
+        "description": "app.models.inventario",
+        "isExtraImport": true,
+        "detail": "app.models.inventario",
+        "documentation": {}
+    },
+    {
+        "label": "Inventario",
+        "importPath": "app.models.inventario",
+        "description": "app.models.inventario",
+        "isExtraImport": true,
+        "detail": "app.models.inventario",
+        "documentation": {}
+    },
+    {
+        "label": "SituacaoDivergencia",
+        "importPath": "app.models.inventario",
+        "description": "app.models.inventario",
+        "isExtraImport": true,
+        "detail": "app.models.inventario",
+        "documentation": {}
+    },
+    {
         "label": "Inventario",
         "importPath": "app.models.inventario",
         "description": "app.models.inventario",
@@ -7823,6 +8874,14 @@
         "documentation": {}
     },
     {
+        "label": "SituacaoDivergencia",
+        "importPath": "app.models.inventario",
+        "description": "app.models.inventario",
+        "isExtraImport": true,
+        "detail": "app.models.inventario",
+        "documentation": {}
+    },
+    {
         "label": "EstadoInventario",
         "importPath": "app.models.inventario",
         "description": "app.models.inventario",
@@ -7831,11 +8890,187 @@
         "documentation": {}
     },
     {
-        "label": "TipoItemInventario",
+        "label": "Inventario",
         "importPath": "app.models.inventario",
         "description": "app.models.inventario",
         "isExtraImport": true,
         "detail": "app.models.inventario",
+        "documentation": {}
+    },
+    {
+        "label": "InventarioItem",
+        "importPath": "app.models.inventario",
+        "description": "app.models.inventario",
+        "isExtraImport": true,
+        "detail": "app.models.inventario",
+        "documentation": {}
+    },
+    {
+        "label": "TipoInventario",
+        "importPath": "app.models.inventario",
+        "description": "app.models.inventario",
+        "isExtraImport": true,
+        "detail": "app.models.inventario",
+        "documentation": {}
+    },
+    {
+        "label": "EstadoInventario",
+        "importPath": "app.models.inventario",
+        "description": "app.models.inventario",
+        "isExtraImport": true,
+        "detail": "app.models.inventario",
+        "documentation": {}
+    },
+    {
+        "label": "SituacaoDivergencia",
+        "importPath": "app.models.inventario",
+        "description": "app.models.inventario",
+        "isExtraImport": true,
+        "detail": "app.models.inventario",
+        "documentation": {}
+    },
+    {
+        "label": "MotivoAjusteInventario",
+        "importPath": "app.models.inventario",
+        "description": "app.models.inventario",
+        "isExtraImport": true,
+        "detail": "app.models.inventario",
+        "documentation": {}
+    },
+    {
+        "label": "A4",
+        "importPath": "reportlab.lib.pagesizes",
+        "description": "reportlab.lib.pagesizes",
+        "isExtraImport": true,
+        "detail": "reportlab.lib.pagesizes",
+        "documentation": {}
+    },
+    {
+        "label": "A4",
+        "importPath": "reportlab.lib.pagesizes",
+        "description": "reportlab.lib.pagesizes",
+        "isExtraImport": true,
+        "detail": "reportlab.lib.pagesizes",
+        "documentation": {}
+    },
+    {
+        "label": "canvas",
+        "importPath": "reportlab.pdfgen",
+        "description": "reportlab.pdfgen",
+        "isExtraImport": true,
+        "detail": "reportlab.pdfgen",
+        "documentation": {}
+    },
+    {
+        "label": "canvas",
+        "importPath": "reportlab.pdfgen",
+        "description": "reportlab.pdfgen",
+        "isExtraImport": true,
+        "detail": "reportlab.pdfgen",
+        "documentation": {}
+    },
+    {
+        "label": "colors",
+        "importPath": "reportlab.lib",
+        "description": "reportlab.lib",
+        "isExtraImport": true,
+        "detail": "reportlab.lib",
+        "documentation": {}
+    },
+    {
+        "label": "colors",
+        "importPath": "reportlab.lib",
+        "description": "reportlab.lib",
+        "isExtraImport": true,
+        "detail": "reportlab.lib",
+        "documentation": {}
+    },
+    {
+        "label": "SimpleDocTemplate",
+        "importPath": "reportlab.platypus",
+        "description": "reportlab.platypus",
+        "isExtraImport": true,
+        "detail": "reportlab.platypus",
+        "documentation": {}
+    },
+    {
+        "label": "Paragraph",
+        "importPath": "reportlab.platypus",
+        "description": "reportlab.platypus",
+        "isExtraImport": true,
+        "detail": "reportlab.platypus",
+        "documentation": {}
+    },
+    {
+        "label": "Spacer",
+        "importPath": "reportlab.platypus",
+        "description": "reportlab.platypus",
+        "isExtraImport": true,
+        "detail": "reportlab.platypus",
+        "documentation": {}
+    },
+    {
+        "label": "Table",
+        "importPath": "reportlab.platypus",
+        "description": "reportlab.platypus",
+        "isExtraImport": true,
+        "detail": "reportlab.platypus",
+        "documentation": {}
+    },
+    {
+        "label": "TableStyle",
+        "importPath": "reportlab.platypus",
+        "description": "reportlab.platypus",
+        "isExtraImport": true,
+        "detail": "reportlab.platypus",
+        "documentation": {}
+    },
+    {
+        "label": "PageBreak",
+        "importPath": "reportlab.platypus",
+        "description": "reportlab.platypus",
+        "isExtraImport": true,
+        "detail": "reportlab.platypus",
+        "documentation": {}
+    },
+    {
+        "label": "KeepTogether",
+        "importPath": "reportlab.platypus",
+        "description": "reportlab.platypus",
+        "isExtraImport": true,
+        "detail": "reportlab.platypus",
+        "documentation": {}
+    },
+    {
+        "label": "Table",
+        "importPath": "reportlab.platypus",
+        "description": "reportlab.platypus",
+        "isExtraImport": true,
+        "detail": "reportlab.platypus",
+        "documentation": {}
+    },
+    {
+        "label": "TableStyle",
+        "importPath": "reportlab.platypus",
+        "description": "reportlab.platypus",
+        "isExtraImport": true,
+        "detail": "reportlab.platypus",
+        "documentation": {}
+    },
+    {
+        "label": "getSampleStyleSheet",
+        "importPath": "reportlab.lib.styles",
+        "description": "reportlab.lib.styles",
+        "isExtraImport": true,
+        "detail": "reportlab.lib.styles",
+        "documentation": {}
+    },
+    {
+        "label": "ParagraphStyle",
+        "importPath": "reportlab.lib.styles",
+        "description": "reportlab.lib.styles",
+        "isExtraImport": true,
+        "detail": "reportlab.lib.styles",
         "documentation": {}
     },
     {
@@ -7881,15 +9116,6 @@
         "documentation": {}
     },
     {
-        "label": "logging",
-        "kind": 6,
-        "isExtraImport": true,
-        "importPath": "logging",
-        "description": "logging",
-        "detail": "logging",
-        "documentation": {}
-    },
-    {
         "label": "MIMEText",
         "importPath": "email.mime.text",
         "description": "email.mime.text",
@@ -7919,46 +9145,6 @@
         "description": "app.config.settings",
         "isExtraImport": true,
         "detail": "app.config.settings",
-        "documentation": {}
-    },
-    {
-        "label": "A4",
-        "importPath": "reportlab.lib.pagesizes",
-        "description": "reportlab.lib.pagesizes",
-        "isExtraImport": true,
-        "detail": "reportlab.lib.pagesizes",
-        "documentation": {}
-    },
-    {
-        "label": "canvas",
-        "importPath": "reportlab.pdfgen",
-        "description": "reportlab.pdfgen",
-        "isExtraImport": true,
-        "detail": "reportlab.pdfgen",
-        "documentation": {}
-    },
-    {
-        "label": "colors",
-        "importPath": "reportlab.lib",
-        "description": "reportlab.lib",
-        "isExtraImport": true,
-        "detail": "reportlab.lib",
-        "documentation": {}
-    },
-    {
-        "label": "Table",
-        "importPath": "reportlab.platypus",
-        "description": "reportlab.platypus",
-        "isExtraImport": true,
-        "detail": "reportlab.platypus",
-        "documentation": {}
-    },
-    {
-        "label": "TableStyle",
-        "importPath": "reportlab.platypus",
-        "description": "reportlab.platypus",
-        "isExtraImport": true,
-        "detail": "reportlab.platypus",
         "documentation": {}
     },
     {
@@ -8250,6 +9436,22 @@
         "documentation": {}
     },
     {
+        "label": "create_app",
+        "importPath": "app",
+        "description": "app",
+        "isExtraImport": true,
+        "detail": "app",
+        "documentation": {}
+    },
+    {
+        "label": "create_app",
+        "importPath": "app",
+        "description": "app",
+        "isExtraImport": true,
+        "detail": "app",
+        "documentation": {}
+    },
+    {
         "label": "sys",
         "kind": 6,
         "isExtraImport": true,
@@ -8302,6 +9504,14 @@
         "documentation": {}
     },
     {
+        "label": "ensure_database_ready",
+        "importPath": "app.core.db_initializer",
+        "description": "app.core.db_initializer",
+        "isExtraImport": true,
+        "detail": "app.core.db_initializer",
+        "documentation": {}
+    },
+    {
         "label": "time",
         "kind": 6,
         "isExtraImport": true,
@@ -8315,7 +9525,7 @@
         "kind": 2,
         "importPath": "backend.app.api.v1.armazem_controller",
         "description": "backend.app.api.v1.armazem_controller",
-        "peekOfCode": "def validar_importacao_catalogo():\n    linhas = (request.get_json() or {}).get('linhas', [])\n    resultado = armazem_service.validar_importacao_catalogo(linhas)\n    return jsonify({'linhas': resultado, 'resumo': {'total': len(resultado), 'validos': sum(x['valido'] for x in resultado), 'invalidos': sum(not x['valido'] for x in resultado)}}), 200\n@armazem_bp.route('/importacao/confirmar', methods=['POST'])\n@jwt_required()\n@requires_roles('Administrador', 'Armazém')\ndef confirmar_importacao_catalogo():\n    linhas = (request.get_json() or {}).get('linhas', [])\n    resultado, erro = armazem_service.importar_catalogo(linhas, get_jwt_identity())",
+        "peekOfCode": "def validar_importacao_catalogo():\n    \"\"\"\n    Pré-validação e Normalização do Catálogo via Excel\n    ---\n    tags:\n      - Armazém - Importação\n    summary: Valida um lote de catálogo (produtos e materiais) sem persistir na base de dados\n    description: >\n      Analisa cada linha, normaliza textos e números, resolve referências humanas\n      (categorias, unidades de medida, taxas de IVA e armazéns) para IDs internos,",
         "detail": "backend.app.api.v1.armazem_controller",
         "documentation": {}
     },
@@ -8324,7 +9534,25 @@
         "kind": 2,
         "importPath": "backend.app.api.v1.armazem_controller",
         "description": "backend.app.api.v1.armazem_controller",
-        "peekOfCode": "def confirmar_importacao_catalogo():\n    linhas = (request.get_json() or {}).get('linhas', [])\n    resultado, erro = armazem_service.importar_catalogo(linhas, get_jwt_identity())\n    if erro:\n        return jsonify(erro), 400\n    return jsonify({'msg': 'Importação concluída', 'itens': resultado}), 201\ndef build_pagination(repo, schema, request):\n    page = request.args.get('page', 1, type=int)\n    per_page = request.args.get('per_page', 10, type=int)\n    search = request.args.get('search', '')",
+        "peekOfCode": "def confirmar_importacao_catalogo():\n    \"\"\"\n    Confirmação e Gravação Transacional do Catálogo\n    ---\n    tags:\n      - Armazém - Importação\n    summary: Grava os produtos/materiais, gera movimentos de stock inicial e regista auditoria\n    description: >\n      Revalida todo o lote na base de dados para garantir integridade.\n      Se não houver nenhuma linha bloqueada, executa uma transação MySQL atómica",
+        "detail": "backend.app.api.v1.armazem_controller",
+        "documentation": {}
+    },
+    {
+        "label": "obter_template_info",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.armazem_controller",
+        "description": "backend.app.api.v1.armazem_controller",
+        "peekOfCode": "def obter_template_info():\n    \"\"\"\n    Informações para Modelos e Validação de Importação\n    ---\n    tags:\n      - Armazém - Importação\n    summary: Retorna as opções ativas do sistema (categorias, unidades, armazéns, taxas IVA)\n    description: Fornece ao frontend listas atualizadas para selects ou geração de folhas Excel dinâmicas.\n    responses:\n      200:",
+        "detail": "backend.app.api.v1.armazem_controller",
+        "documentation": {}
+    },
+    {
+        "label": "obter_dados_auxiliares",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.armazem_controller",
+        "description": "backend.app.api.v1.armazem_controller",
+        "peekOfCode": "def obter_dados_auxiliares():\n    \"\"\"\n    Dados Auxiliares de Produtos e Armazém\n    ---\n    tags:\n      - Armazém\n    summary: Retorna unidades de medida, categorias, taxas de IVA, serviços de produtos e armazéns\n    description: Rota simples e consolidada para carregar opções de seleção do catálogo (unidades de medida, categorias, taxas de IVA, serviços de produtos, tipos e armazéns).\n    responses:\n      200:",
         "detail": "backend.app.api.v1.armazem_controller",
         "documentation": {}
     },
@@ -8711,7 +9939,7 @@
         "kind": 5,
         "importPath": "backend.app.api.v1.armazem_controller",
         "description": "backend.app.api.v1.armazem_controller",
-        "peekOfCode": "armazem_bp = Blueprint('armazem', __name__)\narmazem_service = ArmazemService()\n@armazem_bp.route('/importacao/validar', methods=['POST'])\n@jwt_required()\n@requires_roles('Administrador', 'Armazém')\ndef validar_importacao_catalogo():\n    linhas = (request.get_json() or {}).get('linhas', [])\n    resultado = armazem_service.validar_importacao_catalogo(linhas)\n    return jsonify({'linhas': resultado, 'resumo': {'total': len(resultado), 'validos': sum(x['valido'] for x in resultado), 'invalidos': sum(not x['valido'] for x in resultado)}}), 200\n@armazem_bp.route('/importacao/confirmar', methods=['POST'])",
+        "peekOfCode": "armazem_bp = Blueprint('armazem', __name__)\narmazem_service = ArmazemService()\nfrom app.services.importacao import ImportacaoCatalogoService\nimportacao_service = ImportacaoCatalogoService()\ndef _extrair_linhas_payload(req) -> list:\n    dados = req.get_json(silent=True)\n    if isinstance(dados, list):\n        return dados\n    if isinstance(dados, dict):\n        return dados.get('linhas') or dados.get('itens') or dados.get('data') or []",
         "detail": "backend.app.api.v1.armazem_controller",
         "documentation": {}
     },
@@ -8720,7 +9948,16 @@
         "kind": 5,
         "importPath": "backend.app.api.v1.armazem_controller",
         "description": "backend.app.api.v1.armazem_controller",
-        "peekOfCode": "armazem_service = ArmazemService()\n@armazem_bp.route('/importacao/validar', methods=['POST'])\n@jwt_required()\n@requires_roles('Administrador', 'Armazém')\ndef validar_importacao_catalogo():\n    linhas = (request.get_json() or {}).get('linhas', [])\n    resultado = armazem_service.validar_importacao_catalogo(linhas)\n    return jsonify({'linhas': resultado, 'resumo': {'total': len(resultado), 'validos': sum(x['valido'] for x in resultado), 'invalidos': sum(not x['valido'] for x in resultado)}}), 200\n@armazem_bp.route('/importacao/confirmar', methods=['POST'])\n@jwt_required()",
+        "peekOfCode": "armazem_service = ArmazemService()\nfrom app.services.importacao import ImportacaoCatalogoService\nimportacao_service = ImportacaoCatalogoService()\ndef _extrair_linhas_payload(req) -> list:\n    dados = req.get_json(silent=True)\n    if isinstance(dados, list):\n        return dados\n    if isinstance(dados, dict):\n        return dados.get('linhas') or dados.get('itens') or dados.get('data') or []\n    return []",
+        "detail": "backend.app.api.v1.armazem_controller",
+        "documentation": {}
+    },
+    {
+        "label": "importacao_service",
+        "kind": 5,
+        "importPath": "backend.app.api.v1.armazem_controller",
+        "description": "backend.app.api.v1.armazem_controller",
+        "peekOfCode": "importacao_service = ImportacaoCatalogoService()\ndef _extrair_linhas_payload(req) -> list:\n    dados = req.get_json(silent=True)\n    if isinstance(dados, list):\n        return dados\n    if isinstance(dados, dict):\n        return dados.get('linhas') or dados.get('itens') or dados.get('data') or []\n    return []\n@armazem_bp.route('/importacao/validar', methods=['POST'])\n@armazem_bp.route('/catalogo/validar', methods=['POST'])",
         "detail": "backend.app.api.v1.armazem_controller",
         "documentation": {}
     },
@@ -9544,20 +10781,254 @@
         "documentation": {}
     },
     {
-        "label": "create",
+        "label": "criar",
         "kind": 2,
         "importPath": "backend.app.api.v1.inventario_controller",
         "description": "backend.app.api.v1.inventario_controller",
-        "peekOfCode": "def create():\n    data = request.json\n    user_id = get_jwt_identity()\n    obj, error = service.create_inventario(data, user_id)\n    if error: return ApiResponse.success(message=error, status=400)\n    return ApiResponse.success(data={\"id\": obj.id, \"numero\": obj.numero}, message=\"Inventário iniciado\", status=201)\n@inventario_bp.route('/<int:id>/concluir', methods=['POST'])\n@jwt_required()\ndef concluir(id):\n    user_id = get_jwt_identity()",
+        "peekOfCode": "def criar():\n    \"\"\"\n    Criar um novo Inventário (RASCUNHO)\n    ---\n    tags:\n      - Inventário de Stock\n    parameters:\n      - in: body\n        name: body\n        required: true",
         "detail": "backend.app.api.v1.inventario_controller",
         "documentation": {}
     },
     {
-        "label": "concluir",
+        "label": "listar",
         "kind": 2,
         "importPath": "backend.app.api.v1.inventario_controller",
         "description": "backend.app.api.v1.inventario_controller",
-        "peekOfCode": "def concluir(id):\n    user_id = get_jwt_identity()\n    obj, error = service.concluir_inventario(id, user_id)\n    if error: return ApiResponse.success(message=error, status=400)\n    return ApiResponse.success(message=\"Inventário concluído e stocks ajustados\")",
+        "peekOfCode": "def listar():\n    \"\"\"\n    Listar inventários com filtros e paginação\n    ---\n    tags:\n      - Inventário de Stock\n    parameters:\n      - in: query\n        name: armazem_id\n        type: integer",
+        "detail": "backend.app.api.v1.inventario_controller",
+        "documentation": {}
+    },
+    {
+        "label": "detalhar",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.inventario_controller",
+        "description": "backend.app.api.v1.inventario_controller",
+        "peekOfCode": "def detalhar(id):\n    \"\"\"\n    Obter cabeçalho e resumo de um inventário específico\n    ---\n    tags:\n      - Inventário de Stock\n    responses:\n      200:\n        description: Detalhes do inventário.\n      404:",
+        "detail": "backend.app.api.v1.inventario_controller",
+        "documentation": {}
+    },
+    {
+        "label": "iniciar",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.inventario_controller",
+        "description": "backend.app.api.v1.inventario_controller",
+        "peekOfCode": "def iniciar(id):\n    \"\"\"\n    Iniciar contagem do inventário (Congela Snapshot do Stock)\n    ---\n    tags:\n      - Inventário de Stock\n    responses:\n      200:\n        description: Inventário iniciado, transita para EM_CONTAGEM com snapshot do sistema.\n      400:",
+        "detail": "backend.app.api.v1.inventario_controller",
+        "documentation": {}
+    },
+    {
+        "label": "listar_itens",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.inventario_controller",
+        "description": "backend.app.api.v1.inventario_controller",
+        "peekOfCode": "def listar_itens(id):\n    \"\"\"\n    Listar itens de um inventário com paginação e filtros\n    ---\n    tags:\n      - Inventário de Stock\n    parameters:\n      - in: path\n        name: id\n        required: true",
+        "detail": "backend.app.api.v1.inventario_controller",
+        "documentation": {}
+    },
+    {
+        "label": "registar_contagem_item",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.inventario_controller",
+        "description": "backend.app.api.v1.inventario_controller",
+        "peekOfCode": "def registar_contagem_item(id, item_id):\n    \"\"\"\n    Registar ou atualizar a quantidade contada de um item\n    ---\n    tags:\n      - Inventário de Stock\n    parameters:\n      - in: body\n        name: body\n        required: true",
+        "detail": "backend.app.api.v1.inventario_controller",
+        "documentation": {}
+    },
+    {
+        "label": "registar_contagens_lote",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.inventario_controller",
+        "description": "backend.app.api.v1.inventario_controller",
+        "peekOfCode": "def registar_contagens_lote(id):\n    \"\"\"\n    Registar contagens de múltiplos itens em lote\n    ---\n    tags:\n      - Inventário de Stock\n    parameters:\n      - in: body\n        name: body\n        required: true",
+        "detail": "backend.app.api.v1.inventario_controller",
+        "documentation": {}
+    },
+    {
+        "label": "finalizar_contagem",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.inventario_controller",
+        "description": "backend.app.api.v1.inventario_controller",
+        "peekOfCode": "def finalizar_contagem(id):\n    \"\"\"\n    Finalizar contagem física e transitar para EM_CONFERENCIA\n    ---\n    tags:\n      - Inventário de Stock\n    \"\"\"\n    user_id = get_jwt_identity()\n    data = request.get_json(silent=True) or {}\n    forcar = bool(data.get('forcar', False))",
+        "detail": "backend.app.api.v1.inventario_controller",
+        "documentation": {}
+    },
+    {
+        "label": "obter_conferencia",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.inventario_controller",
+        "description": "backend.app.api.v1.inventario_controller",
+        "peekOfCode": "def obter_conferencia(id):\n    \"\"\"\n    Obter dados completos de conferência com indicadores e totais\n    ---\n    tags:\n      - Inventário de Stock\n    \"\"\"\n    rel = InventarioReportService.obter_relatorio_completo(id)\n    if not rel:\n        return jsonify({\"success\": False, \"msg\": \"Inventário não encontrado.\"}), 404",
+        "detail": "backend.app.api.v1.inventario_controller",
+        "documentation": {}
+    },
+    {
+        "label": "aprovar",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.inventario_controller",
+        "description": "backend.app.api.v1.inventario_controller",
+        "peekOfCode": "def aprovar(id):\n    \"\"\"\n    Aprovar inventário conferido para autorizar aplicação de ajustes\n    ---\n    tags:\n      - Inventário de Stock\n    \"\"\"\n    user_id = get_jwt_identity()\n    obj, error = inventario_service.aprovar_inventario(id, user_id)\n    if error:",
+        "detail": "backend.app.api.v1.inventario_controller",
+        "documentation": {}
+    },
+    {
+        "label": "aplicar",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.inventario_controller",
+        "description": "backend.app.api.v1.inventario_controller",
+        "peekOfCode": "def aplicar(id):\n    \"\"\"\n    APLICAR AJUSTES DE STOCK: Operação crítica transacional que lança movimentos e ajusta stocks\n    ---\n    tags:\n      - Inventário de Stock\n    responses:\n      200:\n        description: Ajustes aplicados com transação atómica e movimentos oficiais gerados.\n      400:",
+        "detail": "backend.app.api.v1.inventario_controller",
+        "documentation": {}
+    },
+    {
+        "label": "cancelar",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.inventario_controller",
+        "description": "backend.app.api.v1.inventario_controller",
+        "peekOfCode": "def cancelar(id):\n    \"\"\"\n    Cancelar inventário antes de sua aplicação\n    ---\n    tags:\n      - Inventário de Stock\n    parameters:\n      - in: body\n        name: body\n        properties:",
+        "detail": "backend.app.api.v1.inventario_controller",
+        "documentation": {}
+    },
+    {
+        "label": "listar_quarentena",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.inventario_controller",
+        "description": "backend.app.api.v1.inventario_controller",
+        "peekOfCode": "def listar_quarentena():\n    return jsonify({\"success\": True, \"data\": {\"items\": [item.to_dict() for item in QuarentenaItem.query.order_by(QuarentenaItem.created_at.desc()).all()]}})\n@inventario_bp.route('/quarentena', methods=['POST'])\n@jwt_required()\n@requires_roles('Administrador', 'Armazém', 'Controlador de Materiais')\ndef criar_quarentena():\n    data = request.get_json() or {}\n    produto_id, material_id = data.get('produto_id'), data.get('material_id')\n    if bool(produto_id) == bool(material_id):\n        return jsonify({\"success\": False, \"msg\": \"Informe exclusivamente produto_id ou material_id.\"}), 400",
+        "detail": "backend.app.api.v1.inventario_controller",
+        "documentation": {}
+    },
+    {
+        "label": "criar_quarentena",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.inventario_controller",
+        "description": "backend.app.api.v1.inventario_controller",
+        "peekOfCode": "def criar_quarentena():\n    data = request.get_json() or {}\n    produto_id, material_id = data.get('produto_id'), data.get('material_id')\n    if bool(produto_id) == bool(material_id):\n        return jsonify({\"success\": False, \"msg\": \"Informe exclusivamente produto_id ou material_id.\"}), 400\n    try:\n        quantidade = float(data.get('quantidade', 0))\n    except (TypeError, ValueError):\n        quantidade = 0\n    if quantidade <= 0:",
+        "detail": "backend.app.api.v1.inventario_controller",
+        "documentation": {}
+    },
+    {
+        "label": "descartar_quarentena",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.inventario_controller",
+        "description": "backend.app.api.v1.inventario_controller",
+        "peekOfCode": "def descartar_quarentena(item_id):\n    item = QuarentenaItem.query.get(item_id)\n    if not item or item.estado != EstadoQuarentena.QUARENTENA:\n        return jsonify({\"success\": False, \"msg\": \"Item de quarentena não disponível para descarte.\"}), 400\n    item.estado, item.resolvido_em = EstadoQuarentena.DESCARTADO, datetime.utcnow()\n    item.justificativa_resolucao = (request.get_json() or {}).get('justificativa')\n    db.session.commit()\n    return jsonify({\"success\": True, \"data\": item.to_dict()})\n@inventario_bp.route('/quarentena/<int:item_id>/reintegrar', methods=['POST'])\n@jwt_required()",
+        "detail": "backend.app.api.v1.inventario_controller",
+        "documentation": {}
+    },
+    {
+        "label": "reintegrar_quarentena",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.inventario_controller",
+        "description": "backend.app.api.v1.inventario_controller",
+        "peekOfCode": "def reintegrar_quarentena(item_id):\n    item = QuarentenaItem.query.get(item_id)\n    if not item or item.estado != EstadoQuarentena.QUARENTENA:\n        return jsonify({\"success\": False, \"msg\": \"Item de quarentena não disponível para reintegração.\"}), 400\n    user_id = get_jwt_identity()\n    movement, error = ArmazemService().registar_movimento({\n        'tipo': 'Entrada', 'origem': 'Ajuste', 'entidade_tipo': 'Produto' if item.produto_id else 'Material',\n        'referencia_id': item.produto_id or item.material_id, 'armazem_id': item.armazem_id,\n        'quantidade': float(item.quantidade), 'justificacao': 'Reintegração de quarentena',\n    }, user_id)",
+        "detail": "backend.app.api.v1.inventario_controller",
+        "documentation": {}
+    },
+    {
+        "label": "relatorio_geral",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.inventario_controller",
+        "description": "backend.app.api.v1.inventario_controller",
+        "peekOfCode": "def relatorio_geral(id):\n    rel = InventarioReportService.obter_relatorio_completo(id)\n    if not rel:\n        return jsonify({\"success\": False, \"msg\": \"Inventário não encontrado.\"}), 404\n    return jsonify({\"success\": True, \"data\": rel})\n@inventario_bp.route('/<int:id>/relatorio/divergencias', methods=['GET'])\n@jwt_required()\ndef relatorio_divergencias(id):\n    rel = InventarioReportService.obter_relatorio_divergencias(id)\n    if not rel:",
+        "detail": "backend.app.api.v1.inventario_controller",
+        "documentation": {}
+    },
+    {
+        "label": "relatorio_divergencias",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.inventario_controller",
+        "description": "backend.app.api.v1.inventario_controller",
+        "peekOfCode": "def relatorio_divergencias(id):\n    rel = InventarioReportService.obter_relatorio_divergencias(id)\n    if not rel:\n        return jsonify({\"success\": False, \"msg\": \"Inventário não encontrado.\"}), 404\n    return jsonify({\"success\": True, \"data\": rel})\n@inventario_bp.route('/<int:id>/relatorio/faltas', methods=['GET'])\n@jwt_required()\ndef relatorio_faltas(id):\n    rel = InventarioReportService.obter_relatorio_faltas(id)\n    if not rel:",
+        "detail": "backend.app.api.v1.inventario_controller",
+        "documentation": {}
+    },
+    {
+        "label": "relatorio_faltas",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.inventario_controller",
+        "description": "backend.app.api.v1.inventario_controller",
+        "peekOfCode": "def relatorio_faltas(id):\n    rel = InventarioReportService.obter_relatorio_faltas(id)\n    if not rel:\n        return jsonify({\"success\": False, \"msg\": \"Inventário não encontrado.\"}), 404\n    return jsonify({\"success\": True, \"data\": rel})\n@inventario_bp.route('/<int:id>/relatorio/sobras', methods=['GET'])\n@jwt_required()\ndef relatorio_sobras(id):\n    rel = InventarioReportService.obter_relatorio_sobras(id)\n    if not rel:",
+        "detail": "backend.app.api.v1.inventario_controller",
+        "documentation": {}
+    },
+    {
+        "label": "relatorio_sobras",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.inventario_controller",
+        "description": "backend.app.api.v1.inventario_controller",
+        "peekOfCode": "def relatorio_sobras(id):\n    rel = InventarioReportService.obter_relatorio_sobras(id)\n    if not rel:\n        return jsonify({\"success\": False, \"msg\": \"Inventário não encontrado.\"}), 404\n    return jsonify({\"success\": True, \"data\": rel})\n@inventario_bp.route('/<int:id>/relatorio/sem-divergencias', methods=['GET'])\n@jwt_required()\ndef relatorio_sem_divergencias(id):\n    rel = InventarioReportService.obter_relatorio_sem_divergencias(id)\n    if not rel:",
+        "detail": "backend.app.api.v1.inventario_controller",
+        "documentation": {}
+    },
+    {
+        "label": "relatorio_sem_divergencias",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.inventario_controller",
+        "description": "backend.app.api.v1.inventario_controller",
+        "peekOfCode": "def relatorio_sem_divergencias(id):\n    rel = InventarioReportService.obter_relatorio_sem_divergencias(id)\n    if not rel:\n        return jsonify({\"success\": False, \"msg\": \"Inventário não encontrado.\"}), 404\n    return jsonify({\"success\": True, \"data\": rel})\n@inventario_bp.route('/<int:id>/relatorio/nao-contados', methods=['GET'])\n@jwt_required()\ndef relatorio_nao_contados(id):\n    rel = InventarioReportService.obter_relatorio_nao_contados(id)\n    if not rel:",
+        "detail": "backend.app.api.v1.inventario_controller",
+        "documentation": {}
+    },
+    {
+        "label": "relatorio_nao_contados",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.inventario_controller",
+        "description": "backend.app.api.v1.inventario_controller",
+        "peekOfCode": "def relatorio_nao_contados(id):\n    rel = InventarioReportService.obter_relatorio_nao_contados(id)\n    if not rel:\n        return jsonify({\"success\": False, \"msg\": \"Inventário não encontrado.\"}), 404\n    return jsonify({\"success\": True, \"data\": rel})\n@inventario_bp.route('/<int:id>/relatorio/ajustes', methods=['GET'])\n@jwt_required()\ndef relatorio_ajustes(id):\n    rel = InventarioReportService.obter_relatorio_ajustes(id)\n    if not rel:",
+        "detail": "backend.app.api.v1.inventario_controller",
+        "documentation": {}
+    },
+    {
+        "label": "relatorio_ajustes",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.inventario_controller",
+        "description": "backend.app.api.v1.inventario_controller",
+        "peekOfCode": "def relatorio_ajustes(id):\n    rel = InventarioReportService.obter_relatorio_ajustes(id)\n    if not rel:\n        return jsonify({\"success\": False, \"msg\": \"Inventário não encontrado.\"}), 404\n    return jsonify({\"success\": True, \"data\": rel})\n@inventario_bp.route('/<int:id>/relatorio/auditoria', methods=['GET'])\n@inventario_bp.route('/<int:id>/historico', methods=['GET'])\n@jwt_required()\ndef relatorio_auditoria(id):\n    rel = InventarioReportService.obter_relatorio_auditoria(id)",
+        "detail": "backend.app.api.v1.inventario_controller",
+        "documentation": {}
+    },
+    {
+        "label": "relatorio_auditoria",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.inventario_controller",
+        "description": "backend.app.api.v1.inventario_controller",
+        "peekOfCode": "def relatorio_auditoria(id):\n    rel = InventarioReportService.obter_relatorio_auditoria(id)\n    if not rel:\n        return jsonify({\"success\": False, \"msg\": \"Inventário não encontrado.\"}), 404\n    return jsonify({\"success\": True, \"data\": rel})\n@inventario_bp.route('/relatorios', methods=['GET'])\ndef relatorio_consolidado():\n    filtros = {\n        \"armazem_id\": request.args.get('armazem_id', type=int),\n        \"estado\": request.args.get('estado'),",
+        "detail": "backend.app.api.v1.inventario_controller",
+        "documentation": {}
+    },
+    {
+        "label": "relatorio_consolidado",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.inventario_controller",
+        "description": "backend.app.api.v1.inventario_controller",
+        "peekOfCode": "def relatorio_consolidado():\n    filtros = {\n        \"armazem_id\": request.args.get('armazem_id', type=int),\n        \"estado\": request.args.get('estado'),\n        \"tipo\": request.args.get('tipo'),\n        \"data_inicio\": request.args.get('data_inicio'),\n        \"data_fim\": request.args.get('data_fim')\n    }\n    resultado = InventarioReportService.relatorio_consolidado(filtros)\n    return jsonify({\"success\": True, \"data\": resultado})",
+        "detail": "backend.app.api.v1.inventario_controller",
+        "documentation": {}
+    },
+    {
+        "label": "relatorio_por_armazem",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.inventario_controller",
+        "description": "backend.app.api.v1.inventario_controller",
+        "peekOfCode": "def relatorio_por_armazem(armazem_id):\n    filtros = {\n        \"armazem_id\": armazem_id,\n        \"data_inicio\": request.args.get('data_inicio'),\n        \"data_fim\": request.args.get('data_fim')\n    }\n    resultado = InventarioReportService.relatorio_consolidado(filtros)\n    return jsonify({\"success\": True, \"data\": resultado})\n# ==============================================================================\n# 3. EXPORTAÇÕES OFICIAIS (EXCEL E PDF)",
+        "detail": "backend.app.api.v1.inventario_controller",
+        "documentation": {}
+    },
+    {
+        "label": "exportar_excel",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.inventario_controller",
+        "description": "backend.app.api.v1.inventario_controller",
+        "peekOfCode": "def exportar_excel(id):\n    \"\"\"\n    Gera ficheiro Excel profissional (.xlsx) com 7 abas formatadas\n    \"\"\"\n    user_id = get_jwt_identity()\n    user_nome = _obter_nome_usuario(user_id)\n    from app.models.inventario import Inventario\n    inv = Inventario.query.get(id)\n    if not inv:\n        return jsonify({\"success\": False, \"msg\": \"Inventário não encontrado.\"}), 404",
+        "detail": "backend.app.api.v1.inventario_controller",
+        "documentation": {}
+    },
+    {
+        "label": "exportar_pdf",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.inventario_controller",
+        "description": "backend.app.api.v1.inventario_controller",
+        "peekOfCode": "def exportar_pdf(id):\n    \"\"\"\n    Gera documento PDF oficial formatado via ReportLab com layout corporativo e assinaturas\n    \"\"\"\n    from app.models.inventario import Inventario\n    inv = Inventario.query.get(id)\n    if not inv:\n        return jsonify({\"success\": False, \"msg\": \"Inventário não encontrado.\"}), 404\n    try:\n        pdf_stream = InventarioPdfService.gerar_pdf_inventario(id)",
         "detail": "backend.app.api.v1.inventario_controller",
         "documentation": {}
     },
@@ -9566,16 +11037,16 @@
         "kind": 5,
         "importPath": "backend.app.api.v1.inventario_controller",
         "description": "backend.app.api.v1.inventario_controller",
-        "peekOfCode": "inventario_bp = Blueprint('inventario', __name__)\nservice = InventarioService()\n@inventario_bp.route('', methods=['POST'])\n@jwt_required()\ndef create():\n    data = request.json\n    user_id = get_jwt_identity()\n    obj, error = service.create_inventario(data, user_id)\n    if error: return ApiResponse.success(message=error, status=400)\n    return ApiResponse.success(data={\"id\": obj.id, \"numero\": obj.numero}, message=\"Inventário iniciado\", status=201)",
+        "peekOfCode": "inventario_bp = Blueprint('inventario_armazem', __name__)\ninventario_service = InventarioService()\ndef _obter_nome_usuario(user_id):\n    u = User.query.get(user_id)\n    return u.name if u else \"Administrador\"\n# ==============================================================================\n# 1. CICLO DE VIDA DO INVENTÁRIO (CRIAR, INICIAR, CONTAR, CONFERIR, APLICAR)\n# ==============================================================================\n@inventario_bp.route('', methods=['POST'])\n@jwt_required()",
         "detail": "backend.app.api.v1.inventario_controller",
         "documentation": {}
     },
     {
-        "label": "service",
+        "label": "inventario_service",
         "kind": 5,
         "importPath": "backend.app.api.v1.inventario_controller",
         "description": "backend.app.api.v1.inventario_controller",
-        "peekOfCode": "service = InventarioService()\n@inventario_bp.route('', methods=['POST'])\n@jwt_required()\ndef create():\n    data = request.json\n    user_id = get_jwt_identity()\n    obj, error = service.create_inventario(data, user_id)\n    if error: return ApiResponse.success(message=error, status=400)\n    return ApiResponse.success(data={\"id\": obj.id, \"numero\": obj.numero}, message=\"Inventário iniciado\", status=201)\n@inventario_bp.route('/<int:id>/concluir', methods=['POST'])",
+        "peekOfCode": "inventario_service = InventarioService()\ndef _obter_nome_usuario(user_id):\n    u = User.query.get(user_id)\n    return u.name if u else \"Administrador\"\n# ==============================================================================\n# 1. CICLO DE VIDA DO INVENTÁRIO (CRIAR, INICIAR, CONTAR, CONFERIR, APLICAR)\n# ==============================================================================\n@inventario_bp.route('', methods=['POST'])\n@jwt_required()\n@requires_roles('Administrador', 'Armazém')",
         "detail": "backend.app.api.v1.inventario_controller",
         "documentation": {}
     },
@@ -10367,7 +11838,16 @@
         "kind": 6,
         "importPath": "backend.app.config.settings",
         "description": "backend.app.config.settings",
-        "peekOfCode": "class Config:\n    SECRET_KEY = os.environ.get('SECRET_KEY')\n    # Database MySQL\n    MYSQL_USER = os.environ.get('MYSQL_USER', 'root')\n    MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD', 'root')\n    MYSQL_HOST = os.environ.get('MYSQL_HOST', 'localhost')\n    MYSQL_PORT = os.environ.get('MYSQL_PORT', '3306')\n    MYSQL_DB = os.environ.get('MYSQL_DB', 'sigi_db')\n    SQLALCHEMY_DATABASE_URI = f\"mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DB}\"\n    SQLALCHEMY_TRACK_MODIFICATIONS = False",
+        "peekOfCode": "class Config:\n    SECRET_KEY = os.environ.get('SECRET_KEY') or 'sigi-erp-flask-secret-key-2026-production-token'\n    # Database MySQL\n    MYSQL_USER = os.environ.get('MYSQL_USER', 'root')\n    MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD', 'root')\n    MYSQL_HOST = os.environ.get('MYSQL_HOST', 'localhost')\n    MYSQL_PORT = os.environ.get('MYSQL_PORT', '3306')\n    MYSQL_DB = os.environ.get('MYSQL_DB', 'sigi_db')\n    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or f\"mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DB}\"\n    SQLALCHEMY_TRACK_MODIFICATIONS = False",
+        "detail": "backend.app.config.settings",
+        "documentation": {}
+    },
+    {
+        "label": "backend_dir",
+        "kind": 5,
+        "importPath": "backend.app.config.settings",
+        "description": "backend.app.config.settings",
+        "peekOfCode": "backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))\nload_dotenv(os.path.join(backend_dir, '.env'))\nload_dotenv()\nclass Config:\n    SECRET_KEY = os.environ.get('SECRET_KEY') or 'sigi-erp-flask-secret-key-2026-production-token'\n    # Database MySQL\n    MYSQL_USER = os.environ.get('MYSQL_USER', 'root')\n    MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD', 'root')\n    MYSQL_HOST = os.environ.get('MYSQL_HOST', 'localhost')\n    MYSQL_PORT = os.environ.get('MYSQL_PORT', '3306')",
         "detail": "backend.app.config.settings",
         "documentation": {}
     },
@@ -10396,6 +11876,42 @@
         "description": "backend.app.core.database",
         "peekOfCode": "db = SQLAlchemy(metadata=metadata)",
         "detail": "backend.app.core.database",
+        "documentation": {}
+    },
+    {
+        "label": "import_all_models",
+        "kind": 2,
+        "importPath": "backend.app.core.db_initializer",
+        "description": "backend.app.core.db_initializer",
+        "peekOfCode": "def import_all_models():\n    \"\"\"\n    Importa exaustivamente todos os modelos do SQLAlchemy para garantir\n    que db.metadata conheça 100% das tabelas da aplicação.\n    \"\"\"\n    try:\n        from app.models.user import User, RoleEnum\n        from app.models.cliente import Cliente\n        from app.models.fornecedor import Fornecedor\n        from app.models.empresa import Empresa",
+        "detail": "backend.app.core.db_initializer",
+        "documentation": {}
+    },
+    {
+        "label": "run_safe_migrations",
+        "kind": 2,
+        "importPath": "backend.app.core.db_initializer",
+        "description": "backend.app.core.db_initializer",
+        "peekOfCode": "def run_safe_migrations(db):\n    \"\"\"Executa migrações de compatibilidade prevenindo que falhas em queries quebrem o app.\"\"\"\n    queries = [\n        \"ALTER TABLE itens_pedido MODIFY COLUMN tipo_item ENUM('Produto', 'Produto Acabado', 'Produto Revenda', 'Servico', 'Aluguer') NOT NULL;\",\n        \"ALTER TABLE itens_pedido ADD COLUMN IF NOT EXISTS subtotal NUMERIC(10,2) DEFAULT 0;\",\n        \"ALTER TABLE itens_pedido ADD COLUMN IF NOT EXISTS total NUMERIC(10,2) DEFAULT 0;\",\n        \"ALTER TABLE itens_pedido ADD COLUMN IF NOT EXISTS desconto NUMERIC(10,2) DEFAULT 0;\",\n        \"ALTER TABLE itens_pedido ADD COLUMN IF NOT EXISTS taxa_iva_id INTEGER NULL;\",\n        \"ALTER TABLE itens_pedido ADD COLUMN IF NOT EXISTS taxa_iva NUMERIC(5,2) DEFAULT 0;\",\n        \"ALTER TABLE itens_pedido ADD COLUMN IF NOT EXISTS valor_iva NUMERIC(10,2) DEFAULT 0;\",",
+        "detail": "backend.app.core.db_initializer",
+        "documentation": {}
+    },
+    {
+        "label": "ensure_database_ready",
+        "kind": 2,
+        "importPath": "backend.app.core.db_initializer",
+        "description": "backend.app.core.db_initializer",
+        "peekOfCode": "def ensure_database_ready(app, force=False):\n    \"\"\"\n    Garante que todas as tabelas existam na base de dados:\n    - Executa db.create_all() caso a tabela 'users' ou 'log_erros' não exista.\n    - NÃO insere nenhum utilizador ou dados de empresa.\n    - Preserva o assistente de configuração (Setup Wizard) do frontend.\n    \"\"\"\n    from app.core.database import db\n    with app.app_context():\n        # 1. Carregar todos os modelos para registro de metadados no SQLAlchemy",
+        "detail": "backend.app.core.db_initializer",
+        "documentation": {}
+    },
+    {
+        "label": "logger",
+        "kind": 5,
+        "importPath": "backend.app.core.db_initializer",
+        "description": "backend.app.core.db_initializer",
+        "peekOfCode": "logger = logging.getLogger(__name__)\ndef import_all_models():\n    \"\"\"\n    Importa exaustivamente todos os modelos do SQLAlchemy para garantir\n    que db.metadata conheça 100% das tabelas da aplicação.\n    \"\"\"\n    try:\n        from app.models.user import User, RoleEnum\n        from app.models.cliente import Cliente\n        from app.models.fornecedor import Fornecedor",
+        "detail": "backend.app.core.db_initializer",
         "documentation": {}
     },
     {
@@ -11015,7 +12531,7 @@
         "kind": 6,
         "importPath": "backend.app.models.inventario",
         "description": "backend.app.models.inventario",
-        "peekOfCode": "class TipoInventario(str, Enum):\n    GERAL = 'Geral'\n    PARCIAL = 'Parcial'\nclass EstadoInventario(str, Enum):\n    RASCUNHO = 'Rascunho'\n    CONCLUIDO = 'Concluido'\n    CANCELADO = 'Cancelado'\nclass Inventario(BaseModel):\n    __tablename__ = 'inventarios'\n    numero = db.Column(db.String(50), unique=True, nullable=False)",
+        "peekOfCode": "class TipoInventario(str, Enum):\n    COMPLETO = 'COMPLETO'\n    PARCIAL = 'PARCIAL'\nclass EstadoInventario(str, Enum):\n    RASCUNHO = 'RASCUNHO'\n    EM_CONTAGEM = 'EM_CONTAGEM'\n    EM_CONFERENCIA = 'EM_CONFERENCIA'\n    APROVADO = 'APROVADO'\n    APLICADO = 'APLICADO'\n    CANCELADO = 'CANCELADO'",
         "detail": "backend.app.models.inventario",
         "documentation": {}
     },
@@ -11024,7 +12540,25 @@
         "kind": 6,
         "importPath": "backend.app.models.inventario",
         "description": "backend.app.models.inventario",
-        "peekOfCode": "class EstadoInventario(str, Enum):\n    RASCUNHO = 'Rascunho'\n    CONCLUIDO = 'Concluido'\n    CANCELADO = 'Cancelado'\nclass Inventario(BaseModel):\n    __tablename__ = 'inventarios'\n    numero = db.Column(db.String(50), unique=True, nullable=False)\n    tipo = db.Column(db.Enum(TipoInventario), nullable=False)\n    estado = db.Column(db.Enum(EstadoInventario), default=EstadoInventario.RASCUNHO)\n    data_inicio = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)",
+        "peekOfCode": "class EstadoInventario(str, Enum):\n    RASCUNHO = 'RASCUNHO'\n    EM_CONTAGEM = 'EM_CONTAGEM'\n    EM_CONFERENCIA = 'EM_CONFERENCIA'\n    APROVADO = 'APROVADO'\n    APLICADO = 'APLICADO'\n    CANCELADO = 'CANCELADO'\nclass SituacaoDivergencia(str, Enum):\n    SEM_DIVERGENCIA = 'SEM_DIVERGENCIA'\n    FALTA = 'FALTA'",
+        "detail": "backend.app.models.inventario",
+        "documentation": {}
+    },
+    {
+        "label": "SituacaoDivergencia",
+        "kind": 6,
+        "importPath": "backend.app.models.inventario",
+        "description": "backend.app.models.inventario",
+        "peekOfCode": "class SituacaoDivergencia(str, Enum):\n    SEM_DIVERGENCIA = 'SEM_DIVERGENCIA'\n    FALTA = 'FALTA'\n    SOBRA = 'SOBRA'\n    NAO_CONTADO = 'NAO_CONTADO'\nclass MotivoAjusteInventario(str, Enum):\n    QUEBRA = 'QUEBRA'\n    PERDA = 'PERDA'\n    DANIFICADO = 'DANIFICADO'\n    CONSUMO_NAO_REGISTADO = 'CONSUMO_NAO_REGISTADO'",
+        "detail": "backend.app.models.inventario",
+        "documentation": {}
+    },
+    {
+        "label": "MotivoAjusteInventario",
+        "kind": 6,
+        "importPath": "backend.app.models.inventario",
+        "description": "backend.app.models.inventario",
+        "peekOfCode": "class MotivoAjusteInventario(str, Enum):\n    QUEBRA = 'QUEBRA'\n    PERDA = 'PERDA'\n    DANIFICADO = 'DANIFICADO'\n    CONSUMO_NAO_REGISTADO = 'CONSUMO_NAO_REGISTADO'\n    ERRO_CONTAGEM = 'ERRO_CONTAGEM'\n    ERRO_REGISTO = 'ERRO_REGISTO'\n    VALIDACAO_INVENTARIO = 'VALIDACAO_INVENTARIO'\n    OUTRO = 'OUTRO'\nclass Inventario(BaseModel):",
         "detail": "backend.app.models.inventario",
         "documentation": {}
     },
@@ -11033,16 +12567,7 @@
         "kind": 6,
         "importPath": "backend.app.models.inventario",
         "description": "backend.app.models.inventario",
-        "peekOfCode": "class Inventario(BaseModel):\n    __tablename__ = 'inventarios'\n    numero = db.Column(db.String(50), unique=True, nullable=False)\n    tipo = db.Column(db.Enum(TipoInventario), nullable=False)\n    estado = db.Column(db.Enum(EstadoInventario), default=EstadoInventario.RASCUNHO)\n    data_inicio = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)\n    data_fim = db.Column(db.DateTime, nullable=True)\n    observacoes = db.Column(db.Text, nullable=True)\n    utilizador_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)\n    items = db.relationship('InventarioItem', backref='inventario', lazy=True, cascade=\"all, delete-orphan\")",
-        "detail": "backend.app.models.inventario",
-        "documentation": {}
-    },
-    {
-        "label": "TipoItemInventario",
-        "kind": 6,
-        "importPath": "backend.app.models.inventario",
-        "description": "backend.app.models.inventario",
-        "peekOfCode": "class TipoItemInventario(str, Enum):\n    INGREDIENTE = 'Ingrediente'\n    MATERIAL = 'Material'\n    PRODUTO = 'Produto'\nclass InventarioItem(db.Model):\n    __tablename__ = 'inventario_items'\n    id = db.Column(db.Integer, primary_key=True)\n    inventario_id = db.Column(db.Integer, db.ForeignKey('inventarios.id'), nullable=False)\n    tipo_item = db.Column(db.Enum(TipoItemInventario), nullable=False)\n    referencia_id = db.Column(db.Integer, nullable=False) ",
+        "peekOfCode": "class Inventario(BaseModel):\n    __tablename__ = 'inventarios'\n    numero = db.Column(db.String(50), unique=True, nullable=False, index=True)\n    armazem_id = db.Column(db.Integer, db.ForeignKey('armazens.id'), nullable=False)\n    tipo = db.Column(db.Enum(TipoInventario), default=TipoInventario.COMPLETO, nullable=False)\n    estado = db.Column(db.Enum(EstadoInventario), default=EstadoInventario.RASCUNHO, nullable=False, index=True)\n    data_inventario = db.Column(db.Date, default=date.today, nullable=False)\n    responsavel_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)\n    observacao = db.Column(db.Text, nullable=True)\n    # Datas de ciclo de vida",
         "detail": "backend.app.models.inventario",
         "documentation": {}
     },
@@ -11051,25 +12576,7 @@
         "kind": 6,
         "importPath": "backend.app.models.inventario",
         "description": "backend.app.models.inventario",
-        "peekOfCode": "class InventarioItem(db.Model):\n    __tablename__ = 'inventario_items'\n    id = db.Column(db.Integer, primary_key=True)\n    inventario_id = db.Column(db.Integer, db.ForeignKey('inventarios.id'), nullable=False)\n    tipo_item = db.Column(db.Enum(TipoItemInventario), nullable=False)\n    referencia_id = db.Column(db.Integer, nullable=False) \n    quantidade_sistema = db.Column(db.Numeric(12, 2), nullable=False)\n    quantidade_contada = db.Column(db.Numeric(12, 2), nullable=False)\n    diferenca = db.Column(db.Numeric(12, 2), nullable=False)\n    justificativa = db.Column(db.String(255), nullable=True)",
-        "detail": "backend.app.models.inventario",
-        "documentation": {}
-    },
-    {
-        "label": "InventarioContagem",
-        "kind": 6,
-        "importPath": "backend.app.models.inventario",
-        "description": "backend.app.models.inventario",
-        "peekOfCode": "class InventarioContagem(BaseModel):\n    __tablename__ = 'inventarios_contagem'\n    data_contagem = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)\n    responsavel_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)\n    estado = db.Column(db.Enum(EstadoInventario), default=EstadoInventario.RASCUNHO)\n    observacoes = db.Column(db.Text, nullable=True)\n    responsavel = db.relationship('User')\n    itens = db.relationship('InventarioContagemItem', backref='inventario_contagem_rel', cascade=\"all, delete-orphan\", lazy=True)\nclass InventarioContagemItem(db.Model):\n    __tablename__ = 'inventario_contagem_itens'",
-        "detail": "backend.app.models.inventario",
-        "documentation": {}
-    },
-    {
-        "label": "InventarioContagemItem",
-        "kind": 6,
-        "importPath": "backend.app.models.inventario",
-        "description": "backend.app.models.inventario",
-        "peekOfCode": "class InventarioContagemItem(db.Model):\n    __tablename__ = 'inventario_contagem_itens'\n    id = db.Column(db.Integer, primary_key=True)\n    inventario_id = db.Column(db.Integer, db.ForeignKey('inventarios_contagem.id'), nullable=False)\n    produto_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=False)\n    stock_sistema = db.Column(db.Numeric(10, 3), nullable=False)\n    stock_real = db.Column(db.Numeric(10, 3), nullable=False)\n    diferenca = db.Column(db.Numeric(10, 3), nullable=False)\n    justificativa = db.Column(db.Text, nullable=True)\n    produto = db.relationship('Produto')",
+        "peekOfCode": "class InventarioItem(BaseModel):\n    __tablename__ = 'inventario_items'\n    inventario_id = db.Column(db.Integer, db.ForeignKey('inventarios.id', ondelete='CASCADE'), nullable=False, index=True)\n    produto_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=True, index=True)\n    material_id = db.Column(db.Integer, db.ForeignKey('materiais.id'), nullable=True, index=True)\n    unidade_medida_id = db.Column(db.Integer, db.ForeignKey('unidades_medida.id'), nullable=True)\n    # Snapshot imutável no momento em que o inventário foi iniciado\n    quantidade_sistema = db.Column(db.Numeric(12, 3), nullable=False, default=0.0)\n    # Preenchido durante a contagem\n    quantidade_contada = db.Column(db.Numeric(12, 3), nullable=True)",
         "detail": "backend.app.models.inventario",
         "documentation": {}
     },
@@ -11413,6 +12920,24 @@
         "description": "backend.app.models.produto",
         "peekOfCode": "class Produto(BaseModel):\n    __tablename__ = 'produtos'\n    codigo = db.Column(db.String(50), unique=True, nullable=True)\n    nome = db.Column(db.String(100), nullable=False)\n    tipo = db.Column(db.Enum(TipoProduto), nullable=False)\n    servico = db.Column(db.Enum(ServicoEnum), nullable=True)\n    categoria = db.Column(db.String(100), nullable=True)\n    categoria_id = db.Column(db.Integer, db.ForeignKey('categorias_produto.id'), nullable=True)\n    unidade_medida_id = db.Column(db.Integer, db.ForeignKey('unidades_medida.id'), nullable=True)\n    tempo_producao = db.Column(db.Integer, nullable=True) # in minutes",
         "detail": "backend.app.models.produto",
+        "documentation": {}
+    },
+    {
+        "label": "EstadoQuarentena",
+        "kind": 6,
+        "importPath": "backend.app.models.quarentena",
+        "description": "backend.app.models.quarentena",
+        "peekOfCode": "class EstadoQuarentena(str, Enum):\n    QUARENTENA = 'Quarentena'\n    DESCARTADO = 'Descartado'\n    REINTEGRADO = 'Reintegrado'\nclass QuarentenaItem(BaseModel):\n    __tablename__ = 'quarentena_itens'\n    produto_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=True)\n    material_id = db.Column(db.Integer, db.ForeignKey('materiais.id'), nullable=True)\n    armazem_id = db.Column(db.Integer, db.ForeignKey('armazens.id'), nullable=False)\n    quantidade = db.Column(db.Numeric(10, 3), nullable=False)",
+        "detail": "backend.app.models.quarentena",
+        "documentation": {}
+    },
+    {
+        "label": "QuarentenaItem",
+        "kind": 6,
+        "importPath": "backend.app.models.quarentena",
+        "description": "backend.app.models.quarentena",
+        "peekOfCode": "class QuarentenaItem(BaseModel):\n    __tablename__ = 'quarentena_itens'\n    produto_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=True)\n    material_id = db.Column(db.Integer, db.ForeignKey('materiais.id'), nullable=True)\n    armazem_id = db.Column(db.Integer, db.ForeignKey('armazens.id'), nullable=False)\n    quantidade = db.Column(db.Numeric(10, 3), nullable=False)\n    motivo = db.Column(db.String(120), nullable=False)\n    lote = db.Column(db.String(100), nullable=True)\n    validade = db.Column(db.Date, nullable=True)\n    observacao = db.Column(db.Text, nullable=True)",
+        "detail": "backend.app.models.quarentena",
         "documentation": {}
     },
     {
@@ -12014,7 +13539,7 @@
         "kind": 6,
         "importPath": "backend.app.schemas.armazem_schema",
         "description": "backend.app.schemas.armazem_schema",
-        "peekOfCode": "class ProdutoSchema(Schema):\n    id = fields.Int(dump_only=True)\n    codigo = fields.Str(dump_only=True)\n    nome = fields.Str(required=True, validate=validate.Length(min=2))\n    tipo = fields.Str(required=False, allow_none=True, load_default='Acabado')\n    servico = fields.Function(\n        serialize=lambda obj: obj.servico.value if getattr(obj, 'servico', None) and hasattr(obj.servico, 'value') else (str(obj.servico).split('.')[-1] if getattr(obj, 'servico', None) else None),\n        deserialize=lambda value: str(value).split('.')[-1] if value is not None else None,\n        required=False,\n        allow_none=True,",
+        "peekOfCode": "class ProdutoSchema(Schema):\n    class Meta:\n        unknown = EXCLUDE\n    id = fields.Int(dump_only=True)\n    codigo = fields.Str(dump_only=True)\n    nome = fields.Str(required=True, validate=validate.Length(min=2))\n    tipo = fields.Str(required=False, allow_none=True, load_default='Acabado')\n    servico = fields.Function(\n        serialize=lambda obj: obj.servico.value if getattr(obj, 'servico', None) and hasattr(obj.servico, 'value') else (str(obj.servico).split('.')[-1] if getattr(obj, 'servico', None) else None),\n        deserialize=lambda value: str(value).split('.')[-1] if value is not None else None,",
         "detail": "backend.app.schemas.armazem_schema",
         "documentation": {}
     },
@@ -12023,7 +13548,7 @@
         "kind": 6,
         "importPath": "backend.app.schemas.armazem_schema",
         "description": "backend.app.schemas.armazem_schema",
-        "peekOfCode": "class MaterialSchema(Schema):\n    id = fields.Int(dump_only=True)\n    codigo = fields.Str(required=False)\n    nome = fields.Str(required=True)\n    categoria = fields.Str(required=False)\n    tipo = fields.Str(required=False, allow_none=True, load_default='Material')\n    quantidade_total = fields.Decimal(dump_only=True)\n    quantidade_disponivel = fields.Decimal(dump_only=True)\n    quantidade_reservada = fields.Decimal(dump_only=True)\n    estado = fields.Str(dump_only=True)",
+        "peekOfCode": "class MaterialSchema(Schema):\n    class Meta:\n        unknown = EXCLUDE\n    id = fields.Int(dump_only=True)\n    codigo = fields.Str(required=False)\n    nome = fields.Str(required=True)\n    categoria = fields.Str(required=False)\n    tipo = fields.Str(required=False, allow_none=True, load_default='Material')\n    quantidade_total = fields.Decimal(dump_only=True)\n    quantidade_disponivel = fields.Decimal(dump_only=True)",
         "detail": "backend.app.schemas.armazem_schema",
         "documentation": {}
     },
@@ -12505,6 +14030,159 @@
         "documentation": {}
     },
     {
+        "label": "ImportacaoErrorCode",
+        "kind": 6,
+        "importPath": "backend.app.services.importacao.importacao_constants",
+        "description": "backend.app.services.importacao.importacao_constants",
+        "peekOfCode": "class ImportacaoErrorCode:\n    INVALID_PAYLOAD = \"INVALID_PAYLOAD\"\n    EMPTY_FILE = \"EMPTY_FILE\"\n    MAX_ROWS_EXCEEDED = \"MAX_ROWS_EXCEEDED\"\n    INVALID_ROW = \"INVALID_ROW\"\n    INVALID_TYPE = \"INVALID_TYPE\"\n    REQUIRED_FIELD = \"REQUIRED_FIELD\"\n    INVALID_NUMBER = \"INVALID_NUMBER\"\n    INVALID_PRICE = \"INVALID_PRICE\"\n    INVALID_SERVICE = \"INVALID_SERVICE\"",
+        "detail": "backend.app.services.importacao.importacao_constants",
+        "documentation": {}
+    },
+    {
+        "label": "ImportacaoWarningCode",
+        "kind": 6,
+        "importPath": "backend.app.services.importacao.importacao_constants",
+        "description": "backend.app.services.importacao.importacao_constants",
+        "peekOfCode": "class ImportacaoWarningCode:\n    LOW_INITIAL_STOCK = \"LOW_INITIAL_STOCK\"\n    SALE_PRICE_EMPTY = \"SALE_PRICE_EMPTY\"\n    COST_PRICE_ZERO = \"COST_PRICE_ZERO\"\n    NO_WAREHOUSE_FOR_ZERO_STOCK = \"NO_WAREHOUSE_FOR_ZERO_STOCK\"\n    DEFAULT_WAREHOUSE_APPLIED = \"DEFAULT_WAREHOUSE_APPLIED\"\n# Limites de segurança para evitar sobrecarga ou DoS\nMAX_IMPORT_ROWS = 1000\nTIPOS_PRODUTO_PERMITIDOS = ('Consumivel', 'Acabado', 'Revenda', 'Material')\nTIPOS_MATERIAL_PERMITIDOS = ('Reutilizavel', 'Consumivel')",
+        "detail": "backend.app.services.importacao.importacao_constants",
+        "documentation": {}
+    },
+    {
+        "label": "MAX_IMPORT_ROWS",
+        "kind": 5,
+        "importPath": "backend.app.services.importacao.importacao_constants",
+        "description": "backend.app.services.importacao.importacao_constants",
+        "peekOfCode": "MAX_IMPORT_ROWS = 1000\nTIPOS_PRODUTO_PERMITIDOS = ('Consumivel', 'Acabado', 'Revenda', 'Material')\nTIPOS_MATERIAL_PERMITIDOS = ('Reutilizavel', 'Consumivel')\nSERVICOS_PERMITIDOS = ('ABASTECIMENTO', 'COZINHA', 'PASTELARIA', 'BAR')",
+        "detail": "backend.app.services.importacao.importacao_constants",
+        "documentation": {}
+    },
+    {
+        "label": "TIPOS_PRODUTO_PERMITIDOS",
+        "kind": 5,
+        "importPath": "backend.app.services.importacao.importacao_constants",
+        "description": "backend.app.services.importacao.importacao_constants",
+        "peekOfCode": "TIPOS_PRODUTO_PERMITIDOS = ('Consumivel', 'Acabado', 'Revenda', 'Material')\nTIPOS_MATERIAL_PERMITIDOS = ('Reutilizavel', 'Consumivel')\nSERVICOS_PERMITIDOS = ('ABASTECIMENTO', 'COZINHA', 'PASTELARIA', 'BAR')",
+        "detail": "backend.app.services.importacao.importacao_constants",
+        "documentation": {}
+    },
+    {
+        "label": "TIPOS_MATERIAL_PERMITIDOS",
+        "kind": 5,
+        "importPath": "backend.app.services.importacao.importacao_constants",
+        "description": "backend.app.services.importacao.importacao_constants",
+        "peekOfCode": "TIPOS_MATERIAL_PERMITIDOS = ('Reutilizavel', 'Consumivel')\nSERVICOS_PERMITIDOS = ('ABASTECIMENTO', 'COZINHA', 'PASTELARIA', 'BAR')",
+        "detail": "backend.app.services.importacao.importacao_constants",
+        "documentation": {}
+    },
+    {
+        "label": "SERVICOS_PERMITIDOS",
+        "kind": 5,
+        "importPath": "backend.app.services.importacao.importacao_constants",
+        "description": "backend.app.services.importacao.importacao_constants",
+        "peekOfCode": "SERVICOS_PERMITIDOS = ('ABASTECIMENTO', 'COZINHA', 'PASTELARIA', 'BAR')",
+        "detail": "backend.app.services.importacao.importacao_constants",
+        "documentation": {}
+    },
+    {
+        "label": "normalizar_texto",
+        "kind": 2,
+        "importPath": "backend.app.services.importacao.importacao_normalizer",
+        "description": "backend.app.services.importacao.importacao_normalizer",
+        "peekOfCode": "def normalizar_texto(valor: Any) -> Optional[str]:\n    \"\"\"Remove espaços supérfluos e colapsa múltiplos espaços em branco.\"\"\"\n    if valor is None:\n        return None\n    texto = str(valor).strip()\n    if not texto:\n        return None\n    # Colapsar múltiplos espaços internos\n    return re.sub(r'\\s+', ' ', texto)\ndef normalizar_chave_busca(valor: Any) -> str:",
+        "detail": "backend.app.services.importacao.importacao_normalizer",
+        "documentation": {}
+    },
+    {
+        "label": "normalizar_chave_busca",
+        "kind": 2,
+        "importPath": "backend.app.services.importacao.importacao_normalizer",
+        "description": "backend.app.services.importacao.importacao_normalizer",
+        "peekOfCode": "def normalizar_chave_busca(valor: Any) -> str:\n    \"\"\"Retorna uma chave de comparação minúscula e sem espaços supérfluos.\"\"\"\n    texto = normalizar_texto(valor)\n    return texto.lower() if texto else \"\"\ndef normalizar_tipo(valor: Any) -> Optional[str]:\n    \"\"\"Valida e normaliza o tipo de item para a grafia oficial.\"\"\"\n    chave = normalizar_chave_busca(valor)\n    if not chave:\n        return None\n    for tipo in TIPOS_PRODUTO_PERMITIDOS:",
+        "detail": "backend.app.services.importacao.importacao_normalizer",
+        "documentation": {}
+    },
+    {
+        "label": "normalizar_tipo",
+        "kind": 2,
+        "importPath": "backend.app.services.importacao.importacao_normalizer",
+        "description": "backend.app.services.importacao.importacao_normalizer",
+        "peekOfCode": "def normalizar_tipo(valor: Any) -> Optional[str]:\n    \"\"\"Valida e normaliza o tipo de item para a grafia oficial.\"\"\"\n    chave = normalizar_chave_busca(valor)\n    if not chave:\n        return None\n    for tipo in TIPOS_PRODUTO_PERMITIDOS:\n        if tipo.lower() == chave:\n            return tipo\n    return None\ndef normalizar_tipo_material(valor: Any) -> Optional[str]:",
+        "detail": "backend.app.services.importacao.importacao_normalizer",
+        "documentation": {}
+    },
+    {
+        "label": "normalizar_tipo_material",
+        "kind": 2,
+        "importPath": "backend.app.services.importacao.importacao_normalizer",
+        "description": "backend.app.services.importacao.importacao_normalizer",
+        "peekOfCode": "def normalizar_tipo_material(valor: Any) -> Optional[str]:\n    \"\"\"Normaliza o subtipo de material (Reutilizável ou Consumível).\"\"\"\n    chave = normalizar_chave_busca(valor)\n    if not chave:\n        return None\n    if chave in ('reutilizavel', 'reutilizável', 'reutil'):\n        return 'Reutilizavel'\n    if chave in ('consumivel', 'consumível', 'descartavel', 'descartável'):\n        return 'Consumivel'\n    return None",
+        "detail": "backend.app.services.importacao.importacao_normalizer",
+        "documentation": {}
+    },
+    {
+        "label": "normalizar_servico",
+        "kind": 2,
+        "importPath": "backend.app.services.importacao.importacao_normalizer",
+        "description": "backend.app.services.importacao.importacao_normalizer",
+        "peekOfCode": "def normalizar_servico(valor: Any) -> Optional[str]:\n    \"\"\"Normaliza o serviço para maiúsculas aceites.\"\"\"\n    chave = normalizar_chave_busca(valor)\n    if not chave:\n        return None\n    for serv in SERVICOS_PERMITIDOS:\n        if serv.lower() == chave:\n            return serv\n    return None\ndef normalizar_numero(valor: Any, default: Optional[float] = None) -> Optional[float]:",
+        "detail": "backend.app.services.importacao.importacao_normalizer",
+        "documentation": {}
+    },
+    {
+        "label": "normalizar_numero",
+        "kind": 2,
+        "importPath": "backend.app.services.importacao.importacao_normalizer",
+        "description": "backend.app.services.importacao.importacao_normalizer",
+        "peekOfCode": "def normalizar_numero(valor: Any, default: Optional[float] = None) -> Optional[float]:\n    \"\"\"Converte números, inteiros, floats e strings com vírgula para float.\"\"\"\n    if valor is None:\n        return default\n    if isinstance(valor, (int, float, Decimal)):\n        return float(valor)\n    texto = str(valor).strip()\n    if not texto:\n        return default\n    # Remover símbolos monetários e espaços",
+        "detail": "backend.app.services.importacao.importacao_normalizer",
+        "documentation": {}
+    },
+    {
+        "label": "normalizar_taxa_iva",
+        "kind": 2,
+        "importPath": "backend.app.services.importacao.importacao_normalizer",
+        "description": "backend.app.services.importacao.importacao_normalizer",
+        "peekOfCode": "def normalizar_taxa_iva(valor: Any) -> Optional[float]:\n    \"\"\"Extrai o valor numérico percentual da taxa de IVA (ex: '15%' -> 15.0).\"\"\"\n    if valor is None:\n        return None\n    if isinstance(valor, (int, float, Decimal)):\n        num = float(valor)\n        # Se vier como decimal 0.15, converte para 15\n        if 0 < num < 1:\n            return num * 100\n        return num",
+        "detail": "backend.app.services.importacao.importacao_normalizer",
+        "documentation": {}
+    },
+    {
+        "label": "ImportacaoCatalogoService",
+        "kind": 6,
+        "importPath": "backend.app.services.importacao.importacao_service",
+        "description": "backend.app.services.importacao.importacao_service",
+        "peekOfCode": "class ImportacaoCatalogoService:\n    \"\"\"\n    Serviço empresarial de Importação de Catálogo via Excel para o SIGI ERP.\n    Garante validação multi-fases, atomicidade transacional e integridade de stocks.\n    \"\"\"\n    def __init__(self):\n        self.resolver = ReferenceResolver()\n        self.validator = ImportacaoValidator(self.resolver)\n    def validar_catalogo(self, linhas: Any) -> Dict[str, Any]:\n        \"\"\"",
+        "detail": "backend.app.services.importacao.importacao_service",
+        "documentation": {}
+    },
+    {
+        "label": "logger",
+        "kind": 5,
+        "importPath": "backend.app.services.importacao.importacao_service",
+        "description": "backend.app.services.importacao.importacao_service",
+        "peekOfCode": "logger = logging.getLogger(\"sigi.importacao\")\nclass ImportacaoCatalogoService:\n    \"\"\"\n    Serviço empresarial de Importação de Catálogo via Excel para o SIGI ERP.\n    Garante validação multi-fases, atomicidade transacional e integridade de stocks.\n    \"\"\"\n    def __init__(self):\n        self.resolver = ReferenceResolver()\n        self.validator = ImportacaoValidator(self.resolver)\n    def validar_catalogo(self, linhas: Any) -> Dict[str, Any]:",
+        "detail": "backend.app.services.importacao.importacao_service",
+        "documentation": {}
+    },
+    {
+        "label": "ImportacaoValidator",
+        "kind": 6,
+        "importPath": "backend.app.services.importacao.importacao_validator",
+        "description": "backend.app.services.importacao.importacao_validator",
+        "peekOfCode": "class ImportacaoValidator:\n    \"\"\"\n    Motor de validação e resolução do catálogo importado via Excel.\n    Executa validação estrutural, resolução de referências, regras de negócio e deteção de duplicados em lote.\n    \"\"\"\n    def __init__(self, resolver: Optional[ReferenceResolver] = None):\n        self.resolver = resolver or ReferenceResolver()\n    def validar_lote(self, linhas: Any) -> Dict[str, Any]:\n        \"\"\"\n        Valida todas as linhas do payload sem efetuar qualquer escrita na base de dados.",
+        "detail": "backend.app.services.importacao.importacao_validator",
+        "documentation": {}
+    },
+    {
+        "label": "ReferenceResolver",
+        "kind": 6,
+        "importPath": "backend.app.services.importacao.reference_resolver",
+        "description": "backend.app.services.importacao.reference_resolver",
+        "peekOfCode": "class ReferenceResolver:\n    \"\"\"\n    Camada responsável por resolver nomes, códigos, siglas e percentagens em IDs de base de dados.\n    Carrega os dados em lote na inicialização para garantir alta performance e evitar N+1 queries.\n    \"\"\"\n    def __init__(self):\n        self._carregado = False\n        self.categorias_por_id: Dict[int, CategoriaProduto] = {}\n        self.categorias_por_nome: Dict[str, int] = {}\n        self.unidades_por_id: Dict[int, UnidadeMedida] = {}",
+        "detail": "backend.app.services.importacao.reference_resolver",
+        "documentation": {}
+    },
+    {
         "label": "ArmazemService",
         "kind": 6,
         "importPath": "backend.app.services.armazem_service",
@@ -12604,11 +14282,47 @@
         "documentation": {}
     },
     {
+        "label": "InventarioExcelService",
+        "kind": 6,
+        "importPath": "backend.app.services.inventario_excel_service",
+        "description": "backend.app.services.inventario_excel_service",
+        "peekOfCode": "class InventarioExcelService:\n    @staticmethod\n    def gerar_excel_inventario(inventario_id: int, user_nome: str = \"Administrador\") -> io.BytesIO:\n        inventario = Inventario.query.get(inventario_id)\n        if not inventario:\n            raise ValueError(\"Inventário não encontrado para exportação.\")\n        wb = openpyxl.Workbook()\n        # Remove a folha padrão criada automaticamente\n        wb.remove(wb.active)\n        # Paleta de Estilos Profissional SIGI",
+        "detail": "backend.app.services.inventario_excel_service",
+        "documentation": {}
+    },
+    {
+        "label": "NumberedCanvas",
+        "kind": 6,
+        "importPath": "backend.app.services.inventario_pdf_service",
+        "description": "backend.app.services.inventario_pdf_service",
+        "peekOfCode": "class NumberedCanvas(canvas.Canvas):\n    def __init__(self, *args, **kwargs):\n        super().__init__(*args, **kwargs)\n        self._saved_page_states = []\n    def showPage(self):\n        self._saved_page_states.append(dict(self.__dict__))\n        self._startPage()\n    def save(self):\n        num_pages = len(self._saved_page_states)\n        for state in self._saved_page_states:",
+        "detail": "backend.app.services.inventario_pdf_service",
+        "documentation": {}
+    },
+    {
+        "label": "InventarioPdfService",
+        "kind": 6,
+        "importPath": "backend.app.services.inventario_pdf_service",
+        "description": "backend.app.services.inventario_pdf_service",
+        "peekOfCode": "class InventarioPdfService:\n    @staticmethod\n    def gerar_pdf_inventario(inventario_id: int) -> io.BytesIO:\n        inventario = Inventario.query.get(inventario_id)\n        if not inventario:\n            raise ValueError(\"Inventário não encontrado para geração de PDF.\")\n        empresa = Empresa.query.first()\n        nome_empresa = empresa.nome if empresa else \"SABOR IMBATÍVEL\"\n        nif_empresa = empresa.nif if empresa else \"500000000\"\n        buffer = io.BytesIO()",
+        "detail": "backend.app.services.inventario_pdf_service",
+        "documentation": {}
+    },
+    {
+        "label": "InventarioReportService",
+        "kind": 6,
+        "importPath": "backend.app.services.inventario_report_service",
+        "description": "backend.app.services.inventario_report_service",
+        "peekOfCode": "class InventarioReportService:\n    @staticmethod\n    def obter_relatorio_completo(inventario_id: int) -> Optional[Dict[str, Any]]:\n        inventario = Inventario.query.get(inventario_id)\n        if not inventario:\n            return None\n        itens = [it.to_dict() for it in inventario.items]\n        resumo = inventario.calcular_resumo()\n        return {\n            \"inventario\": inventario.to_dict(include_resumo=False),",
+        "detail": "backend.app.services.inventario_report_service",
+        "documentation": {}
+    },
+    {
         "label": "InventarioService",
         "kind": 6,
         "importPath": "backend.app.services.inventario_service",
         "description": "backend.app.services.inventario_service",
-        "peekOfCode": "class InventarioService:\n    def create_inventario(self, data, user_id):\n        numero = f\"INV-{datetime.utcnow().strftime('%Y%M')}-{str(uuid.uuid4())[:6].upper()}\"\n        inventario = Inventario(\n            numero=numero,\n            tipo=data.get('tipo', 'Geral'),\n            observacoes=data.get('observacoes'),\n            utilizador_id=user_id\n        )\n        items_data = data.get('items', [])",
+        "peekOfCode": "class InventarioService:\n    def __init__(self):\n        pass\n    def gerar_numero_inventario(self) -> str:\n        ano = datetime.utcnow().year\n        prefixo = f\"INV-{ano}-\"\n        ultimo = Inventario.query.filter(Inventario.numero.like(f\"{prefixo}%\"))\\\n                                 .order_by(desc(Inventario.id)).first()\n        if ultimo and ultimo.numero:\n            try:",
         "detail": "backend.app.services.inventario_service",
         "documentation": {}
     },
@@ -13846,11 +15560,38 @@
         "documentation": {}
     },
     {
+        "label": "main",
+        "kind": 2,
+        "importPath": "backend.init_db",
+        "description": "backend.init_db",
+        "peekOfCode": "def main():\n    force = '--force' in sys.argv\n    app = create_app()\n    with app.app_context():\n        success = ensure_database_ready(app, force=force)\n        if success:\n            print(\"=======================================================\")\n            print(\"🎉 [SUCESSO] Todas as tabelas foram geradas no MySQL!\")\n            print(\"ℹ️  Nenhum utilizador foi criado.\")\n            print(\"🌐 O fluxo de primeiro utilizador (Setup Wizard) no Frontend\")",
+        "detail": "backend.init_db",
+        "documentation": {}
+    },
+    {
+        "label": "backend_dir",
+        "kind": 5,
+        "importPath": "backend.init_db",
+        "description": "backend.init_db",
+        "peekOfCode": "backend_dir = os.path.dirname(os.path.abspath(__file__))\nsys.path.insert(0, backend_dir)\nload_dotenv(os.path.join(backend_dir, '.env'))\nfrom app import create_app\nfrom app.core.db_initializer import ensure_database_ready\ndef main():\n    force = '--force' in sys.argv\n    app = create_app()\n    with app.app_context():\n        success = ensure_database_ready(app, force=force)",
+        "detail": "backend.init_db",
+        "documentation": {}
+    },
+    {
+        "label": "current_dir",
+        "kind": 5,
+        "importPath": "backend.run",
+        "description": "backend.run",
+        "peekOfCode": "current_dir = os.path.dirname(os.path.abspath(__file__))\nload_dotenv(os.path.join(current_dir, '.env'))\nfrom app import create_app\nfrom app.websocket.socket_manager import socketio\napp = create_app()\nif __name__ == '__main__':\n    host = os.environ.get('HOST', '0.0.0.0')\n    port = int(os.environ.get('PORT', '8000'))\n    debug = os.environ.get('FLASK_DEBUG', '').lower() in ('1', 'true')\n    print(\"\\n\" + \"=\" * 65)",
+        "detail": "backend.run",
+        "documentation": {}
+    },
+    {
         "label": "app",
         "kind": 5,
         "importPath": "backend.run",
         "description": "backend.run",
-        "peekOfCode": "app = create_app()\nif __name__ == '__main__':\n    socketio.run(\n        app,\n        host=os.environ.get('HOST', '0.0.0.0'),\n        port=int(os.environ.get('PORT', '8000')),\n        debug=os.environ.get('FLASK_DEBUG', '').lower() in ('1', 'true'),\n    )",
+        "peekOfCode": "app = create_app()\nif __name__ == '__main__':\n    host = os.environ.get('HOST', '0.0.0.0')\n    port = int(os.environ.get('PORT', '8000'))\n    debug = os.environ.get('FLASK_DEBUG', '').lower() in ('1', 'true')\n    print(\"\\n\" + \"=\" * 65)\n    print(f\"🚀 [SIGI ERP] Servidor Backend ativo em http://{host}:{port}\")\n    print(f\"📄 Documentação Swagger em: http://{host}:{port}/swagger/\")\n    print(\"=\" * 65 + \"\\n\")\n    socketio.run(",
         "detail": "backend.run",
         "documentation": {}
     },
@@ -13960,6 +15701,24 @@
         "description": "backend.upgrade_db",
         "peekOfCode": "app = create_app()\nwith app.app_context():\n    queries = [\n        \"ALTER TABLE movimentacoes_armazem MODIFY COLUMN origem VARCHAR(50);\",\n        \"ALTER TABLE movimentacoes_armazem MODIFY COLUMN tipo VARCHAR(50);\",\n        \"ALTER TABLE movimentacoes_armazem MODIFY COLUMN entidade_tipo VARCHAR(50);\"\n    ]\n    for q in queries:\n        try:\n            db.session.execute(text(q))",
         "detail": "backend.upgrade_db",
+        "documentation": {}
+    },
+    {
+        "label": "run_upgrade",
+        "kind": 2,
+        "importPath": "backend.upgrade_inventario_db",
+        "description": "backend.upgrade_inventario_db",
+        "peekOfCode": "def run_upgrade():\n    print(\"\\n\" + \"=\" * 65)\n    print(\"📦 [SIGI ERP] Executando Migração do Módulo de Inventário de Stock...\")\n    print(\"=\" * 65)\n    statements = [\n        # 1. Criar tabela inventarios se não existir\n        \"\"\"\n        CREATE TABLE IF NOT EXISTS inventarios (\n            id INT AUTO_INCREMENT PRIMARY KEY,\n            numero VARCHAR(50) NOT NULL UNIQUE,",
+        "detail": "backend.upgrade_inventario_db",
+        "documentation": {}
+    },
+    {
+        "label": "current_dir",
+        "kind": 5,
+        "importPath": "backend.upgrade_inventario_db",
+        "description": "backend.upgrade_inventario_db",
+        "peekOfCode": "current_dir = os.path.dirname(os.path.abspath(__file__))\nif current_dir not in sys.path:\n    sys.path.insert(0, current_dir)\nfrom app import create_app\nfrom app.core.database import db\nfrom sqlalchemy import text\ndef run_upgrade():\n    print(\"\\n\" + \"=\" * 65)\n    print(\"📦 [SIGI ERP] Executando Migração do Módulo de Inventário de Stock...\")\n    print(\"=\" * 65)",
+        "detail": "backend.upgrade_inventario_db",
         "documentation": {}
     }
 ]

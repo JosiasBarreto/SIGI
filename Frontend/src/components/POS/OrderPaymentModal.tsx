@@ -41,6 +41,7 @@ export const OrderPaymentModal: React.FC<OrderPaymentModalProps> = ({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
       queryClient.invalidateQueries({ queryKey: ["caixas"] });
+      queryClient.invalidateQueries({ queryKey: ["minha-sessao-caixa"] });
       queryClient.invalidateQueries({ queryKey: ["vendas"] });
       toast.success("Pagamento registado com sucesso no Caixa!");
       onSuccess?.();

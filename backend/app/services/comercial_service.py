@@ -181,8 +181,8 @@ class ComercialService:
     def converter_evento_em_venda(self, evento_id, data, user_id):
         from app.models.evento import Evento, EstadoEvento
         from app.models.caixa import Caixa, MovimentoCaixa, TipoMovimentoCaixa
-        from app.models.financeiro import Pagamento, FormaPagamento
-        from app.models.comercial import Venda, VendaItem
+        from app.models.financeiro import Pagamento, FormaPagamento, EstadoPagamento
+        from app.models.comercial import Venda, VendaItem, TipoDocumento, EstadoVenda
         
         pagamento_info = data.get('pagamento', data) if isinstance(data, dict) else {}
         tipo_documento = str(pagamento_info.get('tipo_documento', 'FR')).upper()
@@ -191,102 +191,183 @@ class ComercialService:
         if not evento:
             return None, "Evento não encontrado."
             
-        if tipo_documento == TipoDocumento.PROFORMA.value:
-            resumo = evento.calcular_resumo_financeiro()
+        resumo = evento.calcular_resumo_financeiro()
+        subtotal_evento = float(resumo['subtotal_geral'])
+        iva_evento = float(resumo['total_iva_geral'])
+        total_evento = float(resumo['total_geral'])
+        desconto_evento = float(resumo['desconto_total'])
+        saldo_evento = max(0.0, total_evento - float(evento.valor_pago or 0))
+
+        if tipo_documento == TipoDocumento.PROFORMA.value or tipo_documento == 'FP':
             venda = Venda(
                 numero_documento=self.generate_numero_documento(TipoDocumento.PROFORMA.value),
                 tipo_documento=TipoDocumento.PROFORMA,
                 cliente_id=evento.cliente_id,
-                subtotal=float(resumo['subtotal_geral']),
-                desconto_total=0,
-                base_tributavel=float(resumo['subtotal_geral']),
-                total_iva=float(resumo['total_iva_geral']),
-                total=float(resumo['total_geral']),
+                evento_id=evento.id,
+                subtotal=subtotal_evento,
+                desconto_total=desconto_evento,
+                base_tributavel=max(0.0, subtotal_evento - desconto_evento),
+                total_iva=iva_evento,
+                total=total_evento,
                 valor_pago=0,
-                saldo=float(resumo['total_geral']),
+                saldo=total_evento,
                 estado=EstadoVenda.PENDENTE,
                 observacoes=f'Fatura Proforma referente ao Evento {evento.numero}.',
                 criado_por=user_id,
             )
             db.session.add(venda)
             db.session.flush()
-            for item in evento.itens or []:
-                db.session.add(VendaItem(
-                    venda_id=venda.id, item_tipo=str(item.tipo_item),
-                    item_id=item.referencia_id or item.produto_id or item.id,
-                    descricao=item.descricao, quantidade=item.quantidade,
-                    preco_unitario=item.preco_unitario, desconto=item.valor_desconto or 0,
-                    taxa_iva=item.taxa_iva or 0, valor_iva=item.valor_iva or 0,
-                    subtotal=item.subtotal or 0, total=item.total or 0,
-                ))
+            evento.venda_id = venda.id
+
+            self._adicionar_itens_venda_evento(venda, evento, resumo)
+
             try:
                 db.session.commit()
                 return venda, None
             except Exception as exc:
                 db.session.rollback()
                 return None, f'Erro ao emitir Proforma do evento: {str(exc)}'
-        if tipo_documento != TipoDocumento.FR.value:
-            return None, 'Tipo de documento de evento inválido.'
 
-        caixa = Caixa.query.with_for_update().filter_by(estado='Aberto').first()
-        if not caixa:
-            return None, "Não existe nenhum caixa aberto no momento. Abra o caixa primeiro para realizar vendas."
-            
-        valor_pagar = float(pagamento_info.get('valor', evento.saldo))
-        forma_pg_id = pagamento_info.get('forma_pagamento_id')
-        codigo_transf = pagamento_info.get('codigo_transferencia')
-        emissor = pagamento_info.get('emissor')
-        referencia = pagamento_info.get('referencia')
-        observacoes = pagamento_info.get('observacoes', '')
-        
-        forma_db = FormaPagamento.query.get(forma_pg_id)
-        if not forma_db:
-            return None, "Forma de pagamento inválida."
-            
-        nome_forma = forma_db.nome.lower()
-        if 'transferencia' in nome_forma or 'transferência' in nome_forma or 'pos' in nome_forma:
-            if not codigo_transf:
-                return None, "Código de transferência ou código de transação POS é obrigatório."
-            if not emissor:
-                return None, "Emissor/Remetente da operação de pagamento é obrigatório."
-                
-        numero_doc = self.generate_numero_documento('FR')
-        resumo = evento.calcular_resumo_financeiro()
-        subtotal_evento = float(resumo['subtotal_geral'])
-        iva_evento = float(resumo['total_iva_geral'])
-        total_evento = float(resumo['total_geral'])
-        saldo_evento = max(0.0, total_evento - float(evento.valor_pago or 0))
-        if valor_pagar > saldo_evento + 0.01:
+        if tipo_documento not in [TipoDocumento.FR.value, TipoDocumento.FT.value, 'FATURA', 'FATURA-RECIBO']:
+            return None, 'Tipo de documento de evento inválido. Utilize FT (Fatura) ou FR (Fatura-Recibo).'
+
+        tipo_doc_enum = TipoDocumento.FR if tipo_documento in [TipoDocumento.FR.value, 'FATURA-RECIBO'] else TipoDocumento.FT
+
+        valor_pagar = float(pagamento_info.get('valor', saldo_evento if tipo_doc_enum == TipoDocumento.FR else 0.0))
+
+        if tipo_doc_enum == TipoDocumento.FR and valor_pagar < (saldo_evento - 0.01):
+            return None, 'Fatura-Recibo (FR) exige a liquidação total do valor. Para pagamentos fasedos/prestação, emita Fatura (FT).'
+
+        if valor_pagar > (saldo_evento + 0.01):
             return None, "O valor do pagamento não pode ser superior ao saldo do evento."
-        
+
+        forma_db = None
+        codigo_transf = None
+        emissor = None
+        referencia = None
+        observacoes = pagamento_info.get('observacoes', '')
+
+        if valor_pagar > 0:
+            caixa = Caixa.query.with_for_update().filter_by(estado='Aberto', utilizador_abertura_id=user_id).first()
+            if not caixa:
+                return None, "Não possui nenhuma sessão de caixa aberta no momento. Abra a sua caixa primeiro para receber pagamentos."
+
+            forma_pg_id = pagamento_info.get('forma_pagamento_id')
+            codigo_transf = pagamento_info.get('codigo_transferencia')
+            emissor = pagamento_info.get('emissor')
+            referencia = pagamento_info.get('referencia')
+
+            forma_db = FormaPagamento.query.get(forma_pg_id)
+            if not forma_db:
+                return None, "Forma de pagamento inválida."
+
+            nome_forma = forma_db.nome.lower()
+            if 'transferencia' in nome_forma or 'transferência' in nome_forma or 'pos' in nome_forma:
+                if not codigo_transf:
+                    return None, "Código de transferência ou transação POS é obrigatório."
+                if not emissor:
+                    return None, "Emissor/Remetente da operação de pagamento é obrigatório."
+
+        numero_doc = self.generate_numero_documento(tipo_doc_enum.value)
+
+        novo_pago_venda = float(evento.valor_pago or 0) + valor_pagar
+        novo_saldo_venda = max(0.0, total_evento - novo_pago_venda)
+
+        if novo_saldo_venda <= 0:
+            estado_venda = EstadoVenda.PAGO
+        elif valor_pagar > 0:
+            estado_venda = EstadoVenda.PARCIALMENTE_PAGO
+        else:
+            estado_venda = EstadoVenda.PENDENTE
+
         venda = Venda(
             numero_documento=numero_doc,
-            tipo_documento='FR',
+            tipo_documento=tipo_doc_enum,
             cliente_id=evento.cliente_id,
-            # We don't have evento_id in Venda model natively, we use observacoes to link it or if it exists, use it.
-            # Assuming there's no evento_id, we will put it in observacoes.
+            evento_id=evento.id,
             subtotal=subtotal_evento,
-            desconto_total=0,
-            base_tributavel=subtotal_evento,
+            desconto_total=desconto_evento,
+            base_tributavel=max(0.0, subtotal_evento - desconto_evento),
             total_iva=iva_evento,
             total=total_evento,
-            valor_pago=valor_pagar,
-            saldo=saldo_evento - valor_pagar,
-            estado='Pago' if (saldo_evento - valor_pagar) <= 0 else 'Parcialmente Pago',
-            observacoes=f"Faturação referente ao Evento {evento.numero}. {observacoes}",
+            valor_pago=novo_pago_venda,
+            saldo=novo_saldo_venda,
+            estado=estado_venda,
+            observacoes=f"Faturação ({tipo_doc_enum.value}) referente ao Evento {evento.numero}. {observacoes}",
             criado_por=user_id
         )
         db.session.add(venda)
         db.session.flush()
-        
-        # Add items based on EventoItem if available
+        evento.venda_id = venda.id
+
+        self._adicionar_itens_venda_evento(venda, evento, resumo)
+
+        if valor_pagar > 0 and forma_db:
+            pagamento = Pagamento(
+                venda_id=venda.id,
+                evento_id=evento.id,
+                valor=valor_pagar,
+                forma_pagamento_id=forma_db.id,
+                estado=EstadoPagamento.PAGO,
+                data_pagamento=datetime.utcnow(),
+                codigo_transferencia=codigo_transf,
+                emissor=emissor,
+                referencia=referencia,
+                observacoes=f"Pagamento/Entrada do evento {evento.numero}. {observacoes}"
+            )
+            db.session.add(pagamento)
+
+            desc_mov = f"Recebimento de Evento {evento.numero} via {forma_db.nome}"
+            if codigo_transf:
+                desc_mov += f" [Ref: {codigo_transf}, Emissor: {emissor}]"
+
+            mov = MovimentoCaixa(
+                caixa_id=caixa.id,
+                tipo=TipoMovimentoCaixa.RECEBIMENTO,
+                valor=valor_pagar,
+                descricao=desc_mov,
+                utilizador_id=user_id,
+                codigo_transferencia=codigo_transf,
+                emissor=emissor,
+                forma_pagamento=forma_db.nome
+            )
+            db.session.add(mov)
+
+        evento.valor_pago = novo_pago_venda
+        evento.valor_total = total_evento
+        evento.saldo = novo_saldo_venda
+
+        if evento.saldo <= 0:
+            evento.estado = EstadoEvento.FATURADO
+        else:
+            evento.estado = EstadoEvento.CONFIRMADO
+
+        try:
+            db.session.commit()
+            return venda, None
+        except Exception as exc:
+            db.session.rollback()
+            return None, f"Erro ao processar faturamento do evento: {str(exc)}"
+
+    def _adicionar_itens_venda_evento(self, venda, evento, resumo):
+        from app.models.comercial import VendaItem
+        tem_item_deslocacao = False
+        tem_item_outros = False
+
         if evento.itens and len(evento.itens) > 0:
             for it in evento.itens:
                 q = float(it.quantidade or 1)
                 pu = float(it.preco_unitario or 0)
-                sub = float(it.subtotal or (q * pu))
-                tot = float(it.total or sub)
-                
+                sub = float(it.subtotal if it.subtotal is not None else (q * pu))
+                tot = float(it.total if it.total is not None else sub)
+                desc = float(it.valor_desconto or 0)
+                desc_str = str(it.descricao or '').lower()
+
+                if 'desloca' in desc_str or 'transporte' in desc_str:
+                    tem_item_deslocacao = True
+                if 'outros' in desc_str or 'encargo' in desc_str:
+                    tem_item_outros = True
+
                 v_item = VendaItem(
                     venda_id=venda.id,
                     item_tipo=it.tipo_item.value if hasattr(it.tipo_item, 'value') else str(it.tipo_item),
@@ -294,78 +375,98 @@ class ComercialService:
                     descricao=it.descricao,
                     quantidade=q,
                     preco_unitario=pu,
-                    desconto=float(it.valor_desconto or 0),
+                    desconto=desc,
                     subtotal=sub,
                     taxa_iva=float(it.taxa_iva or 0),
-                    valor_iva=float(it.valor_iva or max(0, tot - sub)),
+                    valor_iva=float(it.valor_iva or max(0.0, tot - sub)),
                     total=tot
                 )
                 db.session.add(v_item)
         else:
-            # Fallback to legacy collections if itens is empty
             for servico in (evento.servicos or []):
+                q = float(servico.quantidade or 1)
+                pu = float(servico.valor_unitario or 0)
+                sub = q * pu
                 v_item = VendaItem(
                     venda_id=venda.id,
                     item_tipo='Servico',
                     item_id=servico.id,
                     descricao=f"Serviço de Evento: {servico.descricao or servico.tipo}",
-                    quantidade=float(servico.quantidade or 1),
-                    preco_unitario=float(servico.valor_unitario or 0),
-                    subtotal=float(servico.subtotal or 0),
-                    total=float(servico.subtotal or 0)
+                    quantidade=q,
+                    preco_unitario=pu,
+                    subtotal=sub,
+                    total=sub
                 )
                 db.session.add(v_item)
-                
+
             for res in (evento.reservas_material or []):
+                q = float(res.quantidade or 1)
+                pu = float(res.valor_unitario or 0)
+                sub = q * pu
                 v_item = VendaItem(
                     venda_id=venda.id,
                     item_tipo='Material',
                     item_id=res.material_id,
                     descricao=f"Reserva de Material: {res.material.nome if hasattr(res, 'material') and res.material else 'Material'}",
-                    quantidade=float(res.quantidade or 1),
-                    preco_unitario=float(res.valor_unitario or 0),
-                    subtotal=float(res.subtotal or 0),
-                    total=float(res.subtotal or 0)
+                    quantidade=q,
+                    preco_unitario=pu,
+                    subtotal=sub,
+                    total=sub
                 )
                 db.session.add(v_item)
-            
-        pagamento = Pagamento(
-            venda_id=venda.id,
-            valor=valor_pagar,
-            forma_pagamento_id=forma_db.id,
-            estado='Pago',
-            data_pagamento=datetime.utcnow(),
-            codigo_transferencia=codigo_transf,
-            emissor=emissor,
-            referencia=referencia,
-            observacoes=f"Pagamento do evento {evento.numero}. {observacoes}"
-        )
-        db.session.add(pagamento)
-        
-        desc_mov = f"Recebimento de Evento {evento.numero} via {forma_db.nome}"
-        if codigo_transf:
-            desc_mov += f" [Ref: {codigo_transf}, Emissor: {emissor}]"
-            
-        mov = MovimentoCaixa(
-            caixa_id=caixa.id,
-            tipo=TipoMovimentoCaixa.RECEBIMENTO,
-            valor=valor_pagar,
-            descricao=desc_mov,
-            utilizador_id=user_id,
-            codigo_transferencia=codigo_transf,
-            emissor=emissor,
-            forma_pagamento=forma_db.nome
-        )
-        db.session.add(mov)
-        
-        
-        
-        evento.valor_pago = float(evento.valor_pago or 0) + valor_pagar
-        evento.valor_total = total_evento
-        evento.saldo = max(0.0, total_evento - float(evento.valor_pago))
-        
-        if evento.saldo <= 0:
-            evento.estado = EstadoEvento.FATURADO
+
+            for r in (evento.reservas_espaco or []):
+                pu = float(r.valor_aluguer or 0)
+                esp_nome = r.espaco.nome if hasattr(r, 'espaco') and r.espaco else "Espaço"
+                v_item = VendaItem(
+                    venda_id=venda.id,
+                    item_tipo='Espaco',
+                    item_id=r.espaco_id,
+                    descricao=f"Aluguer Espaço: {esp_nome}",
+                    quantidade=1.0,
+                    preco_unitario=pu,
+                    subtotal=pu,
+                    total=pu
+                )
+                db.session.add(v_item)
+
+        desloc_val = float(resumo.get('subtotal_deslocacoes') or 0.0)
+        if desloc_val > 0 and not tem_item_deslocacao:
+            taxa_iva_serv = float(resumo.get('taxa_iva_servicos') or 0.0) if resumo.get('cobrar_iva_servicos') else 0.0
+            val_iva_desl = desloc_val * (taxa_iva_serv / 100.0)
+            tot_desl = desloc_val + val_iva_desl
+            v_item = VendaItem(
+                venda_id=venda.id,
+                item_tipo='Deslocacao',
+                descricao="Serviço de Transporte / Deslocação",
+                quantidade=1.0,
+                preco_unitario=desloc_val,
+                desconto=0.0,
+                subtotal=desloc_val,
+                taxa_iva=taxa_iva_serv,
+                valor_iva=val_iva_desl,
+                total=tot_desl
+            )
+            db.session.add(v_item)
+
+        outros_val = float(resumo.get('subtotal_outros') or 0.0)
+        if outros_val > 0 and not tem_item_outros:
+            taxa_iva_serv = float(resumo.get('taxa_iva_servicos') or 0.0) if resumo.get('cobrar_iva_servicos') else 0.0
+            val_iva_outros = outros_val * (taxa_iva_serv / 100.0)
+            tot_outros = outros_val + val_iva_outros
+            v_item = VendaItem(
+                venda_id=venda.id,
+                item_tipo='Outros',
+                descricao="Outras Despesas / Encargos Diversos",
+                quantidade=1.0,
+                preco_unitario=outros_val,
+                desconto=0.0,
+                subtotal=outros_val,
+                taxa_iva=taxa_iva_serv,
+                valor_iva=val_iva_outros,
+                total=tot_outros
+            )
+            db.session.add(v_item)
             
         # Deduct stock if there are any products sold, but events usually have services and materials.
         stock_service = StockService()
@@ -429,12 +530,13 @@ class ComercialService:
         from app.models.caixa import Caixa, MovimentoCaixa, TipoMovimentoCaixa
 
         # Verificar caixa aberto
-        caixa = Caixa.query.with_for_update().filter_by(estado='Aberto').first()
+        caixa = Caixa.query.with_for_update().filter_by(estado='Aberto', utilizador_abertura_id=user_id).first()
         if not caixa:
-            raise ValueError("Não existe nenhum caixa aberto no momento.")
+            raise ValueError("Não possui nenhuma sessão de caixa aberta no momento. Abra a sua caixa primeiro para realizar pagamentos.")
 
         pagamento = Pagamento(
             venda_id=venda.id,
+            evento_id=venda.evento_id,
             valor=valor_entregue,
             forma_pagamento_id=data.get('forma_pagamento_id'),
             codigo_transferencia=data.get('codigo_transferencia'),
@@ -452,6 +554,15 @@ class ComercialService:
             venda.estado = EstadoVenda.PAGO
         else:
             venda.estado = EstadoVenda.PARCIALMENTE_PAGO
+
+        if venda.evento_id or getattr(venda, 'evento', None):
+            from app.models.evento import Evento, EstadoEvento
+            ev = venda.evento or Evento.query.get(venda.evento_id)
+            if ev:
+                ev.valor_pago = float(venda.valor_pago)
+                ev.saldo = max(0.0, float(ev.valor_total) - float(ev.valor_pago))
+                if ev.saldo <= 0:
+                    ev.estado = EstadoEvento.FATURADO
             
         db.session.add(pagamento)
 
@@ -668,9 +779,9 @@ class ComercialService:
             pedido.saldo = pedido.valor_total
             pedido.estado_pagamento = EstadoPagamento.PENDENTE.value
 
-        caixa = Caixa.query.with_for_update().filter_by(estado='Aberto').first()
+        caixa = Caixa.query.with_for_update().filter_by(estado='Aberto', utilizador_abertura_id=user_id).first()
         if not caixa:
-            return None, "Não existe nenhum caixa aberto no momento. Abra o caixa primeiro para realizar vendas."
+            return None, "Não possui nenhuma sessão de caixa aberta no momento. Abra a sua caixa primeiro para realizar vendas."
             
         valor_pagar = float(pagamento_info.get('valor', pedido.saldo))
         if valor_pagar <= 0:
