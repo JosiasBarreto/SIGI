@@ -26,6 +26,7 @@ import {
   TrendingUp,
   Lock,
   Wrench,
+  Bell,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { useAuth } from "../AuthContext";
@@ -173,6 +174,11 @@ export function Sidebar({
       icon: FileSearch,
       path: "/auditoria",
       roles: ["Administrador"],
+    },
+    {
+      name: "Notificações",
+      icon: Bell,
+      path: "/notificacoes",
     },
     {
       name: "Configurações",

@@ -43,6 +43,7 @@ import Relatorios from "./pages/Relatorios";
 import Vendas from "./pages/Vendas";
 import ContasReceber from "./pages/ContasReceber";
 import Perfil from "./pages/Perfil";
+import Notificacoes from "./pages/Notificacoes";
 import RecuperarSenha from "./pages/RecuperarSenha";
 import FechoDiario from "./pages/FechoDiario";
 
@@ -139,6 +140,7 @@ export default function App() {
                       <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
                         {/* Shared routes */}
                         <Route path="perfil" element={<Perfil />} />
+                        <Route path="notificacoes" element={<Notificacoes />} />
 
                         {/* Executive Dashboard */}
                         <Route element={<RoleRoute roles={["Administrador", "Atendimento"]} />}>

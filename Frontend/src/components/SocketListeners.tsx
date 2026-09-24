@@ -1,241 +1,158 @@
-// File: Frontend/src/components/SocketListeners.tsx
 import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSocket } from '../contexts/SocketContext';
-import { useNotifications } from '../components/NotificationContext';
-import { toast } from 'react-toastify';
+import { notificationManager } from '../services/notifications';
 
 export function SocketListeners() {
   const { on, off, emit } = useSocket();
   const queryClient = useQueryClient();
-  const { addNotification } = useNotifications();
 
   useEffect(() => {
-    const playProductionAlert = () => {
-      try {
-        const AudioContextCtor = window.AudioContext || (window as any).webkitAudioContext;
-        const context = new AudioContextCtor();
-        const oscillator = context.createOscillator();
-        const gain = context.createGain();
-        oscillator.frequency.value = 880;
-        gain.gain.setValueAtTime(0.12, context.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 0.45);
-        oscillator.connect(gain).connect(context.destination);
-        oscillator.start();
-        oscillator.stop(context.currentTime + 0.45);
-      } catch {
-        // Áudio silenciado se o browser exigir interação prévia do utilizador
-      }
-    };
-
-    // 1. Evento: notificacao (Contrato principal de notificações / toasts)
-    // Payload esperado: { titulo: string, mensagem: string, tipo: 'info' | 'success' | 'error', data: object }
+    // 1. Notificação genérica / contrato direto de toasts e avisos
     const handleNotificacao = (payload: any) => {
-      if (!payload || typeof payload !== 'object') return;
-      const titulo = payload.titulo || payload.title || 'Notificação';
-      const mensagem = payload.mensagem || payload.message || payload.msg || '';
-      const tipoRaw = String(payload.tipo || payload.type || 'info').toLowerCase();
-      const tipo: 'info' | 'success' | 'warning' | 'error' =
-        tipoRaw === 'success' ? 'success' :
-        tipoRaw === 'error' ? 'error' :
-        tipoRaw === 'warning' ? 'warning' : 'info';
-
-      if (mensagem) {
-        toast[tipo](mensagem);
-      }
-      addNotification({
-        title: titulo,
-        message: mensagem || titulo,
-        type: tipo,
-        data: payload.data
-      });
+      notificationManager.handleEvent('notificacao', payload);
     };
 
-    // 2. Evento: caixa_fechado
-    // Payload esperado: { caixa_id, valor_final, data_fecho }
-    const handleCaixaFechado = (payload: any) => {
-      queryClient.invalidateQueries({ queryKey: ['minha-sessao-caixa'] });
-      queryClient.invalidateQueries({ queryKey: ['caixas'] });
-      queryClient.invalidateQueries({ queryKey: ['caixas_historico'] });
-
-      const caixaId = payload?.caixa_id || payload?.id;
-      const valor = typeof payload?.valor_final === 'number' ? ` (${payload.valor_final.toFixed(2)} STN)` : '';
-      const msg = caixaId ? `Caixa #${caixaId} foi encerrado${valor}.` : 'Uma sessão de caixa foi encerrada.';
-
-      toast.warning(msg);
-      addNotification({
-        title: 'Fecho de Caixa',
-        message: msg,
-        type: 'warning',
-        data: payload
-      });
-    };
-
-    // 3. Evento: novo_pedido
-    // Payload esperado: { numero, cliente_id, total }
+    // 2. Pedidos Comerciais
     const handleNovoPedido = (payload: any) => {
       queryClient.invalidateQueries({ queryKey: ['pedidos'] });
       queryClient.invalidateQueries({ queryKey: ['requests'] });
       queryClient.invalidateQueries({ queryKey: ['vendas'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-
-      const numero = payload?.numero || payload?.id || '';
-      const totalStr = typeof payload?.total === 'number' ? ` (Total: ${payload.total.toFixed(2)} STN)` : '';
-      const msg = numero ? `Novo pedido #${numero} recebido${totalStr}!` : 'Novo pedido recebido no sistema!';
-
-      toast.info(msg);
-      addNotification({
-        title: 'Novo Pedido',
-        message: msg,
-        type: 'info',
-        data: payload
-      });
+      notificationManager.handleEvent('novo_pedido', payload);
     };
 
-    // 4. Evento: pedido_atualizado
-    // Payload esperado: { id, estado }
     const handlePedidoAtualizado = (payload: any) => {
       queryClient.invalidateQueries({ queryKey: ['pedidos'] });
       queryClient.invalidateQueries({ queryKey: ['producao'] });
       queryClient.invalidateQueries({ queryKey: ['entregas'] });
       queryClient.invalidateQueries({ queryKey: ['requests'] });
-
-      const id = payload?.id || payload?.pedido_id || '';
-      const estado = payload?.estado || payload?.status || '';
-      const msg = id && estado ? `Pedido #${id} atualizado para: ${estado}.` : (payload?.msg || 'Pedido atualizado!');
-
-      toast.info(msg);
-      addNotification({
-        title: 'Pedido Atualizado',
-        message: msg,
-        type: 'info',
-        data: payload
-      });
+      notificationManager.handleEvent('pedido_actualizado', payload);
     };
 
-    // 5. Evento: nova_ordem_producao
-    // Payload esperado: { numero, produto_id }
+    const handlePedidoCancelado = (payload: any) => {
+      queryClient.invalidateQueries({ queryKey: ['pedidos'] });
+      queryClient.invalidateQueries({ queryKey: ['producao'] });
+      queryClient.invalidateQueries({ queryKey: ['vendas'] });
+      notificationManager.handleEvent('pedido_cancelado', payload);
+    };
+
+    const handlePedidoPronto = (payload: any) => {
+      queryClient.invalidateQueries({ queryKey: ['pedidos'] });
+      queryClient.invalidateQueries({ queryKey: ['producao'] });
+      notificationManager.handleEvent('pedido_pronto', payload);
+    };
+
+    // 3. Produção & Cozinha / Pastelaria
     const handleNovaOrdemProducao = (payload: any) => {
       queryClient.invalidateQueries({ queryKey: ['producao'] });
       queryClient.invalidateQueries({ queryKey: ['production-orders'] });
       queryClient.invalidateQueries({ queryKey: ['prod-cal'] });
       queryClient.invalidateQueries({ queryKey: ['calendario-dia'] });
       queryClient.invalidateQueries({ queryKey: ['pedidos'] });
-      queryClient.invalidateQueries({ queryKey: ['requests'] });
-
-      const numero = payload?.numero || payload?.id || '';
-      const sector = payload?.sector || 'Produção';
-      const msg = numero ? `Nova ordem de produção em ${sector}: ${numero}` : `Tlim! Nova ordem recebida em ${sector}!`;
-
-      playProductionAlert();
-      toast.success(msg);
-      addNotification({
-        title: sector,
-        message: msg,
-        type: 'success',
-        data: payload
-      });
+      notificationManager.handleEvent('nova_ordem_producao', payload);
     };
 
-    // 6. Evento: alerta_producao
-    // Payload esperado: { msg, ordem_id }
-    const handleAlertaProducao = (payload: any) => {
+    const handleOrdemProducaoAtualizada = (payload: any) => {
       queryClient.invalidateQueries({ queryKey: ['producao'] });
       queryClient.invalidateQueries({ queryKey: ['production-orders'] });
-
-      const msgText = payload?.msg || payload?.mensagem || 'Alerta operacional na linha de produção.';
-      const ordem = payload?.ordem_id ? ` (OP #${payload.ordem_id})` : '';
-      const fullMsg = `${msgText}${ordem}`;
-
-      toast.warning(fullMsg);
-      addNotification({
-        title: 'Alerta de Produção',
-        message: fullMsg,
-        type: 'warning',
-        data: payload
-      });
+      notificationManager.handleEvent('ordem_producao_actualizada', payload);
     };
 
-    // 7. Evento: alerta_stock
-    // Payload esperado: { ingrediente, msg }
-    const handleAlertaStock = (payload: any) => {
-      queryClient.invalidateQueries({ queryKey: ['produtos'] });
-      queryClient.invalidateQueries({ queryKey: ['warehouse'] });
-      queryClient.invalidateQueries({ queryKey: ['materiais'] });
-
-      const ingrediente = payload?.ingrediente || payload?.material || payload?.nome || '';
-      const msgText = payload?.msg || payload?.mensagem || 'Aviso de rutura/baixo stock de ingrediente.';
-      const fullMsg = ingrediente ? `${msgText} (Ingrediente: ${ingrediente})` : msgText;
-
-      toast.error(fullMsg);
-      addNotification({
-        title: 'Alerta de Stock',
-        message: fullMsg,
-        type: 'error',
-        data: payload
-      });
-    };
-
-    // 8. Evento: ping_server (Heartbeat / liveness check)
-    // Payload esperado: { status: "ok" } -> Resposta obrigatória: emit('pong_client', { status: 'ok' })
-    const handlePingServer = () => {
-      emit('pong_client', { status: 'ok' });
-    };
-
-    // Outros eventos operacionais de apoio
     const handleProducaoIniciada = (payload: any) => {
       queryClient.invalidateQueries({ queryKey: ['producao'] });
       queryClient.invalidateQueries({ queryKey: ['production-orders'] });
-      queryClient.invalidateQueries({ queryKey: ['prod-cal'] });
-      queryClient.invalidateQueries({ queryKey: ['calendario-dia'] });
-      queryClient.invalidateQueries({ queryKey: ['pedidos'] });
-      const msg = payload?.numero ? `Produção iniciada para: ${payload.numero}` : 'Produção iniciada!';
-      toast.info(msg);
-      addNotification({ title: 'Cozinha', message: msg, type: 'info', data: payload });
+      notificationManager.handleEvent('producao_iniciada', payload);
     };
 
     const handleProducaoConcluida = (payload: any) => {
       queryClient.invalidateQueries({ queryKey: ['pedidos'] });
       queryClient.invalidateQueries({ queryKey: ['producao'] });
       queryClient.invalidateQueries({ queryKey: ['production-orders'] });
-      queryClient.invalidateQueries({ queryKey: ['prod-cal'] });
-      queryClient.invalidateQueries({ queryKey: ['calendario-dia'] });
-      queryClient.invalidateQueries({ queryKey: ['requests'] });
-      const msg = payload?.numero ? `Ordem de produção concluída: ${payload.numero}` : 'Ordem de produção concluída!';
-      toast.success(msg);
-      addNotification({ title: 'Produção', message: msg, type: 'success', data: payload });
+      notificationManager.handleEvent('producao_concluida', payload);
     };
 
-    const handlePedidoPronto = (payload: any) => {
-      queryClient.invalidateQueries({ queryKey: ['pedidos'] });
+    const handleAlertaProducao = (payload: any) => {
       queryClient.invalidateQueries({ queryKey: ['producao'] });
-      const clienteNome = payload?.cliente || 'Cliente';
-      const orderNum = payload?.numero || payload?.id || '...';
-      const msg = `Pedido ${orderNum} (${clienteNome}) pronto para entrega!`;
-      toast.success(msg);
-      addNotification({ title: 'Pedido Pronto', message: msg, type: 'success', data: payload });
+      queryClient.invalidateQueries({ queryKey: ['production-orders'] });
+      notificationManager.handleEvent('alerta_producao', payload);
     };
 
-    const handleLogisticaOcorrencia = (payload: any) => {
-      queryClient.invalidateQueries({ queryKey: ['entregas'] });
-      const msg = payload?.msg || 'Ocorrência registada na logística / transporte.';
-      toast.warning(msg);
-      addNotification({ title: 'Ocorrência Logística', message: msg, type: 'warning', data: payload });
+    // 4. Armazém, Stock & Inventário
+    const handleStockBaixo = (payload: any) => {
+      queryClient.invalidateQueries({ queryKey: ['produtos'] });
+      queryClient.invalidateQueries({ queryKey: ['warehouse'] });
+      queryClient.invalidateQueries({ queryKey: ['materiais'] });
+      notificationManager.handleEvent('stock_baixo', payload);
     };
 
+    const handleStockCritico = (payload: any) => {
+      queryClient.invalidateQueries({ queryKey: ['produtos'] });
+      queryClient.invalidateQueries({ queryKey: ['warehouse'] });
+      queryClient.invalidateQueries({ queryKey: ['materiais'] });
+      notificationManager.handleEvent('stock_critico', payload);
+    };
+
+    const handleInventarioConcluido = (payload: any) => {
+      queryClient.invalidateQueries({ queryKey: ['produtos'] });
+      queryClient.invalidateQueries({ queryKey: ['warehouse'] });
+      queryClient.invalidateQueries({ queryKey: ['inventarios'] });
+      notificationManager.handleEvent('inventario_concluido', payload);
+    };
+
+    const handleDivergenciaInventario = (payload: any) => {
+      queryClient.invalidateQueries({ queryKey: ['produtos'] });
+      queryClient.invalidateQueries({ queryKey: ['warehouse'] });
+      queryClient.invalidateQueries({ queryKey: ['auditoria'] });
+      notificationManager.handleEvent('divergencia_inventario', payload);
+    };
+
+    // 5. Requisições de Material
     const handleNovaRequisicao = (payload: any) => {
       queryClient.invalidateQueries({ queryKey: ['requests'] });
-      const msg = payload?.codigo ? `Nova requisição de material criada: ${payload.codigo}` : 'Nova requisição de material recebida!';
-      toast.info(msg);
-      addNotification({ title: 'Armazém / Logística', message: msg, type: 'info', data: payload });
+      queryClient.invalidateQueries({ queryKey: ['requisicoes'] });
+      notificationManager.handleEvent('requisicao_criada', payload);
     };
 
     const handleRequisicaoAprovada = (payload: any) => {
       queryClient.invalidateQueries({ queryKey: ['requests'] });
+      queryClient.invalidateQueries({ queryKey: ['requisicoes'] });
       queryClient.invalidateQueries({ queryKey: ['warehouse'] });
-      const msg = payload?.codigo ? `Requisição ${payload.codigo} aprovada!` : 'Requisição de material aprovada!';
-      toast.success(msg);
-      addNotification({ title: 'Requisição Aprovada', message: msg, type: 'success', data: payload });
+      notificationManager.handleEvent('requisicao_aprovada', payload);
+    };
+
+    const handleRequisicaoRejeitada = (payload: any) => {
+      queryClient.invalidateQueries({ queryKey: ['requests'] });
+      queryClient.invalidateQueries({ queryKey: ['requisicoes'] });
+      notificationManager.handleEvent('requisicao_rejeitada', payload);
+    };
+
+    // 6. Caixa & Financeiro
+    const handleCaixaAberto = (payload: any) => {
+      queryClient.invalidateQueries({ queryKey: ['minha-sessao-caixa'] });
+      queryClient.invalidateQueries({ queryKey: ['caixas'] });
+      notificationManager.handleEvent('caixa_aberto', payload);
+    };
+
+    const handleCaixaFechado = (payload: any) => {
+      queryClient.invalidateQueries({ queryKey: ['minha-sessao-caixa'] });
+      queryClient.invalidateQueries({ queryKey: ['caixas'] });
+      queryClient.invalidateQueries({ queryKey: ['caixas_historico'] });
+      notificationManager.handleEvent('caixa_fechado', payload);
+    };
+
+    const handlePagamentoRecebido = (payload: any) => {
+      queryClient.invalidateQueries({ queryKey: ['vendas'] });
+      queryClient.invalidateQueries({ queryKey: ['pedidos'] });
+      queryClient.invalidateQueries({ queryKey: ['financeiro'] });
+      notificationManager.handleEvent('pagamento_recebido', payload);
+    };
+
+    // 7. Logística & Eventos
+    const handleLogisticaOcorrencia = (payload: any) => {
+      queryClient.invalidateQueries({ queryKey: ['entregas'] });
+      queryClient.invalidateQueries({ queryKey: ['logistica'] });
+      notificationManager.handleEvent('logistica_ocorrencia', payload);
     };
 
     const handleNovoEvento = (payload: any) => {
@@ -243,61 +160,116 @@ export function SocketListeners() {
       queryClient.invalidateQueries({ queryKey: ['events-cal'] });
       queryClient.invalidateQueries({ queryKey: ['calendario-stats'] });
       queryClient.invalidateQueries({ queryKey: ['calendario-dia'] });
-      const msg = payload?.titulo ? `Novo evento agendado: ${payload.titulo}` : 'Novo evento agendado!';
-      toast.info(msg);
-      addNotification({ title: 'Novo Evento', message: msg, type: 'info', data: payload });
+      notificationManager.handleEvent('novo_evento', payload);
     };
 
     const handleAlertaEvento = (payload: any) => {
-      const msg = payload?.msg || payload?.mensagem || 'Alerta de evento próximo!';
-      toast.warning(msg);
-      addNotification({ title: 'Eventos', message: msg, type: 'warning', data: payload });
+      notificationManager.handleEvent('alerta_evento_proximo', payload);
     };
 
-    // Subscrição a todos os eventos contratuais
+    // 8. Alertas e Erros de Sistema
+    const handleAlertaSistema = (payload: any) => {
+      notificationManager.handleEvent('alerta_sistema', payload);
+    };
+
+    const handleErroSistema = (payload: any) => {
+      notificationManager.handleEvent('erro_sistema', payload);
+    };
+
+    // 9. Heartbeat bidirecional (ping_server)
+    const handlePingServer = () => {
+      emit('pong_client', { status: 'ok' });
+    };
+
+    // Subscrições
     on('notificacao', handleNotificacao);
     on('notification', handleNotificacao);
-    on('caixa_fechado', handleCaixaFechado);
-    on('novo_pedido', handleNovoPedido);
-    on('pedido_atualizado', handlePedidoAtualizado);
-    on('nova_ordem_producao', handleNovaOrdemProducao);
-    on('alerta_producao', handleAlertaProducao);
-    on('alerta_stock', handleAlertaStock);
-    on('alerta_material', handleAlertaStock);
-    on('ping_server', handlePingServer);
 
-    // Eventos operacionais complementares
+    // Pedidos
+    on('novo_pedido', handleNovoPedido);
+    on('pedido_actualizado', handlePedidoAtualizado);
+    on('pedido_atualizado', handlePedidoAtualizado);
+    on('pedido_cancelado', handlePedidoCancelado);
+    on('pedido_pronto', handlePedidoPronto);
+
+    // Produção
+    on('nova_ordem_producao', handleNovaOrdemProducao);
+    on('ordem_producao_actualizada', handleOrdemProducaoAtualizada);
+    on('ordem_producao_atualizada', handleOrdemProducaoAtualizada);
     on('producao_iniciada', handleProducaoIniciada);
     on('producao_concluida', handleProducaoConcluida);
-    on('pedido_pronto', handlePedidoPronto);
-    on('logistica_ocorrencia', handleLogisticaOcorrencia);
+    on('alerta_producao', handleAlertaProducao);
+
+    // Stock
+    on('stock_baixo', handleStockBaixo);
+    on('alerta_stock', handleStockBaixo);
+    on('alerta_material', handleStockBaixo);
+    on('stock_critico', handleStockCritico);
+    on('inventario_concluido', handleInventarioConcluido);
+    on('divergencia_inventario', handleDivergenciaInventario);
+
+    // Requisições
+    on('requisicao_criada', handleNovaRequisicao);
     on('nova_requisicao', handleNovaRequisicao);
     on('requisicao_aprovada', handleRequisicaoAprovada);
+    on('requisicao_rejeitada', handleRequisicaoRejeitada);
+
+    // Caixa e Financeiro
+    on('caixa_aberto', handleCaixaAberto);
+    on('caixa_fechado', handleCaixaFechado);
+    on('pagamento_recebido', handlePagamentoRecebido);
+
+    // Logística e Eventos
+    on('logistica_ocorrencia', handleLogisticaOcorrencia);
     on('novo_evento', handleNovoEvento);
     on('alerta_evento_proximo', handleAlertaEvento);
+
+    // Sistema
+    on('alerta_sistema', handleAlertaSistema);
+    on('erro_sistema', handleErroSistema);
+    on('ping_server', handlePingServer);
 
     return () => {
       off('notificacao', handleNotificacao);
       off('notification', handleNotificacao);
-      off('caixa_fechado', handleCaixaFechado);
       off('novo_pedido', handleNovoPedido);
+      off('pedido_actualizado', handlePedidoAtualizado);
       off('pedido_atualizado', handlePedidoAtualizado);
-      off('nova_ordem_producao', handleNovaOrdemProducao);
-      off('alerta_producao', handleAlertaProducao);
-      off('alerta_stock', handleAlertaStock);
-      off('alerta_material', handleAlertaStock);
-      off('ping_server', handlePingServer);
+      off('pedido_cancelado', handlePedidoCancelado);
+      off('pedido_pronto', handlePedidoPronto);
 
+      off('nova_ordem_producao', handleNovaOrdemProducao);
+      off('ordem_producao_actualizada', handleOrdemProducaoAtualizada);
+      off('ordem_producao_atualizada', handleOrdemProducaoAtualizada);
       off('producao_iniciada', handleProducaoIniciada);
       off('producao_concluida', handleProducaoConcluida);
-      off('pedido_pronto', handlePedidoPronto);
-      off('logistica_ocorrencia', handleLogisticaOcorrencia);
+      off('alerta_producao', handleAlertaProducao);
+
+      off('stock_baixo', handleStockBaixo);
+      off('alerta_stock', handleStockBaixo);
+      off('alerta_material', handleStockBaixo);
+      off('stock_critico', handleStockCritico);
+      off('inventario_concluido', handleInventarioConcluido);
+      off('divergencia_inventario', handleDivergenciaInventario);
+
+      off('requisicao_criada', handleNovaRequisicao);
       off('nova_requisicao', handleNovaRequisicao);
       off('requisicao_aprovada', handleRequisicaoAprovada);
+      off('requisicao_rejeitada', handleRequisicaoRejeitada);
+
+      off('caixa_aberto', handleCaixaAberto);
+      off('caixa_fechado', handleCaixaFechado);
+      off('pagamento_recebido', handlePagamentoRecebido);
+
+      off('logistica_ocorrencia', handleLogisticaOcorrencia);
       off('novo_evento', handleNovoEvento);
       off('alerta_evento_proximo', handleAlertaEvento);
+
+      off('alerta_sistema', handleAlertaSistema);
+      off('erro_sistema', handleErroSistema);
+      off('ping_server', handlePingServer);
     };
-  }, [on, off, emit, queryClient, addNotification]);
+  }, [on, off, emit, queryClient]);
 
   return null;
 }
