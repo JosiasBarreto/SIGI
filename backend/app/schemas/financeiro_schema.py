@@ -47,7 +47,10 @@ class CaixaSchema(Schema):
 
 class MovimentoCaixaSchema(Schema):
     id = fields.Int(dump_only=True)
-    caixa_id = fields.Int(required=True)
+    # The authoritative session is the route parameter.  Accepting this field
+    # as optional preserves existing clients while preventing two IDs from
+    # being required for a single movement.
+    caixa_id = fields.Int(required=False)
     tipo = fields.Enum(TipoMovimentoCaixa, by_value=True, required=True)
     valor = fields.Decimal(required=True)
     descricao = fields.Str(required=False, allow_none=True)

@@ -29,10 +29,18 @@ def create_app(config_class=Config):
     CORS(app, resources={r"/api/*": {"origins": "*"}})
     db.init_app(app)
     jwt.init_app(app)
+    
+    # Verificação inteligente e resiliente da fila Redis (Socket.IO message_queue)
+    # Se o Redis não estiver acessível, reverte de forma transparente para threading em memória,
+    # prevenindo bloqueios de thread e loops infinitos de "Cannot publish to redis... retrying".
+    configured_queue = app.config.get('SOCKETIO_MESSAGE_QUEUE')
+    from app.websocket.socket_manager import is_redis_available
+    active_message_queue = configured_queue if (configured_queue and is_redis_available(configured_queue)) else None
+
     socketio.init_app(
         app,
-        cors_allowed_origins=app.config['SOCKETIO_CORS_ALLOWED_ORIGINS'],
-        message_queue=app.config.get('SOCKETIO_MESSAGE_QUEUE'),
+        cors_allowed_origins=app.config.get('SOCKETIO_CORS_ALLOWED_ORIGINS', '*'),
+        message_queue=active_message_queue,
     )
     migrate.init_app(app, db)
     
@@ -70,7 +78,8 @@ def create_app(config_class=Config):
 
     # Inicialização profissional e automática da base de dados
     from app.core.db_initializer import ensure_database_ready
-    ensure_database_ready(app)
+    if not app.config.get('SKIP_DATABASE_INITIALIZATION', False):
+        ensure_database_ready(app)
 
     from app.api.v1.auth_controller import auth_bp
     from app.api.v1.user_controller import user_bp
@@ -93,9 +102,11 @@ def create_app(config_class=Config):
     from app.api.v1.receita_controller import receita_bp
     from app.api.v1.setup_controller import setup_bp
     from app.api.v1.backup_controller import backup_bp
+    from app.api.v1.notificacao_controller import notificacao_bp
     
     app.register_blueprint(setup_bp, url_prefix='/api/v1/setup')
     app.register_blueprint(backup_bp, url_prefix='/api/v1/backups')
+    app.register_blueprint(notificacao_bp, url_prefix='/api/v1/notificacoes')
     app.register_blueprint(auth_bp, url_prefix='/api/v1/auth')
     app.register_blueprint(user_bp, url_prefix='/api/v1/users')
     app.register_blueprint(comercial_bp, url_prefix='/api/v1/vendas')

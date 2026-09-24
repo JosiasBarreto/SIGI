@@ -1684,91 +1684,22 @@ export const shiftService = {
 export const financialService = {
   ...createService<CaixaDTO>('/v1/financeiro/caixas', 'financial'),
   async getMinhaSessao(): Promise<CaixaDTO | null> {
-    const userStr = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
-    const currentUser = userStr ? JSON.parse(userStr) : null;
-    const currentUserId = currentUser?.id;
-
-    // 1. Tentar endpoints explícitos de sessão do utilizador no backend
-    const endpoints = [
-      '/v1/financeiro/caixas/sessao-aberta',
-      '/v1/financeiro/caixas/aberto',
-      '/v1/financeiro/caixas/minha-sessao',
-      '/v1/financeiro/caixas/sessao-atual',
-      '/v1/financeiro/caixas/atual',
-      '/v1/financeiro/caixas/me'
-    ];
-
-    for (const ep of endpoints) {
-      try {
-        const res = await apiClient.get<any, any>(ep);
-        const data = res?.data !== undefined ? res.data : res;
-
-        // Suporte ao contrato do guia: { aberto: true/false, caixa: { ... }, msg: "..." }
-        if (data && typeof data === 'object' && 'aberto' in data) {
-          if (data.aberto && data.caixa) {
-            return data.caixa;
-          }
-          if (data.aberto === false) {
-            return null;
-          }
-        }
-
-        // Suporte ao contrato direto de objeto caixa
-        if (data && (data.id || data.numero)) {
-          const estadoUpper = String(data.estado || data.status || '').toUpperCase();
-          if (estadoUpper === 'ABERTO' || estadoUpper === 'ABERTA') {
-            return data;
-          }
-          return null;
-        }
-      } catch (err: any) {
-        // Se 404, endpoint pode não existir ou não haver sessão para este utilizador
-        if (err?.status === 404 || err?.statusCode === 404 || err?.error_code === 'SIGI_404') {
-          continue;
-        }
-      }
-    }
-
-    // 2. Fallback isolado: Consultar a lista de caixas e filtrar ESTRITAMENTE pelo utilizador autenticado
-    if (!currentUser) return null;
-
     try {
-      const res = await apiClient.get<any, any>('/v1/financeiro/caixas', {
-        params: {
-          estado: 'Aberto',
-          ...(currentUserId ? { operador_id: currentUserId, usuario_id: currentUserId } : {})
-        }
-      });
-
-      const items: any[] = Array.isArray(res) ? res : (res?.items || res?.data || []);
-      const openItems = items.filter((c: any) => {
-        const est = String(c.estado || c.status || '').toUpperCase();
-        return est === 'ABERTO' || est === 'ABERTA';
-      });
-
-      // Isolamento estrito por utilizador: NUNCA reaproveitar a caixa de outro operador!
-      const myCaixa = openItems.find((c: any) => {
-        const uid = c.operador_id ?? c.usuario_id ?? c.user_id ?? c.criado_por_id ?? c.criado_por;
-        if (currentUserId && uid != null) {
-          return String(uid) === String(currentUserId);
-        }
-        if (currentUser.email && c.operador_email) {
-          return String(c.operador_email).toLowerCase() === String(currentUser.email).toLowerCase();
-        }
-        if (currentUser.name && c.operador) {
-          return String(c.operador).toLowerCase() === String(currentUser.name).toLowerCase();
-        }
-        return false;
-      });
-
-      return myCaixa || null;
+      const res = await apiClient.get<any, any>('/v1/financeiro/caixas/minha-sessao');
+      const data = res?.data !== undefined ? res.data : res;
+      const sessao = data?.sessao ?? data?.caixa ?? null;
+      const aberta = data?.aberta ?? data?.aberto ?? false;
+      return aberta && sessao ? sessao : null;
     } catch (err) {
       console.warn('Erro ao obter sessão de caixa do utilizador autenticado:', err);
       return null;
     }
   },
   async abrir(valor_inicial: number | string): Promise<CaixaDTO> {
-    return apiClient.post<any, CaixaDTO>('/v1/financeiro/caixas/abrir', { valor_inicial });
+    const res = await apiClient.post<any, any>('/v1/financeiro/caixas/abrir', { valor_inicial });
+    // The session endpoint uses an envelope; expose the actual persisted
+    // session to the React Query cache, never a synthetic client-side state.
+    return (res?.sessao ?? res?.caixa ?? res) as CaixaDTO;
   },
   async fechar(id: string | number, data?: any): Promise<any> {
     return apiClient.put<any, any>(`/v1/financeiro/caixas/${id}/fechar`, data || {});
@@ -1799,31 +1730,12 @@ export const deliveryService = {
 };
 export const vehicleService = createService<any>('/v1/logistica/viaturas', 'vehicles');
 
-import { io, Socket } from 'socket.io-client';
 import { toast } from 'react-toastify';
 
 export const notificationService = {
-   socket: null as Socket | null,
-   init() {
-     if (!this.socket) {
-       this.socket = io(apiClient.defaults.baseURL?.replace('/api', '') || 'http://localhost:5000', {
-         auth: { token: localStorage.getItem('access_token') }
-       });
-       
-       this.socket.on('connect', () => console.log('Socket ligado'));
-       
-       // Registar eventos pedidos pelo backend
-       this.socket.on('novo_pedido', (data) => toast.info(`Novo Pedido criado: ${data.numero || '...'}`));
-       this.socket.on('pedido_atualizado', (data) => toast.success(`Pedido Atualizado para ${data.estado}`));
-       this.socket.on('producao_concluida', (data) => toast.success(`Produção Concluída: ${data.numero || '...'}`));
-       this.socket.on('requisicao_aprovada', (data) => toast.success('Requisição Aprovada!'));
-       this.socket.on('stock_critico', (data) => toast.error(`Aviso de Stock Crítico: ${data.nome || ''}`));
-       this.socket.on('caixa_fechado', (data) => toast.warning('O Caixa foi fechado.'));
-     }
-   },
-   async getLatest() {
-     return []; // Could fetch initial state from an endpoint if available
-   }
+  async getLatest() {
+    return [];
+  }
 };
 
 export const dashboardService = {
@@ -2197,10 +2109,15 @@ export const vendaService = {
     }
   },
   create: async (venda: any): Promise<any> => {
+    const payload = {
+      evento_id: null,
+      cliente_id: null,
+      ...venda
+    };
     try {
-      return await apiClient.post<any, any>('/v1/vendas', venda);
+      return await apiClient.post<any, any>('/v1/vendas', payload);
     } catch (err) {
-      return apiClient.post<any, any>('/v1/comercial/vendas', venda);
+      return apiClient.post<any, any>('/v1/comercial/vendas', payload);
     }
   },
   registrarPagamento: async (vendaId: string | number, param: { valor: number; metodo_pagamento: string; observacao?: string; codigo_transferencia?: string | null; emissor?: string | null; referencia?: string | null }): Promise<any> => {

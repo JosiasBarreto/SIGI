@@ -19,8 +19,10 @@ export function useCaixaSession() {
 
   const abrirMutation = useMutation({
     mutationFn: (valor: number) => financialService.abrir(valor),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["minha-sessao-caixa"] });
+    onSuccess: (caixa) => {
+      // The API has already created the session. Update this operator's cache
+      // immediately instead of waiting for a refetch before enabling the POS.
+      queryClient.setQueryData(["minha-sessao-caixa", userId], caixa);
       queryClient.invalidateQueries({ queryKey: ["caixas"] });
       toast.success("Fundo de maneio registado com sucesso. Caixa aberto.");
     },
@@ -38,7 +40,7 @@ export function useCaixaSession() {
     mutationFn: ({ id, payload }: { id: number | string; payload: any }) =>
       financialService.fechar(id, payload),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["minha-sessao-caixa"] });
+      queryClient.setQueryData(["minha-sessao-caixa", userId], null);
       queryClient.invalidateQueries({ queryKey: ["caixas"] });
       toast.success("O turno de caixa foi encerrado com sucesso.");
     },

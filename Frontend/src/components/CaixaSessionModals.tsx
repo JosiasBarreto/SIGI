@@ -109,7 +109,12 @@ export default function CaixaSessionModals({
   const divergenciaTransferencia = declaradoTransferenciaNum - esperadoTransferencia;
   const divergenciaPOS = declaradoPOSNum - esperadoPOS;
 
-  const temDivergencia = Math.abs(totalDivergencia) > 0.01;
+  // The server reconciles each payment method independently.  Mirror that
+  // rule here so the user is asked for a justification before submitting.
+  const temDivergencia =
+    Math.abs(divergenciaDinheiro) > 0.01 ||
+    Math.abs(divergenciaTransferencia) > 0.01 ||
+    Math.abs(divergenciaPOS) > 0.01;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

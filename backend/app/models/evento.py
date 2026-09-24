@@ -150,6 +150,7 @@ class Evento(BaseModel):
     numero = db.Column(db.String(50), unique=True, nullable=False)
     _cliente_id = db.Column('cliente_id', db.Integer, db.ForeignKey('clientes.id'), nullable=True)
     pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=True)
+    venda_id = db.Column(db.Integer, db.ForeignKey('vendas.id'), nullable=True)
     responsavel_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     
     tipo_evento = db.Column(db.String(100), nullable=False)
@@ -177,6 +178,7 @@ class Evento(BaseModel):
     _saldo = db.Column('saldo', db.Numeric(10, 2), default=0, nullable=True)
 
     responsavel = db.relationship('User', foreign_keys=[responsavel_id], lazy='selectin')
+    venda = db.relationship('Venda', foreign_keys=[venda_id], lazy='selectin')
     itens = db.relationship('EventoItem', backref='evento', lazy='selectin', cascade="all, delete-orphan")
     servicos = db.relationship('EventoServico', backref='evento', lazy='selectin', cascade="all, delete-orphan")
     reservas_espaco = db.relationship('ReservaEspaco', backref='evento', lazy='selectin', cascade="all, delete-orphan")
@@ -388,4 +390,3 @@ class EventoEquipa(db.Model):
     utilizador_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     funcao = db.Column(db.Enum(FuncaoEquipa, values_callable=lambda x: [e.value for e in x]), nullable=False)
     estado = db.Column(db.String(50), default='Alocado')
-

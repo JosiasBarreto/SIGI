@@ -1,3 +1,4 @@
+# run.py
 """SIGI ERP application entry point.
 Inicialização do servidor com verificação automática da base de dados.
 """

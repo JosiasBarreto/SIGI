@@ -59,6 +59,7 @@ def import_all_models():
         )
         from app.models.auditoria import Auditoria, LogAcesso, LogErro
         from app.models.token_blocklist import TokenBlocklist
+        from app.models.notificacao import Notificacao, NotificacaoLeitura, HistoricoSMS
         return True
     except Exception as e:
         logger.error(f"[SIGI DB] Erro ao importar modelos: {e}")
@@ -76,7 +77,9 @@ def run_safe_migrations(db):
         "ALTER TABLE itens_pedido ADD COLUMN IF NOT EXISTS taxa_iva NUMERIC(5,2) DEFAULT 0;",
         "ALTER TABLE itens_pedido ADD COLUMN IF NOT EXISTS valor_iva NUMERIC(10,2) DEFAULT 0;",
         "ALTER TABLE vendas ADD COLUMN IF NOT EXISTS pedido_id INTEGER NULL;",
+        "ALTER TABLE vendas ADD COLUMN IF NOT EXISTS evento_id INTEGER NULL;",
         "ALTER TABLE eventos ADD COLUMN IF NOT EXISTS pedido_id INTEGER NULL;",
+        "ALTER TABLE eventos ADD COLUMN IF NOT EXISTS venda_id INTEGER NULL;",
         "ALTER TABLE movimentos_caixa ADD COLUMN IF NOT EXISTS forma_pagamento VARCHAR(100) NULL;",
         "ALTER TABLE produtos ADD COLUMN IF NOT EXISTS servico ENUM('ABASTECIMENTO', 'COZINHA', 'PASTELARIA', 'BAR') NULL;",
         # Migração e compatibilidade para tabela inventarios (Módulo Inventário de Stock SIGI)

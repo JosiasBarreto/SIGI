@@ -288,6 +288,30 @@
         "documentation": {}
     },
     {
+        "label": "Blueprint",
+        "importPath": "flask",
+        "description": "flask",
+        "isExtraImport": true,
+        "detail": "flask",
+        "documentation": {}
+    },
+    {
+        "label": "request",
+        "importPath": "flask",
+        "description": "flask",
+        "isExtraImport": true,
+        "detail": "flask",
+        "documentation": {}
+    },
+    {
+        "label": "jsonify",
+        "importPath": "flask",
+        "description": "flask",
+        "isExtraImport": true,
+        "detail": "flask",
+        "documentation": {}
+    },
+    {
         "label": "send_file",
         "importPath": "flask",
         "description": "flask",
@@ -545,6 +569,22 @@
     },
     {
         "label": "current_app",
+        "importPath": "flask",
+        "description": "flask",
+        "isExtraImport": true,
+        "detail": "flask",
+        "documentation": {}
+    },
+    {
+        "label": "current_app",
+        "importPath": "flask",
+        "description": "flask",
+        "isExtraImport": true,
+        "detail": "flask",
+        "documentation": {}
+    },
+    {
+        "label": "request",
         "importPath": "flask",
         "description": "flask",
         "isExtraImport": true,
@@ -689,6 +729,30 @@
     },
     {
         "label": "jwt_required",
+        "importPath": "flask_jwt_extended",
+        "description": "flask_jwt_extended",
+        "isExtraImport": true,
+        "detail": "flask_jwt_extended",
+        "documentation": {}
+    },
+    {
+        "label": "get_jwt_identity",
+        "importPath": "flask_jwt_extended",
+        "description": "flask_jwt_extended",
+        "isExtraImport": true,
+        "detail": "flask_jwt_extended",
+        "documentation": {}
+    },
+    {
+        "label": "jwt_required",
+        "importPath": "flask_jwt_extended",
+        "description": "flask_jwt_extended",
+        "isExtraImport": true,
+        "detail": "flask_jwt_extended",
+        "documentation": {}
+    },
+    {
+        "label": "current_user",
         "importPath": "flask_jwt_extended",
         "description": "flask_jwt_extended",
         "isExtraImport": true,
@@ -897,14 +961,6 @@
     },
     {
         "label": "create_refresh_token",
-        "importPath": "flask_jwt_extended",
-        "description": "flask_jwt_extended",
-        "isExtraImport": true,
-        "detail": "flask_jwt_extended",
-        "documentation": {}
-    },
-    {
-        "label": "decode_token",
         "importPath": "flask_jwt_extended",
         "description": "flask_jwt_extended",
         "isExtraImport": true,
@@ -1469,6 +1525,22 @@
         "description": "app.services.importacao",
         "isExtraImport": true,
         "detail": "app.services.importacao",
+        "documentation": {}
+    },
+    {
+        "label": "db",
+        "importPath": "app.core.database",
+        "description": "app.core.database",
+        "isExtraImport": true,
+        "detail": "app.core.database",
+        "documentation": {}
+    },
+    {
+        "label": "db",
+        "importPath": "app.core.database",
+        "description": "app.core.database",
+        "isExtraImport": true,
+        "detail": "app.core.database",
         "documentation": {}
     },
     {
@@ -3849,6 +3921,30 @@
         "documentation": {}
     },
     {
+        "label": "or_",
+        "importPath": "sqlalchemy",
+        "description": "sqlalchemy",
+        "isExtraImport": true,
+        "detail": "sqlalchemy",
+        "documentation": {}
+    },
+    {
+        "label": "and_",
+        "importPath": "sqlalchemy",
+        "description": "sqlalchemy",
+        "isExtraImport": true,
+        "detail": "sqlalchemy",
+        "documentation": {}
+    },
+    {
+        "label": "desc",
+        "importPath": "sqlalchemy",
+        "description": "sqlalchemy",
+        "isExtraImport": true,
+        "detail": "sqlalchemy",
+        "documentation": {}
+    },
+    {
         "label": "and_",
         "importPath": "sqlalchemy",
         "description": "sqlalchemy",
@@ -4178,6 +4274,14 @@
         "documentation": {}
     },
     {
+        "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
         "label": "date",
         "importPath": "datetime",
         "description": "datetime",
@@ -4219,6 +4323,22 @@
     },
     {
         "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "date",
         "importPath": "datetime",
         "description": "datetime",
         "isExtraImport": true,
@@ -4907,6 +5027,30 @@
         "documentation": {}
     },
     {
+        "label": "User",
+        "importPath": "app.models.user",
+        "description": "app.models.user",
+        "isExtraImport": true,
+        "detail": "app.models.user",
+        "documentation": {}
+    },
+    {
+        "label": "RoleEnum",
+        "importPath": "app.models.user",
+        "description": "app.models.user",
+        "isExtraImport": true,
+        "detail": "app.models.user",
+        "documentation": {}
+    },
+    {
+        "label": "User",
+        "importPath": "app.models.user",
+        "description": "app.models.user",
+        "isExtraImport": true,
+        "detail": "app.models.user",
+        "documentation": {}
+    },
+    {
         "label": "RoleEnum",
         "importPath": "app.models.user",
         "description": "app.models.user",
@@ -4948,14 +5092,6 @@
     },
     {
         "label": "RoleEnum",
-        "importPath": "app.models.user",
-        "description": "app.models.user",
-        "isExtraImport": true,
-        "detail": "app.models.user",
-        "documentation": {}
-    },
-    {
-        "label": "User",
         "importPath": "app.models.user",
         "description": "app.models.user",
         "isExtraImport": true,
@@ -5224,6 +5360,23 @@
         "description": "app.schemas.logistica_schema",
         "isExtraImport": true,
         "detail": "app.schemas.logistica_schema",
+        "documentation": {}
+    },
+    {
+        "label": "logging",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "logging",
+        "description": "logging",
+        "detail": "logging",
+        "documentation": {}
+    },
+    {
+        "label": "GestaoNotificacaoService",
+        "importPath": "app.services.gestao_notificacao_service",
+        "description": "app.services.gestao_notificacao_service",
+        "isExtraImport": true,
+        "detail": "app.services.gestao_notificacao_service",
         "documentation": {}
     },
     {
@@ -6148,15 +6301,6 @@
         "documentation": {}
     },
     {
-        "label": "logging",
-        "kind": 6,
-        "isExtraImport": true,
-        "importPath": "logging",
-        "description": "logging",
-        "detail": "logging",
-        "documentation": {}
-    },
-    {
         "label": "HTTPException",
         "importPath": "werkzeug.exceptions",
         "description": "werkzeug.exceptions",
@@ -6410,6 +6554,22 @@
         "description": "app.models.base",
         "isExtraImport": true,
         "detail": "app.models.base",
+        "documentation": {}
+    },
+    {
+        "label": "BaseModel",
+        "importPath": "app.models.base",
+        "description": "app.models.base",
+        "isExtraImport": true,
+        "detail": "app.models.base",
+        "documentation": {}
+    },
+    {
+        "label": "Enum",
+        "importPath": "enum",
+        "description": "enum",
+        "isExtraImport": true,
+        "detail": "enum",
         "documentation": {}
     },
     {
@@ -7549,6 +7709,46 @@
         "documentation": {}
     },
     {
+        "label": "Optional",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "List",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Dict",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Any",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Tuple",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
         "label": "Dict",
         "importPath": "typing",
         "description": "typing",
@@ -7614,6 +7814,46 @@
     },
     {
         "label": "List",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Dict",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Set",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Optional",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "List",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Any",
         "importPath": "typing",
         "description": "typing",
         "isExtraImport": true,
@@ -8673,6 +8913,54 @@
         "documentation": {}
     },
     {
+        "label": "send_notification",
+        "importPath": "app.websocket.socket_manager",
+        "description": "app.websocket.socket_manager",
+        "isExtraImport": true,
+        "detail": "app.websocket.socket_manager",
+        "documentation": {}
+    },
+    {
+        "label": "socketio",
+        "importPath": "app.websocket.socket_manager",
+        "description": "app.websocket.socket_manager",
+        "isExtraImport": true,
+        "detail": "app.websocket.socket_manager",
+        "documentation": {}
+    },
+    {
+        "label": "send_notification",
+        "importPath": "app.websocket.socket_manager",
+        "description": "app.websocket.socket_manager",
+        "isExtraImport": true,
+        "detail": "app.websocket.socket_manager",
+        "documentation": {}
+    },
+    {
+        "label": "emit_notification_read",
+        "importPath": "app.websocket.socket_manager",
+        "description": "app.websocket.socket_manager",
+        "isExtraImport": true,
+        "detail": "app.websocket.socket_manager",
+        "documentation": {}
+    },
+    {
+        "label": "emit_notification_deactivated",
+        "importPath": "app.websocket.socket_manager",
+        "description": "app.websocket.socket_manager",
+        "isExtraImport": true,
+        "detail": "app.websocket.socket_manager",
+        "documentation": {}
+    },
+    {
+        "label": "emit_sms_dispatched",
+        "importPath": "app.websocket.socket_manager",
+        "description": "app.websocket.socket_manager",
+        "isExtraImport": true,
+        "detail": "app.websocket.socket_manager",
+        "documentation": {}
+    },
+    {
         "label": "socketio",
         "importPath": "app.websocket.socket_manager",
         "description": "app.websocket.socket_manager",
@@ -8766,6 +9054,38 @@
         "description": "app.repositories.financeiro_repos",
         "isExtraImport": true,
         "detail": "app.repositories.financeiro_repos",
+        "documentation": {}
+    },
+    {
+        "label": "Notificacao",
+        "importPath": "app.models.notificacao",
+        "description": "app.models.notificacao",
+        "isExtraImport": true,
+        "detail": "app.models.notificacao",
+        "documentation": {}
+    },
+    {
+        "label": "NotificacaoLeitura",
+        "importPath": "app.models.notificacao",
+        "description": "app.models.notificacao",
+        "isExtraImport": true,
+        "detail": "app.models.notificacao",
+        "documentation": {}
+    },
+    {
+        "label": "HistoricoSMS",
+        "importPath": "app.models.notificacao",
+        "description": "app.models.notificacao",
+        "isExtraImport": true,
+        "detail": "app.models.notificacao",
+        "documentation": {}
+    },
+    {
+        "label": "NotificationService",
+        "importPath": "app.services.notification_service",
+        "description": "app.services.notification_service",
+        "isExtraImport": true,
+        "detail": "app.services.notification_service",
         "documentation": {}
     },
     {
@@ -9249,6 +9569,23 @@
         "description": "flask_socketio",
         "isExtraImport": true,
         "detail": "flask_socketio",
+        "documentation": {}
+    },
+    {
+        "label": "disconnect",
+        "importPath": "flask_socketio",
+        "description": "flask_socketio",
+        "isExtraImport": true,
+        "detail": "flask_socketio",
+        "documentation": {}
+    },
+    {
+        "label": "jwt",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "jwt",
+        "description": "jwt",
+        "detail": "jwt",
         "documentation": {}
     },
     {
@@ -10619,6 +10956,33 @@
         "documentation": {}
     },
     {
+        "label": "caixa_response",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.financeiro_controller",
+        "description": "backend.app.api.v1.financeiro_controller",
+        "peekOfCode": "def caixa_response(caixa, aberta=None, status=200):\n    \"\"\"Stable session contract; legacy keys remain during the frontend migration.\"\"\"\n    sessao = CaixaSchema().dump(caixa) if caixa else None\n    is_open = caixa is not None if aberta is None else aberta\n    return jsonify({\n        \"success\": True,\n        \"aberta\": is_open,\n        \"sessao\": sessao,\n        \"aberto\": is_open,\n        \"caixa\": sessao,",
+        "detail": "backend.app.api.v1.financeiro_controller",
+        "documentation": {}
+    },
+    {
+        "label": "caixa_sessao_response",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.financeiro_controller",
+        "description": "backend.app.api.v1.financeiro_controller",
+        "peekOfCode": "def caixa_sessao_response(sessao):\n    \"\"\"Small, stable response used by the frequently-polled POS endpoint.\"\"\"\n    return jsonify({\"success\": True, \"aberta\": bool(sessao), \"sessao\": sessao}), 200\ndef caixa_error(message, status=400, **extra):\n    return jsonify({\"success\": False, \"message\": message, \"msg\": message, **extra}), status\ndef build_pagination(repo, schema, request):\n    page = request.args.get('page', 1, type=int)\n    per_page = request.args.get('per_page', 10, type=int)\n    filters = {}\n    for key, value in request.args.items():",
+        "detail": "backend.app.api.v1.financeiro_controller",
+        "documentation": {}
+    },
+    {
+        "label": "caixa_error",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.financeiro_controller",
+        "description": "backend.app.api.v1.financeiro_controller",
+        "peekOfCode": "def caixa_error(message, status=400, **extra):\n    return jsonify({\"success\": False, \"message\": message, \"msg\": message, **extra}), status\ndef build_pagination(repo, schema, request):\n    page = request.args.get('page', 1, type=int)\n    per_page = request.args.get('per_page', 10, type=int)\n    filters = {}\n    for key, value in request.args.items():\n        if key not in ['page', 'per_page'] and hasattr(repo.model_class, key):\n            filters[key] = value\n    pagination = repo.get_paginated(page=page, per_page=per_page, filters=filters)",
+        "detail": "backend.app.api.v1.financeiro_controller",
+        "documentation": {}
+    },
+    {
         "label": "build_pagination",
         "kind": 2,
         "importPath": "backend.app.api.v1.financeiro_controller",
@@ -10641,7 +11005,16 @@
         "kind": 2,
         "importPath": "backend.app.api.v1.financeiro_controller",
         "description": "backend.app.api.v1.financeiro_controller",
-        "peekOfCode": "def abrir_caixa():\n    try:\n        data = request.get_json()\n        valor_inicial = data.get('valor_inicial', 0)\n    except Exception:\n        return jsonify({\"msg\": \"Dados inválidos\"}), 400\n    user_id = get_jwt_identity()\n    result, error = financeiro_service.abrir_caixa(valor_inicial, user_id)\n    if error: return jsonify({\"msg\": error}), 400\n    return jsonify(CaixaSchema().dump(result)), 201",
+        "peekOfCode": "def abrir_caixa():\n    try:\n        data = request.get_json()\n        valor_inicial = data.get('valor_inicial', 0)\n    except Exception:\n        return caixa_error(\"Dados inválidos\")\n    user_id = get_jwt_identity()\n    result, error = financeiro_service.abrir_caixa(valor_inicial, user_id)\n    if error:\n        existente = financeiro_service.obter_caixa_aberto(user_id)",
+        "detail": "backend.app.api.v1.financeiro_controller",
+        "documentation": {}
+    },
+    {
+        "label": "get_minha_sessao_caixa",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.financeiro_controller",
+        "description": "backend.app.api.v1.financeiro_controller",
+        "peekOfCode": "def get_minha_sessao_caixa():\n    \"\"\"Return only the authenticated operator's open cash session.\n    The client must never infer its active session from another operator's\n    session.  A stable, explicit contract also avoids probing non-existent\n    routes before every POS operation.\n    \"\"\"\n    sessao = financeiro_service.obter_resumo_caixa_aberto(get_jwt_identity())\n    return caixa_sessao_response(sessao)\n@financeiro_bp.route('/caixas/<int:id>/fechar', methods=['PUT'])\n@jwt_required()",
         "detail": "backend.app.api.v1.financeiro_controller",
         "documentation": {}
     },
@@ -10650,7 +11023,7 @@
         "kind": 2,
         "importPath": "backend.app.api.v1.financeiro_controller",
         "description": "backend.app.api.v1.financeiro_controller",
-        "peekOfCode": "def fechar_caixa(id):\n    user_id = get_jwt_identity()\n    data = request.json or {}\n    if 'valor_declarado_dinheiro' in data:\n        result, error = financeiro_service.fechar_caixa_detalhado(id, data, user_id)\n    else:\n        result, error = financeiro_service.fechar_caixa(id, user_id)\n    if error: return jsonify({\"msg\": error}), 400\n    return jsonify(CaixaSchema().dump(result)), 200\n@financeiro_bp.route('/caixas/<int:id>/movimentos', methods=['POST'])",
+        "peekOfCode": "def fechar_caixa(id):\n    user_id = get_jwt_identity()\n    # A simple close may intentionally have no JSON body.  Do not let Flask\n    # turn that normal request into a 415 Unsupported Media Type.\n    data = request.get_json(silent=True) or {}\n    if 'valor_declarado_dinheiro' in data:\n        result, error = financeiro_service.fechar_caixa_detalhado(id, data, user_id)\n    else:\n        result, error = financeiro_service.fechar_caixa(id, user_id)\n    if error: return caixa_error(error)",
         "detail": "backend.app.api.v1.financeiro_controller",
         "documentation": {}
     },
@@ -10659,7 +11032,7 @@
         "kind": 2,
         "importPath": "backend.app.api.v1.financeiro_controller",
         "description": "backend.app.api.v1.financeiro_controller",
-        "peekOfCode": "def registrar_movimento(id):\n    try:\n        data = MovimentoCaixaSchema().load(request.get_json())\n    except ValidationError as err:\n        return jsonify({\"msg\": \"Validation error\", \"errors\": err.messages}), 400\n    user_id = get_jwt_identity()\n    try:\n        result, error = financeiro_service.registrar_movimento(id, data, user_id)\n        if error: return jsonify({\"msg\": error}), 400\n        return jsonify(MovimentoCaixaSchema().dump(result)), 201",
+        "peekOfCode": "def registrar_movimento(id):\n    try:\n        data = MovimentoCaixaSchema().load(request.get_json())\n    except ValidationError as err:\n        return caixa_error(\"Erro de validação\", errors=err.messages)\n    user_id = get_jwt_identity()\n    try:\n        result, error = financeiro_service.registrar_movimento(id, data, user_id)\n        if error: return caixa_error(error)\n        return jsonify(MovimentoCaixaSchema().dump(result)), 201",
         "detail": "backend.app.api.v1.financeiro_controller",
         "documentation": {}
     },
@@ -10668,7 +11041,7 @@
         "kind": 2,
         "importPath": "backend.app.api.v1.financeiro_controller",
         "description": "backend.app.api.v1.financeiro_controller",
-        "peekOfCode": "def get_valores_esperados(id):\n    user_id = get_jwt_identity()\n    result, error = financeiro_service.get_valores_esperados(id)\n    if error: return jsonify({\"msg\": error}), 400\n    return jsonify(result), 200\n# -- CONTAS RECEBER --\n@financeiro_bp.route('/contas-receber', methods=['GET'])\n@jwt_required()\ndef get_contas_receber():\n    return build_pagination(financeiro_service.conta_receber_repo, ContaReceberSchema, request)",
+        "peekOfCode": "def get_valores_esperados(id):\n    user_id = get_jwt_identity()\n    result, error = financeiro_service.get_valores_esperados(id, user_id)\n    if error: return caixa_error(error)\n    return jsonify(result), 200\n# -- CONTAS RECEBER --\n@financeiro_bp.route('/contas-receber', methods=['GET'])\n@jwt_required()\ndef get_contas_receber():\n    return build_pagination(financeiro_service.conta_receber_repo, ContaReceberSchema, request)",
         "detail": "backend.app.api.v1.financeiro_controller",
         "documentation": {}
     },
@@ -10767,7 +11140,7 @@
         "kind": 5,
         "importPath": "backend.app.api.v1.financeiro_controller",
         "description": "backend.app.api.v1.financeiro_controller",
-        "peekOfCode": "financeiro_bp = Blueprint('financeiro', __name__)\nfinanceiro_service = FinanceiroService()\ndef build_pagination(repo, schema, request):\n    page = request.args.get('page', 1, type=int)\n    per_page = request.args.get('per_page', 10, type=int)\n    filters = {}\n    for key, value in request.args.items():\n        if key not in ['page', 'per_page'] and hasattr(repo.model_class, key):\n            filters[key] = value\n    pagination = repo.get_paginated(page=page, per_page=per_page, filters=filters)",
+        "peekOfCode": "financeiro_bp = Blueprint('financeiro', __name__)\nfinanceiro_service = FinanceiroService()\ndef caixa_response(caixa, aberta=None, status=200):\n    \"\"\"Stable session contract; legacy keys remain during the frontend migration.\"\"\"\n    sessao = CaixaSchema().dump(caixa) if caixa else None\n    is_open = caixa is not None if aberta is None else aberta\n    return jsonify({\n        \"success\": True,\n        \"aberta\": is_open,\n        \"sessao\": sessao,",
         "detail": "backend.app.api.v1.financeiro_controller",
         "documentation": {}
     },
@@ -10776,7 +11149,7 @@
         "kind": 5,
         "importPath": "backend.app.api.v1.financeiro_controller",
         "description": "backend.app.api.v1.financeiro_controller",
-        "peekOfCode": "financeiro_service = FinanceiroService()\ndef build_pagination(repo, schema, request):\n    page = request.args.get('page', 1, type=int)\n    per_page = request.args.get('per_page', 10, type=int)\n    filters = {}\n    for key, value in request.args.items():\n        if key not in ['page', 'per_page'] and hasattr(repo.model_class, key):\n            filters[key] = value\n    pagination = repo.get_paginated(page=page, per_page=per_page, filters=filters)\n    return jsonify({",
+        "peekOfCode": "financeiro_service = FinanceiroService()\ndef caixa_response(caixa, aberta=None, status=200):\n    \"\"\"Stable session contract; legacy keys remain during the frontend migration.\"\"\"\n    sessao = CaixaSchema().dump(caixa) if caixa else None\n    is_open = caixa is not None if aberta is None else aberta\n    return jsonify({\n        \"success\": True,\n        \"aberta\": is_open,\n        \"sessao\": sessao,\n        \"aberto\": is_open,",
         "detail": "backend.app.api.v1.financeiro_controller",
         "documentation": {}
     },
@@ -11147,6 +11520,141 @@
         "description": "backend.app.api.v1.logistica_controller",
         "peekOfCode": "logistica_service = LogisticaService()\ndef build_pagination(repo, schema, request):\n    page = request.args.get('page', 1, type=int)\n    per_page = request.args.get('per_page', 10, type=int)\n    search = request.args.get('search', '')\n    filters = {}\n    for key, value in request.args.items():\n        if key not in ['page', 'per_page', 'search'] and hasattr(repo.model_class, key):\n            filters[key] = value\n    search_fields = ['nome', 'matricula', 'numero']",
         "detail": "backend.app.api.v1.logistica_controller",
+        "documentation": {}
+    },
+    {
+        "label": "listar_notificacoes",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.notificacao_controller",
+        "description": "backend.app.api.v1.notificacao_controller",
+        "peekOfCode": "def listar_notificacoes():\n    \"\"\"\n    Lista notificações com suporte a filtros e isolamento por utilizador/cargo.\n    ---\n    tags:\n      - Notificações\n    security:\n      - Bearer: []\n    parameters:\n      - in: query",
+        "detail": "backend.app.api.v1.notificacao_controller",
+        "documentation": {}
+    },
+    {
+        "label": "obter_detalhes_notificacao",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.notificacao_controller",
+        "description": "backend.app.api.v1.notificacao_controller",
+        "peekOfCode": "def obter_detalhes_notificacao(id: int):\n    \"\"\"\n    Obtém os detalhes de uma notificação com relatório de QUEM LEU e QUEM NÃO LEU.\n    ---\n    tags:\n      - Notificações\n    security:\n      - Bearer: []\n    responses:\n      200:",
+        "detail": "backend.app.api.v1.notificacao_controller",
+        "documentation": {}
+    },
+    {
+        "label": "criar_notificacao",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.notificacao_controller",
+        "description": "backend.app.api.v1.notificacao_controller",
+        "peekOfCode": "def criar_notificacao():\n    \"\"\"\n    Cria e despacha uma nova notificação com envio WebSocket imediato.\n    ---\n    tags:\n      - Notificações\n    security:\n      - Bearer: []\n    parameters:\n      - in: body",
+        "detail": "backend.app.api.v1.notificacao_controller",
+        "documentation": {}
+    },
+    {
+        "label": "marcar_como_lida",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.notificacao_controller",
+        "description": "backend.app.api.v1.notificacao_controller",
+        "peekOfCode": "def marcar_como_lida(id: int):\n    \"\"\"\n    Marca uma notificação como lida pelo utilizador autenticado.\n    ---\n    tags:\n      - Notificações\n    security:\n      - Bearer: []\n    responses:\n      200:",
+        "detail": "backend.app.api.v1.notificacao_controller",
+        "documentation": {}
+    },
+    {
+        "label": "marcar_todas_como_lidas",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.notificacao_controller",
+        "description": "backend.app.api.v1.notificacao_controller",
+        "peekOfCode": "def marcar_todas_como_lidas():\n    \"\"\"\n    Marca todas as notificações pendentes do utilizador como lidas.\n    ---\n    tags:\n      - Notificações\n    security:\n      - Bearer: []\n    responses:\n      200:",
+        "detail": "backend.app.api.v1.notificacao_controller",
+        "documentation": {}
+    },
+    {
+        "label": "desativar_notificacao",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.notificacao_controller",
+        "description": "backend.app.api.v1.notificacao_controller",
+        "peekOfCode": "def desativar_notificacao(id: int):\n    \"\"\"\n    Desativa / arquiva uma notificação específica.\n    ---\n    tags:\n      - Notificações\n    security:\n      - Bearer: []\n    responses:\n      200:",
+        "detail": "backend.app.api.v1.notificacao_controller",
+        "documentation": {}
+    },
+    {
+        "label": "desativar_notificacoes_lidas",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.notificacao_controller",
+        "description": "backend.app.api.v1.notificacao_controller",
+        "peekOfCode": "def desativar_notificacoes_lidas():\n    \"\"\"\n    Desativa em lote todas as notificações que já foram lidas.\n    ---\n    tags:\n      - Notificações\n    security:\n      - Bearer: []\n    parameters:\n      - in: body",
+        "detail": "backend.app.api.v1.notificacao_controller",
+        "documentation": {}
+    },
+    {
+        "label": "alternar_persistente",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.notificacao_controller",
+        "description": "backend.app.api.v1.notificacao_controller",
+        "peekOfCode": "def alternar_persistente(id: int):\n    \"\"\"\n    Alterna ou define o status de notificação persistente (fixada).\n    ---\n    tags:\n      - Notificações\n    security:\n      - Bearer: []\n    parameters:\n      - in: body",
+        "detail": "backend.app.api.v1.notificacao_controller",
+        "documentation": {}
+    },
+    {
+        "label": "excluir_notificacao",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.notificacao_controller",
+        "description": "backend.app.api.v1.notificacao_controller",
+        "peekOfCode": "def excluir_notificacao(id: int):\n    \"\"\"\n    Exclui permanentemente uma notificação.\n    ---\n    tags:\n      - Notificações\n    security:\n      - Bearer: []\n    responses:\n      200:",
+        "detail": "backend.app.api.v1.notificacao_controller",
+        "documentation": {}
+    },
+    {
+        "label": "listar_sms",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.notificacao_controller",
+        "description": "backend.app.api.v1.notificacao_controller",
+        "peekOfCode": "def listar_sms():\n    \"\"\"\n    Lista todo o histórico de SMS e mensagens WhatsApp enviadas,\n    com status de entrega e rastreamento de leitura.\n    ---\n    tags:\n      - Notificações\n    security:\n      - Bearer: []\n    parameters:",
+        "detail": "backend.app.api.v1.notificacao_controller",
+        "documentation": {}
+    },
+    {
+        "label": "enviar_sms_manual",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.notificacao_controller",
+        "description": "backend.app.api.v1.notificacao_controller",
+        "peekOfCode": "def enviar_sms_manual():\n    \"\"\"\n    Envia uma mensagem manual via SMS ou WhatsApp para cliente ou colaborador\n    e registra no histórico permanente.\n    ---\n    tags:\n      - Notificações\n    security:\n      - Bearer: []\n    parameters:",
+        "detail": "backend.app.api.v1.notificacao_controller",
+        "documentation": {}
+    },
+    {
+        "label": "atualizar_status_sms",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.notificacao_controller",
+        "description": "backend.app.api.v1.notificacao_controller",
+        "peekOfCode": "def atualizar_status_sms(id: int):\n    \"\"\"\n    Atualiza status ou confirma leitura de uma mensagem SMS/WhatsApp.\n    ---\n    tags:\n      - Notificações\n    security:\n      - Bearer: []\n    parameters:\n      - in: body",
+        "detail": "backend.app.api.v1.notificacao_controller",
+        "documentation": {}
+    },
+    {
+        "label": "obter_estatisticas",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.notificacao_controller",
+        "description": "backend.app.api.v1.notificacao_controller",
+        "peekOfCode": "def obter_estatisticas():\n    \"\"\"\n    Retorna métricas em tempo real sobre notificações e histórico de SMS.\n    ---\n    tags:\n      - Notificações\n    security:\n      - Bearer: []\n    responses:\n      200:",
+        "detail": "backend.app.api.v1.notificacao_controller",
+        "documentation": {}
+    },
+    {
+        "label": "logger",
+        "kind": 5,
+        "importPath": "backend.app.api.v1.notificacao_controller",
+        "description": "backend.app.api.v1.notificacao_controller",
+        "peekOfCode": "logger = logging.getLogger(__name__)\nnotificacao_bp = Blueprint(\"notificacoes\", __name__)\ndef _get_current_authenticated_user() -> User:\n    \"\"\"Recupera a instância do utilizador autenticado via JWT\"\"\"\n    if current_user:\n        return current_user\n    ident = get_jwt_identity()\n    if ident:\n        return User.query.get(ident)\n    return None",
+        "detail": "backend.app.api.v1.notificacao_controller",
+        "documentation": {}
+    },
+    {
+        "label": "notificacao_bp",
+        "kind": 5,
+        "importPath": "backend.app.api.v1.notificacao_controller",
+        "description": "backend.app.api.v1.notificacao_controller",
+        "peekOfCode": "notificacao_bp = Blueprint(\"notificacoes\", __name__)\ndef _get_current_authenticated_user() -> User:\n    \"\"\"Recupera a instância do utilizador autenticado via JWT\"\"\"\n    if current_user:\n        return current_user\n    ident = get_jwt_identity()\n    if ident:\n        return User.query.get(ident)\n    return None\n# -----------------------------------------------------------------------------",
+        "detail": "backend.app.api.v1.notificacao_controller",
         "documentation": {}
     },
     {
@@ -12153,7 +12661,7 @@
         "kind": 6,
         "importPath": "backend.app.models.comercial",
         "description": "backend.app.models.comercial",
-        "peekOfCode": "class Venda(BaseModel):\n    __tablename__ = 'vendas'\n    numero_documento = db.Column(db.String(50), unique=True, nullable=False)\n    tipo_documento = db.Column(db.Enum(TipoDocumento), nullable=False)\n    _cliente_id = db.Column('cliente_id', db.Integer, db.ForeignKey('clientes.id'), nullable=True)\n    pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=True)\n    _subtotal = db.Column('subtotal', db.Numeric(12, 2), default=0, nullable=True)\n    _desconto_total = db.Column('desconto_total', db.Numeric(12, 2), default=0, nullable=True)\n    _base_tributavel = db.Column('base_tributavel', db.Numeric(12, 2), default=0, nullable=True)\n    _total_iva = db.Column('total_iva', db.Numeric(12, 2), default=0, nullable=True)",
+        "peekOfCode": "class Venda(BaseModel):\n    __tablename__ = 'vendas'\n    numero_documento = db.Column(db.String(50), unique=True, nullable=False)\n    tipo_documento = db.Column(db.Enum(TipoDocumento), nullable=False)\n    _cliente_id = db.Column('cliente_id', db.Integer, db.ForeignKey('clientes.id'), nullable=True)\n    pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=True)\n    # A venda pode ser emitida diretamente no POS ou resultar da faturação de\n    # um evento. Esta coluna existe no esquema da aplicação e torna a ligação\n    # explícita, em vez de depender de atributos transitórios em memória.\n    evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=True)",
         "detail": "backend.app.models.comercial",
         "documentation": {}
     },
@@ -12333,7 +12841,7 @@
         "kind": 6,
         "importPath": "backend.app.models.evento",
         "description": "backend.app.models.evento",
-        "peekOfCode": "class Evento(BaseModel):\n    __tablename__ = 'eventos'\n    numero = db.Column(db.String(50), unique=True, nullable=False)\n    _cliente_id = db.Column('cliente_id', db.Integer, db.ForeignKey('clientes.id'), nullable=True)\n    pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=True)\n    responsavel_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)\n    tipo_evento = db.Column(db.String(100), nullable=False)\n    titulo = db.Column(db.String(100), nullable=False)\n    descricao = db.Column(db.Text, nullable=True)\n    local_evento = db.Column(db.String(255), nullable=True)",
+        "peekOfCode": "class Evento(BaseModel):\n    __tablename__ = 'eventos'\n    numero = db.Column(db.String(50), unique=True, nullable=False)\n    _cliente_id = db.Column('cliente_id', db.Integer, db.ForeignKey('clientes.id'), nullable=True)\n    pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=True)\n    venda_id = db.Column(db.Integer, db.ForeignKey('vendas.id'), nullable=True)\n    responsavel_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)\n    tipo_evento = db.Column(db.String(100), nullable=False)\n    titulo = db.Column(db.String(100), nullable=False)\n    descricao = db.Column(db.Text, nullable=True)",
         "detail": "backend.app.models.evento",
         "documentation": {}
     },
@@ -12749,6 +13257,69 @@
         "description": "backend.app.models.movimento_stock",
         "peekOfCode": "class MovimentoStock(BaseModel):\n    __tablename__ = 'movimentacoes_armazem'\n    tipo = db.Column(db.Enum(TipoMovimento), nullable=False)\n    origem = db.Column(db.Enum(OrigemMovimento), nullable=False)\n    entidade_tipo = db.Column(db.Enum(EntidadeMovimento), nullable=False)\n    referencia_id = db.Column(db.Integer, nullable=False) # ID of Ingrediente/Produto/Material\n    armazem_id = db.Column(db.Integer, db.ForeignKey('armazens.id'), nullable=True)\n    quantidade = db.Column(db.Numeric(10, 3), nullable=False)\n    quantidade_antes = db.Column(db.Numeric(10, 3), default=0)\n    quantidade_depois = db.Column(db.Numeric(10, 3), default=0)",
         "detail": "backend.app.models.movimento_stock",
+        "documentation": {}
+    },
+    {
+        "label": "TipoNotificacaoEnum",
+        "kind": 6,
+        "importPath": "backend.app.models.notificacao",
+        "description": "backend.app.models.notificacao",
+        "peekOfCode": "class TipoNotificacaoEnum(str, Enum):\n    INFO = \"info\"\n    WARNING = \"warning\"\n    SUCCESS = \"success\"\n    ERROR = \"error\"\n    ALERTA = \"alerta\"\nclass CanalNotificacaoEnum(str, Enum):\n    SISTEMA = \"SISTEMA\"\n    PEDIDO = \"PEDIDO\"\n    PRODUCAO = \"PRODUCAO\"",
+        "detail": "backend.app.models.notificacao",
+        "documentation": {}
+    },
+    {
+        "label": "CanalNotificacaoEnum",
+        "kind": 6,
+        "importPath": "backend.app.models.notificacao",
+        "description": "backend.app.models.notificacao",
+        "peekOfCode": "class CanalNotificacaoEnum(str, Enum):\n    SISTEMA = \"SISTEMA\"\n    PEDIDO = \"PEDIDO\"\n    PRODUCAO = \"PRODUCAO\"\n    STOCK = \"STOCK\"\n    FINANCEIRO = \"FINANCEIRO\"\n    SMS = \"SMS\"\n    WHATSAPP = \"WHATSAPP\"\n    EMAIL = \"EMAIL\"\nclass PrioridadeNotificacaoEnum(str, Enum):",
+        "detail": "backend.app.models.notificacao",
+        "documentation": {}
+    },
+    {
+        "label": "PrioridadeNotificacaoEnum",
+        "kind": 6,
+        "importPath": "backend.app.models.notificacao",
+        "description": "backend.app.models.notificacao",
+        "peekOfCode": "class PrioridadeNotificacaoEnum(str, Enum):\n    BAIXA = \"baixa\"\n    MEDIA = \"media\"\n    ALTA = \"alta\"\n    URGENTE = \"urgente\"\nclass TargetTypeEnum(str, Enum):\n    GLOBAL = \"GLOBAL\"\n    ROLE = \"ROLE\"\n    SECTOR = \"SECTOR\"\n    USER = \"USER\"",
+        "detail": "backend.app.models.notificacao",
+        "documentation": {}
+    },
+    {
+        "label": "TargetTypeEnum",
+        "kind": 6,
+        "importPath": "backend.app.models.notificacao",
+        "description": "backend.app.models.notificacao",
+        "peekOfCode": "class TargetTypeEnum(str, Enum):\n    GLOBAL = \"GLOBAL\"\n    ROLE = \"ROLE\"\n    SECTOR = \"SECTOR\"\n    USER = \"USER\"\nclass Notificacao(BaseModel):\n    \"\"\"\n    Modelo principal para armazenamento de notificações no sistema.\n    Permite notificações globais, por cargo/role, por setor ou por utilizador específico,\n    com suporte a persistência, prioridade e ciclo de vida (ativa/desativada).",
+        "detail": "backend.app.models.notificacao",
+        "documentation": {}
+    },
+    {
+        "label": "Notificacao",
+        "kind": 6,
+        "importPath": "backend.app.models.notificacao",
+        "description": "backend.app.models.notificacao",
+        "peekOfCode": "class Notificacao(BaseModel):\n    \"\"\"\n    Modelo principal para armazenamento de notificações no sistema.\n    Permite notificações globais, por cargo/role, por setor ou por utilizador específico,\n    com suporte a persistência, prioridade e ciclo de vida (ativa/desativada).\n    \"\"\"\n    __tablename__ = \"notificacoes\"\n    titulo = db.Column(db.String(150), nullable=False)\n    mensagem = db.Column(db.Text, nullable=False)\n    tipo = db.Column(db.String(30), nullable=False, default=\"info\")",
+        "detail": "backend.app.models.notificacao",
+        "documentation": {}
+    },
+    {
+        "label": "NotificacaoLeitura",
+        "kind": 6,
+        "importPath": "backend.app.models.notificacao",
+        "description": "backend.app.models.notificacao",
+        "peekOfCode": "class NotificacaoLeitura(db.Model):\n    \"\"\"\n    Tabela de rastreamento de leitura por utilizador.\n    Permite saber com precisão QUEM LEU e QUEM NÃO LEU cada notificação.\n    \"\"\"\n    __tablename__ = \"notificacao_leituras\"\n    id = db.Column(db.Integer, primary_key=True)\n    notificacao_id = db.Column(\n        db.Integer,\n        db.ForeignKey(\"notificacoes.id\", ondelete=\"CASCADE\"),",
+        "detail": "backend.app.models.notificacao",
+        "documentation": {}
+    },
+    {
+        "label": "HistoricoSMS",
+        "kind": 6,
+        "importPath": "backend.app.models.notificacao",
+        "description": "backend.app.models.notificacao",
+        "peekOfCode": "class HistoricoSMS(BaseModel):\n    \"\"\"\n    Modelo de histórico e auditoria de SMS e WhatsApp enviados pelo sistema.\n    Permite listar todas as mensagens enviadas, verificar status, quem leu / confirmação de entrega.\n    \"\"\"\n    __tablename__ = \"historico_sms\"\n    telefone = db.Column(db.String(50), nullable=False, index=True)\n    destinatario_nome = db.Column(db.String(120), nullable=True)\n    cliente_id = db.Column(db.Integer, db.ForeignKey(\"clientes.id\", ondelete=\"SET NULL\"), nullable=True, index=True)\n    user_id = db.Column(db.Integer, db.ForeignKey(\"users.id\", ondelete=\"SET NULL\"), nullable=True, index=True)",
+        "detail": "backend.app.models.notificacao",
         "documentation": {}
     },
     {
@@ -13728,7 +14299,7 @@
         "kind": 6,
         "importPath": "backend.app.schemas.financeiro_schema",
         "description": "backend.app.schemas.financeiro_schema",
-        "peekOfCode": "class MovimentoCaixaSchema(Schema):\n    id = fields.Int(dump_only=True)\n    caixa_id = fields.Int(required=True)\n    tipo = fields.Enum(TipoMovimentoCaixa, by_value=True, required=True)\n    valor = fields.Decimal(required=True)\n    descricao = fields.Str(required=False, allow_none=True)\n    data_movimento = fields.DateTime(dump_only=True)\n    codigo_transferencia = fields.Str(required=False, allow_none=True)\n    emissor = fields.Str(required=False, allow_none=True)\n    forma_pagamento = fields.Str(required=False, allow_none=True)",
+        "peekOfCode": "class MovimentoCaixaSchema(Schema):\n    id = fields.Int(dump_only=True)\n    # The authoritative session is the route parameter.  Accepting this field\n    # as optional preserves existing clients while preventing two IDs from\n    # being required for a single movement.\n    caixa_id = fields.Int(required=False)\n    tipo = fields.Enum(TipoMovimentoCaixa, by_value=True, required=True)\n    valor = fields.Decimal(required=True)\n    descricao = fields.Str(required=False, allow_none=True)\n    data_movimento = fields.DateTime(dump_only=True)",
         "detail": "backend.app.schemas.financeiro_schema",
         "documentation": {}
     },
@@ -14277,8 +14848,35 @@
         "kind": 6,
         "importPath": "backend.app.services.financeiro_service",
         "description": "backend.app.services.financeiro_service",
-        "peekOfCode": "class FinanceiroService:\n    def __init__(self):\n        self.caixa_repo = CaixaRepository()\n        self.movimento_repo = MovimentoCaixaRepository()\n        self.conta_receber_repo = ContaReceberRepository()\n        self.conta_pagar_repo = ContaPagarRepository()\n        self.receita_repo = ReceitaRepository()\n        self.despesa_repo = DespesaRepository()\n    # --- CAIXA ---\n    def abrir_caixa(self, valor_inicial, utilizador_id):",
+        "peekOfCode": "class FinanceiroService:\n    def __init__(self):\n        self.caixa_repo = CaixaRepository()\n        self.movimento_repo = MovimentoCaixaRepository()\n        self.conta_receber_repo = ContaReceberRepository()\n        self.conta_pagar_repo = ContaPagarRepository()\n        self.receita_repo = ReceitaRepository()\n        self.despesa_repo = DespesaRepository()\n    @staticmethod\n    def _normalizar_utilizador_id(utilizador_id):",
         "detail": "backend.app.services.financeiro_service",
+        "documentation": {}
+    },
+    {
+        "label": "logger",
+        "kind": 5,
+        "importPath": "backend.app.services.financeiro_service",
+        "description": "backend.app.services.financeiro_service",
+        "peekOfCode": "logger = logging.getLogger(__name__)\nclass CaixaEncerradoException(Exception):\n    pass\nclass FinanceiroService:\n    def __init__(self):\n        self.caixa_repo = CaixaRepository()\n        self.movimento_repo = MovimentoCaixaRepository()\n        self.conta_receber_repo = ContaReceberRepository()\n        self.conta_pagar_repo = ContaPagarRepository()\n        self.receita_repo = ReceitaRepository()",
+        "detail": "backend.app.services.financeiro_service",
+        "documentation": {}
+    },
+    {
+        "label": "GestaoNotificacaoService",
+        "kind": 6,
+        "importPath": "backend.app.services.gestao_notificacao_service",
+        "description": "backend.app.services.gestao_notificacao_service",
+        "peekOfCode": "class GestaoNotificacaoService:\n    \"\"\"\n    Serviço corporativo para Gestão de Notificações, Leitura Individual e Histórico de SMS.\n    Oferece rastreamento de quem leu / quem não leu, notificações persistentes,\n    desativação de lidas, envio manual de SMS/WhatsApp e métricas em tempo real.\n    \"\"\"\n    # -------------------------------------------------------------------------\n    # GESTÃO DE NOTIFICAÇÕES (CRIAÇÃO, LISTAGEM, LEITURA, STATUS)\n    # -------------------------------------------------------------------------\n    @staticmethod",
+        "detail": "backend.app.services.gestao_notificacao_service",
+        "documentation": {}
+    },
+    {
+        "label": "logger",
+        "kind": 5,
+        "importPath": "backend.app.services.gestao_notificacao_service",
+        "description": "backend.app.services.gestao_notificacao_service",
+        "peekOfCode": "logger = logging.getLogger(__name__)\nclass GestaoNotificacaoService:\n    \"\"\"\n    Serviço corporativo para Gestão de Notificações, Leitura Individual e Histórico de SMS.\n    Oferece rastreamento de quem leu / quem não leu, notificações persistentes,\n    desativação de lidas, envio manual de SMS/WhatsApp e métricas em tempo real.\n    \"\"\"\n    # -------------------------------------------------------------------------\n    # GESTÃO DE NOTIFICAÇÕES (CRIAÇÃO, LISTAGEM, LEITURA, STATUS)\n    # -------------------------------------------------------------------------",
+        "detail": "backend.app.services.gestao_notificacao_service",
         "documentation": {}
     },
     {
@@ -14651,38 +15249,20 @@
         "documentation": {}
     },
     {
-        "label": "production_room",
+        "label": "is_redis_available",
         "kind": 2,
         "importPath": "backend.app.websocket.socket_manager",
         "description": "backend.app.websocket.socket_manager",
-        "peekOfCode": "def production_room(role):\n    \"\"\"Return the canonical Socket.IO room for a production role.\"\"\"\n    return str(role).strip().lower().replace(' ', '_')\ndef send_notification(user_id, message, module=\"geral\"):\n    \"\"\"\n    Utility to emit notifications to a specific user's room\n    \"\"\"\n    socketio.emit('notification', {'message': message, 'module': module}, room=f\"user_{user_id}\")\ndef broadcast_production_update(op_numero, estado):\n    \"\"\"",
+        "peekOfCode": "def is_redis_available(redis_url: str) -> bool:\n    \"\"\"\n    Checks if Redis server is reachable within a strict short timeout.\n    Prevents thread hangs and infinite 'Cannot publish to redis' retry loops\n    when Redis is configured in .env but the daemon is not running locally.\n    \"\"\"\n    if not redis_url or not redis_url.startswith((\"redis://\", \"rediss://\")):\n        return False\n    try:\n        import redis",
         "detail": "backend.app.websocket.socket_manager",
         "documentation": {}
     },
     {
-        "label": "send_notification",
+        "label": "authenticate_socket_token",
         "kind": 2,
         "importPath": "backend.app.websocket.socket_manager",
         "description": "backend.app.websocket.socket_manager",
-        "peekOfCode": "def send_notification(user_id, message, module=\"geral\"):\n    \"\"\"\n    Utility to emit notifications to a specific user's room\n    \"\"\"\n    socketio.emit('notification', {'message': message, 'module': module}, room=f\"user_{user_id}\")\ndef broadcast_production_update(op_numero, estado):\n    \"\"\"\n    Utility to broadcast a production update internally\n    \"\"\"\n    socketio.emit('production_update', {'numero': op_numero, 'estado': estado}, room=\"producao\")",
-        "detail": "backend.app.websocket.socket_manager",
-        "documentation": {}
-    },
-    {
-        "label": "broadcast_production_update",
-        "kind": 2,
-        "importPath": "backend.app.websocket.socket_manager",
-        "description": "backend.app.websocket.socket_manager",
-        "peekOfCode": "def broadcast_production_update(op_numero, estado):\n    \"\"\"\n    Utility to broadcast a production update internally\n    \"\"\"\n    socketio.emit('production_update', {'numero': op_numero, 'estado': estado}, room=\"producao\")\ndef notify_production_orders(pedido_id, numero, sectors):\n    \"\"\"Notify only the departments which received production orders.\"\"\"\n    for sector in {str(sector.value if hasattr(sector, 'value') else sector) for sector in sectors}:\n        socketio.emit(\n            'nova_ordem_producao',",
-        "detail": "backend.app.websocket.socket_manager",
-        "documentation": {}
-    },
-    {
-        "label": "notify_production_orders",
-        "kind": 2,
-        "importPath": "backend.app.websocket.socket_manager",
-        "description": "backend.app.websocket.socket_manager",
-        "peekOfCode": "def notify_production_orders(pedido_id, numero, sectors):\n    \"\"\"Notify only the departments which received production orders.\"\"\"\n    for sector in {str(sector.value if hasattr(sector, 'value') else sector) for sector in sectors}:\n        socketio.emit(\n            'nova_ordem_producao',\n            {'pedido_id': pedido_id, 'numero': numero, 'sector': sector},\n            room=production_room(sector),\n        )\n@socketio.on('connect')\ndef handle_connect():",
+        "peekOfCode": "def authenticate_socket_token(auth_data: Optional[dict] = None) -> Optional[dict]:\n    \"\"\"\n    Validates JWT token passed via Socket.IO connection auth payload, query string, or headers.\n    Returns decoded token payload if valid, None otherwise.\n    \"\"\"\n    token = None\n    # 1. Check auth dictionary from socket handshake\n    if auth_data and isinstance(auth_data, dict):\n        token = auth_data.get(\"token\") or auth_data.get(\"Authorization\")\n    # 2. Check query string",
         "detail": "backend.app.websocket.socket_manager",
         "documentation": {}
     },
@@ -14691,25 +15271,97 @@
         "kind": 2,
         "importPath": "backend.app.websocket.socket_manager",
         "description": "backend.app.websocket.socket_manager",
-        "peekOfCode": "def handle_connect():\n    # Ideally should authenticate, but for now we accept connections\n    pass\n@socketio.on('join')\ndef on_join(data):\n    # Rooms are derived from the signed-in user; clients cannot subscribe to\n    # arbitrary operational departments by supplying a room name.\n    token = (data or {}).get('token')\n    if not token:\n        emit('error', {'msg': 'Autenticação Socket.IO obrigatória.'})",
+        "peekOfCode": "def handle_connect(auth=None):\n    \"\"\"\n    Handles new WebSocket connection with JWT authentication and room assignment\n    (user room, role room, and global notifications).\n    \"\"\"\n    sid = request.sid\n    payload = authenticate_socket_token(auth)\n    user_id = None\n    role = None\n    if payload:",
         "detail": "backend.app.websocket.socket_manager",
         "documentation": {}
     },
     {
-        "label": "on_join",
+        "label": "handle_disconnect",
         "kind": 2,
         "importPath": "backend.app.websocket.socket_manager",
         "description": "backend.app.websocket.socket_manager",
-        "peekOfCode": "def on_join(data):\n    # Rooms are derived from the signed-in user; clients cannot subscribe to\n    # arbitrary operational departments by supplying a room name.\n    token = (data or {}).get('token')\n    if not token:\n        emit('error', {'msg': 'Autenticação Socket.IO obrigatória.'})\n        return\n    try:\n        user_id = decode_token(token)['sub']\n        user = User.query.get(user_id)",
+        "peekOfCode": "def handle_disconnect():\n    \"\"\"\n    Handles WebSocket disconnection with full resource cleanup.\n    \"\"\"\n    sid = request.sid\n    user_id = _sid_to_user.pop(sid, None)\n    role = _sid_to_role.pop(sid, None)\n    if user_id and user_id in _active_user_connections:\n        _active_user_connections[user_id].discard(sid)\n        if not _active_user_connections[user_id]:",
         "detail": "backend.app.websocket.socket_manager",
         "documentation": {}
     },
     {
-        "label": "on_leave",
+        "label": "handle_ping",
         "kind": 2,
         "importPath": "backend.app.websocket.socket_manager",
         "description": "backend.app.websocket.socket_manager",
-        "peekOfCode": "def on_leave(data):\n    user_id = data.get('user_id')\n    if user_id:\n        room = f\"user_{user_id}\"\n        leave_room(room)\n    rooms = data.get('rooms', [])\n    for r in rooms:\n        leave_room(r)",
+        "peekOfCode": "def handle_ping():\n    \"\"\"Heartbeat / Liveness check\"\"\"\n    emit(\"pong_client\", {\"status\": \"ok\"})\ndef send_notification(\n    utilizador_id: Optional[Any] = None,\n    mensagem: str = \"\",\n    titulo: str = \"Notificação\",\n    tipo: str = \"info\",\n    dados_extra: Optional[dict] = None,\n    canal: str = \"SISTEMA\",",
+        "detail": "backend.app.websocket.socket_manager",
+        "documentation": {}
+    },
+    {
+        "label": "send_notification",
+        "kind": 2,
+        "importPath": "backend.app.websocket.socket_manager",
+        "description": "backend.app.websocket.socket_manager",
+        "peekOfCode": "def send_notification(\n    utilizador_id: Optional[Any] = None,\n    mensagem: str = \"\",\n    titulo: str = \"Notificação\",\n    tipo: str = \"info\",\n    dados_extra: Optional[dict] = None,\n    canal: str = \"SISTEMA\",\n    prioridade: str = \"media\",\n    persistente: bool = False,\n    role: Optional[str] = None,",
+        "detail": "backend.app.websocket.socket_manager",
+        "documentation": {}
+    },
+    {
+        "label": "notify_production_orders",
+        "kind": 2,
+        "importPath": "backend.app.websocket.socket_manager",
+        "description": "backend.app.websocket.socket_manager",
+        "peekOfCode": "def notify_production_orders(pedido_id: int, pedido_numero: str, sectores: List[str]) -> bool:\n    \"\"\"\n    Notifica a geração de novas ordens de produção para os setores e operadores.\n    Emite os eventos WebSocket 'nova_ordem_producao', 'alerta_producao' e 'notificacao'\n    e persiste a notificação na base de dados para Cozinha e Pastelaria.\n    \"\"\"\n    sectores_str = \", \".join(sectores) if sectores else \"Geral\"\n    titulo = f\"Nova Produção: Pedido #{pedido_numero}\"\n    mensagem = f\"Ordens de produção geradas para o Pedido #{pedido_numero} nos sectores: {sectores_str}.\"\n    payload = {",
+        "detail": "backend.app.websocket.socket_manager",
+        "documentation": {}
+    },
+    {
+        "label": "emit_notification_read",
+        "kind": 2,
+        "importPath": "backend.app.websocket.socket_manager",
+        "description": "backend.app.websocket.socket_manager",
+        "peekOfCode": "def emit_notification_read(notificacao_id: int, user_id: int, lido_em: str) -> None:\n    \"\"\"Emite evento de atualização em tempo real indicando que a notificação foi lida\"\"\"\n    try:\n        socketio.emit(\"notificacao_lida\", {\n            \"notificacao_id\": notificacao_id,\n            \"user_id\": user_id,\n            \"lido_em\": lido_em\n        })\n    except Exception as e:\n        logger.debug(f\"Erro ao emitir notificacao_lida: {e}\")",
+        "detail": "backend.app.websocket.socket_manager",
+        "documentation": {}
+    },
+    {
+        "label": "emit_notification_deactivated",
+        "kind": 2,
+        "importPath": "backend.app.websocket.socket_manager",
+        "description": "backend.app.websocket.socket_manager",
+        "peekOfCode": "def emit_notification_deactivated(notificacao_id: int) -> None:\n    \"\"\"Emite evento indicando que a notificação foi desativada / arquivada\"\"\"\n    try:\n        socketio.emit(\"notificacao_desativada\", {\n            \"notificacao_id\": notificacao_id\n        })\n    except Exception as e:\n        logger.debug(f\"Erro ao emitir notificacao_desativada: {e}\")\ndef emit_sms_dispatched(sms_data: dict) -> None:\n    \"\"\"Emite evento quando um SMS/WhatsApp é enviado ou seu status é alterado\"\"\"",
+        "detail": "backend.app.websocket.socket_manager",
+        "documentation": {}
+    },
+    {
+        "label": "emit_sms_dispatched",
+        "kind": 2,
+        "importPath": "backend.app.websocket.socket_manager",
+        "description": "backend.app.websocket.socket_manager",
+        "peekOfCode": "def emit_sms_dispatched(sms_data: dict) -> None:\n    \"\"\"Emite evento quando um SMS/WhatsApp é enviado ou seu status é alterado\"\"\"\n    try:\n        socketio.emit(\"sms_atualizada\", sms_data)\n    except Exception as e:\n        logger.debug(f\"Erro ao emitir sms_atualizada: {e}\")\ndef get_active_connections_count() -> int:\n    \"\"\"Retorna total de conexões autenticadas ativas.\"\"\"\n    return sum(len(sids) for sids in _active_user_connections.values())\ndef get_connected_users_count() -> int:",
+        "detail": "backend.app.websocket.socket_manager",
+        "documentation": {}
+    },
+    {
+        "label": "get_active_connections_count",
+        "kind": 2,
+        "importPath": "backend.app.websocket.socket_manager",
+        "description": "backend.app.websocket.socket_manager",
+        "peekOfCode": "def get_active_connections_count() -> int:\n    \"\"\"Retorna total de conexões autenticadas ativas.\"\"\"\n    return sum(len(sids) for sids in _active_user_connections.values())\ndef get_connected_users_count() -> int:\n    \"\"\"Retorna o número de utilizadores distintos conectados.\"\"\"\n    return len(_active_user_connections)",
+        "detail": "backend.app.websocket.socket_manager",
+        "documentation": {}
+    },
+    {
+        "label": "get_connected_users_count",
+        "kind": 2,
+        "importPath": "backend.app.websocket.socket_manager",
+        "description": "backend.app.websocket.socket_manager",
+        "peekOfCode": "def get_connected_users_count() -> int:\n    \"\"\"Retorna o número de utilizadores distintos conectados.\"\"\"\n    return len(_active_user_connections)",
+        "detail": "backend.app.websocket.socket_manager",
+        "documentation": {}
+    },
+    {
+        "label": "logger",
+        "kind": 5,
+        "importPath": "backend.app.websocket.socket_manager",
+        "description": "backend.app.websocket.socket_manager",
+        "peekOfCode": "logger = logging.getLogger(__name__)\n# Single instance of SocketIO\n# Allowing CORS broadly for local dev, IP access (e.g. 192.168.100.141), and configured ports\nsocketio = SocketIO(\n    cors_allowed_origins=\"*\",\n    async_mode=\"threading\",\n    logger=False,\n    engineio_logger=False\n)\n# Connection Manager state",
         "detail": "backend.app.websocket.socket_manager",
         "documentation": {}
     },
@@ -14718,7 +15370,7 @@
         "kind": 5,
         "importPath": "backend.app.websocket.socket_manager",
         "description": "backend.app.websocket.socket_manager",
-        "peekOfCode": "socketio = SocketIO(\n    cors_allowed_origins=os.environ.get('SOCKETIO_CORS_ALLOWED_ORIGINS', '*'),\n    message_queue=os.environ.get('SOCKETIO_MESSAGE_QUEUE') or None,\n)\ndef production_room(role):\n    \"\"\"Return the canonical Socket.IO room for a production role.\"\"\"\n    return str(role).strip().lower().replace(' ', '_')\ndef send_notification(user_id, message, module=\"geral\"):\n    \"\"\"\n    Utility to emit notifications to a specific user's room",
+        "peekOfCode": "socketio = SocketIO(\n    cors_allowed_origins=\"*\",\n    async_mode=\"threading\",\n    logger=False,\n    engineio_logger=False\n)\n# Connection Manager state\n# Maps user_id (str) -> set of socket session IDs (sids)\n_active_user_connections: Dict[str, Set[str]] = {}\n# Maps sid -> user_id",
         "detail": "backend.app.websocket.socket_manager",
         "documentation": {}
     },
@@ -15011,11 +15663,20 @@
         "documentation": {}
     },
     {
+        "label": "FinanceiroTestConfig",
+        "kind": 6,
+        "importPath": "backend.tests.test_financeiro",
+        "description": "backend.tests.test_financeiro",
+        "peekOfCode": "class FinanceiroTestConfig:\n    TESTING = True\n    SQLALCHEMY_DATABASE_URI = \"sqlite:///:memory:\"\n    SQLALCHEMY_TRACK_MODIFICATIONS = False\n    SECRET_KEY = \"test-secret\"\n    JWT_SECRET_KEY = \"test-jwt-secret\"\n    SOCKETIO_CORS_ALLOWED_ORIGINS = \"*\"\n    SOCKETIO_MESSAGE_QUEUE = None\n    SKIP_DATABASE_INITIALIZATION = True\n@pytest.fixture",
+        "detail": "backend.tests.test_financeiro",
+        "documentation": {}
+    },
+    {
         "label": "test_app",
         "kind": 2,
         "importPath": "backend.tests.test_financeiro",
         "description": "backend.tests.test_financeiro",
-        "peekOfCode": "def test_app():\n    app = create_app()\n    app.config.update({\n        \"TESTING\": True,\n        \"SQLALCHEMY_DATABASE_URI\": \"mysql+pymysql://root:rootpassword@127.0.0.1:3306/sigi_erp_test\",\n        \"WTF_CSRF_ENABLED\": False\n    })\n    with app.app_context():\n        db.create_all()\n        user1 = User(",
+        "peekOfCode": "def test_app():\n    app = create_app(FinanceiroTestConfig)\n    with app.app_context():\n        db.create_all()\n        user1 = User(\n            name=\"Admin Financeiro\",\n            email=\"fin@test.com\",\n            password_hash=generate_password_hash(\"password\"),\n            role=RoleEnum.ADMINISTRADOR\n        )",
         "detail": "backend.tests.test_financeiro",
         "documentation": {}
     },
@@ -15024,7 +15685,7 @@
         "kind": 2,
         "importPath": "backend.tests.test_financeiro",
         "description": "backend.tests.test_financeiro",
-        "peekOfCode": "def client(test_app):\n    return test_app.test_client()\n@pytest.fixture\ndef token(client):\n    res = client.post('/api/v1/auth/login', json={\"email\": \"fin@test.com\", \"password\": \"password\"})\n    return res.get_json()[\"access_token\"]\ndef test_abrir_e_fechar_caixa(client, token):\n    headers = {\"Authorization\": f\"Bearer {token}\"}\n    res_abrir = client.post('/api/v1/financeiro/caixas/abrir', headers=headers, json={\"valor_inicial\": 100})\n    assert res_abrir.status_code == 201",
+        "peekOfCode": "def client(test_app):\n    return test_app.test_client()\n@pytest.fixture\ndef token(client):\n    res = client.post('/api/v1/auth/login', json={\"email\": \"fin@test.com\", \"password\": \"password\"})\n    return res.get_json()[\"access_token\"]\n@pytest.fixture\ndef token_outro_operador(client):\n    res = client.post('/api/v1/auth/login', json={\"email\": \"outro-fin@test.com\", \"password\": \"password\"})\n    return res.get_json()[\"access_token\"]",
         "detail": "backend.tests.test_financeiro",
         "documentation": {}
     },
@@ -15033,7 +15694,16 @@
         "kind": 2,
         "importPath": "backend.tests.test_financeiro",
         "description": "backend.tests.test_financeiro",
-        "peekOfCode": "def token(client):\n    res = client.post('/api/v1/auth/login', json={\"email\": \"fin@test.com\", \"password\": \"password\"})\n    return res.get_json()[\"access_token\"]\ndef test_abrir_e_fechar_caixa(client, token):\n    headers = {\"Authorization\": f\"Bearer {token}\"}\n    res_abrir = client.post('/api/v1/financeiro/caixas/abrir', headers=headers, json={\"valor_inicial\": 100})\n    assert res_abrir.status_code == 201\n    caixa_id = res_abrir.get_json()[\"id\"]\n    # Tenta abrir outro\n    res_abrir2 = client.post('/api/v1/financeiro/caixas/abrir', headers=headers, json={\"valor_inicial\": 50})",
+        "peekOfCode": "def token(client):\n    res = client.post('/api/v1/auth/login', json={\"email\": \"fin@test.com\", \"password\": \"password\"})\n    return res.get_json()[\"access_token\"]\n@pytest.fixture\ndef token_outro_operador(client):\n    res = client.post('/api/v1/auth/login', json={\"email\": \"outro-fin@test.com\", \"password\": \"password\"})\n    return res.get_json()[\"access_token\"]\ndef test_abrir_e_fechar_caixa(client, token):\n    headers = {\"Authorization\": f\"Bearer {token}\"}\n    res_abrir = client.post('/api/v1/financeiro/caixas/abrir', headers=headers, json={\"valor_inicial\": 100})",
+        "detail": "backend.tests.test_financeiro",
+        "documentation": {}
+    },
+    {
+        "label": "token_outro_operador",
+        "kind": 2,
+        "importPath": "backend.tests.test_financeiro",
+        "description": "backend.tests.test_financeiro",
+        "peekOfCode": "def token_outro_operador(client):\n    res = client.post('/api/v1/auth/login', json={\"email\": \"outro-fin@test.com\", \"password\": \"password\"})\n    return res.get_json()[\"access_token\"]\ndef test_abrir_e_fechar_caixa(client, token):\n    headers = {\"Authorization\": f\"Bearer {token}\"}\n    res_abrir = client.post('/api/v1/financeiro/caixas/abrir', headers=headers, json={\"valor_inicial\": 100})\n    assert res_abrir.status_code == 201\n    abertura = res_abrir.get_json()\n    assert abertura[\"success\"] is True\n    caixa_id = abertura[\"sessao\"][\"id\"]",
         "detail": "backend.tests.test_financeiro",
         "documentation": {}
     },
@@ -15042,7 +15712,7 @@
         "kind": 2,
         "importPath": "backend.tests.test_financeiro",
         "description": "backend.tests.test_financeiro",
-        "peekOfCode": "def test_abrir_e_fechar_caixa(client, token):\n    headers = {\"Authorization\": f\"Bearer {token}\"}\n    res_abrir = client.post('/api/v1/financeiro/caixas/abrir', headers=headers, json={\"valor_inicial\": 100})\n    assert res_abrir.status_code == 201\n    caixa_id = res_abrir.get_json()[\"id\"]\n    # Tenta abrir outro\n    res_abrir2 = client.post('/api/v1/financeiro/caixas/abrir', headers=headers, json={\"valor_inicial\": 50})\n    assert res_abrir2.status_code == 400\n    # Fecha o caixa\n    res_fechar = client.put(f'/api/v1/financeiro/caixas/{caixa_id}/fechar', headers=headers)",
+        "peekOfCode": "def test_abrir_e_fechar_caixa(client, token):\n    headers = {\"Authorization\": f\"Bearer {token}\"}\n    res_abrir = client.post('/api/v1/financeiro/caixas/abrir', headers=headers, json={\"valor_inicial\": 100})\n    assert res_abrir.status_code == 201\n    abertura = res_abrir.get_json()\n    assert abertura[\"success\"] is True\n    caixa_id = abertura[\"sessao\"][\"id\"]\n    # A fresh frontend load must recover the same persisted session.\n    res_sessao = client.get('/api/v1/financeiro/caixas/minha-sessao', headers=headers)\n    assert res_sessao.status_code == 200",
         "detail": "backend.tests.test_financeiro",
         "documentation": {}
     },
@@ -15051,7 +15721,25 @@
         "kind": 2,
         "importPath": "backend.tests.test_financeiro",
         "description": "backend.tests.test_financeiro",
-        "peekOfCode": "def test_movimentos_caixa(client, token):\n    headers = {\"Authorization\": f\"Bearer {token}\"}\n    res_abrir = client.post('/api/v1/financeiro/caixas/abrir', headers=headers, json={\"valor_inicial\": 100})\n    caixa_id = res_abrir.get_json()[\"id\"]\n    res_mov = client.post(f'/api/v1/financeiro/caixas/{caixa_id}/movimentos', headers=headers, json={\n        \"tipo\": \"Venda\",\n        \"valor\": 50,\n        \"descricao\": \"Venda Dinheiro\"\n    })\n    assert res_mov.status_code == 201",
+        "peekOfCode": "def test_movimentos_caixa(client, token):\n    headers = {\"Authorization\": f\"Bearer {token}\"}\n    res_abrir = client.post('/api/v1/financeiro/caixas/abrir', headers=headers, json={\"valor_inicial\": 100})\n    caixa_id = res_abrir.get_json()[\"sessao\"][\"id\"]\n    res_mov = client.post(f'/api/v1/financeiro/caixas/{caixa_id}/movimentos', headers=headers, json={\n        \"tipo\": \"Venda\",\n        \"valor\": 50,\n        \"descricao\": \"Venda Dinheiro\",\n        \"forma_pagamento\": \"Dinheiro\"\n    })",
+        "detail": "backend.tests.test_financeiro",
+        "documentation": {}
+    },
+    {
+        "label": "test_venda_pos_com_pagamento_na_caixa",
+        "kind": 2,
+        "importPath": "backend.tests.test_financeiro",
+        "description": "backend.tests.test_financeiro",
+        "peekOfCode": "def test_venda_pos_com_pagamento_na_caixa(client, token, test_app):\n    \"\"\"Uma FR direta deve liquidar o pagamento sem exigir que a venda seja de evento.\"\"\"\n    headers = {\"Authorization\": f\"Bearer {token}\"}\n    with test_app.app_context():\n        from app.models.financeiro import FormaPagamento\n        db.session.add(FormaPagamento(nome=\"Dinheiro\"))\n        db.session.commit()\n    abertura = client.post('/api/v1/financeiro/caixas/abrir', headers=headers, json={\"valor_inicial\": 100})\n    assert abertura.status_code == 201\n    venda = client.post('/api/v1/vendas', headers=headers, json={",
+        "detail": "backend.tests.test_financeiro",
+        "documentation": {}
+    },
+    {
+        "label": "test_outro_operador_nao_pode_movimentar_ou_fechar",
+        "kind": 2,
+        "importPath": "backend.tests.test_financeiro",
+        "description": "backend.tests.test_financeiro",
+        "peekOfCode": "def test_outro_operador_nao_pode_movimentar_ou_fechar(client, token, token_outro_operador):\n    headers_proprietario = {\"Authorization\": f\"Bearer {token}\"}\n    headers_outro = {\"Authorization\": f\"Bearer {token_outro_operador}\"}\n    abertura = client.post('/api/v1/financeiro/caixas/abrir', headers=headers_proprietario, json={\"valor_inicial\": 100})\n    caixa_id = abertura.get_json()[\"sessao\"][\"id\"]\n    movimento = client.post(f'/api/v1/financeiro/caixas/{caixa_id}/movimentos', headers=headers_outro, json={\n        \"caixa_id\": caixa_id,\n        \"tipo\": \"Sangria\",\n        \"valor\": 10,\n        \"descricao\": \"Tentativa indevida\"",
         "detail": "backend.tests.test_financeiro",
         "documentation": {}
     },

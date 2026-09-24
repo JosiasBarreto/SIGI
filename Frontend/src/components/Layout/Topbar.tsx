@@ -9,7 +9,7 @@ import { cn } from "../../lib/utils";
 export function Topbar({ toggleSidebar }: { toggleSidebar: () => void }) {
   const { theme, toggleTheme } = useTheme();
   const { user } = useAuth();
-  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  const { notifications, unreadCount, markAsRead, markAllAsRead, addNotification } = useNotifications();
   const [showNotif, setShowNotif] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
 
@@ -116,37 +116,37 @@ export function Topbar({ toggleSidebar }: { toggleSidebar: () => void }) {
                 <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider block">🧪 TESTAR EVENTOS DE SOCKET.IO</span>
                 <div className="grid grid-cols-2 gap-1">
                   <button 
-                    onClick={() => useNotifications().addNotification({ title: 'Novo pedido recebido', message: 'Cliente Sabor Imbatível registou Pedido #201.', type: 'info' })}
+                    onClick={() => addNotification({ title: 'Novo pedido recebido', message: 'Cliente Sabor Imbatível registou Pedido #201.', type: 'info' })}
                     className="px-1.5 py-1 bg-white hover:bg-gray-50 text-[8px] font-bold rounded shadow-xs transition border text-gray-700 text-left truncate"
                   >
                     1. Novo Pedido
                   </button>
                   <button 
-                    onClick={() => useNotifications().addNotification({ title: 'Pedido Concluído (Cozinha)', message: 'A Ordem de Produção de Bolo de Cenoura foi finalizada.', type: 'success' })}
+                    onClick={() => addNotification({ title: 'Pedido Concluído (Cozinha)', message: 'A Ordem de Produção de Bolo de Cenoura foi finalizada.', type: 'success' })}
                     className="px-1.5 py-1 bg-white hover:bg-gray-50 text-[8px] font-bold rounded shadow-xs transition border text-gray-700 text-left truncate"
                   >
                     2. Pedido Concluído
                   </button>
                   <button 
-                    onClick={() => useNotifications().addNotification({ title: 'Nova Requisição Criada', message: 'OP #12 solicitou 10kg de Trigo e ovos.', type: 'warning' })}
+                    onClick={() => addNotification({ title: 'Nova Requisição Criada', message: 'OP #12 solicitou 10kg de Trigo e ovos.', type: 'warning' })}
                     className="px-1.5 py-1 bg-white hover:bg-gray-50 text-[8px] font-bold rounded shadow-xs transition border text-gray-700 text-left truncate"
                   >
                     3. Nova Requisição
                   </button>
                   <button 
-                    onClick={() => useNotifications().addNotification({ title: 'Alerta de Stock Crítico', message: 'Matéria-Prima "Sal iodado" atingiu limite de segurança.', type: 'error' })}
+                    onClick={() => addNotification({ title: 'Alerta de Stock Crítico', message: 'Matéria-Prima "Sal iodado" atingiu limite de segurança.', type: 'error' })}
                     className="px-1.5 py-1 bg-white hover:bg-gray-50 text-[8px] font-bold rounded shadow-xs transition border text-gray-700 text-left truncate"
                   >
                     4. Stock Crítico
                   </button>
                   <button 
-                    onClick={() => useNotifications().addNotification({ title: 'Entrega de Peça Concluída', message: 'O Motorista entregou o pedido do cliente Sagrada Esperança.', type: 'success' })}
+                    onClick={() => addNotification({ title: 'Entrega de Peça Concluída', message: 'O Motorista entregou o pedido do cliente Sagrada Esperança.', type: 'success' })}
                     className="px-1.5 py-1 bg-white hover:bg-gray-50 text-[8px] font-bold rounded shadow-xs transition border text-gray-700 text-left truncate"
                   >
                     5. Entrega Concluída
                   </button>
                   <button 
-                    onClick={() => useNotifications().addNotification({ title: 'Fecho de Caixa POS', message: 'Turno fechado por Carla. Fundo final conciliado.', type: 'info' })}
+                    onClick={() => addNotification({ title: 'Fecho de Caixa POS', message: 'Turno fechado por Carla. Fundo final conciliado.', type: 'info' })}
                     className="px-1.5 py-1 bg-white hover:bg-gray-50 text-[8px] font-bold rounded shadow-xs transition border text-gray-700 text-left truncate"
                   >
                     6. Fecho Caixa

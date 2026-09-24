@@ -12,6 +12,25 @@ from datetime import datetime
 financeiro_bp = Blueprint('financeiro', __name__)
 financeiro_service = FinanceiroService()
 
+def caixa_response(caixa, aberta=None, status=200):
+    """Stable session contract; legacy keys remain during the frontend migration."""
+    sessao = CaixaSchema().dump(caixa) if caixa else None
+    is_open = caixa is not None if aberta is None else aberta
+    return jsonify({
+        "success": True,
+        "aberta": is_open,
+        "sessao": sessao,
+        "aberto": is_open,
+        "caixa": sessao,
+    }), status
+
+def caixa_sessao_response(sessao):
+    """Small, stable response used by the frequently-polled POS endpoint."""
+    return jsonify({"success": True, "aberta": bool(sessao), "sessao": sessao}), 200
+
+def caixa_error(message, status=400, **extra):
+    return jsonify({"success": False, "message": message, "msg": message, **extra}), status
+
 def build_pagination(repo, schema, request):
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 10, type=int)
@@ -45,49 +64,68 @@ def abrir_caixa():
         data = request.get_json()
         valor_inicial = data.get('valor_inicial', 0)
     except Exception:
-        return jsonify({"msg": "Dados inválidos"}), 400
+        return caixa_error("Dados inválidos")
         
     user_id = get_jwt_identity()
     result, error = financeiro_service.abrir_caixa(valor_inicial, user_id)
-    if error: return jsonify({"msg": error}), 400
-    return jsonify(CaixaSchema().dump(result)), 201
+    if error:
+        existente = financeiro_service.obter_caixa_aberto(user_id)
+        return caixa_error(error, 409 if existente else 400, sessao_id=existente.id if existente else None)
+    return caixa_response(result, aberta=True, status=201)
+
+@financeiro_bp.route('/caixas/minha-sessao', methods=['GET'])
+@jwt_required()
+@requires_roles('Administrador', 'Financeiro', 'Atendimento')
+def get_minha_sessao_caixa():
+    """Return only the authenticated operator's open cash session.
+
+    The client must never infer its active session from another operator's
+    session.  A stable, explicit contract also avoids probing non-existent
+    routes before every POS operation.
+    """
+    sessao = financeiro_service.obter_resumo_caixa_aberto(get_jwt_identity())
+    return caixa_sessao_response(sessao)
 
 @financeiro_bp.route('/caixas/<int:id>/fechar', methods=['PUT'])
 @jwt_required()
 @requires_roles('Administrador', 'Financeiro', 'Atendimento')
 def fechar_caixa(id):
     user_id = get_jwt_identity()
-    data = request.json or {}
+    # A simple close may intentionally have no JSON body.  Do not let Flask
+    # turn that normal request into a 415 Unsupported Media Type.
+    data = request.get_json(silent=True) or {}
     if 'valor_declarado_dinheiro' in data:
         result, error = financeiro_service.fechar_caixa_detalhado(id, data, user_id)
     else:
         result, error = financeiro_service.fechar_caixa(id, user_id)
-    if error: return jsonify({"msg": error}), 400
-    return jsonify(CaixaSchema().dump(result)), 200
+    if error: return caixa_error(error)
+    return caixa_response(result, aberta=False)
 
 @financeiro_bp.route('/caixas/<int:id>/movimentos', methods=['POST'])
 @jwt_required()
+@requires_roles('Administrador', 'Financeiro', 'Atendimento')
 def registrar_movimento(id):
     try:
         data = MovimentoCaixaSchema().load(request.get_json())
     except ValidationError as err:
-        return jsonify({"msg": "Validation error", "errors": err.messages}), 400
+        return caixa_error("Erro de validação", errors=err.messages)
         
     user_id = get_jwt_identity()
     try:
         result, error = financeiro_service.registrar_movimento(id, data, user_id)
-        if error: return jsonify({"msg": error}), 400
+        if error: return caixa_error(error)
         return jsonify(MovimentoCaixaSchema().dump(result)), 201
     except CaixaEncerradoException as e:
-        return jsonify({"msg": str(e)}), 400
+        return caixa_error(str(e))
 
 
 @financeiro_bp.route('/caixas/<int:id>/valores-esperados', methods=['GET'])
 @jwt_required()
+@requires_roles('Administrador', 'Financeiro', 'Atendimento')
 def get_valores_esperados(id):
     user_id = get_jwt_identity()
-    result, error = financeiro_service.get_valores_esperados(id)
-    if error: return jsonify({"msg": error}), 400
+    result, error = financeiro_service.get_valores_esperados(id, user_id)
+    if error: return caixa_error(error)
     return jsonify(result), 200
 
 # -- CONTAS RECEBER --

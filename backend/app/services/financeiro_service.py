@@ -1,4 +1,5 @@
 import uuid
+import logging
 from datetime import datetime
 from sqlalchemy import func
 from app.models.caixa import Caixa, MovimentoCaixa, EstadoCaixa, TipoMovimentoCaixa
@@ -11,7 +12,10 @@ from app.repositories.financeiro_repos import (
     ContaPagarRepository, ReceitaRepository, DespesaRepository
 )
 from app.services.audit_service import AuditService
+from app.websocket.socket_manager import send_notification, socketio
 from app.core.database import db
+
+logger = logging.getLogger(__name__)
 
 class CaixaEncerradoException(Exception):
     pass
@@ -25,45 +29,91 @@ class FinanceiroService:
         self.receita_repo = ReceitaRepository()
         self.despesa_repo = DespesaRepository()
 
+    @staticmethod
+    def _normalizar_utilizador_id(utilizador_id):
+        """JWT identities are strings, while the database stores user IDs as ints."""
+        try:
+            return int(utilizador_id)
+        except (TypeError, ValueError):
+            return utilizador_id
+
     # --- CAIXA ---
     def abrir_caixa(self, valor_inicial, utilizador_id):
-        # Verifica se O UTILIZADOR AUTENTICADO já possui uma caixa aberta
-        caixa_aberto = db.session.query(Caixa).filter_by(
-            estado=EstadoCaixa.ABERTO,
-            utilizador_abertura_id=utilizador_id
-        ).first()
-        if caixa_aberto:
-            return None, f"O utilizador já possui uma sessão de caixa aberta ({caixa_aberto.numero}). Feche a sessão atual antes de abrir uma nova."
-            
-        numero = f"CX-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
-        caixa = Caixa(
-            numero=numero,
-            valor_inicial=valor_inicial,
-            utilizador_abertura_id=utilizador_id,
-            estado=EstadoCaixa.ABERTO,
-            data_abertura=datetime.utcnow()
-        )
-        self.caixa_repo.create(caixa)
-        
-        # Movimento de abertura
-        mov = MovimentoCaixa(
-            caixa_id=caixa.id,
-            tipo=TipoMovimentoCaixa.ABERTURA,
-            valor=valor_inicial,
-            descricao="Abertura de Caixa",
-            utilizador_id=utilizador_id
-        )
-        self.movimento_repo.create(mov)
+        utilizador_id = self._normalizar_utilizador_id(utilizador_id)
+        try:
+            # Locking the owner row serializes concurrent open requests for the
+            # same operator, including the case where no open cash row exists.
+            from app.models.user import User
+            db.session.query(User).filter_by(id=utilizador_id).with_for_update().first()
+            caixa_aberto = db.session.query(Caixa).filter_by(
+                estado=EstadoCaixa.ABERTO,
+                utilizador_abertura_id=utilizador_id
+            ).first()
+            if caixa_aberto:
+                return None, f"O utilizador já possui uma sessão de caixa aberta ({caixa_aberto.numero}). Feche a sessão atual antes de abrir uma nova."
+
+            numero = f"CX-{datetime.utcnow().strftime('%Y%m%d%H%M%S%f')}"
+            caixa = Caixa(
+                numero=numero,
+                valor_inicial=valor_inicial,
+                utilizador_abertura_id=utilizador_id,
+                estado=EstadoCaixa.ABERTO,
+                data_abertura=datetime.utcnow()
+            )
+            db.session.add(caixa)
+            db.session.flush()
+            db.session.add(MovimentoCaixa(
+                caixa_id=caixa.id,
+                tipo=TipoMovimentoCaixa.ABERTURA,
+                valor=valor_inicial,
+                descricao="Abertura de Caixa",
+                utilizador_id=utilizador_id,
+                forma_pagamento="Dinheiro"
+            ))
+            db.session.commit()
+        except Exception as exc:
+            db.session.rollback()
+            logger.exception("[CAIXA] operação=ABRIR utilizador=%s falhou", utilizador_id)
+            return None, "Não foi possível abrir a sessão de caixa."
+
+        logger.info("[CAIXA] operação=ABRIR utilizador=%s sessao=%s", utilizador_id, caixa.id)
         AuditService.log_action(utilizador_id, "ABRIR", "caixas", caixa.id)
+        send_notification(utilizador_id, f"Caixa {caixa.numero} aberto com sucesso.", "Caixa")
         return caixa, None
 
     def obter_caixa_aberto(self, utilizador_id):
-        return db.session.query(Caixa).filter_by(
+        utilizador_id = self._normalizar_utilizador_id(utilizador_id)
+        caixa = db.session.query(Caixa).filter_by(
             estado=EstadoCaixa.ABERTO,
             utilizador_abertura_id=utilizador_id
         ).first()
+        logger.info("[CAIXA] operação=CONSULTAR_ABERTA utilizador=%s sessao=%s", utilizador_id, caixa.id if caixa else None)
+        return caixa
+
+    def obter_resumo_caixa_aberto(self, utilizador_id):
+        """Fetch the POS session without loading its movement history."""
+        utilizador_id = self._normalizar_utilizador_id(utilizador_id)
+        from app.models.user import User
+        row = db.session.query(
+            Caixa.id, Caixa.numero, Caixa.estado, Caixa.data_abertura,
+            Caixa.valor_inicial, User.name.label('operador')
+        ).outerjoin(User, User.id == Caixa.utilizador_abertura_id).filter(
+            Caixa.estado == EstadoCaixa.ABERTO,
+            Caixa.utilizador_abertura_id == utilizador_id,
+        ).first()
+        if not row:
+            return None
+        return {
+            "id": row.id,
+            "numero": row.numero,
+            "estado": row.estado.value if hasattr(row.estado, 'value') else row.estado,
+            "data_abertura": row.data_abertura.isoformat() if row.data_abertura else None,
+            "valor_inicial": str(row.valor_inicial or 0),
+            "operador": row.operador,
+        }
 
     def fechar_caixa(self, caixa_id, utilizador_id):
+        utilizador_id = self._normalizar_utilizador_id(utilizador_id)
         caixa = self.caixa_repo.get_by_id(caixa_id)
         if not caixa:
             return None, "Caixa não encontrado."
@@ -89,11 +139,15 @@ class FinanceiroService:
         caixa.data_fecho = datetime.utcnow()
         caixa.utilizador_fecho_id = utilizador_id
         db.session.commit()
-        
+        logger.info("[CAIXA] operação=FECHAR utilizador=%s sessao=%s", utilizador_id, caixa.id)
         AuditService.log_action(utilizador_id, "FECHAR", "caixas", caixa.id)
+        payload = {"caixa_id": caixa.id, "numero": caixa.numero, "valor_final": float(caixa.valor_final or 0)}
+        send_notification(utilizador_id, f"Caixa {caixa.numero} fechado. Saldo final: {float(caixa.valor_final or 0):.2f}.", "Caixa")
+        socketio.emit('caixa_fechado', payload, room=f"user_{utilizador_id}")
         return caixa, None
 
     def get_valores_esperados(self, caixa_id, utilizador_id=None):
+        utilizador_id = self._normalizar_utilizador_id(utilizador_id)
         caixa = self.caixa_repo.get_by_id(caixa_id)
         if not caixa:
             return None, "Caixa não encontrado."
@@ -138,6 +192,7 @@ class FinanceiroService:
         }, None
 
     def fechar_caixa_detalhado(self, caixa_id, dados_fecho, utilizador_id):
+        utilizador_id = self._normalizar_utilizador_id(utilizador_id)
         caixa = self.caixa_repo.get_by_id(caixa_id)
         if not caixa:
             return None, "Caixa não encontrado."
@@ -209,10 +264,15 @@ class FinanceiroService:
         caixa.utilizador_fecho_id = utilizador_id
 
         db.session.commit()
+        logger.info("[CAIXA] operação=FECHAR_DETALHADO utilizador=%s sessao=%s", utilizador_id, caixa.id)
         AuditService.log_action(utilizador_id, "FECHAR_DETALHADO", "caixas", caixa.id)
+        payload = {"caixa_id": caixa.id, "numero": caixa.numero, "valor_final": float(caixa.valor_final or 0)}
+        send_notification(utilizador_id, f"Caixa {caixa.numero} fechado e conciliado.", "Caixa")
+        socketio.emit('caixa_fechado', payload, room=f"user_{utilizador_id}")
         return caixa, None
 
     def registrar_movimento(self, caixa_id, data, utilizador_id):
+        utilizador_id = self._normalizar_utilizador_id(utilizador_id)
         caixa = self.caixa_repo.get_by_id(caixa_id)
         if not caixa:
             raise CaixaEncerradoException("Caixa não encontrado.")
@@ -225,7 +285,10 @@ class FinanceiroService:
         data['utilizador_id'] = utilizador_id
         mov = MovimentoCaixa(**data)
         self.movimento_repo.create(mov)
+        logger.info("[CAIXA] operação=MOVIMENTO utilizador=%s sessao=%s tipo=%s", utilizador_id, caixa.id, mov.tipo)
         AuditService.log_action(utilizador_id, "CREATE", "movimentos_caixa", mov.id)
+        tipo = mov.tipo.value if hasattr(mov.tipo, 'value') else str(mov.tipo)
+        send_notification(utilizador_id, f"{tipo} de caixa registado: {float(mov.valor or 0):.2f}.", "Caixa")
         return mov, None
 
     # --- CONTAS A RECEBER ---

@@ -140,46 +140,16 @@ export default function PedidoCaixaEventos({ token, getHeaders, showFeedback }: 
 
   const fetchCaixas = async () => {
     try {
-      const userStr = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
-      const currentUser = userStr ? JSON.parse(userStr) : null;
-      const currentUserId = currentUser?.id;
+      const res = await fetch(`${API_URL}/financeiro/caixas/minha-sessao`, { headers: getHeaders() });
+      if (!res.ok) throw new Error('Não foi possível obter a sessão de caixa.');
 
-      // Tentar endpoint de sessão do utilizador
-      try {
-        const resMinha = await fetch(`${API_URL}/financeiro/caixas/minha-sessao`, { headers: getHeaders() });
-        if (resMinha.ok) {
-          const dataMinha = await resMinha.json();
-          const sessao = dataMinha?.data || dataMinha;
-          if (sessao && (sessao.estado === 'Aberto' || sessao.estado === 'ABERTA')) {
-            setActiveCaixa(sessao);
-            return;
-          }
-        }
-      } catch {}
-
-      const res = await fetch(`${API_URL}/financeiro/caixas`, { headers: getHeaders() });
-      if (res.ok) {
-        const data = await res.json();
-        const list = Array.isArray(data) ? data : data.items || [];
-        setCaixas(list);
-
-        if (!currentUser) {
-          setActiveCaixa(null);
-          return;
-        }
-
-        const openSession = list.find((c: any) => {
-          const isAberto = c.estado === 'Aberto' || c.estado === 'ABERTA';
-          if (!isAberto) return false;
-          const uid = c.operador_id ?? c.usuario_id ?? c.user_id ?? c.criado_por;
-          if (currentUserId && uid != null) return String(uid) === String(currentUserId);
-          if (currentUser.email && c.operador_email) return String(c.operador_email).toLowerCase() === String(currentUser.email).toLowerCase();
-          return false;
-        });
-
-        setActiveCaixa(openSession || null);
-      }
+      const data = await res.json();
+      const envelope = data?.data ?? data;
+      const sessao = envelope?.sessao ?? envelope?.caixa ?? null;
+      const aberta = envelope?.aberta ?? envelope?.aberto ?? false;
+      setActiveCaixa(aberta && sessao ? sessao : null);
     } catch (e) {
+      setActiveCaixa(null);
       console.error("Erro ao carregar sessões de caixa:", e);
     }
   };
@@ -414,6 +384,7 @@ export default function PedidoCaixaEventos({ token, getHeaders, showFeedback }: 
       const vendaPayload = {
         tipo_documento: 'FR', // Factura Recibo por padrão para POS na hora
         cliente_id: selectedClienteId ? parseInt(selectedClienteId) : null,
+        evento_id: null,
         observacoes: observacoesVenda,
         itens: cart.map(item => ({
           item_tipo: 'Produto',
@@ -427,11 +398,19 @@ export default function PedidoCaixaEventos({ token, getHeaders, showFeedback }: 
       };
 
       try {
-        const res = await fetch(`${API_URL}/vendas`, {
+        let res = await fetch(`${API_URL}/vendas`, {
           method: 'POST',
           headers: { ...getHeaders(), 'Content-Type': 'application/json' },
           body: JSON.stringify(vendaPayload)
         });
+
+        if (!res.ok) {
+          res = await fetch(`${API_URL}/comercial/vendas`, {
+            method: 'POST',
+            headers: { ...getHeaders(), 'Content-Type': 'application/json' },
+            body: JSON.stringify(vendaPayload)
+          });
+        }
 
         if (res.ok) {
           const created = await res.json();
@@ -611,7 +590,7 @@ export default function PedidoCaixaEventos({ token, getHeaders, showFeedback }: 
   const handleAbrirCaixa = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch(`${API_URL}/financeiro/caixas`, {
+      const res = await fetch(`${API_URL}/financeiro/caixas/abrir`, {
         method: 'POST',
         headers: { ...getHeaders(), 'Content-Type': 'application/json' },
         body: JSON.stringify({ valor_inicial: parseFloat(fundoAbertura || '0') })

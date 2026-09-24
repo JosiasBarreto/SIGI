@@ -1,54 +1,91 @@
-import React, { useState, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { productionService, productService, requestService } from "../services";
-import { Play, CheckCircle, Clock, ChefHat, Timer, AlertCircle, Undo2, Utensils, Cake, Wine, CheckCheck, User, Filter } from "lucide-react";
-import { cn } from "../lib/utils";
-import { toast } from "react-toastify";
-import Modal from "../components/Common/Modal";
+import React, { useState, useEffect, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { productionService, productService, requestService } from '../services';
+import {
+  ChefHat,
+  Filter,
+  Search,
+  Calendar,
+  LayoutGrid,
+  Columns3,
+  RefreshCw,
+  Utensils,
+  Cake,
+  Wine,
+  AlertCircle,
+  Clock,
+  Play,
+  CheckCircle,
+  CheckCheck,
+  Package,
+  Layers,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight
+} from 'lucide-react';
+import { cn } from '../lib/utils';
+import { toast } from 'react-toastify';
+import { ProductionOrderCard, extractOrderItems } from './Producao/ProductionOrderCard';
+import { ProductionOrderModal } from './Producao/ProductionOrderModal';
 
-type SectorType = "Todos" | "Cozinha" | "Pastelaria" | "Bar";
+type SectorType = 'Todos' | 'Cozinha' | 'Pastelaria' | 'Bar';
+type StateTabType = 'todos' | 'pendente' | 'producao' | 'pronto' | 'entregue';
+type ViewModeType = 'tabs' | 'kanban';
 
 export default function Producao() {
   const queryClient = useQueryClient();
   const [now, setNow] = useState(new Date());
-  const [selectedSector, setSelectedSector] = useState<SectorType>("Todos");
+  const [selectedSector, setSelectedSector] = useState<SectorType>('Todos');
+  const [selectedStateTab, setSelectedStateTab] = useState<StateTabType>('todos');
+  const [viewMode, setViewMode] = useState<ViewModeType>('tabs');
+  const [searchTerm, setSearchTerm] = useState('');
   const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [page, setPage] = useState(1);
-  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [pageSize, setPageSize] = useState(12);
+  const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
 
-  // Update clock every minute for time-based alerts
+  // Atualização periódica do relógio para atualizar tempos de espera e alertas de atraso
   useEffect(() => {
-    const interval = setInterval(() => setNow(new Date()), 60000);
+    const interval = setInterval(() => setNow(new Date()), 30000);
     return () => clearInterval(interval);
   }, []);
 
-  const { data: ordersResponse, isLoading } = useQuery({
-    queryKey: ["production-orders", selectedSector, selectedDate, page],
-    queryFn: () => productionService.getAll({ 
-      sector: selectedSector !== "Todos" ? selectedSector : undefined, 
-      data: selectedDate,
-      page,
-      per_page: 40,
-    }),
-    refetchInterval: 10000, // Real-time polling
+  // Redefinir página para 1 quando os filtros mudam
+  useEffect(() => {
+    setPage(1);
+  }, [selectedSector, selectedDate, selectedStateTab, searchTerm, pageSize]);
+
+  // Consulta das Ordens de Produção (limite de busca amplo para permitir filtragem fluida)
+  const { data: ordersResponse, isLoading, isFetching, refetch } = useQuery({
+    queryKey: ['production-orders', selectedSector, selectedDate],
+    queryFn: () =>
+      productionService.getAll({
+        sector: selectedSector !== 'Todos' ? selectedSector : undefined,
+        data: selectedDate,
+        per_page: 500
+      }),
+    refetchInterval: 8000 // Polling resiliente
   });
 
+  // Consulta do Catálogo de Produtos
   const { data: productsResponse } = useQuery({
-    queryKey: ["products"],
-    queryFn: () => productService.getAll({ per_page: 5000 }),
+    queryKey: ['products'],
+    queryFn: () => productService.getAll({ per_page: 5000 })
   });
 
+  // Consulta das Requisições de Armazém
   const { data: requisitionsResponse } = useQuery({
-    queryKey: ["requisitions-all"],
+    queryKey: ['requisitions-all'],
     queryFn: () => requestService.getAll({ per_page: 500 }).catch(() => ({ items: [] })),
-    refetchInterval: 10000,
+    refetchInterval: 12000
   });
 
   const orders = ordersResponse?.items || [];
   const products = productsResponse?.items || [];
   const requisitionsList = requisitionsResponse?.items || [];
 
-  const requisitionsMap = React.useMemo(() => {
+  const requisitionsMap = useMemo(() => {
     const map: Record<string | number, any> = {};
     requisitionsList.forEach((r: any) => {
       map[r.id] = r;
@@ -56,18 +93,23 @@ export default function Producao() {
     return map;
   }, [requisitionsList]);
 
+  // Mutação para Atualizar Estado da Ordem
   const updateStatusMutation = useMutation({
     mutationFn: ({ id, estado }: { id: string | number; estado: string }) =>
       productionService.updateEstado(id, estado),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["production-orders"] });
-      const estadoVisivel = 
-        variables.estado === "Em Producao" ? "Em Produção" : 
-        variables.estado === "Entregue" ? "Entregue / Concluído" : variables.estado;
-      toast.success(`Ordem #${variables.id} movida para: ${estadoVisivel}`);
+      queryClient.invalidateQueries({ queryKey: ['production-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['pedidos'] });
+      const estadoVisivel =
+        variables.estado === 'Em Producao'
+          ? 'Em Preparação'
+          : variables.estado === 'Entregue'
+            ? 'Entregue / Concluído'
+            : variables.estado;
+      toast.success(`Ordem #${variables.id} atualizada para: ${estadoVisivel}`);
     },
     onError: (err: any) => {
-      toast.error(err?.message || "Erro ao atualizar ordem de produção.");
+      toast.error(err?.message || 'Erro ao atualizar estado da ordem de produção.');
     }
   });
 
@@ -75,370 +117,710 @@ export default function Producao() {
     updateStatusMutation.mutate({ id, estado: novoEstado });
   };
 
-  const productionOrders = orders || [];
+  // Normalizador de estados
   const normalizeEstadoProducao = (estado: any) => {
-    const raw = String(estado?.value || estado || "").trim();
+    const raw = String(estado?.value || estado || '').trim();
     const key = raw
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
       .toUpperCase()
-      .replace(/[\s-]+/g, "_");
+      .replace(/[\s-]+/g, '_');
 
-    if (key === "PENDENTE") return "Pendente";
-    if (key === "EM_PRODUCAO" || key === "EM_PREPARACAO") return "Em Producao";
-    if (key === "PRONTO") return "Pronto";
-    if (key === "ENTREGUE" || key === "CONCLUIDO") return "Entregue";
+    if (key === 'PENDENTE') return 'Pendente';
+    if (key === 'EM_PRODUCAO' || key === 'EM_PREPARACAO') return 'Em Producao';
+    if (key === 'PRONTO') return 'Pronto';
+    if (key === 'ENTREGUE' || key === 'CONCLUIDO') return 'Entregue';
     return raw;
   };
-  
-  // Filtering by state
-  const pendentes = productionOrders.filter((o: any) => normalizeEstadoProducao(o.estado || o.status) === "Pendente");
-  const emProducao = productionOrders.filter((o: any) => normalizeEstadoProducao(o.estado || o.status) === "Em Producao");
-  const prontos = productionOrders.filter((o: any) => normalizeEstadoProducao(o.estado || o.status) === "Pronto");
-  const entregues = productionOrders.filter((o: any) => normalizeEstadoProducao(o.estado || o.status) === "Entregue");
 
-  // Format Helper
-  const getTempoDecorrido = (dataStr: string, type: string) => {
-    if (!dataStr) return { mins: 0, text: type === 'pendente' ? "Aguardando início" : "Sem registo" };
-    const date = new Date(dataStr);
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    if (diffMins < 0) return { mins: 0, text: "Agendada" };
-    return {
-      mins: diffMins, 
-      text: diffMins < 1 ? "Agora" : `${diffMins} min` 
-    };
+  // Filtragem por pesquisa de texto
+  const filteredOrders = useMemo(() => {
+    if (!searchTerm.trim()) return orders;
+    const term = searchTerm.toLowerCase().trim();
+
+    return orders.filter((o: any) => {
+      const num = String(o.numero || o.codigo || o.id || '').toLowerCase();
+      const ped = String(o.pedido_numero || o.pedido_id || '').toLowerCase();
+      const cli = String(o.cliente_nome || o.cliente || '').toLowerCase();
+      const obs = String(o.observacoes || o.observacoes_pedido || '').toLowerCase();
+      const mesa = String(o.mesa || o.local || '').toLowerCase();
+
+      // Busca nos itens da ordem
+      const items = extractOrderItems(o, products);
+      const itemsMatch = items.some((it: any) => it.nome.toLowerCase().includes(term));
+
+      return (
+        num.includes(term) ||
+        ped.includes(term) ||
+        cli.includes(term) ||
+        obs.includes(term) ||
+        mesa.includes(term) ||
+        itemsMatch
+      );
+    });
+  }, [orders, searchTerm, products]);
+
+  // Separação por estados
+  const pendentes = useMemo(
+    () => filteredOrders.filter((o: any) => normalizeEstadoProducao(o.estado || o.status) === 'Pendente'),
+    [filteredOrders]
+  );
+  const emProducao = useMemo(
+    () => filteredOrders.filter((o: any) => normalizeEstadoProducao(o.estado || o.status) === 'Em Producao'),
+    [filteredOrders]
+  );
+  const prontos = useMemo(
+    () => filteredOrders.filter((o: any) => normalizeEstadoProducao(o.estado || o.status) === 'Pronto'),
+    [filteredOrders]
+  );
+  const entregues = useMemo(
+    () => filteredOrders.filter((o: any) => normalizeEstadoProducao(o.estado || o.status) === 'Entregue'),
+    [filteredOrders]
+  );
+
+  // Contagem de atrasados (> 15 min em espera)
+  const atrasadosCount = useMemo(() => {
+    return pendentes.filter((o: any) => {
+      const ts = o.created_at;
+      if (!ts) return false;
+      const diffMs = now.getTime() - new Date(ts).getTime();
+      return Math.floor(diffMs / 60000) >= 15;
+    }).length;
+  }, [pendentes, now]);
+
+  // Lista de ordens para a aba ativa
+  const activeTabOrders = useMemo(() => {
+    switch (selectedStateTab) {
+      case 'pendente':
+        return pendentes.map((o: any) => ({ order: o, type: 'pendente' as const }));
+      case 'producao':
+        return emProducao.map((o: any) => ({ order: o, type: 'producao' as const }));
+      case 'pronto':
+        return prontos.map((o: any) => ({ order: o, type: 'pronto' as const }));
+      case 'entregue':
+        return entregues.map((o: any) => ({ order: o, type: 'entregue' as const }));
+      case 'todos':
+      default:
+        return [
+          ...pendentes.map((o: any) => ({ order: o, type: 'pendente' as const })),
+          ...emProducao.map((o: any) => ({ order: o, type: 'producao' as const })),
+          ...prontos.map((o: any) => ({ order: o, type: 'pronto' as const })),
+          ...entregues.map((o: any) => ({ order: o, type: 'entregue' as const }))
+        ];
+    }
+  }, [selectedStateTab, pendentes, emProducao, prontos, entregues]);
+
+  // Paginação da listagem
+  const totalCount = activeTabOrders.length;
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [totalPages, page]);
+
+  const startIndex = (page - 1) * pageSize;
+  const endIndex = Math.min(startIndex + pageSize, totalCount);
+  const paginatedOrders = activeTabOrders.slice(startIndex, endIndex);
+
+  // Quick Date presets
+  const setToday = () => {
+    setSelectedDate(new Date().toISOString().slice(0, 10));
+  };
+
+  const setYesterday = () => {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    setSelectedDate(d.toISOString().slice(0, 10));
   };
 
   const sectorIcons = {
-    Cozinha: <Utensils size={16} className="text-amber-500" />,
-    Pastelaria: <Cake size={16} className="text-pink-500" />,
-    Bar: <Wine size={16} className="text-purple-500" />,
-    Todos: <Filter size={16} className="text-gray-500" />
+    Cozinha: <Utensils size={14} className="text-amber-600 dark:text-amber-400" />,
+    Pastelaria: <Cake size={14} className="text-pink-600 dark:text-pink-400" />,
+    Bar: <Wine size={14} className="text-purple-600 dark:text-purple-400" />,
+    Todos: <Filter size={14} className="text-gray-500 dark:text-gray-400" />
   };
-
-  // Card Component for KDS
-  const OrderCard = ({ order, type }: { order: any, type: 'pendente' | 'producao' | 'pronto' | 'entregue' }) => {
-    const tempo = getTempoDecorrido(type === 'producao' ? (order.hora_inicio || order.created_at) : order.created_at, type);
-    const isAtrasado = type === 'pendente' && tempo.mins >= 15;
-    const sector = order.sector || order.setor || "Cozinha";
-
-    return (
-      <div className={cn(
-        "bg-white dark:bg-surface-dark p-5 rounded-xl shadow-sm border flex flex-col justify-between transition-all relative overflow-hidden",
-        type === 'pendente' ? "border-l-4 border-l-gray-400 dark:border-gray-700" :
-        type === 'producao' ? "border-l-4 border-l-warning" :
-        type === 'pronto' ? "border-l-4 border-l-secondary" :
-        "border-l-4 border-l-emerald-500 opacity-80 hover:opacity-100",
-        isAtrasado ? "border-error ring-1 ring-error/50 shadow-error/20 animate-pulse-slow" : ""
-      )}>
-        {isAtrasado && (
-          <div className="absolute top-0 right-0 bg-error text-white text-[10px] font-bold px-2 py-0.5 rounded-bl-lg flex items-center gap-1">
-            <AlertCircle size={10} /> ATRASO
-          </div>
-        )}
-        
-        <div>
-          <div className="flex justify-between items-start mb-2">
-            <span className="font-black text-xl text-gray-900 dark:text-white uppercase tracking-tight">
-              #{order.numero || order.codigo || order.id}
-            </span>
-            <span className={cn(
-              "text-xs font-bold px-2.5 py-1 rounded-md uppercase flex items-center gap-1.5",
-              sector === "Cozinha" ? "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300" :
-              sector === "Pastelaria" ? "bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300" :
-              sector === "Bar" ? "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300" :
-              "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300"
-            )}>
-              {sectorIcons[sector as SectorType] || <ChefHat size={14} />}
-              {sector}
-            </span>
-          </div>
-
-          {order.responsavel_nome || order.responsavel_id ? (
-            <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium">
-              <User size={12} />
-              <span>Responsável: {order.responsavel_nome || `Utilizador #${order.responsavel_id}`}</span>
-            </div>
-          ) : null}
-          
-          <div className={cn(
-            "flex items-center gap-1.5 text-xs font-bold p-2 rounded-lg mb-3",
-            isAtrasado ? "bg-error/10 text-error" : "bg-gray-50 dark:bg-gray-800/50 text-gray-500 dark:text-gray-400"
-          )}>
-            <Clock size={14} className={isAtrasado ? "text-error" : "text-primary"}/>
-            Tempo em espera: {tempo.text}
-          </div>
-          
-          <div className="space-y-1">
-            {order.observacoes && (
-              <div className="mb-3 p-2 bg-amber-50 dark:bg-amber-900/20 rounded-lg text-xs font-bold text-amber-700 dark:text-amber-400 border border-amber-200/50 dark:border-amber-800/50">
-                OBS: {order.observacoes}
-              </div>
-            )}
-            
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Itens / Ingredientes</p>
-            {(order.consumos?.length ? order.consumos : order.itens || order.items || [])?.map((item: any, idx: number) => {
-              const p = products?.find((prod: any) => prod.id === (item.produto_id || item.productId));
-              return (
-                <div key={idx} className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate py-1 border-b border-gray-100 dark:border-gray-800 last:border-0 flex justify-between items-center">
-                  <span>
-                    <span className="text-primary font-black mr-2">{item.quantidade || item.quantity || 1}x</span> 
-                    {p ? p.nome : item.nome_produto || item.nome || item.descricao || 'Item de Produção'}
-                  </span>
-                  {item.unidade ? <span className="text-xs text-gray-400 font-normal">{item.unidade}</span> : null}
-                </div>
-              );
-            })}
-          </div>
-
-          <button onClick={() => setSelectedOrder(order)} className="mt-3 text-xs font-bold text-primary hover:underline">
-            Ver produtos, receita e consumos
-          </button>
-
-          {(() => {
-            const reqId = order.requisicao_id || order.requisicaoId;
-            const matched = reqId ? requisitionsMap[reqId] : null;
-            const reqStatusText = matched ? matched.estado : (order.requisicao_status || order.requisicao_estado || 'Pendente');
-            if (!reqId) return null;
-            return (
-              <div className="mt-4 p-2.5 bg-indigo-50/50 dark:bg-indigo-950/10 rounded-lg border border-indigo-100/50 dark:border-indigo-900/20 flex justify-between items-center text-[11px] font-medium">
-                <span className="text-gray-500">Requisição associada:</span>
-                <span className="font-bold text-indigo-600 dark:text-indigo-400">
-                  REQ-{reqId} ({reqStatusText})
-                </span>
-              </div>
-            );
-          })()}
-        </div>
-
-        <div className="mt-5 pt-4 border-t border-gray-100 dark:border-gray-800">
-          {type === 'pendente' && (
-            <button 
-              onClick={() => handleUpdateStatus(order.id, "Em Producao")}
-              disabled={updateStatusMutation.isPending}
-              className="w-full flex justify-center items-center gap-2 bg-gray-900 hover:bg-gray-800 text-white dark:bg-white dark:hover:bg-gray-100 dark:text-gray-900 py-3 rounded-xl font-bold transition-all shadow-lg active:scale-95 disabled:opacity-50"
-            >
-              <Play size={18} /> Iniciar Preparação
-            </button>
-          )}
-          {type === 'producao' && (() => {
-            const reqId = order.requisicao_id || order.requisicaoId;
-            const matched = reqId ? requisitionsMap[reqId] : null;
-            const reqStatus = (matched ? matched.estado : (order.requisicao_status || order.requisicao_estado || order.estado_requisicao || "")).toString().toLowerCase().trim();
-            const hasPendingRequisition = reqId && reqStatus && !["em uso", "entregue", "devolvido", "finalizado", "concluido", "fechado"].includes(reqStatus);
-            
-            if (hasPendingRequisition) {
-              return (
-                <div className="space-y-2">
-                  <div className="flex items-start gap-2 p-2.5 bg-amber-50 dark:bg-amber-950/10 text-amber-700 dark:text-amber-400 border border-amber-200/50 dark:border-amber-900/30 rounded-xl text-xs font-semibold leading-relaxed">
-                    <AlertCircle size={16} className="shrink-0 text-amber-500 mt-0.5" />
-                    <span>Botão bloqueado: Aguardando entrega dos ingredientes do armazém (REQ-{reqId}).</span>
-                  </div>
-                  <button 
-                    disabled
-                    className="w-full flex justify-center items-center gap-2 bg-gray-100 dark:bg-gray-800/50 text-gray-400 dark:text-gray-600 py-3 rounded-xl font-bold cursor-not-allowed text-xs border border-dashed border-gray-250 dark:border-gray-700"
-                  >
-                    <CheckCircle size={18} /> Marcar como Pronto (Bloqueado)
-                  </button>
-                </div>
-              );
-            }
-
-            return (
-              <button 
-                onClick={() => handleUpdateStatus(order.id, "Pronto")}
-                disabled={updateStatusMutation.isPending}
-                className="w-full flex justify-center items-center gap-2 bg-warning hover:bg-warning-hover text-white py-3 rounded-xl font-bold transition-all shadow-lg shadow-warning/30 active:scale-95 disabled:opacity-50"
-              >
-                <CheckCircle size={18} /> Marcar como Pronto
-              </button>
-            );
-          })()}
-          {type === 'pronto' && (
-            <div className="space-y-2">
-              <button 
-                onClick={() => handleUpdateStatus(order.id, "Entregue")}
-                disabled={updateStatusMutation.isPending}
-                className="w-full flex justify-center items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-xl font-bold transition-all shadow-md active:scale-95 text-xs disabled:opacity-50"
-              >
-                <CheckCheck size={16} /> Entregar ao Cliente / Garçom
-              </button>
-              <button 
-                onClick={() => handleUpdateStatus(order.id, "Em Producao")}
-                disabled={updateStatusMutation.isPending}
-                className="w-full flex justify-center items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-600 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-300 py-2 rounded-xl font-medium transition-all text-xs"
-              >
-                <Undo2 size={14} /> Voltar para Preparação
-              </button>
-            </div>
-          )}
-          {type === 'entregue' && (
-            <div className="flex items-center justify-between text-xs text-emerald-600 font-bold bg-emerald-50 dark:bg-emerald-950/30 p-2 rounded-lg border border-emerald-200/50">
-              <span className="flex items-center gap-1"><CheckCheck size={14} /> Entregue com Sucesso</span>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  };
-
-  if (isLoading) return <div className="p-8 text-center text-gray-500 font-bold">A carregar ordens de produção por setor...</div>;
 
   return (
-    <div className="space-y-6 animate-fade-in pb-12 min-h-[calc(100vh-100px)] flex flex-col">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-3">
-          <ChefHat size={32} className="text-primary bg-primary/10 p-1.5 rounded-lg" />
-          KDS - Monitor de Produção por Setor
-        </h1>
+    <div className="space-y-5 pb-16 min-h-[calc(100vh-100px)] flex flex-col">
+      {/* 1. CABEÇALHO PRINCIPAL DA PÁGINA (Com Cores Consistentes no Modo Dark) */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white dark:bg-surface-dark p-4 sm:p-5 rounded-2xl border border-gray-200 dark:border-border-dark shadow-xs">
+        <div>
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-primary/10 dark:bg-primary/20 text-primary rounded-xl shrink-0">
+              <ChefHat size={26} />
+            </div>
+            <div>
+              <h1 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white tracking-tight">
+                KDS · Monitor de Produção
+              </h1>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                Visão acessível em tempo real por setor e posto de trabalho
+              </p>
+            </div>
+          </div>
+        </div>
 
-        {/* Sector Tabs */}
-        <div className="flex flex-wrap items-center gap-3">
-          <label className="flex items-center gap-2 text-xs font-bold text-gray-600 dark:text-gray-300">
-            <Filter size={15} /> Data
-            <input type="date" value={selectedDate} onChange={(e) => { setSelectedDate(e.target.value); setPage(1); }} className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-2 py-1.5 text-xs" />
-          </label>
-          <div className="flex items-center bg-gray-100 dark:bg-gray-800 p-1 rounded-xl gap-1 overflow-x-auto">
-            {(["Todos", "Cozinha", "Pastelaria", "Bar"] as SectorType[]).map((sec) => (
+        {/* Controles de Data e Alternância de Modo */}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Seletor Rápido de Data */}
+          <div className="flex items-center bg-gray-100 dark:bg-gray-900 p-1 rounded-xl border border-gray-200/60 dark:border-gray-800">
+            <button
+              onClick={setToday}
+              className={cn(
+                'px-3 py-1.5 text-xs font-bold rounded-lg transition-all',
+                selectedDate === new Date().toISOString().slice(0, 10)
+                  ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-xs'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              )}
+            >
+              Hoje
+            </button>
+            <button
+              onClick={setYesterday}
+              className="px-3 py-1.5 text-xs font-bold rounded-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+            >
+              Ontem
+            </button>
+          </div>
+
+          <div className="relative flex items-center">
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-bold text-gray-800 dark:text-gray-200 outline-none focus:ring-2 focus:ring-primary/20 dark:[color-scheme:dark]"
+            />
+          </div>
+
+          {/* Botão Atualizar */}
+          <button
+            onClick={() => refetch()}
+            disabled={isFetching}
+            title="Atualizar ordens agora"
+            className="p-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-900 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl transition-colors border border-gray-200/60 dark:border-gray-800 disabled:opacity-50"
+          >
+            <RefreshCw size={15} className={cn(isFetching && 'animate-spin text-primary')} />
+          </button>
+
+          {/* Alternância de Modo: Abas por Estado vs Kanban */}
+          <div className="flex items-center bg-gray-100 dark:bg-gray-900 p-1 rounded-xl border border-gray-200/60 dark:border-gray-800">
+            <button
+              onClick={() => setViewMode('tabs')}
+              className={cn(
+                'flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-all',
+                viewMode === 'tabs'
+                  ? 'bg-white dark:bg-gray-800 text-primary dark:text-primary shadow-xs'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              )}
+            >
+              <LayoutGrid size={14} />
+              <span className="hidden sm:inline">Abas por Estado</span>
+              <span className="sm:hidden">Abas</span>
+            </button>
+            <button
+              onClick={() => setViewMode('kanban')}
+              className={cn(
+                'flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-all',
+                viewMode === 'kanban'
+                  ? 'bg-white dark:bg-gray-800 text-primary dark:text-primary shadow-xs'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              )}
+            >
+              <Columns3 size={14} />
+              <span className="hidden sm:inline">Quadro Geral (Kanban)</span>
+              <span className="sm:hidden">Kanban</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* 2. FILTROS DE SETOR E PESQUISA RÁPIDA */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        {/* Filtro de Setor */}
+        <div className="flex items-center bg-gray-100 dark:bg-surface-dark p-1 rounded-xl gap-1 overflow-x-auto border border-gray-200/80 dark:border-border-dark">
+          {(['Todos', 'Cozinha', 'Pastelaria', 'Bar'] as SectorType[]).map((sec) => (
             <button
               key={sec}
-              onClick={() => { setSelectedSector(sec); setPage(1); }}
+              onClick={() => setSelectedSector(sec)}
               className={cn(
-                "px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap",
+                'px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap',
                 selectedSector === sec
-                  ? "bg-white dark:bg-gray-700 text-primary shadow-sm"
-                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+                  ? 'bg-white dark:bg-gray-800 text-primary dark:text-primary shadow-xs'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
               )}
             >
               {sectorIcons[sec]}
-              {sec === "Todos" ? "Todos os Setores" : sec}
+              <span>{sec === 'Todos' ? 'Todos os Setores' : sec}</span>
             </button>
-            ))}
-          </div>
+          ))}
+        </div>
+
+        {/* Caixa de Pesquisa Rápida */}
+        <div className="relative flex-1 sm:max-w-md">
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Pesquisar nº ordem, pedido, cliente, produto..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-9 pr-8 py-2 text-xs bg-white dark:bg-surface-dark border border-gray-200 dark:border-border-dark rounded-xl focus:ring-2 focus:ring-primary/20 outline-none text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+          />
+          {searchTerm && (
+            <button
+              onClick={() => setSearchTerm('')}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            >
+              ✕
+            </button>
+          )}
         </div>
       </div>
 
-      <div className="flex items-center justify-between text-sm text-gray-500">
-        <span>{ordersResponse?.total || 0} ordens para {selectedDate.split('-').reverse().join('/')} · página {ordersResponse?.page || page} de {ordersResponse?.pages || 1}</span>
-        <div className="flex gap-2">
-          <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} className="px-3 py-1.5 rounded-lg border disabled:opacity-40">Anterior</button>
-          <button disabled={page >= (ordersResponse?.pages || 1)} onClick={() => setPage(p => p + 1)} className="px-3 py-1.5 rounded-lg border disabled:opacity-40">Seguinte</button>
-        </div>
+      {/* 3. BARRA DE ABAS POR ESTADO (COM RENDERIZAÇÃO LIMPA E ALTO CONTRASTE) */}
+      <div className="bg-gray-100/90 dark:bg-surface-dark p-1.5 rounded-2xl border border-gray-200 dark:border-border-dark shadow-xs flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+        {/* Aba: Todos */}
+        <button
+          onClick={() => setSelectedStateTab('todos')}
+          className={cn(
+            'flex-1 min-w-[120px] sm:min-w-0 py-2 px-3.5 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 select-none shrink-0 sm:shrink',
+            selectedStateTab === 'todos'
+              ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-xs border border-gray-200/80 dark:border-gray-700'
+              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-gray-800/50'
+          )}
+        >
+          <span className="w-2 h-2 rounded-full bg-gray-400 dark:bg-gray-500 shrink-0" />
+          <span>Todos</span>
+          <span
+            className={cn(
+              'px-2 py-0.5 rounded-full text-[11px] font-black shrink-0 transition-colors',
+              selectedStateTab === 'todos'
+                ? 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white'
+                : 'bg-gray-200/70 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+            )}
+          >
+            {filteredOrders.length}
+          </span>
+        </button>
+
+        {/* Aba: 1. Fila de Espera */}
+        <button
+          onClick={() => setSelectedStateTab('pendente')}
+          className={cn(
+            'flex-1 min-w-[150px] sm:min-w-0 py-2 px-3.5 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 relative select-none shrink-0 sm:shrink',
+            selectedStateTab === 'pendente'
+              ? 'bg-white dark:bg-gray-800 text-slate-900 dark:text-white shadow-xs border border-gray-200/80 dark:border-gray-700'
+              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-gray-800/50'
+          )}
+        >
+          <span className="w-2 h-2 rounded-full bg-slate-500 shrink-0" />
+          <span>1. Fila de Espera</span>
+          <span
+            className={cn(
+              'px-2 py-0.5 rounded-full text-[11px] font-black shrink-0 transition-colors',
+              selectedStateTab === 'pendente'
+                ? 'bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-white'
+                : 'bg-gray-200/70 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+            )}
+          >
+            {pendentes.length}
+          </span>
+          {atrasadosCount > 0 && (
+            <span
+              title={`${atrasadosCount} ordens com mais de 15 minutos em espera`}
+              className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping absolute top-1.5 right-2"
+            />
+          )}
+        </button>
+
+        {/* Aba: 2. Em Preparação */}
+        <button
+          onClick={() => setSelectedStateTab('producao')}
+          className={cn(
+            'flex-1 min-w-[150px] sm:min-w-0 py-2 px-3.5 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 select-none shrink-0 sm:shrink',
+            selectedStateTab === 'producao'
+              ? 'bg-white dark:bg-gray-800 text-amber-700 dark:text-amber-300 shadow-xs border border-amber-300/80 dark:border-amber-700/80'
+              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-gray-800/50'
+          )}
+        >
+          <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0 animate-pulse" />
+          <span>2. Em Preparação</span>
+          <span
+            className={cn(
+              'px-2 py-0.5 rounded-full text-[11px] font-black shrink-0 transition-colors',
+              selectedStateTab === 'producao'
+                ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-900 dark:text-amber-200'
+                : 'bg-gray-200/70 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+            )}
+          >
+            {emProducao.length}
+          </span>
+        </button>
+
+        {/* Aba: 3. Prontos p/ Entrega */}
+        <button
+          onClick={() => setSelectedStateTab('pronto')}
+          className={cn(
+            'flex-1 min-w-[160px] sm:min-w-0 py-2 px-3.5 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 select-none shrink-0 sm:shrink',
+            selectedStateTab === 'pronto'
+              ? 'bg-white dark:bg-gray-800 text-emerald-700 dark:text-emerald-300 shadow-xs border border-emerald-300/80 dark:border-emerald-700/80'
+              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-gray-800/50'
+          )}
+        >
+          <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+          <span>3. Prontos p/ Entrega</span>
+          <span
+            className={cn(
+              'px-2 py-0.5 rounded-full text-[11px] font-black shrink-0 transition-colors',
+              selectedStateTab === 'pronto'
+                ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-900 dark:text-emerald-200'
+                : 'bg-gray-200/70 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+            )}
+          >
+            {prontos.length}
+          </span>
+        </button>
+
+        {/* Aba: 4. Entregues */}
+        <button
+          onClick={() => setSelectedStateTab('entregue')}
+          className={cn(
+            'flex-1 min-w-[130px] sm:min-w-0 py-2 px-3.5 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 select-none shrink-0 sm:shrink',
+            selectedStateTab === 'entregue'
+              ? 'bg-white dark:bg-gray-800 text-blue-700 dark:text-blue-300 shadow-xs border border-blue-300/80 dark:border-blue-700/80'
+              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-gray-800/50'
+          )}
+        >
+          <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0" />
+          <span>4. Entregues</span>
+          <span
+            className={cn(
+              'px-2 py-0.5 rounded-full text-[11px] font-black shrink-0 transition-colors',
+              selectedStateTab === 'entregue'
+                ? 'bg-blue-100 dark:bg-blue-950/60 text-blue-900 dark:text-blue-200'
+                : 'bg-gray-200/70 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+            )}
+          >
+            {entregues.length}
+          </span>
+        </button>
       </div>
 
-      {/* Kanban Board Container */}
-      <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 overflow-hidden">
-        
-        {/* Column: Pendentes */}
-        <div className="flex flex-col bg-gray-50/50 dark:bg-gray-900/20 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden">
-          <div className="p-4 bg-white/50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-800 backdrop-blur-sm flex justify-between items-center">
-            <h2 className="font-bold text-gray-900 dark:text-white flex items-center gap-2 text-sm">
-              <span className="w-3 h-3 rounded-full bg-gray-400"></span>
-              Fila de Espera (Pendente)
-            </h2>
-            <span className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-0.5 rounded-full text-xs font-bold">
-              {pendentes.length}
+      {/* 4. RESUMO DE CONTEÚDO E CONTROLES RÁPIDOS NO TOPO */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-600 dark:text-gray-400">
+        <div>
+          <span>
+            {totalCount} ordens encontradas em <strong>{selectedStateTab.toUpperCase()}</strong> para{' '}
+            <strong className="text-gray-900 dark:text-white">
+              {selectedDate.split('-').reverse().join('/')}
+            </strong>
+          </span>
+          {totalCount > 0 && viewMode === 'tabs' && (
+            <span className="text-gray-500 dark:text-gray-400 ml-1.5">
+              · Página {page} de {totalPages} ({totalCount} no total)
             </span>
-          </div>
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 max-h-[70vh]">
-            {pendentes.length === 0 ? (
-              <div className="h-48 flex flex-col items-center justify-center text-gray-400 font-medium">
-                <ChefHat size={32} className="mb-2 opacity-20" />
-                Nenhuma ordem pendente
-              </div>
-            ) : (
-              pendentes.map((o: any) => <OrderCard key={o.id} order={o} type="pendente" />)
-            )}
-          </div>
+          )}
         </div>
 
-        {/* Column: Em Produção */}
-        <div className="flex flex-col bg-warning/5 dark:bg-warning/5 rounded-2xl border border-warning/20 overflow-hidden">
-          <div className="p-4 bg-warning/10 border-b border-warning/20 backdrop-blur-sm flex justify-between items-center">
-            <h2 className="font-bold text-warning-dark dark:text-warning flex items-center gap-2 text-sm">
-              <span className="w-3 h-3 rounded-full bg-warning animate-pulse"></span>
-              Em Preparação
-            </h2>
-            <span className="bg-warning text-white px-2 py-0.5 rounded-full text-xs font-bold">
-              {emProducao.length}
-            </span>
-          </div>
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 max-h-[70vh]">
-            {emProducao.length === 0 ? (
-              <div className="h-48 flex flex-col items-center justify-center text-warning/40 font-medium">
-                <Play size={32} className="mb-2 opacity-20" />
-                Nada em preparação
-              </div>
-            ) : (
-              emProducao.map((o: any) => <OrderCard key={o.id} order={o} type="producao" />)
-            )}
-          </div>
-        </div>
-
-        {/* Column: Prontos (Aguardam Recolha) */}
-        <div className="flex flex-col bg-secondary/5 dark:bg-secondary/5 rounded-2xl border border-secondary/20 overflow-hidden">
-          <div className="p-4 bg-secondary/10 border-b border-secondary/20 backdrop-blur-sm flex justify-between items-center">
-            <h2 className="font-bold text-secondary-dark dark:text-secondary flex items-center gap-2 text-sm">
-              <span className="w-3 h-3 rounded-full bg-secondary"></span>
-              Prontos (Aguardam Entrega)
-            </h2>
-            <span className="bg-secondary text-white px-2 py-0.5 rounded-full text-xs font-bold">
-              {prontos.length}
-            </span>
-          </div>
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 max-h-[70vh]">
-            {prontos.length === 0 ? (
-              <div className="h-48 flex flex-col items-center justify-center text-secondary/40 font-medium">
-                <CheckCircle size={32} className="mb-2 opacity-20" />
-                Nenhum prato pronto
-              </div>
-            ) : (
-              prontos.map((o: any) => <OrderCard key={o.id} order={o} type="pronto" />)
-            )}
-          </div>
-        </div>
-
-        {/* Column: Entregues (Concluídos) */}
-        <div className="flex flex-col bg-emerald-500/5 dark:bg-emerald-500/5 rounded-2xl border border-emerald-500/20 overflow-hidden">
-          <div className="p-4 bg-emerald-500/10 border-b border-emerald-500/20 backdrop-blur-sm flex justify-between items-center">
-            <h2 className="font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-2 text-sm">
-              <span className="w-3 h-3 rounded-full bg-emerald-500"></span>
-              Entregues / Concluídos
-            </h2>
-            <span className="bg-emerald-600 text-white px-2 py-0.5 rounded-full text-xs font-bold">
-              {entregues.length}
-            </span>
-          </div>
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 max-h-[70vh]">
-            {entregues.length === 0 ? (
-              <div className="h-48 flex flex-col items-center justify-center text-emerald-500/40 font-medium">
-                <CheckCheck size={32} className="mb-2 opacity-20" />
-                Sem ordens entregues hoje
-              </div>
-            ) : (
-              entregues.map((o: any) => <OrderCard key={o.id} order={o} type="entregue" />)
-            )}
-          </div>
-        </div>
-
-      </div>
-
-      <Modal isOpen={!!selectedOrder} onClose={() => setSelectedOrder(null)} title={`Detalhe da Ordem ${selectedOrder?.numero || ''}`}>
-        {selectedOrder && (
-          <div className="space-y-5 text-sm">
-            <div className="grid grid-cols-2 gap-3 text-gray-600 dark:text-gray-300">
-              <p><b>Pedido:</b> {selectedOrder.pedido_numero || selectedOrder.pedido_id}</p>
-              <p><b>Cliente:</b> {selectedOrder.cliente_nome || 'Balcão'}</p>
-              <p><b>Setor:</b> {selectedOrder.sector}</p>
-              <p><b>Entrega:</b> {selectedOrder.data_entrega || '—'} {selectedOrder.hora_entrega || ''}</p>
+        {/* Seletor rápido de Itens por Página */}
+        {viewMode === 'tabs' && totalCount > 0 && (
+          <div className="flex items-center gap-2">
+            <span className="text-gray-500 dark:text-gray-400">Exibir por página:</span>
+            <div className="flex items-center bg-gray-100 dark:bg-surface-dark p-0.5 rounded-lg border border-gray-200 dark:border-border-dark">
+              {[12, 24, 48].map((size) => (
+                <button
+                  key={size}
+                  onClick={() => setPageSize(size)}
+                  className={cn(
+                    'px-2 py-0.5 rounded-md text-[11px] font-bold transition-colors',
+                    pageSize === size
+                      ? 'bg-white dark:bg-gray-800 text-primary dark:text-primary shadow-2xs'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                  )}
+                >
+                  {size}
+                </button>
+              ))}
             </div>
-            <div><h3 className="font-bold mb-2">Produtos a preparar</h3>{(selectedOrder.itens || []).map((i: any) => <p key={i.id} className="py-1 border-b">{i.quantidade} × {i.produto_nome || `Produto #${i.produto_id}`}</p>)}</div>
-            <div><h3 className="font-bold mb-2">Receita / consumíveis previstos</h3>{(selectedOrder.consumos || []).map((i: any) => <p key={i.id} className="py-1 border-b">{i.quantidade_prevista} {i.ingrediente_unidade || ''} · {i.ingrediente_nome}</p>)}</div>
-            {selectedOrder.observacoes_pedido && <p className="p-3 rounded-lg bg-amber-50 text-amber-800"><b>Observações do pedido:</b> {selectedOrder.observacoes_pedido}</p>}
           </div>
         )}
-      </Modal>
+      </div>
+
+      {/* 5. ÁREA DE EXIBIÇÃO: MODO ABAS (COM CARDS ESPAÇOSOS E ACESSÍVEIS) OU MODO KANBAN */}
+      {isLoading ? (
+        <div className="p-16 text-center text-gray-500 font-bold flex flex-col items-center justify-center gap-3">
+          <RefreshCw size={28} className="animate-spin text-primary" />
+          <span>A carregar ordens de produção do setor...</span>
+        </div>
+      ) : viewMode === 'tabs' ? (
+        /* ================== MODO 1: VISÃO EM ABAS (PAGINADA E RESPONSIVA) ================== */
+        <div className="flex-1 flex flex-col justify-between">
+          {totalCount === 0 ? (
+            <div className="py-16 px-4 bg-white dark:bg-surface-dark rounded-2xl border border-dashed border-gray-300 dark:border-border-dark text-center flex flex-col items-center justify-center">
+              <div className="p-4 bg-gray-100 dark:bg-gray-800 text-gray-400 rounded-full mb-3">
+                <ChefHat size={36} />
+              </div>
+              <h3 className="text-base font-bold text-gray-900 dark:text-white">
+                Nenhuma ordem encontrada nesta aba
+              </h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-sm">
+                Não existem pedidos pendentes ou em confeção com os filtros selecionados para esta data.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-5">
+              {paginatedOrders.map(({ order, type }) => (
+                <ProductionOrderCard
+                  key={order.id}
+                  order={order}
+                  type={type}
+                  now={now}
+                  products={products}
+                  requisitionsMap={requisitionsMap}
+                  onUpdateStatus={handleUpdateStatus}
+                  isUpdating={updateStatusMutation.isPending}
+                  onOpenDetails={setSelectedOrder}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* BARRA DE PAGINAÇÃO COMPLETA E DESTACADA NO FUNDO DA TELA */}
+          {viewMode === 'tabs' && totalCount > 0 && (
+            <div className="bg-white dark:bg-surface-dark border border-gray-200 dark:border-border-dark p-4 rounded-2xl shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
+              {/* Informação de Contagem */}
+              <div className="text-xs text-gray-600 dark:text-gray-400">
+                A mostrar <strong className="text-gray-900 dark:text-white">{startIndex + 1}</strong> a{' '}
+                <strong className="text-gray-900 dark:text-white">{endIndex}</strong> de{' '}
+                <strong className="text-gray-900 dark:text-white">{totalCount}</strong> ordens
+              </div>
+
+              {/* Botões de Navegação por Páginas */}
+              <div className="flex items-center gap-1.5 flex-wrap justify-center">
+                {/* Botão Primeira Página */}
+                <button
+                  onClick={() => setPage(1)}
+                  disabled={page <= 1}
+                  title="Primeira página"
+                  className="p-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                >
+                  <ChevronsLeft size={16} />
+                </button>
+
+                {/* Botão Página Anterior */}
+                <button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page <= 1}
+                  title="Página anterior"
+                  className="flex items-center gap-1 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-bold disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                >
+                  <ChevronLeft size={15} />
+                  <span>Anterior</span>
+                </button>
+
+                {/* Números de Página */}
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter((p) => p === 1 || p === totalPages || Math.abs(p - page) <= 2)
+                  .map((p, idx, arr) => {
+                    const prevP = arr[idx - 1];
+                    const showEllipsis = prevP && p - prevP > 1;
+
+                    return (
+                      <React.Fragment key={p}>
+                        {showEllipsis && (
+                          <span className="px-1 text-gray-400 text-xs font-bold">...</span>
+                        )}
+                        <button
+                          onClick={() => setPage(p)}
+                          className={cn(
+                            'min-w-[36px] h-9 rounded-xl text-xs font-bold transition-all',
+                            page === p
+                              ? 'bg-primary text-white shadow-xs'
+                              : 'border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                          )}
+                        >
+                          {p}
+                        </button>
+                      </React.Fragment>
+                    );
+                  })}
+
+                {/* Botão Página Seguinte */}
+                <button
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page >= totalPages}
+                  title="Página seguinte"
+                  className="flex items-center gap-1 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-bold disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                >
+                  <span>Seguinte</span>
+                  <ChevronRight size={15} />
+                </button>
+
+                {/* Botão Última Página */}
+                <button
+                  onClick={() => setPage(totalPages)}
+                  disabled={page >= totalPages}
+                  title="Última página"
+                  className="p-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                >
+                  <ChevronsRight size={16} />
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      ) : (
+        /* ================== MODO 2: QUADRO GERAL KANBAN (4 COLUNAS EM TELA AMPLA) ================== */
+        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+          {/* Coluna 1: Pendentes */}
+          <div className="flex flex-col bg-slate-50/60 dark:bg-surface-dark/60 rounded-2xl border border-slate-200 dark:border-border-dark overflow-hidden">
+            <div className="p-3.5 bg-white/80 dark:bg-surface-dark border-b border-slate-200 dark:border-border-dark flex items-center justify-between">
+              <h2 className="font-bold text-xs uppercase tracking-wider text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-slate-400" />
+                Fila de Espera
+              </h2>
+              <span className="bg-slate-200 dark:bg-gray-800 text-slate-800 dark:text-slate-200 px-2 py-0.5 rounded-md text-[11px] font-black">
+                {pendentes.length}
+              </span>
+            </div>
+            <div className="flex-1 overflow-y-auto p-3 space-y-4 max-h-[72vh]">
+              {pendentes.length === 0 ? (
+                <div className="py-12 text-center text-xs text-gray-400 font-medium">
+                  Sem ordens pendentes
+                </div>
+              ) : (
+                pendentes.map((o: any) => (
+                  <ProductionOrderCard
+                    key={o.id}
+                    order={o}
+                    type="pendente"
+                    now={now}
+                    products={products}
+                    requisitionsMap={requisitionsMap}
+                    onUpdateStatus={handleUpdateStatus}
+                    isUpdating={updateStatusMutation.isPending}
+                    onOpenDetails={setSelectedOrder}
+                  />
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Coluna 2: Em Preparação */}
+          <div className="flex flex-col bg-amber-50/20 dark:bg-surface-dark/60 rounded-2xl border border-amber-200/80 dark:border-amber-900/40 overflow-hidden">
+            <div className="p-3.5 bg-amber-100/50 dark:bg-surface-dark border-b border-amber-200/80 dark:border-amber-900/40 flex items-center justify-between">
+              <h2 className="font-bold text-xs uppercase tracking-wider text-amber-900 dark:text-amber-200 flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse" />
+                Em Preparação
+              </h2>
+              <span className="bg-amber-500 text-white px-2 py-0.5 rounded-md text-[11px] font-black">
+                {emProducao.length}
+              </span>
+            </div>
+            <div className="flex-1 overflow-y-auto p-3 space-y-4 max-h-[72vh]">
+              {emProducao.length === 0 ? (
+                <div className="py-12 text-center text-xs text-amber-600/60 dark:text-amber-400/50 font-medium">
+                  Nada no fogão / forno
+                </div>
+              ) : (
+                emProducao.map((o: any) => (
+                  <ProductionOrderCard
+                    key={o.id}
+                    order={o}
+                    type="producao"
+                    now={now}
+                    products={products}
+                    requisitionsMap={requisitionsMap}
+                    onUpdateStatus={handleUpdateStatus}
+                    isUpdating={updateStatusMutation.isPending}
+                    onOpenDetails={setSelectedOrder}
+                  />
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Coluna 3: Prontos (Aguardam Entrega) */}
+          <div className="flex flex-col bg-emerald-50/20 dark:bg-surface-dark/60 rounded-2xl border border-emerald-200/80 dark:border-emerald-900/40 overflow-hidden">
+            <div className="p-3.5 bg-emerald-100/50 dark:bg-surface-dark border-b border-emerald-200/80 dark:border-emerald-900/40 flex items-center justify-between">
+              <h2 className="font-bold text-xs uppercase tracking-wider text-emerald-900 dark:text-emerald-200 flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                Prontos (Aguardam Entrega)
+              </h2>
+              <span className="bg-emerald-600 text-white px-2 py-0.5 rounded-md text-[11px] font-black">
+                {prontos.length}
+              </span>
+            </div>
+            <div className="flex-1 overflow-y-auto p-3 space-y-4 max-h-[72vh]">
+              {prontos.length === 0 ? (
+                <div className="py-12 text-center text-xs text-emerald-600/60 dark:text-emerald-400/50 font-medium">
+                  Nenhum prato a aguardar
+                </div>
+              ) : (
+                prontos.map((o: any) => (
+                  <ProductionOrderCard
+                    key={o.id}
+                    order={o}
+                    type="pronto"
+                    now={now}
+                    products={products}
+                    requisitionsMap={requisitionsMap}
+                    onUpdateStatus={handleUpdateStatus}
+                    isUpdating={updateStatusMutation.isPending}
+                    onOpenDetails={setSelectedOrder}
+                  />
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Coluna 4: Entregues / Concluídos */}
+          <div className="flex flex-col bg-slate-50/40 dark:bg-surface-dark/60 rounded-2xl border border-slate-200/70 dark:border-border-dark overflow-hidden">
+            <div className="p-3.5 bg-white/80 dark:bg-surface-dark border-b border-slate-200/70 dark:border-border-dark flex items-center justify-between">
+              <h2 className="font-bold text-xs uppercase tracking-wider text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+                Entregues
+              </h2>
+              <span className="bg-blue-600 text-white px-2 py-0.5 rounded-md text-[11px] font-black">
+                {entregues.length}
+              </span>
+            </div>
+            <div className="flex-1 overflow-y-auto p-3 space-y-4 max-h-[72vh]">
+              {entregues.length === 0 ? (
+                <div className="py-12 text-center text-xs text-gray-400 font-medium">
+                  Sem ordens entregues hoje
+                </div>
+              ) : (
+                entregues.map((o: any) => (
+                  <ProductionOrderCard
+                    key={o.id}
+                    order={o}
+                    type="entregue"
+                    now={now}
+                    products={products}
+                    requisitionsMap={requisitionsMap}
+                    onUpdateStatus={handleUpdateStatus}
+                    isUpdating={updateStatusMutation.isPending}
+                    onOpenDetails={setSelectedOrder}
+                  />
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 6. MODAL DE DETALHES COMPLETA */}
+      <ProductionOrderModal
+        order={selectedOrder}
+        isOpen={!!selectedOrder}
+        onClose={() => setSelectedOrder(null)}
+        products={products}
+        requisitionsMap={requisitionsMap}
+        onUpdateStatus={handleUpdateStatus}
+        isUpdating={updateStatusMutation.isPending}
+      />
     </div>
   );
 }

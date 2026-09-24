@@ -34,6 +34,10 @@ class Venda(BaseModel):
     tipo_documento = db.Column(db.Enum(TipoDocumento), nullable=False)
     _cliente_id = db.Column('cliente_id', db.Integer, db.ForeignKey('clientes.id'), nullable=True)
     pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=True)
+    # A venda pode ser emitida diretamente no POS ou resultar da faturação de
+    # um evento. Esta coluna existe no esquema da aplicação e torna a ligação
+    # explícita, em vez de depender de atributos transitórios em memória.
+    evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=True)
     
     _subtotal = db.Column('subtotal', db.Numeric(12, 2), default=0, nullable=True)
     _desconto_total = db.Column('desconto_total', db.Numeric(12, 2), default=0, nullable=True)
@@ -49,6 +53,7 @@ class Venda(BaseModel):
     criado_por = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     
     itens = db.relationship('VendaItem', backref='venda', lazy='selectin', cascade='all, delete-orphan')
+    evento = db.relationship('Evento', foreign_keys=[evento_id], lazy='selectin')
 
     @property
     def pedido(self):

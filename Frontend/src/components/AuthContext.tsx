@@ -69,6 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         apiClient.defaults.headers.common[
           "Authorization"
         ] = `Bearer ${response.access_token}`;
+        window.dispatchEvent(new Event('sigi:auth-changed'));
         return true; // Success
       }
       return false;
@@ -88,6 +89,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem("sigi_config");
     localStorage.removeItem("user");
     delete apiClient.defaults.headers.common["Authorization"];
+    window.dispatchEvent(new Event('sigi:auth-changed'));
   };
 
   return (

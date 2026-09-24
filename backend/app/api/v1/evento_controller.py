@@ -375,7 +375,7 @@ def update_evento(id):
 
 @evento_bp.route('/<int:id>/faturar', methods=['POST'])
 @jwt_required()
-@requires_roles('Administrador', 'Comercial')
+@requires_roles('Administrador', 'Comercial', 'Atendimento')
 def faturar_evento(id):
     from app.services.comercial_service import ComercialService
     com_service = ComercialService()
@@ -472,4 +472,3 @@ def gerar_documento(id, doc_type):
         download_name=f"evento_{evento.numero}_{doc_type}.pdf",
         mimetype='application/pdf'
     )
-
