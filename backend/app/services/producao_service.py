@@ -280,16 +280,15 @@ class ProducaoService:
 
         if processados:
             db.session.commit()
+            from app.websocket.socket_manager import notify_production_orders
             for p in processados:
                 socketio.emit('pedido_atualizado', {
                     'numero': p.numero,
                     'antigo_estado': 'Agendado',
-                    'novo_estado': EstadoPedido.EM_PRODUCAO.value
+                    'novo_estado': EstadoPedido.EM_PRODUCAO.value if hasattr(EstadoPedido.EM_PRODUCAO, 'value') else str(EstadoPedido.EM_PRODUCAO)
                 })
-                socketio.emit('nova_ordem_producao', {'pedido_id': p.id, 'numero': p.numero})
-                socketio.emit('alerta_producao', {
-                    'msg': f'O Pedido #{p.numero} agendado para hoje entrou automaticamente em produção!'
-                })
+                p_ordens = db.session.query(OrdemProducao).filter_by(pedido_id=p.id).all()
+                notify_production_orders(p.id, p.numero, [o.sector for o in p_ordens])
 
         return len(processados)
 

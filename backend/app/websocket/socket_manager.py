@@ -199,81 +199,153 @@ def send_notification(
         return False
 
 
-def notify_production_orders(pedido_id: int, pedido_numero: str, sectores: List[str]) -> bool:
+def notify_order_created(pedido_id: int, pedido_numero: str, total: float = 0.0, cliente_nome: Optional[str] = None) -> bool:
     """
-    Notifica a geração de novas ordens de produção para os setores e operadores.
-    Emite os eventos WebSocket 'nova_ordem_producao', 'alerta_producao' e 'notificacao'
-    e persiste a notificação na base de dados para Cozinha e Pastelaria.
+    Notifica a criação de um novo pedido comercial com desduplicação (máximo 1 alerta por pedido).
+    Emite o evento 'novo_pedido' para sincronização de listas e 'notificacao' para alerta visual.
     """
-    sectores_str = ", ".join(sectores) if sectores else "Geral"
+    titulo = "Novo Pedido Recebido"
+    mensagem = f"Pedido #{pedido_numero} registado com sucesso."
+    if cliente_nome:
+        mensagem += f" Cliente: {cliente_nome}."
+
+    payload = {
+        "pedido_id": pedido_id,
+        "numero": pedido_numero,
+        "total": total,
+        "cliente": cliente_nome
+    }
+
+    try:
+        # 1. Evento de dados em tempo real para recarregar tabelas de vendas/pedidos
+        socketio.emit("novo_pedido", payload)
+
+        # 2. Persistência desduplicada na Base de Dados (evita múltiplos registos)
+        try:
+            from app.core.database import db
+            from app.models.notificacao import Notificacao
+            
+            ja_existe = Notificacao.query.filter(
+                Notificacao.canal == "PEDIDO",
+                Notificacao.metadados["pedido_id"].as_integer() == pedido_id
+            ).first()
+
+            if not ja_existe:
+                notif = Notificacao(
+                    titulo=titulo,
+                    mensagem=mensagem,
+                    tipo="info",
+                    canal="PEDIDO",
+                    prioridade="media",
+                    persistente=False,
+                    ativa=True,
+                    target_type="GLOBAL",
+                    metadados=payload,
+                    created_at=datetime.utcnow()
+                )
+                db.session.add(notif)
+                db.session.commit()
+
+                # 3. Notificação visual única para a central
+                socketio.emit("notificacao", {
+                    "id": notif.id,
+                    "titulo": titulo,
+                    "mensagem": mensagem,
+                    "tipo": "info",
+                    "canal": "PEDIDO",
+                    "prioridade": "media",
+                    "persistente": False,
+                    "created_at": datetime.utcnow().isoformat(),
+                    "data": payload
+                }, room="global_notifications")
+        except Exception as db_err:
+            logger.debug(f"Erro ao persistir notificação de pedido: {db_err}")
+
+        logger.info(f"Pedido notificado via WebSocket: #{pedido_numero}")
+        return True
+    except Exception as e:
+        logger.error(f"Erro ao notificar novo pedido: {str(e)}")
+        return False
+
+
+def notify_production_orders(pedido_id: int, pedido_numero: str, sectores: List[Any]) -> bool:
+    """
+    Notifica a geração de ordens de produção de forma CONSOLIDADA e DESDUPLICADA.
+    Gera exatamente UMA notificação operacional para os setores fabris (Cozinha/Pastelaria/Bar),
+    eliminando alertas duplicados ou disparos redundantes em cascata.
+    """
+    # Normalizar e desduplicar nomes dos setores
+    sectores_limpos = []
+    for s in (sectores or []):
+        s_val = s.value if hasattr(s, 'value') else str(s)
+        if s_val and s_val not in sectores_limpos:
+            sectores_limpos.append(s_val)
+
+    sectores_str = ", ".join(sectores_limpos) if sectores_limpos else "Cozinha"
     titulo = f"Nova Produção: Pedido #{pedido_numero}"
     mensagem = f"Ordens de produção geradas para o Pedido #{pedido_numero} nos sectores: {sectores_str}."
 
     payload = {
         "pedido_id": pedido_id,
         "numero": pedido_numero,
-        "sectores": sectores,
+        "sectores": sectores_limpos,
         "titulo": titulo,
         "mensagem": mensagem
     }
 
     try:
-        # 1. Eventos específicos de produção (consumidos por componentes de produção)
+        # 1. Evento técnico de sincronização para os ecrãs KDS/Cozinha atualizarem a fila
         socketio.emit("nova_ordem_producao", payload)
-        socketio.emit("alerta_producao", {
-            "msg": mensagem,
-            "pedido_id": pedido_id,
-            "numero": pedido_numero,
-            "sectores": sectores
-        })
 
-        # 2. Notificação geral para salas de setores específicos
-        for s in (sectores or []):
-            s_slug = s.lower().replace(" ", "_")
-            socketio.emit("notificacao", {
-                "titulo": titulo,
-                "mensagem": mensagem,
-                "tipo": "alerta",
-                "canal": "PRODUCAO",
-                "prioridade": "alta",
-                "persistente": True,
-                "data": payload
-            }, room=f"role_{s_slug}")
-
-        # 3. Notificação global para todos os utilizadores ativos
-        socketio.emit("notificacao", {
-            "titulo": titulo,
-            "mensagem": mensagem,
-            "tipo": "alerta",
-            "canal": "PRODUCAO",
-            "prioridade": "alta",
-            "persistente": True,
-            "data": payload
-        }, room="global_notifications")
-
-        # 4. Gravar notificação persistente no banco de dados para gestão e rastreio
+        # 2. Persistência desduplicada na BD (Impede duplicação na tabela 'notificacoes')
+        notif_id = None
         try:
             from app.core.database import db
             from app.models.notificacao import Notificacao
-            notif = Notificacao(
-                titulo=titulo,
-                mensagem=mensagem,
-                tipo="alerta",
-                canal="PRODUCAO",
-                prioridade="alta",
-                persistente=True,
-                ativa=True,
-                target_type="ROLE" if (sectores and len(sectores) == 1) else "GLOBAL",
-                target_role=sectores[0] if (sectores and len(sectores) == 1) else None,
-                target_sector=sectores_str,
-                metadados=payload
-            )
-            db.session.add(notif)
-            db.session.commit()
-        except Exception as db_err:
-            logger.debug(f"Não foi possível persistir notificação de produção no DB: {db_err}")
 
-        logger.info(f"Produção notificada via WebSocket: Pedido #{pedido_numero} ({sectores_str})")
+            # Verifica se já existe notificação de produção gravada para este pedido
+            notif_existente = Notificacao.query.filter(
+                Notificacao.canal == "PRODUCAO",
+                Notificacao.metadados["pedido_id"].as_integer() == pedido_id
+            ).first()
+
+            if not notif_existente:
+                notif = Notificacao(
+                    titulo=titulo,
+                    mensagem=mensagem,
+                    tipo="info",
+                    canal="PRODUCAO",
+                    prioridade="alta",
+                    persistente=False,
+                    ativa=True,
+                    target_type="GLOBAL",
+                    target_sector=sectores_str,
+                    metadados=payload,
+                    created_at=datetime.utcnow()
+                )
+                db.session.add(notif)
+                db.session.commit()
+                notif_id = notif.id
+            else:
+                notif_id = notif_existente.id
+                logger.debug(f"Notificação de produção para Pedido #{pedido_numero} já existia (evitada duplicação).")
+        except Exception as db_err:
+            logger.debug(f"Erro ao verificar/gravar notificação de produção no DB: {db_err}")
+
+        # 3. Emite UMA ÚNICA notificação global consolidada (sem disparar alertas em loop por role)
+        socketio.emit("notificacao", {
+            "id": notif_id,
+            "titulo": titulo,
+            "mensagem": mensagem,
+            "tipo": "info",
+            "canal": "PRODUCAO",
+            "prioridade": "alta",
+            "persistente": False,
+            "created_at": datetime.utcnow().isoformat(),
+            "data": payload
+        }, room="global_notifications")
+
+        logger.info(f"Produção notificada de forma consolidada: Pedido #{pedido_numero} ({sectores_str})")
         return True
     except Exception as e:
         logger.error(f"Erro ao notificar ordens de produção via WebSocket: {str(e)}")

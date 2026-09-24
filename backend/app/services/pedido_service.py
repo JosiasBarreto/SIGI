@@ -214,8 +214,13 @@ class PedidoService:
             
         AuditService.log_action(user_id, "CREATE", "pedidos", pedido.id, new_values={"numero": numero})
         
-        # SocketIO Notification
-        socketio.emit('novo_pedido', {'numero': pedido.numero, 'estado': pedido.estado.value if hasattr(pedido.estado, 'value') else pedido.estado})
+        # Notificação estruturada e desduplicada de novo pedido
+        try:
+            from app.websocket.socket_manager import notify_order_created
+            cliente_nome = pedido.cliente.nome if pedido.cliente else None
+            notify_order_created(pedido.id, pedido.numero, float(pedido.valor_total or 0), cliente_nome)
+        except Exception as ws_err:
+            socketio.emit('novo_pedido', {'numero': pedido.numero, 'estado': pedido.estado.value if hasattr(pedido.estado, 'value') else str(pedido.estado)})
 
         # Disparar notificação por Email / WhatsApp ao cliente
         try:

@@ -15303,11 +15303,20 @@
         "documentation": {}
     },
     {
+        "label": "notify_order_created",
+        "kind": 2,
+        "importPath": "backend.app.websocket.socket_manager",
+        "description": "backend.app.websocket.socket_manager",
+        "peekOfCode": "def notify_order_created(pedido_id: int, pedido_numero: str, total: float = 0.0, cliente_nome: Optional[str] = None) -> bool:\n    \"\"\"\n    Notifica a criação de um novo pedido comercial com desduplicação (máximo 1 alerta por pedido).\n    Emite o evento 'novo_pedido' para sincronização de listas e 'notificacao' para alerta visual.\n    \"\"\"\n    titulo = \"Novo Pedido Recebido\"\n    mensagem = f\"Pedido #{pedido_numero} registado com sucesso.\"\n    if cliente_nome:\n        mensagem += f\" Cliente: {cliente_nome}.\"\n    payload = {",
+        "detail": "backend.app.websocket.socket_manager",
+        "documentation": {}
+    },
+    {
         "label": "notify_production_orders",
         "kind": 2,
         "importPath": "backend.app.websocket.socket_manager",
         "description": "backend.app.websocket.socket_manager",
-        "peekOfCode": "def notify_production_orders(pedido_id: int, pedido_numero: str, sectores: List[str]) -> bool:\n    \"\"\"\n    Notifica a geração de novas ordens de produção para os setores e operadores.\n    Emite os eventos WebSocket 'nova_ordem_producao', 'alerta_producao' e 'notificacao'\n    e persiste a notificação na base de dados para Cozinha e Pastelaria.\n    \"\"\"\n    sectores_str = \", \".join(sectores) if sectores else \"Geral\"\n    titulo = f\"Nova Produção: Pedido #{pedido_numero}\"\n    mensagem = f\"Ordens de produção geradas para o Pedido #{pedido_numero} nos sectores: {sectores_str}.\"\n    payload = {",
+        "peekOfCode": "def notify_production_orders(pedido_id: int, pedido_numero: str, sectores: List[Any]) -> bool:\n    \"\"\"\n    Notifica a geração de ordens de produção de forma CONSOLIDADA e DESDUPLICADA.\n    Gera exatamente UMA notificação operacional para os setores fabris (Cozinha/Pastelaria/Bar),\n    eliminando alertas duplicados ou disparos redundantes em cascata.\n    \"\"\"\n    # Normalizar e desduplicar nomes dos setores\n    sectores_limpos = []\n    for s in (sectores or []):\n        s_val = s.value if hasattr(s, 'value') else str(s)",
         "detail": "backend.app.websocket.socket_manager",
         "documentation": {}
     },

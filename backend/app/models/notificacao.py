@@ -96,6 +96,17 @@ class Notificacao(BaseModel):
                     lido_em = leitura.lido_em.isoformat() if leitura.lido_em else None
                     break
 
+        # Garantir data formatada rigorosamente em ISO 8601
+        if self.created_at:
+            created_at_val = self.created_at.isoformat() if hasattr(self.created_at, 'isoformat') else str(self.created_at).replace(' ', 'T')
+        else:
+            created_at_val = datetime.utcnow().isoformat()
+
+        if self.updated_at:
+            updated_at_val = self.updated_at.isoformat() if hasattr(self.updated_at, 'isoformat') else str(self.updated_at).replace(' ', 'T')
+        else:
+            updated_at_val = created_at_val
+
         return {
             "id": self.id,
             "titulo": self.titulo,
@@ -105,16 +116,16 @@ class Notificacao(BaseModel):
             "prioridade": self.prioridade,
             "persistente": bool(self.persistente),
             "ativa": bool(self.ativa),
-            "desativada_em": self.desativada_em.isoformat() if self.desativada_em else None,
+            "desativada_em": self.desativada_em.isoformat() if (self.desativada_em and hasattr(self.desativada_em, 'isoformat')) else (str(self.desativada_em).replace(' ', 'T') if self.desativada_em else None),
             "desativada_por": self.desativada_por,
-            "expira_em": self.expira_em.isoformat() if self.expira_em else None,
+            "expira_em": self.expira_em.isoformat() if (self.expira_em and hasattr(self.expira_em, 'isoformat')) else (str(self.expira_em).replace(' ', 'T') if self.expira_em else None),
             "target_type": self.target_type,
             "target_role": self.target_role,
             "target_sector": self.target_sector,
             "target_user_id": self.target_user_id,
             "metadados": self.metadados or {},
-            "created_at": self.created_at.isoformat() if self.created_at else None,
-            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+            "created_at": created_at_val,
+            "updated_at": updated_at_val,
             "created_by": self.created_by,
             "lida": lida,
             "lido_em": lido_em,
