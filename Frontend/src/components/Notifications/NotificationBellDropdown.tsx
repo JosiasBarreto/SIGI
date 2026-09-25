@@ -5,18 +5,13 @@ import {
   Volume2,
   VolumeX,
   ExternalLink,
-  Trash2,
-  AlertTriangle,
   Monitor,
   Sparkles,
-  ChevronRight
 } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useNotifications } from '../NotificationContext';
-import { NotificationIcon } from './NotificationIcon';
+import { NotificationStructuredCard } from './NotificationStructuredCard';
 import { cn } from '../../lib/utils';
-import { formatDistanceToNow } from 'date-fns';
-import { pt } from 'date-fns/locale';
 
 export function NotificationBellDropdown() {
   const {
@@ -29,7 +24,7 @@ export function NotificationBellDropdown() {
     setSoundEnabled,
     osPermission,
     requestOsPermission,
-    addNotification
+    dispatchNotification
   } = useNotifications();
 
   const [isOpen, setIsOpen] = useState(false);
@@ -62,14 +57,6 @@ export function NotificationBellDropdown() {
     }
   };
 
-  const formatTimeAgo = (isoDate: string) => {
-    try {
-      return formatDistanceToNow(new Date(isoDate), { addSuffix: true, locale: pt });
-    } catch {
-      return 'recentemente';
-    }
-  };
-
   return (
     <div className="relative" ref={containerRef}>
       {/* Botão do Sino com badge de não lidas */}
@@ -89,7 +76,7 @@ export function NotificationBellDropdown() {
 
       {/* Painel Dropdown do Centro de Notificações */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-84 sm:w-96 bg-white dark:bg-surface-dark border border-gray-200 dark:border-border-dark rounded-2xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="absolute right-0 mt-2 w-84 sm:w-[420px] bg-white dark:bg-surface-dark border border-gray-200 dark:border-border-dark rounded-2xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
           {/* Cabeçalho */}
           <div className="p-3.5 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-gray-50/70 dark:bg-gray-900/60 backdrop-blur-sm">
             <div className="flex items-center gap-2">
@@ -106,7 +93,7 @@ export function NotificationBellDropdown() {
               <button
                 onClick={() => setSoundEnabled(!soundSettings.enabled)}
                 className={cn(
-                  "p-1.5 rounded-lg text-xs transition-colors",
+                  "p-1.5 rounded-lg text-xs transition-colors cursor-pointer",
                   soundSettings.enabled
                     ? "text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800"
                     : "text-red-500 bg-red-50 dark:bg-red-950/40 hover:bg-red-100"
@@ -120,7 +107,7 @@ export function NotificationBellDropdown() {
               {unreadCount > 0 && (
                 <button
                   onClick={markAllAsRead}
-                  className="text-xs font-semibold text-primary hover:text-primary-hover flex items-center gap-1 transition-colors px-1.5 py-1 rounded hover:bg-primary/10"
+                  className="text-xs font-semibold text-primary hover:text-primary-hover flex items-center gap-1 transition-colors px-1.5 py-1 rounded hover:bg-primary/10 cursor-pointer"
                   title="Marcar todas como lidas"
                 >
                   <Check size={14} />
@@ -135,11 +122,11 @@ export function NotificationBellDropdown() {
             <div className="px-3.5 py-2 bg-blue-50 dark:bg-blue-950/40 border-b border-blue-100 dark:border-blue-900/40 flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 text-xs text-blue-900 dark:text-blue-300">
                 <Monitor size={14} className="shrink-0 text-blue-600 dark:text-blue-400" />
-                <span className="text-[11px] leading-tight">Receber avisos no ambiente de trabalho?</span>
+                <span className="text-[11px] leading-tight">Receber avisos no telemóvel / ecrã de bloqueio?</span>
               </div>
               <button
                 onClick={requestOsPermission}
-                className="px-2 py-0.5 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold rounded-md shadow-xs transition"
+                className="px-2 py-0.5 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold rounded-md shadow-xs transition cursor-pointer"
               >
                 Ativar
               </button>
@@ -151,7 +138,7 @@ export function NotificationBellDropdown() {
             <button
               onClick={() => setFilterTab('all')}
               className={cn(
-                "pb-2 px-2 font-medium border-b-2 transition-all",
+                "pb-2 px-2 font-medium border-b-2 transition-all cursor-pointer",
                 filterTab === 'all'
                   ? "border-primary text-primary font-bold"
                   : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
@@ -162,7 +149,7 @@ export function NotificationBellDropdown() {
             <button
               onClick={() => setFilterTab('unread')}
               className={cn(
-                "pb-2 px-2 font-medium border-b-2 transition-all",
+                "pb-2 px-2 font-medium border-b-2 transition-all cursor-pointer",
                 filterTab === 'unread'
                   ? "border-primary text-primary font-bold"
                   : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
@@ -173,7 +160,7 @@ export function NotificationBellDropdown() {
             <button
               onClick={() => setFilterTab('important')}
               className={cn(
-                "pb-2 px-2 font-medium border-b-2 transition-all",
+                "pb-2 px-2 font-medium border-b-2 transition-all cursor-pointer",
                 filterTab === 'important'
                   ? "border-primary text-primary font-bold"
                   : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
@@ -183,8 +170,8 @@ export function NotificationBellDropdown() {
             </button>
           </div>
 
-          {/* Lista de Notificações com Scroll suave */}
-          <div className="max-h-80 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-800/60 custom-scrollbar">
+          {/* Lista de Notificações com Cards Estruturados */}
+          <div className="max-h-[380px] overflow-y-auto divide-y divide-gray-100 dark:divide-gray-800/60 custom-scrollbar">
             {filteredNotifications.length === 0 ? (
               <div className="p-8 text-center flex flex-col items-center justify-center">
                 <div className="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-400 mb-2">
@@ -197,83 +184,24 @@ export function NotificationBellDropdown() {
               </div>
             ) : (
               filteredNotifications.map((n) => (
-                <div
+                <NotificationStructuredCard
                   key={n.id}
-                  onClick={() => handleNotificationClick(n)}
-                  className={cn(
-                    "p-3.5 hover:bg-gray-50 dark:hover:bg-gray-800/60 transition cursor-pointer flex gap-3 relative group",
-                    !n.read
-                      ? "bg-primary/5 dark:bg-primary/10 border-l-3 border-l-primary"
-                      : "opacity-85 hover:opacity-100"
-                  )}
-                >
-                  <NotificationIcon type={n.type} priority={n.priority} />
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-1.5">
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <p
-                          className={cn(
-                            "text-xs font-bold truncate",
-                            !n.read ? "text-gray-900 dark:text-white" : "text-gray-700 dark:text-gray-300"
-                          )}
-                        >
-                          {n.title}
-                        </p>
-                        {n.priority === 'critical' && (
-                          <span className="px-1.5 py-0.2 bg-red-100 dark:bg-red-950/80 text-red-600 dark:text-red-400 text-[9px] font-black rounded uppercase">
-                            Crítico
-                          </span>
-                        )}
-                        {n.priority === 'high' && (
-                          <span className="px-1.5 py-0.2 bg-amber-100 dark:bg-amber-950/80 text-amber-600 dark:text-amber-400 text-[9px] font-black rounded uppercase">
-                            Alta
-                          </span>
-                        )}
-                      </div>
-                      <span className="text-[10px] text-gray-400 whitespace-nowrap shrink-0">
-                        {formatTimeAgo(n.timestamp)}
-                      </span>
-                    </div>
-
-                    <p className="text-xs text-gray-600 dark:text-gray-300 mt-1 line-clamp-2 leading-relaxed">
-                      {n.message}
-                    </p>
-
-                    <div className="flex items-center justify-between mt-2 pt-1 border-t border-gray-100/50 dark:border-gray-800/40">
-                      {n.actionUrl ? (
-                        <span className="text-[11px] font-semibold text-primary group-hover:underline flex items-center gap-1">
-                          Ver detalhes <ChevronRight size={12} />
-                        </span>
-                      ) : (
-                        <span />
-                      )}
-
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            deleteNotification(n.id);
-                          }}
-                          className="p-1 text-gray-400 hover:text-red-500 rounded transition"
-                          title="Eliminar notificação"
-                        >
-                          <Trash2 size={13} />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                  notification={n}
+                  compact={true}
+                  onOpen={handleNotificationClick}
+                  onMarkAsRead={markAsRead}
+                  onDelete={deleteNotification}
+                />
               ))
             )}
           </div>
 
-          {/* Simulador Expansível para Testes de Socket.IO / Eventos */}
+          {/* Simulador Expansível para Testes de Socket.IO / Padrão Universal */}
           <div className="border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/60 p-2.5">
             <div className="flex items-center justify-between">
               <button
                 onClick={() => setShowSimulator(!showSimulator)}
-                className="text-[11px] font-bold text-gray-600 dark:text-gray-400 hover:text-primary flex items-center gap-1.5 transition"
+                className="text-[11px] font-bold text-gray-600 dark:text-gray-400 hover:text-primary flex items-center gap-1.5 transition cursor-pointer"
               >
                 <Sparkles size={13} className="text-amber-500" />
                 <span>Simulador de Eventos em Tempo Real</span>
@@ -292,59 +220,56 @@ export function NotificationBellDropdown() {
               <div className="mt-2.5 pt-2 border-t border-gray-200 dark:border-gray-800 grid grid-cols-2 gap-1.5">
                 <button
                   onClick={() =>
-                    addNotification({
-                      type: 'novo_pedido',
-                      title: 'Novo Pedido #304',
-                      message: 'Cliente Restaurante Miramar registou Pedido #304 (450 STN).',
-                      priority: 'normal',
-                      actionUrl: '/pedidos',
+                    dispatchNotification('notificacao', {
+                      id: Date.now(),
+                      titulo: "Pedido #PED-2026-0042: Pronto para Levantamento",
+                      mensagem: "O estado do Pedido #PED-2026-0042 foi alterado para 'PRONTO'.\n• Cliente: Carlos Alberto\n• Produtos: 2x Croissant Simples, 1x Café Expresso\n• Transição: EM_PRODUCAO ➔ PRONTO",
+                      tipo: "success",
+                      canal: "PEDIDO",
+                      prioridade: "alta",
+                      persistente: false,
+                      data: {
+                        pedido_id: 42,
+                        numero: "PED-2026-0042",
+                        cliente: "Carlos Alberto",
+                        produtos: "2x Croissant Simples, 1x Café Expresso",
+                        antigo_estado: "EM_PRODUCAO",
+                        novo_estado: "PRONTO",
+                        origem: "pedido_atualizado"
+                      }
                     })
                   }
-                  className="px-2 py-1.5 bg-white dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-gray-700/80 text-[10px] font-semibold text-gray-700 dark:text-gray-300 rounded border border-gray-200 dark:border-gray-700 text-left truncate transition"
+                  className="p-2 bg-white dark:bg-gray-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 rounded-lg border border-emerald-200 dark:border-emerald-800 text-left transition cursor-pointer"
                 >
-                  🛒 1. Novo Pedido
+                  1. Pedido Pronto (Exemplo 1)
                 </button>
+
                 <button
                   onClick={() =>
-                    addNotification({
-                      type: 'nova_ordem_producao',
-                      title: 'Nova OP Pastelaria #89',
-                      message: 'Produção: Bolo Red Velvet com Cobertura (3 un).',
-                      priority: 'high',
-                      actionUrl: '/producao',
+                    dispatchNotification('notificacao', {
+                      id: Date.now() + 1,
+                      titulo: "Produção (Pastelaria) #OP-PAS-0089: Concluída",
+                      mensagem: "A ordem de produção #OP-PAS-0089 (Pastelaria) passou para 'PRONTO'.\n• Pedido: #PED-2026-0042\n• Cliente: Carlos Alberto\n• Artigos: 2x Croissant Simples\n• Transição: EM_PRODUCAO ➔ PRONTO",
+                      tipo: "success",
+                      canal: "PRODUCAO",
+                      prioridade: "alta",
+                      persistente: false,
+                      data: {
+                        ordem_id: 89,
+                        ordem_numero: "OP-PAS-0089",
+                        pedido_numero: "PED-2026-0042",
+                        sector: "Pastelaria",
+                        cliente: "Carlos Alberto",
+                        produtos: "2x Croissant Simples",
+                        antigo_estado: "EM_PRODUCAO",
+                        novo_estado: "PRONTO",
+                        origem: "ordem_producao_atualizada"
+                      }
                     })
                   }
-                  className="px-2 py-1.5 bg-white dark:bg-gray-800 hover:bg-amber-50 dark:hover:bg-gray-700/80 text-[10px] font-semibold text-gray-700 dark:text-gray-300 rounded border border-gray-200 dark:border-gray-700 text-left truncate transition"
+                  className="p-2 bg-white dark:bg-gray-800 hover:bg-amber-50 dark:hover:bg-amber-950/40 text-[11px] font-semibold text-amber-700 dark:text-amber-300 rounded-lg border border-amber-200 dark:border-amber-800 text-left transition cursor-pointer"
                 >
-                  🎂 2. Nova OP
-                </button>
-                <button
-                  onClick={() =>
-                    addNotification({
-                      type: 'stock_critico',
-                      title: 'Stock Crítico de Farinha',
-                      message: 'Aviso urgente: Farinha de Trigo atingiu 0kg no armazém!',
-                      priority: 'critical',
-                      actionUrl: '/armazem',
-                    })
-                  }
-                  className="px-2 py-1.5 bg-white dark:bg-gray-800 hover:bg-red-50 dark:hover:bg-gray-700/80 text-[10px] font-semibold text-red-600 dark:text-red-400 rounded border border-red-200 dark:border-red-900/60 text-left truncate transition"
-                >
-                  🚨 3. Stock Crítico
-                </button>
-                <button
-                  onClick={() =>
-                    addNotification({
-                      type: 'requisicao_criada',
-                      title: 'Nova Requisição #REQ-22',
-                      message: 'Setor Cozinha solicitou 12kg Açúcar e Óleo.',
-                      priority: 'normal',
-                      actionUrl: '/requisicoes',
-                    })
-                  }
-                  className="px-2 py-1.5 bg-white dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-gray-700/80 text-[10px] font-semibold text-gray-700 dark:text-gray-300 rounded border border-gray-200 dark:border-gray-700 text-left truncate transition"
-                >
-                  📋 4. Requisição
+                  2. OP Concluída (Exemplo 2)
                 </button>
               </div>
             )}

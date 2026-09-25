@@ -1,5 +1,5 @@
 
-import { EstadoPedido } from '../../enums';
+import { EstadoPedido, EstadoProducao } from '../../enums';
 export interface PedidoItemDTO {
   id?: number;
   tipo_item: string;
@@ -25,17 +25,25 @@ export interface PedidoDTO {
   saldo: string | number;
   forma_pagamento?: string;
   estado_pagamento?: string;
-  itens: PedidoItemDTO[];}
+  itens: PedidoItemDTO[];
+}
+export interface OrdemProducaoItemDTO {
+  id?: number;
+  produto_id: number;
+  quantidade: string | number;
+  observacoes?: string;
+}
 export interface OrdemProducaoDTO {
   id: number;
   numero: string;
   pedido_id: number;
-  sector: string;
+  sector: 'Cozinha' | 'Pastelaria' | 'Bar' | string;
   data_producao?: string;
   hora_inicio?: string;
   hora_fim?: string;
   prioridade: string;
-  estado: string;
+  estado: EstadoProducao | string;
   observacoes?: string;
+  itens?: OrdemProducaoItemDTO[];
   consumos: any[];
 }

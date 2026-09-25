@@ -13,7 +13,7 @@ class NotificationSoundManager {
   private isUnlocked = false;
   private settings: SoundSettings = {
     enabled: true,
-    volume: 0.7,
+    volume: 0.75,
   };
 
   constructor() {
@@ -28,38 +28,61 @@ class NotificationSoundManager {
 
       this.settings = {
         enabled: storedEnabled !== null ? storedEnabled === 'true' : true,
-        volume: storedVolume !== null ? Math.min(1, Math.max(0, parseFloat(storedVolume))) : 0.7,
+        volume: storedVolume !== null ? Math.min(1, Math.max(0, parseFloat(storedVolume))) : 0.75,
       };
     } catch {
-      this.settings = { enabled: true, volume: 0.7 };
+      this.settings = { enabled: true, volume: 0.75 };
     }
   }
 
+  /**
+   * Configura ouvintes globais para desbloquear a reprodução de áudio
+   * na primeira interação táctil ou de clique do utilizador no telemóvel/desktop.
+   */
   private setupUnlockListeners() {
     if (typeof window === 'undefined') return;
 
     const unlock = () => {
-      this.ensureAudioContext();
-      if (this.audioCtx && this.audioCtx.state === 'suspended') {
-        this.audioCtx.resume().then(() => {
-          this.isUnlocked = true;
-        }).catch(() => {
-          // Ignora silenciosamente se o browser ainda bloquear
-        });
-      } else if (this.audioCtx && this.audioCtx.state === 'running') {
-        this.isUnlocked = true;
-      }
-
-      if (this.isUnlocked) {
-        window.removeEventListener('click', unlock);
-        window.removeEventListener('keydown', unlock);
-        window.removeEventListener('touchstart', unlock);
-      }
+      this.unlockAudioContext();
     };
 
-    window.addEventListener('click', unlock, { passive: true });
-    window.addEventListener('keydown', unlock, { passive: true });
-    window.addEventListener('touchstart', unlock, { passive: true });
+    // Múltiplos eventos para garantir desbloqueio em Android Chrome, Safari iOS e Desktop
+    ['click', 'touchstart', 'touchend', 'keydown', 'pointerdown'].forEach((evt) => {
+      window.addEventListener(evt, unlock, { passive: true });
+    });
+
+    // Quando a aba/ecrã voltar a ficar visível, garante que o áudio não está suspenso
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          this.resumeContext();
+        }
+      });
+    }
+  }
+
+  private unlockAudioContext() {
+    try {
+      const ctx = this.ensureAudioContext();
+      if (ctx) {
+        if (ctx.state === 'suspended') {
+          ctx.resume().then(() => {
+            this.isUnlocked = true;
+          }).catch(() => {});
+        } else if (ctx.state === 'running') {
+          this.isUnlocked = true;
+        }
+
+        // Toca um buffer silencioso para desbloquear totalmente o pipeline de áudio no iOS Safari
+        try {
+          const buffer = ctx.createBuffer(1, 1, 22050);
+          const source = ctx.createBufferSource();
+          source.buffer = buffer;
+          source.connect(ctx.destination);
+          source.start(0);
+        } catch {}
+      }
+    } catch {}
   }
 
   private ensureAudioContext(): AudioContext | null {
@@ -76,6 +99,12 @@ class NotificationSoundManager {
       }
     }
     return this.audioCtx;
+  }
+
+  private resumeContext() {
+    if (this.audioCtx && this.audioCtx.state === 'suspended') {
+      this.audioCtx.resume().catch(() => {});
+    }
   }
 
   public getSettings(): SoundSettings {
@@ -98,33 +127,74 @@ class NotificationSoundManager {
   }
 
   /**
-   * Toca sintetizador de áudio dependendo do preset solicitado
+   * Dispara vibração táctil no dispositivo móvel (Android / PWA)
+   */
+  public triggerVibration(preset: SoundPreset = 'chime') {
+    if (typeof window === 'undefined' || typeof navigator === 'undefined') return;
+    if (!('vibrate' in navigator)) return;
+
+    try {
+      switch (preset) {
+        case 'critical':
+          navigator.vibrate([250, 100, 250, 100, 400]);
+          break;
+        case 'alarm':
+          navigator.vibrate([200, 100, 200]);
+          break;
+        case 'success':
+          navigator.vibrate([120, 80, 180]);
+          break;
+        case 'subtle':
+          navigator.vibrate(80);
+          break;
+        case 'chime':
+        default:
+          navigator.vibrate([150, 100, 150]);
+          break;
+      }
+    } catch {}
+  }
+
+  /**
+   * Toca som sintetizado dependendo do preset solicitado e aciona vibração móvel
    */
   public play(preset: SoundPreset = 'chime'): void {
+    // 1. Disparar vibração física sempre que possível no telemóvel
+    this.triggerVibration(preset);
+
     if (!this.settings.enabled || this.settings.volume <= 0) return;
 
     const ctx = this.ensureAudioContext();
     if (!ctx) return;
 
-    // Se estiver suspenso, tenta dar resume
+    // Se estiver suspenso no telemóvel ou em segundo plano, tenta retomar
     if (ctx.state === 'suspended') {
-      ctx.resume().catch(() => {});
+      ctx.resume().then(() => {
+        this.renderPreset(ctx, preset);
+      }).catch(() => {
+        this.renderPreset(ctx, preset);
+      });
+      return;
     }
 
+    this.renderPreset(ctx, preset);
+  }
+
+  private renderPreset(ctx: AudioContext, preset: SoundPreset) {
     try {
       const now = ctx.currentTime;
-      const baseGain = 0.25 * this.settings.volume;
+      const baseGain = 0.3 * this.settings.volume;
 
       switch (preset) {
         case 'subtle': {
-          // Um 'tick' sutil e rápido (440Hz -> 220Hz decaimento em 0.12s)
+          // 'Tick' sutil e rápido (480Hz -> 240Hz decaimento em 0.12s)
           const osc = ctx.createOscillator();
           const gain = ctx.createGain();
           osc.type = 'sine';
-          osc.frequency.setValueAtTime(440, now);
-          osc.frequency.exponentialRampToValueAtTime(220, now + 0.12);
+          osc.frequency.setValueAtTime(480, now);
+          osc.frequency.exponentialRampToValueAtTime(240, now + 0.12);
 
-          gain.gain.setValueAtTime(baseGain * 0.5, now);
+          gain.gain.setValueAtTime(baseGain * 0.6, now);
           gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
 
           osc.connect(gain);
@@ -136,38 +206,37 @@ class NotificationSoundManager {
         }
 
         case 'chime': {
-          // Sino agradável duplo (587Hz D5 -> 880Hz A5)
-          this.playTone(ctx, 587.33, now, 0.18, baseGain * 0.7, 'triangle');
-          this.playTone(ctx, 880.00, now + 0.12, 0.35, baseGain * 0.9, 'sine');
+          // Sino agradável duplo (587.33Hz D5 -> 880Hz A5)
+          this.playTone(ctx, 587.33, now, 0.18, baseGain * 0.8, 'triangle');
+          this.playTone(ctx, 880.00, now + 0.12, 0.38, baseGain * 0.95, 'sine');
           break;
         }
 
         case 'success': {
-          // Acorde alegre de sucesso (C5 -> E5 -> G5)
-          this.playTone(ctx, 523.25, now, 0.15, baseGain * 0.6, 'triangle');
-          this.playTone(ctx, 659.25, now + 0.1, 0.15, baseGain * 0.7, 'triangle');
-          this.playTone(ctx, 783.99, now + 0.2, 0.4, baseGain * 0.9, 'sine');
+          // Acorde alegre de sucesso (C5 523Hz -> E5 659Hz -> G5 784Hz)
+          this.playTone(ctx, 523.25, now, 0.15, baseGain * 0.7, 'triangle');
+          this.playTone(ctx, 659.25, now + 0.1, 0.15, baseGain * 0.8, 'triangle');
+          this.playTone(ctx, 783.99, now + 0.2, 0.45, baseGain * 1.0, 'sine');
           break;
         }
 
         case 'alarm': {
-          // Alerta operacional chamativo de produção/stock (dois bipes de atenção 784Hz -> 659Hz)
-          this.playTone(ctx, 783.99, now, 0.16, baseGain, 'square');
-          this.playTone(ctx, 659.25, now + 0.2, 0.25, baseGain, 'triangle');
+          // Alerta operacional de produção/pedidos (dois bipes de atenção 784Hz -> 659Hz)
+          this.playTone(ctx, 783.99, now, 0.16, baseGain * 1.1, 'square');
+          this.playTone(ctx, 659.25, now + 0.2, 0.28, baseGain * 1.0, 'triangle');
           break;
         }
 
         case 'critical': {
-          // Alerta crítico de emergência (pulso triplo penetrante 880Hz / 440Hz)
-          this.playTone(ctx, 880.00, now, 0.15, baseGain * 1.1, 'sawtooth');
-          this.playTone(ctx, 440.00, now + 0.18, 0.15, baseGain * 1.1, 'sawtooth');
-          this.playTone(ctx, 880.00, now + 0.36, 0.35, baseGain * 1.2, 'sawtooth');
+          // Alerta crítico (pulso triplo penetrante 880Hz / 440Hz)
+          this.playTone(ctx, 880.00, now, 0.15, baseGain * 1.2, 'sawtooth');
+          this.playTone(ctx, 440.00, now + 0.18, 0.15, baseGain * 1.2, 'sawtooth');
+          this.playTone(ctx, 880.00, now + 0.36, 0.4, baseGain * 1.3, 'sawtooth');
           break;
         }
       }
     } catch (e) {
-      // Audio bloqueado ou restrição do browser - sem quebrar a app
-      console.warn('[SoundManager] Não foi possível reproduzir som:', e);
+      console.warn('[SoundManager] Não foi possível reproduzir som no navegador móvel/desktop:', e);
     }
   }
 

@@ -410,7 +410,7 @@ export const StockOverviewTab: React.FC<StockOverviewTabProps> = ({
                 <th className="px-4 py-3 text-right">Saldo Atual</th>
                 <th className="px-4 py-3 text-right">Stock Mín.</th>
                 <th className="px-4 py-3 text-right">Custo Médio</th>
-                <th className="px-4 py-3 text-right">Valor Total (Kz)</th>
+                <th className="px-4 py-3 text-right">Valor Total</th>
                 <th className="px-4 py-3 text-center">Estado</th>
                 <th className="px-4 py-3 text-center">Ações</th>
               </tr>

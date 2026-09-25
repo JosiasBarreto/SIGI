@@ -461,7 +461,10 @@ const normalizePedidoEstado = (estado: string): string => {
   if (upper === 'CONCLUIDO' || upper === 'CONCLUÍDO' || upper === 'CONCLUIDA' || upper === 'COMPLETADO') {
     return 'Concluido';
   }
-  if (upper === 'PENDENTE' || upper === 'AGENDADO' || upper === 'RASCUNHO') {
+  if (upper === 'PENDENTE' || upper === 'RASCUNHO') {
+    return 'Pendente';
+  }
+  if (upper === 'AGENDADO') {
     return 'Agendado';
   }
   if (upper === 'CONFIRMADO') return 'Confirmado';
@@ -470,8 +473,8 @@ const normalizePedidoEstado = (estado: string): string => {
   if (upper === 'CANCELADO') return 'Cancelado';
 
   const validMap: Record<string, string> = {
+    "pendente": "Pendente",
     "agendado": "Agendado",
-    "pendente": "Agendado",
     "confirmado": "Confirmado",
     "em producao": "Em Producao",
     "em produção": "Em Producao",
@@ -525,7 +528,9 @@ export const orderService = {
     if (payload.estado) {
       payload.estado = normalizePedidoEstado(payload.estado);
     } else {
-      payload.estado = "Agendado";
+      const todayStr = new Date().toISOString().split('T')[0];
+      const isHoje = !payload.data_entrega || payload.data_entrega <= todayStr;
+      payload.estado = isHoje ? "Em Producao" : "Agendado";
     }
     if (Array.isArray(payload.itens)) {
       payload.itens = payload.itens.map((it: any) => {
@@ -1644,8 +1649,13 @@ export const productionService = {
             ? 'Pronto'
             : upper === 'ENTREGUE' || upper === 'CONCLUIDO' || upper === 'CONCLUÍDO'
               ? 'Entregue'
-              : estado;
+              : upper === 'CANCELADO'
+                ? 'Cancelado'
+                : estado;
     return apiClient.put<any, OrdemProducaoDTO>(`/v1/producao/ordens/${id}/estado`, { estado: estadoNormalized });
+  },
+  async processarAgendados(): Promise<any> {
+    return apiClient.post<any, any>('/v1/producao/processar-agendados', {});
   }
 };
 

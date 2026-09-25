@@ -14,12 +14,21 @@ export enum ServicoEnum {
 }
 
 export enum EstadoPedido {
+  PENDENTE = 'Pendente',
   AGENDADO = 'Agendado',
   CONFIRMADO = 'Confirmado',
   EM_PRODUCAO = 'Em Producao',
   PRONTO = 'Pronto',
   ENTREGUE = 'Entregue',
   CONCLUIDO = 'Concluido',
+  CANCELADO = 'Cancelado'
+}
+
+export enum EstadoProducao {
+  PENDENTE = 'Pendente',
+  EM_PRODUCAO = 'Em Producao',
+  PRONTO = 'Pronto',
+  ENTREGUE = 'Entregue',
   CANCELADO = 'Cancelado'
 }
 

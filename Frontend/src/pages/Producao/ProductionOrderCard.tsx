@@ -41,7 +41,7 @@ export function extractOrderItems(order: any, productsList: any[] = []) {
 
   if (rawList) {
     return rawList.map((item: any, idx: number) => {
-      const pid = item.produto_id || item.productId;
+      const pid = item.produto_id || item.productId || item.item_id;
       const matchedProd = productsList?.find((p: any) => String(p.id) === String(pid));
       const nome =
         item.produto_nome ||
@@ -65,6 +65,53 @@ export function extractOrderItems(order: any, productsList: any[] = []) {
         categoria: matchedProd?.categoria || matchedProd?.categoria_nome || item.categoria || ''
       };
     });
+  }
+
+  // 1.5. Fallback para itens do Pedido Comercial pai (parentOrder)
+  const parentList = Array.isArray(order?.parentOrder?.itens) && order.parentOrder.itens.length > 0
+    ? order.parentOrder.itens
+    : Array.isArray(order?.parentOrder?.items) && order.parentOrder.items.length > 0
+      ? order.parentOrder.items
+      : null;
+
+  if (parentList) {
+    const sectorLower = String(order.sector || order.setor || '').toLowerCase();
+    const relevantItems = parentList.filter((item: any) => {
+      if (!sectorLower || sectorLower === 'todos') return true;
+      const pid = item.produto_id || item.productId || item.item_id;
+      const matchedProd = productsList?.find((p: any) => String(p.id) === String(pid));
+      const cat = String(matchedProd?.categoria || matchedProd?.categoria_nome || item.tipo_item || '').toLowerCase();
+      if (sectorLower.includes('cozinh') && (cat.includes('cozinh') || cat.includes('prato') || cat.includes('refeic') || cat.includes('comida') || cat.includes('quente'))) return true;
+      if (sectorLower.includes('pastel') && (cat.includes('pastel') || cat.includes('bolo') || cat.includes('doce') || cat.includes('sobremesa') || cat.includes('salgado'))) return true;
+      if (sectorLower.includes('bar') && (cat.includes('bar') || cat.includes('bebid') || cat.includes('vinho') || cat.includes('sumo') || cat.includes('cocktail') || cat.includes('cerveja'))) return true;
+      return true;
+    });
+
+    if (relevantItems.length > 0) {
+      return relevantItems.map((item: any, idx: number) => {
+        const pid = item.produto_id || item.productId || item.item_id;
+        const matchedProd = productsList?.find((p: any) => String(p.id) === String(pid));
+        const nome =
+          item.descricao ||
+          item.produto_nome ||
+          item.nome_produto ||
+          item.nome ||
+          matchedProd?.nome ||
+          `Produto #${pid || idx + 1}`;
+        const quantidade = Number(item.quantidade ?? item.quantity ?? 1);
+        const unidade = item.unidade || matchedProd?.unidade || '';
+        const observacoes = item.observacoes || item.observacao || '';
+        return {
+          id: item.id || `parent-item-${idx}-${pid || Math.random()}`,
+          produto_id: pid,
+          nome,
+          quantidade: isNaN(quantidade) || quantidade <= 0 ? 1 : quantidade,
+          unidade,
+          observacoes,
+          categoria: matchedProd?.categoria || matchedProd?.categoria_nome || item.tipo_item || ''
+        };
+      });
+    }
   }
 
   // 2. Se a ordem foi gerada para 1 produto principal (lote direto)
@@ -182,9 +229,17 @@ export const ProductionOrderCard: React.FC<ProductionOrderCardProps> = ({
 
   // Cliente / Pedido de Origem
   const orderNumber = order.numero || order.codigo || `#${order.id}`;
-  const pedidoNumero = order.pedido_numero || (order.pedido_id ? `#${order.pedido_id}` : null);
-  const clienteNome = order.cliente_nome || order.cliente || null;
-  const mesaInfo = order.mesa || order.local || order.mesa_numero || null;
+  const pedidoNumero = order.pedido_numero || order.parentOrder?.numero || (order.pedido_id ? `#${order.pedido_id}` : null);
+  const clienteNome =
+    (typeof order.cliente_nome === 'string' && order.cliente_nome.trim() ? order.cliente_nome : null) ||
+    (typeof order.cliente === 'string' && order.cliente.trim() ? order.cliente : null) ||
+    order.cliente?.nome ||
+    order.parentOrder?.cliente?.nome ||
+    order.parentOrder?.cliente_nome ||
+    null;
+  const mesaInfo = order.mesa || order.local || order.mesa_numero || order.parentOrder?.mesa || null;
+  const dataEntrega = order.data_entrega || order.parentOrder?.data_entrega || null;
+  const horaEntrega = order.hora_entrega || order.parentOrder?.hora_entrega || null;
 
   const handlePrint = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -228,7 +283,7 @@ export const ProductionOrderCard: React.FC<ProductionOrderCardProps> = ({
               </span>
             </div>
 
-            {/* Metadados: Pedido, Cliente, Mesa */}
+            {/* Metadados: Pedido, Cliente, Mesa, Horário */}
             <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 mt-1 flex-wrap">
               {pedidoNumero && (
                 <span className="font-semibold text-gray-700 dark:text-gray-200">
@@ -243,9 +298,17 @@ export const ProductionOrderCard: React.FC<ProductionOrderCardProps> = ({
               )}
               {mesaInfo && clienteNome && <span aria-hidden="true">·</span>}
               {clienteNome && (
-                <span className="truncate max-w-[160px] text-gray-600 dark:text-gray-300">
+                <span className="truncate max-w-[160px] text-gray-600 dark:text-gray-300 font-medium">
                   {clienteNome}
                 </span>
+              )}
+              {(horaEntrega || dataEntrega) && (
+                <>
+                  <span aria-hidden="true">·</span>
+                  <span className="flex items-center gap-1 text-indigo-600 dark:text-indigo-400 font-bold text-[11px]">
+                    <Clock size={11} /> {horaEntrega ? horaEntrega.slice(0, 5) : dataEntrega}
+                  </span>
+                </>
               )}
             </div>
           </div>

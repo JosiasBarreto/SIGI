@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { ShoppingCart, Trash2, Minus, Plus, Tag, AlertCircle } from "lucide-react";
 
+
 interface CartItem {
   id: string | number;
   nome?: string;
@@ -35,7 +36,7 @@ interface CartListProps {
 const CartList: React.FC<CartListProps> = ({
   cart,
   showPriceWithIva = false,
-  currencySymbol = "STN",
+  currencySymbol =  "STN",
   formatCurrency,
   removeItem,
   updateQty,

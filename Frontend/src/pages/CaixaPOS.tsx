@@ -30,10 +30,18 @@ import {
   Filter,
   Check,
   Receipt,
-  ShoppingCart
+  ShoppingCart,
+  MessageSquare,
+  Smartphone,
+  Copy,
+  ChefHat,
+  ShoppingBag,
+  PackageCheck,
+  Send
 } from "lucide-react";
 import { formatCurrency, cn } from "../lib/utils";
 import { toast } from "react-toastify";
+import { notificationManager, externalNotificationService } from "../services/notifications";
 import SearchableClientSelect from "../components/Common/SearchableClientSelect";
 import ProductGrid from "./CaixaPOS/ProductGrid";
 import CartList from "./CaixaPOS/CartList";
@@ -46,6 +54,7 @@ import CaixaAdvancedFilterModal from "./CaixaPOS/CaixaAdvancedFilterModal";
 import CaixaDraftsModal, { CaixaDraft } from "./CaixaPOS/CaixaDraftsModal";
 import CaixaPOSPaymentModal from "./CaixaPOS/CaixaPOSPaymentModal";
 import CaixaCartModal from "./CaixaPOS/CaixaCartModal";
+import PedidoSuccessModal from "./Pedidos/PedidoSuccessModal";
 
 export default function CaixaPOS() {
   const { createVenda, checkoutPedido, enviarFatura } = useComercial();
@@ -115,6 +124,8 @@ export default function CaixaPOS() {
 
   // Invoice sending & Receipt modal states
   const [createdVenda, setCreatedVenda] = useState<any>(null);
+  const [completedOrderData, setCompletedOrderData] = useState<any>(null);
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [sendMethod, setSendMethod] = useState<"email" | "whatsapp">("email");
   const [sendContact, setSendContact] = useState("");
   const [invoiceSent, setInvoiceSent] = useState(false);
@@ -417,6 +428,7 @@ export default function CaixaPOS() {
       return;
     }
     try {
+      notificationManager.startOrderSession(undefined, 8000);
       const payload: ProformaCreatePayload = {
         cliente_id: selectedClient ? Number(selectedClient) : null,
         pedido_id: null,
@@ -442,16 +454,20 @@ export default function CaixaPOS() {
         }),
       };
       const res = await proformaService.create(payload);
-      setCreatedVenda({
+      const proformaObj = {
         ...res,
         isProforma: true,
         id: res.id,
         numero: res.numero_documento || `PROFORMA/${res.id}`,
         total: res.total || total,
-      });
+        cliente: selectedClientObj,
+        itens: cart,
+        forma_pagamento: "Orçamento / Pró-Forma",
+      };
+      setCreatedVenda(proformaObj);
+      setCompletedOrderData(proformaObj);
       setIsPaymentModalOpen(false);
-      setStep(3);
-      toast.success(res.msg || "Fatura Pró-Forma gerada com sucesso!");
+      setIsSuccessModalOpen(true);
     } catch (err: any) {
       toast.error(err?.message || "Erro ao gerar Fatura Pró-Forma.");
     }
@@ -517,6 +533,7 @@ export default function CaixaPOS() {
     }
 
     try {
+      notificationManager.startOrderSession(undefined, 8000);
       const paymentMethodId =
         paymentMethod === "Transferência" ? 2 : paymentMethod === "TPA / POS" ? 3 : 1;
 
@@ -594,7 +611,8 @@ export default function CaixaPOS() {
 
       const buildVendaPayload = (valorPagamento = valorPagoNum) => ({
         tipo_documento: tipoDocumento,
-        cliente_id: selectedClient ? Number(selectedClient) : undefined,
+        cliente_id: selectedClient ? Number(selectedClient) : null,
+        evento_id: null,
         observacoes: "Venda direta via POS",
         itens: mapCartToVendaItens(),
         pagamentos: valorPagamento > 0 ? pagamentos : [],
@@ -604,6 +622,8 @@ export default function CaixaPOS() {
       const current_date = d.toISOString().split("T")[0];
       const current_time = d.toTimeString().split(" ")[0];
 
+      const isEntregaHoje = !isAgendado || dataEntrega.split("T")[0] <= current_date;
+
       const orderPayload: any = {
         cliente_id: selectedClient ? Number(selectedClient) : undefined,
         tipo: "Simples",
@@ -612,7 +632,7 @@ export default function CaixaPOS() {
         hora_entrega: isAgendado
           ? `${dataEntrega.split("T")[1] || "12:00"}:00`.substring(0, 8)
           : current_time,
-        estado: "Agendado",
+        estado: isEntregaHoje ? "Em Producao" : "Agendado",
         observacoes: `Pedido ${tipoPedido}. Caixa: #${caixaId}`,
         valor_pago: 0,
         forma_pagamento: "Dinheiro",
@@ -672,7 +692,15 @@ export default function CaixaPOS() {
       } else if (tipoPedido === "Imediato") {
         const vendaPayload = buildVendaPayload(valorPagoNum);
         const vendaRes = await createVenda.mutateAsync(vendaPayload);
-        setCreatedVenda(vendaRes);
+        const vendaObj = {
+          ...vendaRes,
+          cliente: selectedClientObj,
+          total: (vendaRes as any)?.total || (vendaRes as any)?.valor_total || total,
+          itens: cart,
+          forma_pagamento: paymentMethod,
+        };
+        setCreatedVenda(vendaObj);
+        setCompletedOrderData(vendaObj);
       } else {
         const createdOrder: any = await orderService.create(orderPayload);
         if (valorPagoNum > 0) {
@@ -702,13 +730,29 @@ export default function CaixaPOS() {
             pedido_id: createdOrder.id,
             pagamento: payloadPagamento,
           });
-          setCreatedVenda(vendaRes);
+          const orderObj = {
+            ...createdOrder,
+            cliente: selectedClientObj,
+            total: createdOrder?.total || total,
+            itens: cart,
+            forma_pagamento: paymentMethod,
+          };
+          setCreatedVenda(vendaRes || orderObj);
+          setCompletedOrderData(orderObj);
         } else {
           const vendaRes = await vendaService.emitirDocumentoPedido(
             createdOrder.id,
             isProforma ? "PROFORMA" : "FT"
           );
-          setCreatedVenda(vendaRes);
+          const orderObj = {
+            ...createdOrder,
+            cliente: selectedClientObj,
+            total: createdOrder?.total || total,
+            itens: cart,
+            forma_pagamento: paymentMethod,
+          };
+          setCreatedVenda(vendaRes || orderObj);
+          setCompletedOrderData(orderObj);
         }
       }
 
@@ -721,9 +765,16 @@ export default function CaixaPOS() {
       }
 
       setIsPaymentModalOpen(false);
-      setStep(3);
+      setIsSuccessModalOpen(true);
     } catch (err: any) {
-      console.error(err);
+      console.error("Erro ao concluir venda no caixa:", err);
+      const errMsg =
+        err?.response?.data?.error ||
+        err?.response?.data?.message ||
+        err?.response?.data?.msg ||
+        err?.message ||
+        "Erro ao concluir a venda no caixa.";
+      toast.error(errMsg);
     }
   };
 
@@ -741,6 +792,8 @@ export default function CaixaPOS() {
     setCodigoTransferencia("");
     setEmissor("");
     setCreatedVenda(null);
+    setCompletedOrderData(null);
+    setIsSuccessModalOpen(false);
     setSendMethod("email");
     setSendContact("");
     setInvoiceSent(false);
@@ -971,188 +1024,237 @@ export default function CaixaPOS() {
                 String(createdVenda.numero_documento).toUpperCase().includes("PROFORMA"))
           );
 
+          const docNumber = createdVenda?.numero_documento || createdVenda?.numero || `#${createdVenda?.id || "NOVO"}`;
+          const clientName = selectedClientObj?.nome || (selectedClientObj as any)?.name || "Cliente Final";
+          const clientTel = sendContact || selectedClientObj?.telefone || "";
+          const docTotal = createdVenda?.total || createdVenda?.valor_total || total;
+          const defaultPosSmsText = `Olá ${clientName}, o seu atendimento ${docNumber} no valor de ${formatCurrency(docTotal)} foi registado com sucesso no Sabor Imbatível. Agradecemos a sua preferência!`;
+
           return (
-            <div className="p-6 flex-1 flex flex-col items-center justify-center text-center animate-fade-in-up">
-              <div className="w-16 h-16 bg-success/10 rounded-full flex items-center justify-center mb-4">
-                <CheckCircle size={32} className="text-success" />
+            <div className="p-4 sm:p-6 flex-1 flex flex-col items-center justify-center text-center animate-fade-in-up">
+              <div className="w-14 h-14 bg-emerald-500/10 text-emerald-600 rounded-full flex items-center justify-center mb-3">
+                <CheckCircle size={32} />
               </div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
-                {isProformaDoc ? "Pró-Forma Emitida!" : "Sucesso!"}
+              <h2 className="text-xl font-black text-gray-900 dark:text-white mb-1">
+                {isProformaDoc ? "Pró-Forma Emitida com Sucesso!" : "Venda Concluída com Sucesso!"}
               </h2>
-              <p className="text-xs text-gray-500 mb-6 max-w-[280px]">
-                {isProformaDoc
-                  ? `Fatura Pró-Forma emitida com sucesso (${createdVenda?.numero_documento || createdVenda?.numero || `#${createdVenda?.id}`}).`
-                  : `Venda registada com sucesso ${createdVenda?.numero ? `(#${createdVenda.numero})` : ""}.`}
+              <p className="text-xs text-gray-500 mb-4 max-w-md">
+                Todas as operações do atendimento e mensagens foram organizadas e processadas.
               </p>
 
               {createdVenda && (
-                <div className="w-full max-w-lg p-4 mb-6 border border-gray-150 dark:border-border-dark bg-gray-50 dark:bg-gray-900/40 rounded-xl text-left">
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (isProformaDoc) {
-                          proformaService.openRecibo(createdVenda.id);
-                        } else {
-                          printThermalReceipt(createdVenda);
-                        }
-                      }}
-                      className="px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors flex items-center justify-center gap-1.5"
-                    >
-                      <Printer size={14} /> Recibo Térmico (80mm)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (isProformaDoc) {
-                          proformaService.openPdf(createdVenda.id);
-                        } else {
-                          documentService.vendaPdf(createdVenda.id).catch((err) =>
-                            toast.error(err.message || "Erro ao abrir PDF.")
-                          );
-                        }
-                      }}
-                      className="px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors flex items-center justify-center gap-1.5"
-                    >
-                      <FileText size={14} /> {isProformaDoc ? "Pró-Forma A4" : "Fatura A4"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (isProformaDoc) {
-                          proformaService.openPdf(createdVenda.id);
-                        } else {
-                          documentService.vendaRecibo(createdVenda.id).catch((err) =>
-                            toast.error(err.message || "Erro ao descarregar recibo.")
-                          );
-                        }
-                      }}
-                      className="px-3 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-white text-xs font-bold transition-colors flex items-center justify-center gap-1.5"
-                    >
-                      <Download size={14} /> Descarregar PDF
-                    </button>
+                <div className="w-full max-w-xl p-4 sm:p-5 mb-5 border border-gray-200 dark:border-border-dark bg-white dark:bg-surface-dark rounded-2xl shadow-sm text-left space-y-4">
+                  {/* Info Banner */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3 bg-gray-50 dark:bg-gray-900/60 rounded-xl border border-gray-150 dark:border-gray-800 text-xs">
+                    <div>
+                      <span className="text-gray-400 block font-semibold text-[10px] uppercase">Documento</span>
+                      <strong className="text-gray-900 dark:text-white">{docNumber}</strong>
+                    </div>
+                    <div>
+                      <span className="text-gray-400 block font-semibold text-[10px] uppercase">Cliente</span>
+                      <strong className="text-gray-900 dark:text-white truncate block">{clientName}</strong>
+                    </div>
+                    <div>
+                      <span className="text-gray-400 block font-semibold text-[10px] uppercase">Total</span>
+                      <strong className="text-emerald-600 dark:text-emerald-400">{formatCurrency(docTotal)}</strong>
+                    </div>
+                    <div>
+                      <span className="text-gray-400 block font-semibold text-[10px] uppercase">Estado</span>
+                      <span className="text-emerald-600 font-bold">Liquidado</span>
+                    </div>
                   </div>
 
-                  <h3 className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-3">
-                    Enviar {isProformaDoc ? "Pró-Forma" : "Fatura"} ao Cliente
-                  </h3>
-
-                  {invoiceSent ? (
-                    <div className="text-center py-2 text-xs text-indigo-600 dark:text-indigo-400 font-semibold">
-                      ✓ Documento enviado com sucesso!
+                  {/* Central de Mensagens e Notificações Estruturadas */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black uppercase tracking-wider text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
+                        <MessageSquare size={14} className="text-primary" />
+                        Central de Mensagens & Notificações
+                      </span>
                     </div>
-                  ) : (
-                    <form
-                      onSubmit={async (e) => {
-                        e.preventDefault();
-                        if (!sendContact) {
-                          toast.error("Por favor, introduza o contacto.");
-                          return;
-                        }
-                        if (isProformaDoc) {
-                          try {
-                            const res = await proformaService.send(
-                              createdVenda.id,
-                              sendMethod,
-                              sendContact
-                            );
-                            setInvoiceSent(true);
-                            toast.success(
-                              res.msg ||
-                                `Pró-Forma enviada com sucesso para ${sendContact} via ${sendMethod}!`
-                            );
-                          } catch (err: any) {
-                            toast.error(err?.message || "Erro ao enviar Pró-Forma.");
-                          }
-                        } else {
-                          enviarFatura.mutate(
-                            {
-                              id: Number(createdVenda.id),
-                              data: {
-                                method: sendMethod,
-                                contact: sendContact,
-                              },
-                            },
-                            {
-                              onSuccess: () => {
-                                setInvoiceSent(true);
-                                toast.success(
-                                  `Fatura solicitada para envio via ${
-                                    sendMethod === "email" ? "E-mail" : "WhatsApp"
-                                  }!`
-                                );
-                              },
-                            }
-                          );
-                        }
-                      }}
-                      className="space-y-3"
-                    >
-                      <div className="flex gap-3">
-                        <label className="flex items-center gap-1.5 cursor-pointer text-xs text-gray-600 dark:text-gray-400 font-medium">
-                          <input
-                            type="radio"
-                            name="posSendMethod"
-                            value="email"
-                            checked={sendMethod === "email"}
-                            onChange={() => {
-                              setSendMethod("email");
-                              const client = clients.find(
-                                (c: any) => String(c.id) === String(selectedClient)
-                              );
-                              setSendContact(client?.email || "");
-                            }}
-                            className="accent-indigo-600"
-                          />
-                          E-mail
-                        </label>
-                        <label className="flex items-center gap-1.5 cursor-pointer text-xs text-gray-600 dark:text-gray-400 font-medium">
-                          <input
-                            type="radio"
-                            name="posSendMethod"
-                            value="whatsapp"
-                            checked={sendMethod === "whatsapp"}
-                            onChange={() => {
-                              setSendMethod("whatsapp");
-                              const client = clients.find(
-                                (c: any) => String(c.id) === String(selectedClient)
-                              );
-                              setSendContact(client?.telefone || "");
-                            }}
-                            className="accent-indigo-600"
-                          />
-                          WhatsApp
-                        </label>
+
+                    {/* Card SMS & WhatsApp */}
+                    <div className="border border-orange-200 dark:border-orange-950/60 bg-orange-50/50 dark:bg-orange-950/20 rounded-xl p-3.5 space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Smartphone size={16} className="text-orange-600 dark:text-orange-400" />
+                          <strong className="text-xs text-gray-900 dark:text-white">
+                            Notificação ao Cliente (SMS / WhatsApp)
+                          </strong>
+                        </div>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-orange-100 dark:bg-orange-900/60 text-orange-700 dark:text-orange-300">
+                          Pronta para Envio
+                        </span>
                       </div>
 
+                      {/* Contact & Method */}
                       <div className="flex gap-2">
                         <input
-                          type={sendMethod === "email" ? "email" : "text"}
-                          placeholder={
-                            sendMethod === "email" ? "exemplo@cliente.com" : "Telemóvel"
-                          }
+                          type="text"
                           value={sendContact}
                           onChange={(e) => setSendContact(e.target.value)}
-                          className="flex-1 px-3 py-1.5 text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                          placeholder="Telemóvel do cliente (+244 923 000 000)"
+                          className="flex-1 px-3 py-1.5 text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 rounded-lg outline-none focus:border-primary"
                         />
                         <button
-                          type="submit"
-                          disabled={enviarFatura.isPending}
-                          className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-lg transition-colors disabled:opacity-50"
+                          type="button"
+                          onClick={() => {
+                            if (!sendContact.trim()) {
+                              toast.error("Introduza o contacto.");
+                              return;
+                            }
+                            externalNotificationService.abrirWhatsAppWeb(sendContact.trim(), defaultPosSmsText);
+                          }}
+                          className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
                         >
-                          {enviarFatura.isPending ? "..." : "Enviar"}
+                          <Send size={12} /> WhatsApp
+                        </button>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            if (!sendContact.trim()) {
+                              toast.error("Introduza o contacto.");
+                              return;
+                            }
+                            const res = await externalNotificationService.enviarNotificacaoCliente({
+                              telefone: sendContact.trim(),
+                              mensagem: defaultPosSmsText,
+                              destinatario_nome: clientName,
+                              canal: "sms",
+                              referencia_id: createdVenda?.id,
+                              referencia_tipo: "pedido",
+                            });
+                            if (res.sucesso) {
+                              toast.success("SMS enviada ao cliente!");
+                            } else {
+                              toast.info("SMS registada na fila de envio.");
+                            }
+                          }}
+                          className="px-3 py-1.5 bg-primary hover:bg-primary-hover text-white font-bold text-xs rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
+                        >
+                          <MessageSquare size={12} /> SMS
                         </button>
                       </div>
-                    </form>
-                  )}
+
+                      {/* Text preview with copy button */}
+                      <div className="relative">
+                        <div className="p-2 bg-white dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700/80 rounded-lg text-[11px] text-gray-600 dark:text-gray-300 pr-16 leading-relaxed">
+                          "{defaultPosSmsText}"
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(defaultPosSmsText);
+                            toast.success("Texto da SMS copiado!");
+                          }}
+                          className="absolute right-1.5 top-1.5 px-2 py-0.5 rounded bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-[10px] font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                        >
+                          <Copy size={11} /> Copiar
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Status das Operações Organizadinhas */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                      <div className="p-2.5 bg-gray-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-800 rounded-xl flex items-center gap-2">
+                        <ShoppingBag size={14} className="text-emerald-500" />
+                        <div className="flex-1">
+                          <strong className="block text-gray-900 dark:text-white text-[11px]">Venda Comercial Registada</strong>
+                          <span className="text-[10px] text-gray-500">Documento {docNumber} emitido.</span>
+                        </div>
+                        <span className="text-[10px] text-emerald-600 font-bold">✓ OK</span>
+                      </div>
+
+                      <div className="p-2.5 bg-gray-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-800 rounded-xl flex items-center gap-2">
+                        <CreditCard size={14} className="text-purple-500" />
+                        <div className="flex-1">
+                          <strong className="block text-gray-900 dark:text-white text-[11px]">Movimento de Caixa</strong>
+                          <span className="text-[10px] text-gray-500">Liquidado em {paymentMethod}.</span>
+                        </div>
+                        <span className="text-[10px] text-purple-600 font-bold">✓ OK</span>
+                      </div>
+
+                      <div className="p-2.5 bg-gray-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-800 rounded-xl flex items-center gap-2">
+                        <PackageCheck size={14} className="text-amber-500" />
+                        <div className="flex-1">
+                          <strong className="block text-gray-900 dark:text-white text-[11px]">Baixa de Inventário</strong>
+                          <span className="text-[10px] text-gray-500">Stock atualizado em tempo real.</span>
+                        </div>
+                        <span className="text-[10px] text-amber-600 font-bold">✓ OK</span>
+                      </div>
+
+                      <div className="p-2.5 bg-gray-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-800 rounded-xl flex items-center gap-2">
+                        <ChefHat size={14} className="text-blue-500" />
+                        <div className="flex-1">
+                          <strong className="block text-gray-900 dark:text-white text-[11px]">Produção & Fabrico</strong>
+                          <span className="text-[10px] text-gray-500">
+                            {tipoPedido === "Agendado" ? `Agendado (${dataEntrega || "Breve"})` : "Atendimento Imediato"}
+                          </span>
+                        </div>
+                        <span className="text-[10px] text-blue-600 font-bold">✓ OK</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Document Action Buttons */}
+                  <div className="pt-2">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-2">
+                      Documentos
+                    </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (isProformaDoc) {
+                            proformaService.openRecibo(createdVenda.id);
+                          } else {
+                            printThermalReceipt(createdVenda);
+                          }
+                        }}
+                        className="p-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+                      >
+                        <Printer size={14} /> Recibo 80mm
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (isProformaDoc) {
+                            proformaService.openPdf(createdVenda.id);
+                          } else {
+                            documentService.vendaPdf(createdVenda.id).catch((err) =>
+                              toast.error(err.message || "Erro ao abrir PDF.")
+                            );
+                          }
+                        }}
+                        className="p-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+                      >
+                        <FileText size={14} /> {isProformaDoc ? "Pró-Forma A4" : "Fatura A4"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (isProformaDoc) {
+                            proformaService.openPdf(createdVenda.id);
+                          } else {
+                            documentService.vendaRecibo(createdVenda.id).catch((err) =>
+                              toast.error(err.message || "Erro ao descarregar recibo.")
+                            );
+                          }
+                        }}
+                        className="p-2.5 rounded-xl bg-gray-800 hover:bg-gray-700 text-white text-xs font-bold transition-colors flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+                      >
+                        <Download size={14} /> Descarregar PDF
+                      </button>
+                    </div>
+                  </div>
                 </div>
               )}
 
               <button
                 onClick={finishSale}
-                className="w-full max-w-lg bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-900 dark:text-white font-bold py-3.5 rounded-xl transition-all text-sm"
+                className="w-full max-w-xl bg-gray-900 hover:bg-black dark:bg-gray-100 dark:hover:bg-white text-white dark:text-gray-900 font-bold py-3.5 rounded-xl transition-all text-sm shadow-md cursor-pointer"
               >
-                Novo Atendimento
+                Novo Atendimento / Próxima Venda
               </button>
             </div>
           );
@@ -1384,6 +1486,22 @@ export default function CaixaPOS() {
         onClose={() => setReceiptModalOpen(false)}
         documentData={receiptDocData}
       />
+
+      {/* Modal de Sucesso idêntico ao Pedidos com todas as informações / SMS do Atendimento */}
+      {isSuccessModalOpen && (completedOrderData || createdVenda) && (
+        <PedidoSuccessModal
+          order={completedOrderData || createdVenda}
+          createdVenda={createdVenda}
+          onClose={() => {
+            setIsSuccessModalOpen(false);
+            finishSale();
+          }}
+          onNewOrder={() => {
+            setIsSuccessModalOpen(false);
+            finishSale();
+          }}
+        />
+      )}
     </>
   );
 }

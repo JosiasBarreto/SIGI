@@ -214,11 +214,18 @@ class PedidoService:
             
         AuditService.log_action(user_id, "CREATE", "pedidos", pedido.id, new_values={"numero": numero})
         
-        # Notificação estruturada e desduplicada de novo pedido
+        # Notificação estruturada e desduplicada de novo pedido com padrão de identificação
         try:
-            from app.websocket.socket_manager import notify_order_created
-            cliente_nome = pedido.cliente.nome if pedido.cliente else None
-            notify_order_created(pedido.id, pedido.numero, float(pedido.valor_total or 0), cliente_nome)
+            from app.websocket.socket_manager import notify_order_created, format_products_summary
+            cliente_nome = pedido.cliente.nome if pedido.cliente else "Consumidor Final"
+            produtos_resumo = format_products_summary(pedido.itens)
+            notify_order_created(
+                pedido_id=pedido.id,
+                pedido_numero=pedido.numero,
+                total=float(pedido.valor_total or 0),
+                cliente_nome=cliente_nome,
+                produtos_resumo=produtos_resumo
+            )
         except Exception as ws_err:
             socketio.emit('novo_pedido', {'numero': pedido.numero, 'estado': pedido.estado.value if hasattr(pedido.estado, 'value') else str(pedido.estado)})
 
@@ -343,11 +350,26 @@ class PedidoService:
                                     old_values={"estado": old_estado}, 
                                     new_values={"estado": novo_estado})
                                     
-            socketio.emit('pedido_atualizado', {
-                'numero': pedido.numero, 
-                'antigo_estado': old_estado, 
-                'novo_estado': novo_estado
-            })
+            # Notificação estruturada com identificação de referência, cliente e produtos
+            try:
+                from app.websocket.socket_manager import notify_order_status_updated, format_products_summary
+                cliente_nome = pedido.cliente.nome if pedido.cliente else "Consumidor Final"
+                produtos_resumo = format_products_summary(pedido.itens)
+                notify_order_status_updated(
+                    pedido_id=pedido.id,
+                    pedido_numero=pedido.numero,
+                    antigo_estado=old_estado,
+                    novo_estado=novo_estado,
+                    cliente_nome=cliente_nome,
+                    produtos_resumo=produtos_resumo,
+                    total=float(pedido.valor_total or 0)
+                )
+            except Exception as notif_err:
+                socketio.emit('pedido_atualizado', {
+                    'numero': pedido.numero, 
+                    'antigo_estado': old_estado, 
+                    'novo_estado': novo_estado
+                })
             
             # Disparar notificação ao cliente
             try:

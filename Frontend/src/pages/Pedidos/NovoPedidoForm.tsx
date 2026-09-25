@@ -27,6 +27,7 @@ import PedidoCartSummary from "./PedidoCartSummary";
 import PedidoPaymentModal from "./PedidoPaymentModal";
 import PedidoDraftsModal, { PedidoDraft } from "./PedidoDraftsModal";
 import PedidoSuccessModal from "./PedidoSuccessModal";
+import { notificationManager } from "../../services/notifications";
 
 interface NovoPedidoFormProps {
   onSuccessRedirect?: () => void;
@@ -231,13 +232,16 @@ export default function NovoPedidoForm({ onSuccessRedirect }: NovoPedidoFormProp
       0
     );
 
+    const todayDateStr = new Date().toISOString().split("T")[0];
+    const isEntregaHoje = !orderDueDate || orderDueDate <= todayDateStr;
+
     const orderPayload: any = {
       cliente_id: finalClientId ? Number(finalClientId) : undefined,
       tipo: orderType,
       origem: "Balcao",
-      data_entrega: orderDueDate,
-      hora_entrega: `${orderDueTime}:00`.substring(0, 8),
-      estado: "Agendado",
+      data_entrega: orderDueDate || todayDateStr,
+      hora_entrega: `${orderDueTime || "12:00"}:00`.substring(0, 8),
+      estado: isEntregaHoje ? "Em Producao" : "Agendado",
       observacoes: orderNotes || undefined,
       valor_pago: 0,
       forma_pagamento: "Dinheiro",
@@ -393,6 +397,9 @@ export default function NovoPedidoForm({ onSuccessRedirect }: NovoPedidoFormProp
           }
         }
       }
+
+      // Inicia sessão de pedido para concentrar todas as mensagens/SMS no modal organizado
+      notificationManager.startOrderSession(undefined, 8000);
 
       // 1. Create order
       const createdOrder: any = await orderService.create(orderPayload);
@@ -792,7 +799,11 @@ export default function NovoPedidoForm({ onSuccessRedirect }: NovoPedidoFormProp
         <PedidoSuccessModal
           order={completedOrder}
           createdVenda={createdVenda}
-          onClose={handleResetForm}
+          onClose={() => {
+            handleResetForm();
+            onSuccessRedirect?.();
+          }}
+          onNewOrder={handleResetForm}
         />
       )}
     </div>

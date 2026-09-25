@@ -4,27 +4,23 @@ import {
   Search,
   Check,
   Trash2,
-  Filter,
   ExternalLink,
   Volume2,
-  VolumeX,
   Sliders,
   Monitor,
-  Calendar,
-  AlertTriangle,
   Play,
   RotateCcw,
   Sparkles,
   ChevronLeft,
   ChevronRight,
-  Eye,
   X,
+  Smartphone,
   Info
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useNotifications } from '../components/NotificationContext';
-import { NotificationIcon } from '../components/Notifications/NotificationIcon';
-import { NOTIFICATION_TYPES, NotificationPriority, SoundPreset, notificationSoundManager } from '../services/notifications';
+import { NotificationStructuredCard } from '../components/Notifications/NotificationStructuredCard';
+import { NOTIFICATION_TYPES, SoundPreset, notificationSoundManager } from '../services/notifications';
 import { cn } from '../lib/utils';
 import { format, isToday, isThisWeek, parseISO } from 'date-fns';
 import { pt } from 'date-fns/locale';
@@ -37,7 +33,7 @@ export default function Notificacoes() {
     markAllAsRead,
     deleteNotification,
     clearNotifications,
-    addNotification,
+    dispatchNotification,
     soundSettings,
     setSoundEnabled,
     setSoundVolume,
@@ -79,7 +75,9 @@ export default function Notificacoes() {
         const matchTitle = item.title?.toLowerCase().includes(query);
         const matchMsg = item.message?.toLowerCase().includes(query);
         const matchId = item.id?.toLowerCase().includes(query);
-        if (!matchTitle && !matchMsg && !matchId) return false;
+        const matchCliente = item.data?.cliente?.toLowerCase().includes(query) || item.data?.cliente_nome?.toLowerCase().includes(query);
+        const matchNumero = item.data?.numero?.toLowerCase().includes(query) || item.data?.ordem_numero?.toLowerCase().includes(query);
+        if (!matchTitle && !matchMsg && !matchId && !matchCliente && !matchNumero) return false;
       }
 
       // Filtro de Categoria
@@ -99,9 +97,7 @@ export default function Notificacoes() {
           const date = parseISO(item.timestamp);
           if (selectedPeriod === 'today' && !isToday(date)) return false;
           if (selectedPeriod === 'week' && !isThisWeek(date, { locale: pt })) return false;
-        } catch {
-          // Mantém se a data for inválida
-        }
+        } catch {}
       }
 
       return true;
@@ -145,7 +141,7 @@ export default function Notificacoes() {
                 Centro de Notificações
               </h1>
               <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                Histórico em tempo real de pedidos, ordens de produção, armazém, caixa e alertas do sistema.
+                Padrão Universal de Notificações para Pedidos, Ordens de Produção Fabril, Stock e Caixa em Tempo Real.
               </p>
             </div>
           </div>
@@ -155,104 +151,93 @@ export default function Notificacoes() {
           {unreadCount > 0 && (
             <button
               onClick={markAllAsRead}
-              className="px-3.5 py-2 text-xs font-bold text-white bg-primary hover:bg-primary-hover rounded-xl shadow-xs transition flex items-center gap-1.5"
+              className="px-3.5 py-2 text-xs font-bold text-white bg-primary hover:bg-primary-hover rounded-xl shadow-xs transition flex items-center gap-1.5 cursor-pointer"
             >
               <Check size={16} />
-              Marcar todas como lidas ({unreadCount})
+              <span>Marcar todas como lidas</span>
             </button>
           )}
 
           {notifications.length > 0 && (
             <button
               onClick={() => {
-                if (window.confirm('Tem certeza que deseja limpar todo o histórico de notificações?')) {
+                if (window.confirm('Tem a certeza que deseja limpar todo o histórico de notificações?')) {
                   clearNotifications();
                 }
               }}
-              className="px-3 py-2 text-xs font-semibold text-gray-600 dark:text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-xl border border-gray-200 dark:border-gray-800 transition flex items-center gap-1.5"
+              className="p-2 text-gray-400 hover:text-red-500 rounded-xl border border-gray-200 dark:border-gray-800 hover:bg-red-50 dark:hover:bg-red-950/30 transition cursor-pointer"
+              title="Limpar histórico"
             >
-              <Trash2 size={15} />
-              Limpar histórico
+              <Trash2 size={16} />
             </button>
           )}
         </div>
       </div>
 
-      {/* Tabs Principais de Navegação */}
-      <div className="flex items-center justify-between border-b border-gray-200 dark:border-border-dark">
-        <div className="flex gap-2 sm:gap-4 overflow-x-auto custom-scrollbar">
+      {/* Navegação por Abas Principais */}
+      <div className="flex items-center justify-between border-b border-gray-200 dark:border-border-dark pb-px">
+        <div className="flex gap-2 sm:gap-6 text-xs sm:text-sm font-bold">
           <button
-            onClick={() => {
-              setActiveTab('all');
-              setPage(1);
-            }}
+            onClick={() => setActiveTab('all')}
             className={cn(
-              "py-3 px-3.5 font-bold text-xs sm:text-sm border-b-2 transition flex items-center gap-2 whitespace-nowrap",
+              "pb-3 border-b-2 transition-all cursor-pointer flex items-center gap-2",
               activeTab === 'all'
                 ? "border-primary text-primary"
-                : "border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-gray-200"
+                : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
             )}
           >
-            <Bell size={16} />
-            Todas as Notificações
-            <span className="px-1.5 py-0.5 text-[10px] rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
+            <span>Todas</span>
+            <span className="px-2 py-0.5 text-[11px] rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-bold">
               {notifications.length}
             </span>
           </button>
 
           <button
-            onClick={() => {
-              setActiveTab('unread');
-              setPage(1);
-            }}
+            onClick={() => setActiveTab('unread')}
             className={cn(
-              "py-3 px-3.5 font-bold text-xs sm:text-sm border-b-2 transition flex items-center gap-2 whitespace-nowrap",
+              "pb-3 border-b-2 transition-all cursor-pointer flex items-center gap-2",
               activeTab === 'unread'
                 ? "border-primary text-primary"
-                : "border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-gray-200"
+                : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
             )}
           >
-            Não Lidas
+            <span>Não lidas</span>
             {unreadCount > 0 && (
-              <span className="px-1.5 py-0.5 text-[10px] rounded-full bg-primary/20 text-primary font-black">
+              <span className="px-2 py-0.5 text-[11px] rounded-full bg-primary/20 text-primary font-black">
                 {unreadCount}
               </span>
             )}
           </button>
 
           <button
-            onClick={() => {
-              setActiveTab('important');
-              setPage(1);
-            }}
+            onClick={() => setActiveTab('important')}
             className={cn(
-              "py-3 px-3.5 font-bold text-xs sm:text-sm border-b-2 transition flex items-center gap-2 whitespace-nowrap",
+              "pb-3 border-b-2 transition-all cursor-pointer flex items-center gap-2",
               activeTab === 'important'
                 ? "border-primary text-primary"
-                : "border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-gray-200"
+                : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
             )}
           >
-            <AlertTriangle size={16} />
-            Críticas & Altas
-          </button>
-
-          <button
-            onClick={() => setActiveTab('settings')}
-            className={cn(
-              "py-3 px-3.5 font-bold text-xs sm:text-sm border-b-2 transition flex items-center gap-2 whitespace-nowrap",
-              activeTab === 'settings'
-                ? "border-primary text-primary"
-                : "border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-gray-200"
-            )}
-          >
-            <Sliders size={16} />
-            Preferências & Sons
+            <span>Alta Prioridade</span>
           </button>
         </div>
+
+        <button
+          onClick={() => setActiveTab('settings')}
+          className={cn(
+            "pb-3 px-2 border-b-2 transition-all cursor-pointer flex items-center gap-1.5 text-xs sm:text-sm font-bold",
+            activeTab === 'settings'
+              ? "border-primary text-primary"
+              : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+          )}
+        >
+          <Sliders size={16} />
+          <span>Configuração de Áudio & Mobile</span>
+        </button>
       </div>
 
       {activeTab === 'settings' ? (
-        /* Painel de Configurações de Som e Notificações de Sistema */
+        /* Painel de Configurações de Som e Notificações de Sistema & Mobile */
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Cartão de Som */}
           <div className="bg-white dark:bg-surface-dark border border-gray-200 dark:border-border-dark rounded-2xl p-6 shadow-sm space-y-6">
@@ -261,8 +246,8 @@ export default function Notificacoes() {
                 <Volume2 size={20} />
               </div>
               <div>
-                <h3 className="text-base font-bold text-gray-900 dark:text-white">Áudio e Efeitos Sonoros</h3>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Sons sintetizados Web Audio API sem dependências externas.</p>
+                <h3 className="text-base font-bold text-gray-900 dark:text-white">Áudio & Vibração Móvel</h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Sons sintetizados Web Audio API com desbloqueio táctil contínuo.</p>
               </div>
             </div>
 
@@ -270,7 +255,7 @@ export default function Notificacoes() {
               <div className="flex items-center justify-between p-3.5 bg-gray-50 dark:bg-gray-900/40 rounded-xl border border-gray-150 dark:border-gray-800">
                 <div>
                   <span className="text-sm font-bold text-gray-900 dark:text-white block">Sons de Notificação</span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">Tocar alerta acústico quando eventos chegarem em tempo real.</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">Tocar alerta acústico e vibrar no telemóvel quando novos eventos chegarem.</span>
                 </div>
                 <button
                   onClick={() => setSoundEnabled(!soundSettings.enabled)}
@@ -314,28 +299,28 @@ export default function Notificacoes() {
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     onClick={() => handleTestSound('chime')}
-                    className="p-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-surface-dark hover:bg-gray-50 dark:hover:bg-gray-800 text-xs font-semibold text-gray-800 dark:text-gray-200 flex items-center justify-between"
+                    className="p-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-surface-dark hover:bg-gray-50 dark:hover:bg-gray-800 text-xs font-semibold text-gray-800 dark:text-gray-200 flex items-center justify-between cursor-pointer"
                   >
                     <span>🔔 Chime (Normal)</span>
                     <Play size={12} className="text-primary" />
                   </button>
                   <button
                     onClick={() => handleTestSound('success')}
-                    className="p-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-surface-dark hover:bg-gray-50 dark:hover:bg-gray-800 text-xs font-semibold text-gray-800 dark:text-gray-200 flex items-center justify-between"
+                    className="p-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-surface-dark hover:bg-gray-50 dark:hover:bg-gray-800 text-xs font-semibold text-gray-800 dark:text-gray-200 flex items-center justify-between cursor-pointer"
                   >
-                    <span>✨ Sucesso (Concluído)</span>
+                    <span>✨ Sucesso (Pronto)</span>
                     <Play size={12} className="text-green-600" />
                   </button>
                   <button
                     onClick={() => handleTestSound('alarm')}
-                    className="p-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-surface-dark hover:bg-gray-50 dark:hover:bg-gray-800 text-xs font-semibold text-gray-800 dark:text-gray-200 flex items-center justify-between"
+                    className="p-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-surface-dark hover:bg-gray-50 dark:hover:bg-gray-800 text-xs font-semibold text-gray-800 dark:text-gray-200 flex items-center justify-between cursor-pointer"
                   >
                     <span>⚠️ Alerta (OP / Stock)</span>
                     <Play size={12} className="text-amber-500" />
                   </button>
                   <button
                     onClick={() => handleTestSound('critical')}
-                    className="p-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-surface-dark hover:bg-gray-50 dark:hover:bg-gray-800 text-xs font-semibold text-gray-800 dark:text-gray-200 flex items-center justify-between"
+                    className="p-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-surface-dark hover:bg-gray-50 dark:hover:bg-gray-800 text-xs font-semibold text-gray-800 dark:text-gray-200 flex items-center justify-between cursor-pointer"
                   >
                     <span>🚨 Crítico (Rutura)</span>
                     <Play size={12} className="text-red-600" />
@@ -345,22 +330,22 @@ export default function Notificacoes() {
             </div>
           </div>
 
-          {/* Cartão de Notificações do Sistema Operativo */}
+          {/* Cartão de Notificações do Sistema Operativo & Mobile Lock Screen */}
           <div className="bg-white dark:bg-surface-dark border border-gray-200 dark:border-border-dark rounded-2xl p-6 shadow-sm space-y-6">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold">
-                <Monitor size={20} />
+                <Smartphone size={20} />
               </div>
               <div>
-                <h3 className="text-base font-bold text-gray-900 dark:text-white">Notificações do Sistema Operativo</h3>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Alertas nativos do Windows, macOS, Linux e Android.</p>
+                <h3 className="text-base font-bold text-gray-900 dark:text-white">Ecrã de Bloqueio & Barra de Notificações</h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Service Worker integrado para entrega em dispositivos móveis Android / PWA / Desktop.</p>
               </div>
             </div>
 
             <div className="space-y-4 pt-2">
               <div className="p-4 bg-gray-50 dark:bg-gray-900/40 rounded-xl border border-gray-150 dark:border-gray-800 flex items-center justify-between">
                 <div>
-                  <span className="text-xs font-bold text-gray-500 uppercase tracking-wider block">Estado de Permissão</span>
+                  <span className="text-xs font-bold text-gray-500 uppercase tracking-wider block">Permissão do Navegador</span>
                   <span className={cn(
                     "text-sm font-extrabold capitalize",
                     osPermission === 'granted' ? "text-green-600 dark:text-green-400" :
@@ -373,80 +358,80 @@ export default function Notificacoes() {
                 {osPermission !== 'granted' && (
                   <button
                     onClick={requestOsPermission}
-                    className="px-3.5 py-1.5 bg-primary hover:bg-primary-hover text-white text-xs font-bold rounded-xl shadow-xs transition"
+                    className="px-3.5 py-1.5 bg-primary hover:bg-primary-hover text-white text-xs font-bold rounded-xl shadow-xs transition cursor-pointer"
                   >
-                    Solicitar Permissão
+                    Ativar no Telemóvel
                   </button>
                 )}
               </div>
 
-              <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1.5 leading-relaxed bg-blue-50/50 dark:bg-blue-950/30 p-3 rounded-xl border border-blue-100/60 dark:border-blue-900/40">
-                <p className="font-semibold text-blue-900 dark:text-blue-300">Como funciona:</p>
-                <p>• Notificações com prioridade Alta e Crítica serão exibidas na área de trabalho mesmo quando estiver numa outra aba ou aplicação.</p>
-                <p>• Ao clicar no aviso nativo, o SIGI será colocado em foco e abrirá a página correspondente (OP, Pedido, etc.).</p>
+              <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1.5 leading-relaxed bg-blue-50/50 dark:bg-blue-950/30 p-3.5 rounded-xl border border-blue-100/60 dark:border-blue-900/40">
+                <p className="font-semibold text-blue-900 dark:text-blue-300 flex items-center gap-1.5">
+                  <Info size={14} /> Como funcionam as notificações no telemóvel:
+                </p>
+                <p>• Quando um pedido ou ordem de produção mudar de estado, o telemóvel vibra e emite o sinal sonoro.</p>
+                <p>• Mesmo com o telemóvel no bolso ou ecrã bloqueado, o Service Worker apresenta o cartão na barra de notificações.</p>
+                <p>• Clicar na notificação desbloqueia e leva diretamente ao pedido ou ordem de produção.</p>
               </div>
 
-              {/* Simulador Completo */}
+              {/* Simulador Completo segundo o Padrão Universal */}
               <div className="pt-2">
                 <span className="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider block mb-2 flex items-center gap-1.5">
-                  <Sparkles size={14} className="text-amber-500" /> Disparar Eventos de Demonstração
+                  <Sparkles size={14} className="text-amber-500" /> Disparar Exemplos do Padrão Universal
                 </span>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <button
                     onClick={() =>
-                      addNotification({
-                        type: 'novo_pedido',
-                        title: 'Novo Pedido Comercial #415',
-                        message: 'Restaurante O Pescador registou Pedido #415 (Total: 920.00 STN).',
-                        priority: 'normal',
-                        actionUrl: '/pedidos',
+                      dispatchNotification('notificacao', {
+                        id: Date.now(),
+                        titulo: "Pedido #PED-2026-0042: Pronto para Levantamento",
+                        mensagem: "O estado do Pedido #PED-2026-0042 foi alterado para 'PRONTO'.\n• Cliente: Carlos Alberto\n• Produtos: 2x Croissant Simples, 1x Café Expresso\n• Transição: EM_PRODUCAO ➔ PRONTO",
+                        tipo: "success",
+                        canal: "PEDIDO",
+                        prioridade: "alta",
+                        persistente: false,
+                        data: {
+                          pedido_id: 42,
+                          numero: "PED-2026-0042",
+                          cliente: "Carlos Alberto",
+                          produtos: "2x Croissant Simples, 1x Café Expresso",
+                          antigo_estado: "EM_PRODUCAO",
+                          novo_estado: "PRONTO",
+                          origem: "pedido_atualizado"
+                        }
                       })
                     }
-                    className="p-2 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700/80 text-[11px] font-semibold text-gray-800 dark:text-gray-200 rounded-lg border border-gray-200 dark:border-gray-700 text-left transition"
+                    className="p-2.5 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-xs font-bold text-emerald-800 dark:text-emerald-200 rounded-xl border border-emerald-200 dark:border-emerald-800 text-left transition cursor-pointer"
                   >
-                    1. Novo Pedido
+                    1. Pedido Pronto (#PED-2026-0042)
                   </button>
+
                   <button
                     onClick={() =>
-                      addNotification({
-                        type: 'nova_ordem_producao',
-                        title: 'Ordem de Pastelaria OP-908',
-                        message: 'Torta de Nozes 2kg pronta para confeção na Pastelaria.',
-                        priority: 'high',
-                        actionUrl: '/producao',
+                      dispatchNotification('notificacao', {
+                        id: Date.now() + 1,
+                        titulo: "Produção (Pastelaria) #OP-PAS-0089: Concluída",
+                        mensagem: "A ordem de produção #OP-PAS-0089 (Pastelaria) passou para 'PRONTO'.\n• Pedido: #PED-2026-0042\n• Cliente: Carlos Alberto\n• Artigos: 2x Croissant Simples\n• Transição: EM_PRODUCAO ➔ PRONTO",
+                        tipo: "success",
+                        canal: "PRODUCAO",
+                        prioridade: "alta",
+                        persistente: false,
+                        data: {
+                          ordem_id: 89,
+                          ordem_numero: "OP-PAS-0089",
+                          pedido_numero: "PED-2026-0042",
+                          sector: "Pastelaria",
+                          cliente: "Carlos Alberto",
+                          produtos: "2x Croissant Simples",
+                          antigo_estado: "EM_PRODUCAO",
+                          novo_estado: "PRONTO",
+                          origem: "ordem_producao_atualizada"
+                        }
                       })
                     }
-                    className="p-2 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700/80 text-[11px] font-semibold text-gray-800 dark:text-gray-200 rounded-lg border border-gray-200 dark:border-gray-700 text-left transition"
+                    className="p-2.5 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/60 text-xs font-bold text-amber-800 dark:text-amber-200 rounded-xl border border-amber-200 dark:border-amber-800 text-left transition cursor-pointer"
                   >
-                    2. Nova OP
-                  </button>
-                  <button
-                    onClick={() =>
-                      addNotification({
-                        type: 'stock_critico',
-                        title: 'Rutura de Stock: Fermento Seco',
-                        message: 'Stock do artigo "Fermento Biológico Seco" atingiu 0 unidades!',
-                        priority: 'critical',
-                        actionUrl: '/armazem',
-                      })
-                    }
-                    className="p-2 bg-red-50 dark:bg-red-950/40 hover:bg-red-100 dark:hover:bg-red-900/60 text-[11px] font-bold text-red-600 dark:text-red-400 rounded-lg border border-red-200 dark:border-red-900/60 text-left transition"
-                  >
-                    3. Alerta Crítico
-                  </button>
-                  <button
-                    onClick={() =>
-                      addNotification({
-                        type: 'caixa_fechado',
-                        title: 'Fecho de Sessão POS #14',
-                        message: 'Caixa fechado por Manuel com saldo final de 2,450.00 STN.',
-                        priority: 'high',
-                        actionUrl: '/caixa',
-                      })
-                    }
-                    className="p-2 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700/80 text-[11px] font-semibold text-gray-800 dark:text-gray-200 rounded-lg border border-gray-200 dark:border-gray-700 text-left transition"
-                  >
-                    4. Fecho de Caixa
+                    2. OP Pastelaria (#OP-PAS-0089)
                   </button>
                 </div>
               </div>
@@ -462,7 +447,7 @@ export default function Notificacoes() {
               <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                placeholder="Pesquisar por título, conteúdo ou ID..."
+                placeholder="Pesquisar por referência #PED/#OP, cliente, artigos ou estado..."
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value);
@@ -473,7 +458,7 @@ export default function Notificacoes() {
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
                 >
                   <X size={14} />
                 </button>
@@ -488,10 +473,10 @@ export default function Notificacoes() {
                   setSelectedCategory(e.target.value);
                   setPage(1);
                 }}
-                className="px-3 py-2 text-xs font-semibold bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-xl text-gray-700 dark:text-gray-300 focus:outline-hidden"
+                className="px-3 py-2 text-xs font-semibold bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-xl text-gray-700 dark:text-gray-300 focus:outline-hidden cursor-pointer"
               >
                 <option value="all">Todas as Áreas</option>
-                <option value="producao">Produção & Cozinha</option>
+                <option value="producao">Produção Fabril & Cozinha</option>
                 <option value="pedidos">Pedidos Comerciais</option>
                 <option value="stock">Stock & Armazém</option>
                 <option value="requisicoes">Requisições</option>
@@ -507,7 +492,7 @@ export default function Notificacoes() {
                   setSelectedPriority(e.target.value);
                   setPage(1);
                 }}
-                className="px-3 py-2 text-xs font-semibold bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-xl text-gray-700 dark:text-gray-300 focus:outline-hidden"
+                className="px-3 py-2 text-xs font-semibold bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-xl text-gray-700 dark:text-gray-300 focus:outline-hidden cursor-pointer"
               >
                 <option value="all">Todas as Prioridades</option>
                 <option value="critical">🚨 Crítica</option>
@@ -523,7 +508,7 @@ export default function Notificacoes() {
                   setSelectedPeriod(e.target.value);
                   setPage(1);
                 }}
-                className="px-3 py-2 text-xs font-semibold bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-xl text-gray-700 dark:text-gray-300 focus:outline-hidden"
+                className="px-3 py-2 text-xs font-semibold bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-xl text-gray-700 dark:text-gray-300 focus:outline-hidden cursor-pointer"
               >
                 <option value="all">Todo o Período</option>
                 <option value="today">Hoje</option>
@@ -539,7 +524,7 @@ export default function Notificacoes() {
                     setSelectedPeriod('all');
                     setPage(1);
                   }}
-                  className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                  className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition cursor-pointer"
                   title="Limpar filtros"
                 >
                   <RotateCcw size={15} />
@@ -548,7 +533,7 @@ export default function Notificacoes() {
             </div>
           </div>
 
-          {/* Listagem de Notificações */}
+          {/* Listagem de Notificações com Cartões Estruturados Padronizados */}
           <div className="bg-white dark:bg-surface-dark border border-gray-200 dark:border-border-dark rounded-2xl shadow-xs overflow-hidden divide-y divide-gray-100 dark:divide-gray-800">
             {paginatedList.length === 0 ? (
               <div className="p-12 text-center flex flex-col items-center justify-center">
@@ -562,101 +547,15 @@ export default function Notificacoes() {
               </div>
             ) : (
               paginatedList.map((item) => (
-                <div
+                <NotificationStructuredCard
                   key={item.id}
-                  className={cn(
-                    "p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition group",
-                    !item.read
-                      ? "bg-primary/5 dark:bg-primary/10 border-l-4 border-l-primary"
-                      : "hover:bg-gray-50/70 dark:hover:bg-gray-800/40"
-                  )}
-                >
-                  <div className="flex items-start gap-3.5 flex-1 min-w-0">
-                    <NotificationIcon type={item.type} priority={item.priority} size={20} />
-
-                    <div className="space-y-1 flex-1 min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span
-                          className={cn(
-                            "text-sm font-bold truncate",
-                            !item.read ? "text-gray-900 dark:text-white" : "text-gray-700 dark:text-gray-300"
-                          )}
-                        >
-                          {item.title}
-                        </span>
-
-                        {item.priority === 'critical' && (
-                          <span className="px-2 py-0.5 text-[9px] font-black uppercase rounded-full bg-red-100 dark:bg-red-950/80 text-red-600 dark:text-red-400">
-                            Crítica
-                          </span>
-                        )}
-                        {item.priority === 'high' && (
-                          <span className="px-2 py-0.5 text-[9px] font-black uppercase rounded-full bg-amber-100 dark:bg-amber-950/80 text-amber-600 dark:text-amber-400">
-                            Alta
-                          </span>
-                        )}
-                        {item.priority === 'normal' && (
-                          <span className="px-2 py-0.5 text-[9px] font-semibold uppercase rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">
-                            Normal
-                          </span>
-                        )}
-
-                        {!item.read && (
-                          <span className="w-2 h-2 rounded-full bg-primary animate-pulse" title="Não lida" />
-                        )}
-                      </div>
-
-                      <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 line-clamp-2 leading-relaxed">
-                        {item.message}
-                      </p>
-
-                      <div className="flex items-center gap-4 text-[11px] text-gray-400 pt-0.5">
-                        <span>{formatDate(item.timestamp)}</span>
-                        {item.source && (
-                          <span className="capitalize">• Origem: {item.source}</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Ações da Notificação */}
-                  <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
-                    <button
-                      onClick={() => setSelectedNotification(item)}
-                      className="px-2.5 py-1.5 text-xs font-semibold text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 rounded-lg transition flex items-center gap-1"
-                      title="Ver detalhes técnicos"
-                    >
-                      <Eye size={13} />
-                      <span className="hidden sm:inline">Detalhes</span>
-                    </button>
-
-                    {item.actionUrl && (
-                      <button
-                        onClick={() => handleOpenAction(item)}
-                        className="px-3 py-1.5 text-xs font-bold text-primary hover:text-white bg-primary/10 hover:bg-primary rounded-lg transition flex items-center gap-1.5 shadow-2xs"
-                      >
-                        <span>Abrir</span>
-                        <ExternalLink size={13} />
-                      </button>
-                    )}
-
-                    <button
-                      onClick={() => (item.read ? markAsRead(item.id) : markAsRead(item.id))}
-                      className="p-1.5 text-gray-400 hover:text-primary rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-                      title={item.read ? "Lida" : "Marcar como lida"}
-                    >
-                      <Check size={16} className={item.read ? "text-green-500" : ""} />
-                    </button>
-
-                    <button
-                      onClick={() => deleteNotification(item.id)}
-                      className="p-1.5 text-gray-400 hover:text-red-500 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/40 transition"
-                      title="Eliminar notificação"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                </div>
+                  notification={item}
+                  compact={false}
+                  onOpen={handleOpenAction}
+                  onMarkAsRead={markAsRead}
+                  onDelete={deleteNotification}
+                  onSelectDetail={setSelectedNotification}
+                />
               ))
             )}
           </div>
@@ -674,7 +573,7 @@ export default function Notificacoes() {
                     setPerPage(Number(e.target.value));
                     setPage(1);
                   }}
-                  className="bg-transparent border border-gray-200 dark:border-gray-800 rounded px-1.5 py-0.5 text-xs font-semibold focus:outline-hidden"
+                  className="bg-transparent border border-gray-200 dark:border-gray-800 rounded px-1.5 py-0.5 text-xs font-semibold focus:outline-hidden cursor-pointer"
                 >
                   <option value={10}>10</option>
                   <option value={25}>25</option>
@@ -686,7 +585,7 @@ export default function Notificacoes() {
                 <button
                   disabled={currentPage <= 1}
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  className="p-1.5 rounded-lg border border-gray-200 dark:border-gray-800 disabled:opacity-40 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                  className="p-1.5 rounded-lg border border-gray-200 dark:border-gray-800 disabled:opacity-40 hover:bg-gray-100 dark:hover:bg-gray-800 transition cursor-pointer"
                 >
                   <ChevronLeft size={16} />
                 </button>
@@ -698,7 +597,7 @@ export default function Notificacoes() {
                 <button
                   disabled={currentPage >= totalPages}
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  className="p-1.5 rounded-lg border border-gray-200 dark:border-gray-800 disabled:opacity-40 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                  className="p-1.5 rounded-lg border border-gray-200 dark:border-gray-800 disabled:opacity-40 hover:bg-gray-100 dark:hover:bg-gray-800 transition cursor-pointer"
                 >
                   <ChevronRight size={16} />
                 </button>
@@ -711,57 +610,41 @@ export default function Notificacoes() {
       {/* Modal de Detalhes da Notificação */}
       {selectedNotification && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-surface-dark border border-gray-200 dark:border-border-dark rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
+          <div className="bg-white dark:bg-surface-dark border border-gray-200 dark:border-border-dark rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-start justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
-              <div className="flex items-center gap-2.5">
-                <NotificationIcon type={selectedNotification.type} priority={selectedNotification.priority} />
-                <div>
-                  <h3 className="font-bold text-base text-gray-900 dark:text-white leading-tight">
-                    {selectedNotification.title}
-                  </h3>
-                  <span className="text-[11px] text-gray-400">
-                    ID: {selectedNotification.id}
-                  </span>
-                </div>
+              <div>
+                <h3 className="font-bold text-base text-gray-900 dark:text-white leading-tight">
+                  {selectedNotification.title}
+                </h3>
+                <span className="text-[11px] text-gray-400">
+                  ID: {selectedNotification.id} • {formatDate(selectedNotification.timestamp)}
+                </span>
               </div>
               <button
                 onClick={() => setSelectedNotification(null)}
-                className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-lg"
+                className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-lg cursor-pointer"
               >
                 <X size={18} />
               </button>
             </div>
 
             <div className="space-y-3 text-xs sm:text-sm">
-              <div>
-                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block">Mensagem</span>
-                <p className="text-gray-800 dark:text-gray-200 mt-0.5 leading-relaxed bg-gray-50 dark:bg-gray-900/50 p-3 rounded-xl border border-gray-150 dark:border-gray-800">
-                  {selectedNotification.message}
-                </p>
+              {/* Apresentação no Cartão Estruturado */}
+              <div className="border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden">
+                <NotificationStructuredCard
+                  notification={selectedNotification}
+                  compact={false}
+                />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="p-2.5 bg-gray-50 dark:bg-gray-900/40 rounded-xl border border-gray-150 dark:border-gray-800">
-                  <span className="text-[10px] font-bold text-gray-400 uppercase block">Data e Hora</span>
-                  <span className="font-semibold text-gray-700 dark:text-gray-300">
-                    {formatDate(selectedNotification.timestamp)}
-                  </span>
-                </div>
-                <div className="p-2.5 bg-gray-50 dark:bg-gray-900/40 rounded-xl border border-gray-150 dark:border-gray-800">
-                  <span className="text-[10px] font-bold text-gray-400 uppercase block">Prioridade</span>
-                  <span className="font-bold text-gray-700 dark:text-gray-300 uppercase">
-                    {selectedNotification.priority}
-                  </span>
-                </div>
-              </div>
-
-              {selectedNotification.data && (
+              {/* Inspetor de Payload JSON */}
+              {(selectedNotification.data || selectedNotification.metadados) && (
                 <div>
                   <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
-                    Dados do Evento (Payload JSON)
+                    Metadados do Evento (Payload JSON Normalizado)
                   </span>
-                  <pre className="p-3 bg-gray-900 text-emerald-400 rounded-xl text-[11px] overflow-x-auto max-h-40 font-mono">
-                    {JSON.stringify(selectedNotification.data, null, 2)}
+                  <pre className="p-3 bg-gray-900 text-emerald-400 rounded-xl text-[11px] overflow-x-auto max-h-48 font-mono">
+                    {JSON.stringify(selectedNotification.data || selectedNotification.metadados, null, 2)}
                   </pre>
                 </div>
               )}
@@ -770,7 +653,7 @@ export default function Notificacoes() {
             <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-100 dark:border-gray-800">
               <button
                 onClick={() => setSelectedNotification(null)}
-                className="px-4 py-2 text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition"
+                className="px-4 py-2 text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition cursor-pointer"
               >
                 Fechar
               </button>
@@ -782,9 +665,9 @@ export default function Notificacoes() {
                     setSelectedNotification(null);
                     navigate(url);
                   }}
-                  className="px-4 py-2 text-xs font-bold text-white bg-primary hover:bg-primary-hover rounded-xl shadow-xs transition flex items-center gap-1.5"
+                  className="px-4 py-2 text-xs font-bold text-white bg-primary hover:bg-primary-hover rounded-xl shadow-xs transition flex items-center gap-1.5 cursor-pointer"
                 >
-                  <span>Ir para Recurso Relacionado</span>
+                  <span>Abrir no Sistema</span>
                   <ExternalLink size={14} />
                 </button>
               )}

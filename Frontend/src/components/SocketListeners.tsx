@@ -15,31 +15,42 @@ export function SocketListeners() {
 
     // 2. Pedidos Comerciais
     const handleNovoPedido = (payload: any) => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
       queryClient.invalidateQueries({ queryKey: ['pedidos'] });
       queryClient.invalidateQueries({ queryKey: ['requests'] });
       queryClient.invalidateQueries({ queryKey: ['vendas'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['orders-cal'] });
       notificationManager.handleEvent('novo_pedido', payload);
     };
 
     const handlePedidoAtualizado = (payload: any) => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
       queryClient.invalidateQueries({ queryKey: ['pedidos'] });
       queryClient.invalidateQueries({ queryKey: ['producao'] });
+      queryClient.invalidateQueries({ queryKey: ['production-orders'] });
       queryClient.invalidateQueries({ queryKey: ['entregas'] });
       queryClient.invalidateQueries({ queryKey: ['requests'] });
+      queryClient.invalidateQueries({ queryKey: ['orders-cal'] });
       notificationManager.handleEvent('pedido_actualizado', payload);
     };
 
     const handlePedidoCancelado = (payload: any) => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
       queryClient.invalidateQueries({ queryKey: ['pedidos'] });
       queryClient.invalidateQueries({ queryKey: ['producao'] });
+      queryClient.invalidateQueries({ queryKey: ['production-orders'] });
       queryClient.invalidateQueries({ queryKey: ['vendas'] });
+      queryClient.invalidateQueries({ queryKey: ['orders-cal'] });
       notificationManager.handleEvent('pedido_cancelado', payload);
     };
 
     const handlePedidoPronto = (payload: any) => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
       queryClient.invalidateQueries({ queryKey: ['pedidos'] });
       queryClient.invalidateQueries({ queryKey: ['producao'] });
+      queryClient.invalidateQueries({ queryKey: ['production-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['orders-cal'] });
       notificationManager.handleEvent('pedido_pronto', payload);
     };
 
@@ -49,6 +60,7 @@ export function SocketListeners() {
       queryClient.invalidateQueries({ queryKey: ['production-orders'] });
       queryClient.invalidateQueries({ queryKey: ['prod-cal'] });
       queryClient.invalidateQueries({ queryKey: ['calendario-dia'] });
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
       queryClient.invalidateQueries({ queryKey: ['pedidos'] });
       notificationManager.handleEvent('nova_ordem_producao', payload);
     };
@@ -56,16 +68,21 @@ export function SocketListeners() {
     const handleOrdemProducaoAtualizada = (payload: any) => {
       queryClient.invalidateQueries({ queryKey: ['producao'] });
       queryClient.invalidateQueries({ queryKey: ['production-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['pedidos'] });
       notificationManager.handleEvent('ordem_producao_actualizada', payload);
     };
 
     const handleProducaoIniciada = (payload: any) => {
       queryClient.invalidateQueries({ queryKey: ['producao'] });
       queryClient.invalidateQueries({ queryKey: ['production-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['pedidos'] });
       notificationManager.handleEvent('producao_iniciada', payload);
     };
 
     const handleProducaoConcluida = (payload: any) => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
       queryClient.invalidateQueries({ queryKey: ['pedidos'] });
       queryClient.invalidateQueries({ queryKey: ['producao'] });
       queryClient.invalidateQueries({ queryKey: ['production-orders'] });

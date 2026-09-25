@@ -8,9 +8,57 @@ type NotificationListener = (notification: AppNotification) => void;
 
 class NotificationManager {
   private listeners: Set<NotificationListener> = new Set();
+  private orderEventListeners: Set<NotificationListener> = new Set();
   // Cache de desduplicação: chave (hash/id) -> timestamp em ms
   private recentEvents: Map<string, number> = new Map();
   private readonly DEDUP_WINDOW_MS = 3000; // Ignora duplicados exatos recebidos dentro de 3 segundos
+
+  // Controlo de sessão ativa de criação/finalização de pedidos (evita enxurrada de 3-4 toasts soltos)
+  private orderSessionActive: boolean = false;
+  private orderSessionExpiry: number = 0;
+  private orderSessionReference: string | null = null;
+
+  /**
+   * Inicia um período de finalização de pedido onde múltiplos eventos relacionados
+   * (novo pedido, nova OP, pagamento, etc.) são agrupados no Modal/Swal do Pedido
+   * em vez de disparar 3 a 4 toasts flutuantes na tela.
+   */
+  public startOrderSession(orderReference?: string | number, durationMs: number = 7000) {
+    this.orderSessionActive = true;
+    this.orderSessionExpiry = Date.now() + durationMs;
+    this.orderSessionReference = orderReference ? String(orderReference) : null;
+  }
+
+  /**
+   * Encerra imediatamente a sessão de finalização do pedido
+   */
+  public endOrderSession() {
+    this.orderSessionActive = false;
+    this.orderSessionReference = null;
+  }
+
+  /**
+   * Verifica se existe uma sessão ativa de pedido
+   */
+  public isOrderSessionActive(): boolean {
+    if (!this.orderSessionActive) return false;
+    if (Date.now() > this.orderSessionExpiry) {
+      this.orderSessionActive = false;
+      this.orderSessionReference = null;
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * Regista um ouvinte específico para o Modal/Swal de resumo de pedido
+   */
+  public subscribeToOrderEvents(listener: NotificationListener): () => void {
+    this.orderEventListeners.add(listener);
+    return () => {
+      this.orderEventListeners.delete(listener);
+    };
+  }
 
   /**
    * Processa qualquer evento recebido do Socket.IO ou da aplicação
@@ -44,20 +92,47 @@ class NotificationManager {
       notificationSoundManager.play(preset);
     }
 
-    // 2. Apresentar notificação Toast de acordo com a prioridade
-    this.showToast(notification);
+    // 2. Notificar ouvintes do React (Store / Context / Notificações Gerais)
+    this.notifyListeners(notification);
 
-    // 3. Notificação do Sistema Operacional (se janela não estiver com foco ou para high/critical)
-    if (notification.priority !== 'low') {
+    // 3. Notificar o modal de pedido caso esteja ativo
+    if (this.isOrderSessionActive() || this.orderEventListeners.size > 0) {
+      this.orderEventListeners.forEach((listener) => {
+        try {
+          listener(notification);
+        } catch (err) {
+          console.error('[NotificationManager] Erro no ouvinte de pedido:', err);
+        }
+      });
+    }
+
+    // 4. Apresentar notificação Toast de acordo com a prioridade
+    // Se a sessão de pedido estiver ativa, suprime toasts de eventos de fluxo de pedido
+    // para que todas as mensagens fiquem organizadas dentro do componente/modal/swal
+    const isOrderRelatedEvent = [
+      'novo_pedido',
+      'pedido_actualizado',
+      'nova_ordem_producao',
+      'ordem_producao_actualizada',
+      'pagamento_recebido',
+      'stock_baixo',
+      'notificacao',
+    ].includes(notification.type);
+
+    if (this.isOrderSessionActive() && isOrderRelatedEvent && notification.priority !== 'critical') {
+      // Suprimido da tela flutuante de toasts: fica organizado no componente/modal
+    } else {
+      this.showToast(notification);
+    }
+
+    // 5. Notificação do Sistema Operacional (se janela não estiver com foco ou para high/critical)
+    if (notification.priority !== 'low' && !this.isOrderSessionActive()) {
       osNotificationManager.show(notification, (targetUrl) => {
         if (targetUrl && window.location.pathname !== targetUrl) {
           window.location.href = targetUrl;
         }
       });
     }
-
-    // 4. Notificar ouvintes do React (Store / Context)
-    this.notifyListeners(notification);
 
     return notification;
   }

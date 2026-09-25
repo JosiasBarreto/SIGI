@@ -71,9 +71,17 @@ export const ProductionOrderModal: React.FC<ProductionOrderModalProps> = ({
 
   const estado = normalizeEstado(order.estado || order.status);
   const orderNumber = order.numero || order.codigo || `#${order.id}`;
-  const pedidoNumero = order.pedido_numero || (order.pedido_id ? `#${order.pedido_id}` : 'Avulso');
-  const clienteNome = order.cliente_nome || order.cliente || 'Balcão';
-  const mesaInfo = order.mesa || order.local || order.mesa_numero || null;
+  const pedidoNumero = order.pedido_numero || order.parentOrder?.numero || (order.pedido_id ? `#${order.pedido_id}` : 'Avulso');
+  const clienteNome =
+    (typeof order.cliente_nome === 'string' && order.cliente_nome.trim() ? order.cliente_nome : null) ||
+    (typeof order.cliente === 'string' && order.cliente.trim() ? order.cliente : null) ||
+    order.cliente?.nome ||
+    order.parentOrder?.cliente?.nome ||
+    order.parentOrder?.cliente_nome ||
+    'Balcão';
+  const mesaInfo = order.mesa || order.local || order.mesa_numero || order.parentOrder?.mesa || null;
+  const dataEntrega = order.data_entrega || order.parentOrder?.data_entrega || order.data_producao || '';
+  const horaEntrega = order.hora_entrega || order.parentOrder?.hora_entrega || '';
 
   // Requisição de Armazém
   const reqId = order.requisicao_id || order.requisicaoId;
@@ -167,10 +175,10 @@ export const ProductionOrderModal: React.FC<ProductionOrderModalProps> = ({
 
           <div className="p-3 bg-gray-50 dark:bg-gray-900/60 rounded-xl border border-gray-100 dark:border-gray-800">
             <span className="text-[10px] uppercase font-bold text-gray-400 block mb-1">
-              Responsável
+              Entrega Prevista
             </span>
-            <span className="text-sm font-bold text-gray-900 dark:text-white truncate block">
-              {order.responsavel_nome || 'Equipa de Turno'}
+            <span className="text-sm font-bold text-indigo-600 dark:text-indigo-400 truncate block">
+              {horaEntrega ? `${horaEntrega.slice(0, 5)} (${dataEntrega || 'Hoje'})` : (dataEntrega || 'Imediata')}
             </span>
           </div>
         </div>

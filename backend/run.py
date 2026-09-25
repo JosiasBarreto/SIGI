@@ -1,4 +1,3 @@
-# run.py
 """SIGI ERP application entry point.
 Inicialização do servidor com verificação automática da base de dados.
 """
@@ -9,6 +8,21 @@ from dotenv import load_dotenv
 # Carregar variáveis de ambiente do .env na pasta backend se existir
 current_dir = os.path.dirname(os.path.abspath(__file__))
 load_dotenv(os.path.join(current_dir, '.env'))
+
+# Patch preventivo para Werkzeug 3.0+ em modo desenvolvimento (evita AssertionError: write() before start_response em upgrades WebSocket)
+try:
+    import werkzeug.serving
+    _orig_run_wsgi = werkzeug.serving.WSGIRequestHandler.run_wsgi
+    def _safe_run_wsgi(self):
+        try:
+            return _orig_run_wsgi(self)
+        except AssertionError as e:
+            if "write() before start_response" in str(e):
+                return
+            raise
+    werkzeug.serving.WSGIRequestHandler.run_wsgi = _safe_run_wsgi
+except Exception:
+    pass
 
 from app import create_app
 from app.websocket.socket_manager import socketio

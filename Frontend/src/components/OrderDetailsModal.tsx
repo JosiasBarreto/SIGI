@@ -1,8 +1,28 @@
 import React, { useState } from 'react';
-import { X, CheckCircle, Clock, Play, FileText, Gift, CreditCard, ChevronRight, User, Truck, History, Printer } from 'lucide-react';
+import {
+  X,
+  CheckCircle,
+  Clock,
+  Play,
+  FileText,
+  Gift,
+  CreditCard,
+  ChevronRight,
+  User,
+  Truck,
+  History,
+  Printer,
+  ChefHat,
+  Utensils,
+  Cake,
+  Wine,
+  CheckCheck,
+  AlertCircle,
+  Package
+} from 'lucide-react';
 import { formatCurrency, cn } from '../lib/utils';
-import { useQuery } from '@tanstack/react-query';
-import { clientService, productService, documentService } from '../services';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { clientService, productService, documentService, productionService } from '../services';
 import { toast } from 'react-toastify';
 import Swal from 'sweetalert2';
 import PedidoCheckoutForm from './PedidoCheckoutForm';
@@ -15,6 +35,7 @@ interface OrderDetailsModalProps {
 }
 
 export default function OrderDetailsModal({ order, isOpen, onClose, onUpdateStatus }: OrderDetailsModalProps) {
+  const queryClient = useQueryClient();
   const { data: clientsResponse } = useQuery({ 
     queryKey: ["clients"], 
     queryFn: () => clientService.getAll({ per_page: 5000 }) 
@@ -29,9 +50,37 @@ export default function OrderDetailsModal({ order, isOpen, onClose, onUpdateStat
 
   const [showCheckoutForm, setShowCheckoutForm] = useState(false);
 
+  const orderId = order?.id;
+
+  // Consulta das Ordens de Produção vinculadas a este Pedido Comercial
+  const { data: productionOrdersResponse } = useQuery({
+    queryKey: ['order-production-orders', orderId],
+    queryFn: () => productionService.getAll({ pedido_id: orderId, per_page: 50 }).catch(() => ({ items: [] })),
+    enabled: Boolean(orderId),
+    refetchInterval: 8000
+  });
+
+  const relatedProductionOrders = (productionOrdersResponse?.items || []).filter(
+    (o: any) => String(o.pedido_id) === String(orderId) || String(o.pedido?.id) === String(orderId)
+  );
+
+  const updateProdStatusMutation = useMutation({
+    mutationFn: ({ id, estado }: { id: string | number; estado: string }) =>
+      productionService.updateEstado(id, estado),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['order-production-orders', orderId] });
+      queryClient.invalidateQueries({ queryKey: ['production-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['pedidos'] });
+      toast.success(`Comanda de Produção atualizada para: ${variables.estado}`);
+    },
+    onError: (err: any) => {
+      toast.error(err?.message || 'Erro ao atualizar comanda de produção.');
+    }
+  });
+
   if (!isOpen || !order) return null;
 
-  const orderId = order.id;
   const orderNumber = order.numero || order.id;
   const orderStatus = order.estado || order.status;
   const orderType = order.tipo || order.type;
@@ -228,24 +277,118 @@ export default function OrderDetailsModal({ order, isOpen, onClose, onUpdateStat
                </div>
              </div>
 
-             {/* Alugueres */}
-             {orderType === 'Composto' && (
-                <div className="bg-white dark:bg-gray-800/20 rounded-xl border border-gray-200 dark:border-gray-800 flex flex-col">
-                  <div className="p-4 sm:p-5 border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/30 rounded-t-xl">
-                    <h4 className="text-sm font-bold text-gray-900 dark:text-white">Aluguer de Materiais</h4>
-                  </div>
-                  <div className="p-4 sm:p-5 flex-1 overflow-y-auto max-h-[300px] space-y-3">
-                      <div className="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-800">
-                        <span className="text-sm font-bold text-gray-900 dark:text-white">20x Cadeiras Tiffani</span>
-                        <span className="font-semibold text-sm text-primary">{formatCurrency(40000)}</span>
-                      </div>
-                      <div className="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-800">
-                        <span className="text-sm font-bold text-gray-900 dark:text-white">5x Mesas Redondas</span>
-                        <span className="font-semibold text-sm text-primary">{formatCurrency(25000)}</span>
-                      </div>
-                  </div>
-                </div>
-             )}
+             {/* Ordens de Produção Fabril Vinculadas (Cozinha, Pastelaria e Bar) */}
+             <div className="bg-white dark:bg-gray-800/20 rounded-xl border border-gray-200 dark:border-gray-800 flex flex-col">
+               <div className="p-4 sm:p-5 border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/30 rounded-t-xl flex items-center justify-between">
+                 <h4 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                   <ChefHat size={16} className="text-primary" />
+                   Ordens de Produção ({relatedProductionOrders.length})
+                 </h4>
+                 <span className="text-[11px] font-semibold text-gray-500 dark:text-gray-400">
+                   Bancadas & KDS
+                 </span>
+               </div>
+               <div className="p-4 sm:p-5 flex-1 overflow-y-auto max-h-[300px] space-y-3">
+                 {relatedProductionOrders.length === 0 ? (
+                   <div className="py-6 text-center text-gray-400 text-xs italic">
+                     Nenhuma comanda operacional separada para este pedido ou itens de balcão direto.
+                   </div>
+                 ) : (
+                   relatedProductionOrders.map((ord: any) => {
+                     const sector = ord.sector || ord.setor || 'Cozinha';
+                     const sectorIcon =
+                       sector === 'Pastelaria' ? (
+                         <Cake size={14} className="text-pink-600 dark:text-pink-400" />
+                       ) : sector === 'Bar' ? (
+                         <Wine size={14} className="text-purple-600 dark:text-purple-400" />
+                       ) : (
+                         <Utensils size={14} className="text-amber-600 dark:text-amber-400" />
+                       );
+
+                     const rawEst = String(ord.estado || ord.status || '').trim();
+                     const isPendente = rawEst.toLowerCase().includes('pendente');
+                     const isEmProducao = rawEst.toLowerCase().includes('producao') || rawEst.toLowerCase().includes('preparacao');
+                     const isPronto = rawEst.toLowerCase().includes('pronto');
+                     const isEntregue = rawEst.toLowerCase().includes('entregue') || rawEst.toLowerCase().includes('concluido');
+
+                     const badgeColor = isPronto
+                       ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
+                       : isEmProducao
+                       ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300'
+                       : isEntregue
+                       ? 'bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300'
+                       : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300';
+
+                     return (
+                       <div
+                         key={ord.id}
+                         className="p-3 bg-gray-50 dark:bg-gray-800/40 rounded-xl border border-gray-150 dark:border-gray-800 flex items-center justify-between gap-3 text-xs"
+                       >
+                         <div className="flex items-center gap-2.5 min-w-0">
+                           <div className="p-1.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                             {sectorIcon}
+                           </div>
+                           <div className="min-w-0">
+                             <div className="font-bold text-gray-900 dark:text-white truncate">
+                               {ord.numero || `OP-${sector.slice(0, 3).toUpperCase()}-${ord.id}`}
+                             </div>
+                             <div className="text-[11px] text-gray-500 dark:text-gray-400">
+                               Setor: <strong className="text-gray-700 dark:text-gray-300">{sector}</strong>
+                               {ord.hora_inicio ? ` · Início: ${new Date(ord.hora_inicio).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}` : ''}
+                             </div>
+                           </div>
+                         </div>
+
+                         <div className="flex items-center gap-2 shrink-0">
+                           <span className={cn('px-2.5 py-1 rounded-md font-bold text-[11px]', badgeColor)}>
+                             {isEmProducao ? 'Em Preparação' : ord.estado || 'Pendente'}
+                           </span>
+
+                           {/* Botão rápido para avançar estado */}
+                           {isPendente && (
+                             <button
+                               type="button"
+                               disabled={updateProdStatusMutation.isPending}
+                               onClick={() => updateProdStatusMutation.mutate({ id: ord.id, estado: 'Em Producao' })}
+                               className="px-2 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded-md text-[10px] font-bold transition-colors"
+                               title="Iniciar Preparação no KDS"
+                             >
+                               Iniciar
+                             </button>
+                           )}
+                           {isEmProducao && (
+                             <button
+                               type="button"
+                               disabled={updateProdStatusMutation.isPending}
+                               onClick={() => updateProdStatusMutation.mutate({ id: ord.id, estado: 'Pronto' })}
+                               className="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-[10px] font-bold transition-colors"
+                               title="Marcar Comanda como Pronta"
+                             >
+                               Concluir
+                             </button>
+                           )}
+                         </div>
+                       </div>
+                     );
+                   })
+                 )}
+
+                 {/* Se houver materiais ou alugueres reais cadastrados no pedido */}
+                 {Array.isArray(order?.materiais) && order.materiais.length > 0 && (
+                   <div className="pt-2 border-t border-gray-200 dark:border-gray-800 space-y-1">
+                     <span className="text-[10px] uppercase font-bold text-gray-400 block mb-1">
+                       Materiais Alugados / Fornecidos
+                     </span>
+                     {order.materiais.map((m: any, mIdx: number) => (
+                       <div key={mIdx} className="flex justify-between items-center text-xs text-gray-700 dark:text-gray-300">
+                         <span>{m.quantidade || 1}x {m.nome || m.descricao}</span>
+                         <span className="font-semibold text-primary">{formatCurrency(m.valor || 0)}</span>
+                       </div>
+                     ))}
+                   </div>
+                 )}
+               </div>
+             </div>
           </div>
 
           {/* Histórico Simples */}

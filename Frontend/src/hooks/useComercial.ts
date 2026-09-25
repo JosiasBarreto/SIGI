@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { commercialService } from '../services/commercial/commercialService';
+import { notificationManager } from '../services/notifications';
 import { 
   VendaRequest, 
   PagamentoRequest, 
@@ -15,7 +16,9 @@ export const useComercial = () => {
   const createVenda = useMutation({
     mutationFn: (data: VendaRequest) => commercialService.createVenda(data),
     onSuccess: () => {
-      toast.success('Venda realizada com sucesso');
+      if (!notificationManager.isOrderSessionActive()) {
+        toast.success('Venda realizada com sucesso');
+      }
       // Invalida cache para atualizar painéis
       queryClient.invalidateQueries({ queryKey: ['vendas'] });
       queryClient.invalidateQueries({ queryKey: ['caixa'] });
@@ -38,7 +41,9 @@ export const useComercial = () => {
   const checkoutPedido = useMutation({
     mutationFn: (data: CheckoutPedidoRequest) => commercialService.checkoutPedido(data),
     onSuccess: () => {
-      toast.success('Pedido faturado com sucesso');
+      if (!notificationManager.isOrderSessionActive()) {
+        toast.success('Pedido faturado com sucesso');
+      }
       queryClient.invalidateQueries({ queryKey: ['pedidos'] });
       queryClient.invalidateQueries({ queryKey: ['vendas'] });
       queryClient.invalidateQueries({ queryKey: ['caixa'] });

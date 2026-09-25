@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { productionService, productService, requestService } from '../services';
+import { productionService, productService, requestService, orderService, clientService } from '../services';
 import {
   ChefHat,
   Filter,
@@ -81,9 +81,24 @@ export default function Producao() {
     refetchInterval: 12000
   });
 
+  // Consulta dos Pedidos Comerciais (para cruzar com dados de cliente, mesa e entrega)
+  const { data: commercialOrdersResponse } = useQuery({
+    queryKey: ['commercial-orders-producao'],
+    queryFn: () => orderService.getAll({ per_page: 1000 }).catch(() => ({ items: [] })),
+    refetchInterval: 10000
+  });
+
+  // Consulta dos Clientes
+  const { data: clientsResponse } = useQuery({
+    queryKey: ['clients-producao'],
+    queryFn: () => clientService.getAll({ per_page: 5000 }).catch(() => ({ items: [] }))
+  });
+
   const orders = ordersResponse?.items || [];
   const products = productsResponse?.items || [];
   const requisitionsList = requisitionsResponse?.items || [];
+  const commercialOrders = commercialOrdersResponse?.items || [];
+  const clientsList = clientsResponse?.items || [];
 
   const requisitionsMap = useMemo(() => {
     const map: Record<string | number, any> = {};
@@ -93,29 +108,22 @@ export default function Producao() {
     return map;
   }, [requisitionsList]);
 
-  // Mutação para Atualizar Estado da Ordem
-  const updateStatusMutation = useMutation({
-    mutationFn: ({ id, estado }: { id: string | number; estado: string }) =>
-      productionService.updateEstado(id, estado),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['production-orders'] });
-      queryClient.invalidateQueries({ queryKey: ['pedidos'] });
-      const estadoVisivel =
-        variables.estado === 'Em Producao'
-          ? 'Em Preparação'
-          : variables.estado === 'Entregue'
-            ? 'Entregue / Concluído'
-            : variables.estado;
-      toast.success(`Ordem #${variables.id} atualizada para: ${estadoVisivel}`);
-    },
-    onError: (err: any) => {
-      toast.error(err?.message || 'Erro ao atualizar estado da ordem de produção.');
-    }
-  });
+  const ordersMap = useMemo(() => {
+    const map: Record<string | number, any> = {};
+    commercialOrders.forEach((o: any) => {
+      map[o.id] = o;
+      if (o.numero) map[o.numero] = o;
+    });
+    return map;
+  }, [commercialOrders]);
 
-  const handleUpdateStatus = (id: string | number, novoEstado: string) => {
-    updateStatusMutation.mutate({ id, estado: novoEstado });
-  };
+  const clientsMap = useMemo(() => {
+    const map: Record<string | number, any> = {};
+    clientsList.forEach((c: any) => {
+      map[c.id] = c;
+    });
+    return map;
+  }, [clientsList]);
 
   // Normalizador de estados
   const normalizeEstadoProducao = (estado: any) => {
@@ -133,12 +141,131 @@ export default function Producao() {
     return raw;
   };
 
+  // Enriquecer ordens com metadados do pedido pai e cliente
+  const enrichedOrders = useMemo(() => {
+    return orders.map((o: any) => {
+      const parentOrder = o.pedido_id ? ordersMap[o.pedido_id] : null;
+      const clientObj =
+        o.cliente ||
+        (parentOrder?.cliente_id ? clientsMap[parentOrder.cliente_id] : null) ||
+        parentOrder?.cliente;
+      const clienteNome =
+        (typeof o.cliente_nome === 'string' && o.cliente_nome.trim() ? o.cliente_nome : null) ||
+        (typeof o.cliente === 'string' && o.cliente.trim() ? o.cliente : null) ||
+        clientObj?.nome ||
+        clientObj?.name ||
+        parentOrder?.cliente_nome ||
+        'Balcão';
+      const clienteTelefone = clientObj?.telefone || clientObj?.phone || parentOrder?.cliente_telefone || '';
+      const mesa = o.mesa || o.local || parentOrder?.mesa || '';
+      const pedidoNumero = o.pedido_numero || parentOrder?.numero || (o.pedido_id ? `#${o.pedido_id}` : null);
+      const dataEntrega = o.data_entrega || parentOrder?.data_entrega || o.data_producao || '';
+      const horaEntrega = o.hora_entrega || parentOrder?.hora_entrega || '';
+      const observacoes = o.observacoes || parentOrder?.observacoes || '';
+
+      return {
+        ...o,
+        parentOrder,
+        cliente_nome: clienteNome,
+        cliente_telefone: clienteTelefone,
+        mesa,
+        pedido_numero: pedidoNumero,
+        data_entrega: dataEntrega,
+        hora_entrega: horaEntrega,
+        observacoes,
+      };
+    });
+  }, [orders, ordersMap, clientsMap]);
+
+  // Mutação para Atualizar Estado da Ordem com Agregação Reativa ao Pedido Pai
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ id, estado }: { id: string | number; estado: string }) => {
+      const res = await productionService.updateEstado(id, estado);
+
+      const currentOrder = orders.find((o: any) => String(o.id) === String(id));
+      const pedidoId = currentOrder?.pedido_id || (res as any)?.pedido_id;
+
+      if (pedidoId) {
+        // Regra 1: Ao iniciar preparação ('Em Producao'), se o Pedido pai estiver 'Pendente', 'Agendado' ou 'Confirmado', avançar para 'Em Producao'
+        if (estado === 'Em Producao') {
+          const parent = ordersMap[pedidoId];
+          const parentEst = parent?.estado || parent?.status;
+          if (['Pendente', 'Agendado', 'Confirmado', 'PENDENTE', 'AGENDADO', 'CONFIRMADO'].includes(parentEst)) {
+            try {
+              await orderService.updateEstado(pedidoId, 'Em Producao');
+            } catch {
+              // Ignore if already updated or server handles it
+            }
+          }
+        }
+
+        // Regra 2: Agregação Inteligente quando a ordem fica 'Pronto'
+        if (estado === 'Pronto') {
+          const siblingOrders = orders.filter((o: any) => String(o.pedido_id) === String(pedidoId));
+          const allSiblingsReady = siblingOrders.every((o: any) => {
+            if (String(o.id) === String(id)) return true;
+            const sEst = normalizeEstadoProducao(o.estado || o.status);
+            return sEst === 'Pronto' || sEst === 'Entregue' || sEst === 'Cancelado';
+          });
+
+          if (allSiblingsReady) {
+            try {
+              await orderService.updateEstado(pedidoId, 'Pronto');
+              toast.info(`Todas as bancadas concluíram o Pedido #${pedidoId}! Pedido atualizado para PRONTO.`);
+            } catch {
+              // Server may have already aggregated
+            }
+          }
+        }
+
+        // Regra 3: Se todas as ordens forem entregues, atualizar o pedido para 'Entregue'
+        if (estado === 'Entregue') {
+          const siblingOrders = orders.filter((o: any) => String(o.pedido_id) === String(pedidoId));
+          const allSiblingsDelivered = siblingOrders.every((o: any) => {
+            if (String(o.id) === String(id)) return true;
+            const sEst = normalizeEstadoProducao(o.estado || o.status);
+            return sEst === 'Entregue' || sEst === 'Cancelado';
+          });
+          if (allSiblingsDelivered) {
+            try {
+              await orderService.updateEstado(pedidoId, 'Entregue');
+            } catch {
+              // Ignore
+            }
+          }
+        }
+      }
+
+      return res;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['production-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['pedidos'] });
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['commercial-orders-producao'] });
+      const estadoVisivel =
+        variables.estado === 'Em Producao'
+          ? 'Em Preparação'
+          : variables.estado === 'Entregue'
+            ? 'Entregue / Concluído'
+            : variables.estado;
+      toast.success(`Ordem #${variables.id} atualizada para: ${estadoVisivel}`);
+    },
+    onError: (err: any) => {
+      toast.error(err?.message || 'Erro ao atualizar estado da ordem de produção.');
+    }
+  });
+
+  const handleUpdateStatus = (id: string | number, novoEstado: string) => {
+    updateStatusMutation.mutate({ id, estado: novoEstado });
+  };
+
   // Filtragem por pesquisa de texto
   const filteredOrders = useMemo(() => {
-    if (!searchTerm.trim()) return orders;
+    if (!searchTerm.trim()) return enrichedOrders;
     const term = searchTerm.toLowerCase().trim();
 
-    return orders.filter((o: any) => {
+    return enrichedOrders.filter((o: any) => {
       const num = String(o.numero || o.codigo || o.id || '').toLowerCase();
       const ped = String(o.pedido_numero || o.pedido_id || '').toLowerCase();
       const cli = String(o.cliente_nome || o.cliente || '').toLowerCase();
@@ -158,7 +285,7 @@ export default function Producao() {
         itemsMatch
       );
     });
-  }, [orders, searchTerm, products]);
+  }, [enrichedOrders, searchTerm, products]);
 
   // Separação por estados
   const pendentes = useMemo(

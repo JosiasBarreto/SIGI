@@ -46,6 +46,29 @@ export interface NotificationTypeConfig {
   toastDuration: number; // milliseconds, 0 = persistent
 }
 
+export interface NotificationMetadata {
+  pedido_id?: number | string;
+  numero?: string;
+  pedido_numero?: string;
+  ordem_id?: number | string;
+  ordem_numero?: string;
+  sector?: string;
+  cliente?: string;
+  cliente_nome?: string;
+  produtos?: string;
+  artigos?: string;
+  antigo_estado?: string;
+  novo_estado?: string;
+  estado_anterior?: string;
+  estado_novo?: string;
+  total?: number;
+  origem?: string;
+  target_type?: string;
+  target_role?: string | null;
+  target_sector?: string | null;
+  [key: string]: any;
+}
+
 export interface AppNotification {
   id: string;
   type: string;
@@ -54,11 +77,13 @@ export interface AppNotification {
   priority: NotificationPriority;
   timestamp: string; // ISO 8601
   read: boolean;
+  canal?: string;
   sound?: boolean;
   persistent?: boolean;
   source?: string;
   actionUrl?: string;
-  data?: any;
+  data?: NotificationMetadata;
+  metadados?: NotificationMetadata;
 }
 
 export const NOTIFICATION_TYPES: Record<string, NotificationTypeConfig> = {

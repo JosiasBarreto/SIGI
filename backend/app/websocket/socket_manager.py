@@ -5,6 +5,7 @@ from flask import request, current_app
 from flask_socketio import SocketIO, emit, join_room, leave_room, disconnect
 import jwt
 import os
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -199,21 +200,69 @@ def send_notification(
         return False
 
 
-def notify_order_created(pedido_id: int, pedido_numero: str, total: float = 0.0, cliente_nome: Optional[str] = None) -> bool:
+def format_products_summary(itens: Any) -> str:
+    """Extrai uma string limpa e condensada com a lista de produtos e respetivas quantidades"""
+    if not itens:
+        return "Sem artigos detalhados"
+
+    produtos_str = []
+    try:
+        for it in (itens or []):
+            if isinstance(it, dict):
+                nome = it.get('descricao') or it.get('nome')
+                if not nome and it.get('produto'):
+                    prod = it.get('produto')
+                    nome = prod.get('nome') if isinstance(prod, dict) else getattr(prod, 'nome', None)
+                qtd = it.get('quantidade', 1)
+            else:
+                prod = getattr(it, 'produto', None)
+                nome = getattr(prod, 'nome', None) if prod else getattr(it, 'descricao', None)
+                qtd = getattr(it, 'quantidade', 1)
+
+            try:
+                qtd_formatada = f"{float(qtd):g}"
+            except Exception:
+                qtd_formatada = "1"
+
+            produtos_str.append(f"{nome or 'Artigo'} ({qtd_formatada}x)")
+    except Exception:
+        return "Artigos do Pedido"
+
+    return ", ".join(produtos_str) if produtos_str else "Sem artigos detalhados"
+
+
+def notify_order_created(
+    pedido_id: int, 
+    pedido_numero: str, 
+    total: float = 0.0, 
+    cliente_nome: Optional[str] = None,
+    produtos_resumo: Optional[str] = None
+) -> bool:
     """
-    Notifica a criação de um novo pedido comercial com desduplicação (máximo 1 alerta por pedido).
-    Emite o evento 'novo_pedido' para sincronização de listas e 'notificacao' para alerta visual.
+    Notifica a criação de um novo pedido comercial com o padrão completo de identificação:
+    - Referência: #PED-XXXX
+    - Cliente: Nome do Cliente
+    - Produtos: Artigo A (1x), Artigo B (2x)
+    - Total: Valor monetário
     """
-    titulo = "Novo Pedido Recebido"
-    mensagem = f"Pedido #{pedido_numero} registado com sucesso."
-    if cliente_nome:
-        mensagem += f" Cliente: {cliente_nome}."
+    cliente_str = cliente_nome or "Consumidor Final"
+    produtos_str = produtos_resumo or "Sem artigos detalhados"
+
+    titulo = f"Novo Pedido #{pedido_numero}"
+    mensagem = (
+        f"Pedido #{pedido_numero} registado com sucesso.\n"
+        f"• Cliente: {cliente_str}\n"
+        f"• Produtos: {produtos_str}\n"
+        f"• Total: {float(total or 0):.2f} €"
+    )
 
     payload = {
         "pedido_id": pedido_id,
         "numero": pedido_numero,
-        "total": total,
-        "cliente": cliente_nome
+        "cliente": cliente_str,
+        "produtos": produtos_str,
+        "total": float(total or 0),
+        "origem": "novo_pedido"
     }
 
     try:
@@ -261,20 +310,144 @@ def notify_order_created(pedido_id: int, pedido_numero: str, total: float = 0.0,
         except Exception as db_err:
             logger.debug(f"Erro ao persistir notificação de pedido: {db_err}")
 
-        logger.info(f"Pedido notificado via WebSocket: #{pedido_numero}")
+        logger.info(f"Pedido notificado via WebSocket: #{pedido_numero} ({cliente_str})")
         return True
     except Exception as e:
         logger.error(f"Erro ao notificar novo pedido: {str(e)}")
         return False
 
 
-def notify_production_orders(pedido_id: int, pedido_numero: str, sectores: List[Any]) -> bool:
+def notify_order_status_updated(
+    pedido_id: int,
+    pedido_numero: str,
+    antigo_estado: str,
+    novo_estado: str,
+    cliente_nome: Optional[str] = None,
+    produtos_resumo: Optional[str] = None,
+    total: float = 0.0
+) -> bool:
     """
-    Notifica a geração de ordens de produção de forma CONSOLIDADA e DESDUPLICADA.
-    Gera exatamente UMA notificação operacional para os setores fabris (Cozinha/Pastelaria/Bar),
-    eliminando alertas duplicados ou disparos redundantes em cascata.
+    Notifica a alteração de estado do pedido com identificação estruturada:
+    - Referência: #PED-XXXX
+    - Cliente: Nome do Cliente
+    - Produtos: Artigos do pedido
+    - Transição: Estado Anterior -> Novo Estado
     """
-    # Normalizar e desduplicar nomes dos setores
+    cliente_str = cliente_nome or "Consumidor Final"
+    produtos_str = produtos_resumo or "Sem artigos detalhados"
+
+    tipo = "info"
+    prioridade = "media"
+    novo_upper = str(novo_estado).upper()
+
+    if "PRONTO" in novo_upper:
+        tipo = "success"
+        prioridade = "alta"
+        titulo = f"Pedido #{pedido_numero}: Pronto para Levantamento"
+    elif "ENTREGUE" in novo_upper or "CONCLUIDO" in novo_upper:
+        tipo = "success"
+        prioridade = "media"
+        titulo = f"Pedido #{pedido_numero}: Entregue"
+    elif "CANCELADO" in novo_upper:
+        tipo = "error"
+        prioridade = "urgente"
+        titulo = f"Pedido #{pedido_numero}: Cancelado"
+    elif "PRODUCAO" in novo_upper:
+        tipo = "info"
+        prioridade = "alta"
+        titulo = f"Pedido #{pedido_numero}: Em Confeção"
+    else:
+        titulo = f"Pedido #{pedido_numero}: {novo_estado}"
+
+    mensagem = (
+        f"O estado do Pedido #{pedido_numero} foi alterado para '{novo_estado}'.\n"
+        f"• Cliente: {cliente_str}\n"
+        f"• Produtos: {produtos_str}\n"
+        f"• Transição: {antigo_estado} ➔ {novo_estado}"
+    )
+
+    payload = {
+        "pedido_id": pedido_id,
+        "numero": pedido_numero,
+        "cliente": cliente_str,
+        "produtos": produtos_str,
+        "antigo_estado": antigo_estado,
+        "novo_estado": novo_estado,
+        "total": float(total or 0),
+        "origem": "pedido_atualizado"
+    }
+
+    try:
+        # 1. Evento de dados em tempo real
+        socketio.emit("pedido_atualizado", payload)
+
+        # Se ficou pronto, emite também o evento específico para o balcão
+        if "PRONTO" in novo_upper:
+            socketio.emit("pedido_pronto", {
+                "pedido_id": pedido_id,
+                "numero": pedido_numero,
+                "cliente": cliente_str,
+                "produtos": produtos_str
+            })
+
+        # 2. Persistência na Base de Dados
+        notif_id = None
+        try:
+            from app.core.database import db
+            from app.models.notificacao import Notificacao
+
+            notif = Notificacao(
+                titulo=titulo,
+                mensagem=mensagem,
+                tipo=tipo,
+                canal="PEDIDO",
+                prioridade=prioridade,
+                persistente=False,
+                ativa=True,
+                target_type="GLOBAL",
+                metadados=payload,
+                created_at=datetime.utcnow()
+            )
+            db.session.add(notif)
+            db.session.commit()
+            notif_id = notif.id
+        except Exception as db_err:
+            logger.debug(f"Erro ao persistir notificação de status de pedido: {db_err}")
+
+        # 3. Notificação visual global estruturada
+        socketio.emit("notificacao", {
+            "id": notif_id,
+            "titulo": titulo,
+            "mensagem": mensagem,
+            "tipo": tipo,
+            "canal": "PEDIDO",
+            "prioridade": prioridade,
+            "persistente": False,
+            "created_at": datetime.utcnow().isoformat(),
+            "data": payload
+        }, room="global_notifications")
+
+        logger.info(f"Alteração de estado de pedido notificada: #{pedido_numero} ({antigo_estado} -> {novo_estado})")
+        return True
+    except Exception as e:
+        logger.error(f"Erro ao notificar alteração de estado do pedido: {str(e)}")
+        return False
+
+
+def notify_production_orders(
+    pedido_id: int, 
+    pedido_numero: str, 
+    sectores: List[Any],
+    cliente_nome: Optional[str] = None,
+    produtos_resumo: Optional[str] = None
+) -> bool:
+    """
+    Notifica a geração de ordens de produção de forma CONSOLIDADA e DESDUPLICADA com padrão de identificação:
+    - Referência: #PED-XXXX
+    - Setores: Cozinha, Pastelaria, Bar
+    - Cliente: Nome do Cliente
+    - Produtos: Artigos a confecionar
+    """
     sectores_limpos = []
     for s in (sectores or []):
         s_val = s.value if hasattr(s, 'value') else str(s)
@@ -282,15 +455,26 @@ def notify_production_orders(pedido_id: int, pedido_numero: str, sectores: List[
             sectores_limpos.append(s_val)
 
     sectores_str = ", ".join(sectores_limpos) if sectores_limpos else "Cozinha"
+    cliente_str = cliente_nome or "Consumidor Final"
+    produtos_str = produtos_resumo or "Sem artigos detalhados"
+
     titulo = f"Nova Produção: Pedido #{pedido_numero}"
-    mensagem = f"Ordens de produção geradas para o Pedido #{pedido_numero} nos sectores: {sectores_str}."
+    mensagem = (
+        f"Ordens de produção geradas para os sectores: {sectores_str}.\n"
+        f"• Pedido: #{pedido_numero}\n"
+        f"• Cliente: {cliente_str}\n"
+        f"• Artigos a Confecionar: {produtos_str}"
+    )
 
     payload = {
         "pedido_id": pedido_id,
         "numero": pedido_numero,
+        "cliente": cliente_str,
+        "produtos": produtos_str,
         "sectores": sectores_limpos,
         "titulo": titulo,
-        "mensagem": mensagem
+        "mensagem": mensagem,
+        "origem": "nova_ordem_producao"
     }
 
     try:
@@ -303,7 +487,6 @@ def notify_production_orders(pedido_id: int, pedido_numero: str, sectores: List[
             from app.core.database import db
             from app.models.notificacao import Notificacao
 
-            # Verifica se já existe notificação de produção gravada para este pedido
             notif_existente = Notificacao.query.filter(
                 Notificacao.canal == "PRODUCAO",
                 Notificacao.metadados["pedido_id"].as_integer() == pedido_id
@@ -332,7 +515,7 @@ def notify_production_orders(pedido_id: int, pedido_numero: str, sectores: List[
         except Exception as db_err:
             logger.debug(f"Erro ao verificar/gravar notificação de produção no DB: {db_err}")
 
-        # 3. Emite UMA ÚNICA notificação global consolidada (sem disparar alertas em loop por role)
+        # 3. Emite UMA ÚNICA notificação global consolidada
         socketio.emit("notificacao", {
             "id": notif_id,
             "titulo": titulo,
@@ -349,6 +532,118 @@ def notify_production_orders(pedido_id: int, pedido_numero: str, sectores: List[
         return True
     except Exception as e:
         logger.error(f"Erro ao notificar ordens de produção via WebSocket: {str(e)}")
+        return False
+
+
+def notify_production_status_updated(
+    ordem_id: int,
+    ordem_numero: str,
+    pedido_numero: str,
+    sector: str,
+    antigo_estado: str,
+    novo_estado: str,
+    cliente_nome: Optional[str] = None,
+    produtos_resumo: Optional[str] = None
+) -> bool:
+    """
+    Notifica a evolução de uma ordem de fabrico de setor específico (KDS):
+    - Referência: #OP-COZ-... (Pedido #PED-...)
+    - Setor: Cozinha / Pastelaria / Bar
+    - Cliente: Nome do Cliente
+    - Produtos: Artigos da ordem
+    - Transição: Estado Anterior -> Novo Estado
+    """
+    cliente_str = cliente_nome or "Consumidor Final"
+    produtos_str = produtos_resumo or "Sem artigos detalhados"
+
+    tipo = "info"
+    prioridade = "media"
+    novo_upper = str(novo_estado).upper()
+
+    if "PRONTO" in novo_upper:
+        tipo = "success"
+        prioridade = "alta"
+        titulo = f"Produção ({sector}) #{ordem_numero}: Concluída"
+    elif "EM_PRODUCAO" in novo_upper or "EM PRODUCAO" in novo_upper:
+        tipo = "info"
+        prioridade = "media"
+        titulo = f"Produção ({sector}) #{ordem_numero}: Em Preparação"
+    elif "CANCELADO" in novo_upper:
+        tipo = "error"
+        prioridade = "urgente"
+        titulo = f"Produção ({sector}) #{ordem_numero}: CANCELADA"
+    else:
+        titulo = f"Produção ({sector}) #{ordem_numero}: {novo_estado}"
+
+    mensagem = (
+        f"A ordem de produção #{ordem_numero} ({sector}) passou para '{novo_estado}'.\n"
+        f"• Pedido: #{pedido_numero}\n"
+        f"• Cliente: {cliente_str}\n"
+        f"• Artigos: {produtos_str}\n"
+        f"• Transição: {antigo_estado} ➔ {novo_estado}"
+    )
+
+    payload = {
+        "ordem_id": ordem_id,
+        "ordem_numero": ordem_numero,
+        "pedido_numero": pedido_numero,
+        "sector": sector,
+        "cliente": cliente_str,
+        "produtos": produtos_str,
+        "antigo_estado": antigo_estado,
+        "novo_estado": novo_estado,
+        "origem": "ordem_producao_atualizada"
+    }
+
+    try:
+        # Eventos para ecrãs de fábrica
+        if "PRONTO" in novo_upper:
+            socketio.emit("producao_concluida", {"ordem_numero": ordem_numero, "pedido_numero": pedido_numero})
+        elif "PRODUCAO" in novo_upper:
+            socketio.emit("producao_iniciada", {"ordem_numero": ordem_numero, "pedido_numero": pedido_numero})
+
+        # Persistência
+        notif_id = None
+        try:
+            from app.core.database import db
+            from app.models.notificacao import Notificacao
+
+            notif = Notificacao(
+                titulo=titulo,
+                mensagem=mensagem,
+                tipo=tipo,
+                canal="PRODUCAO",
+                prioridade=prioridade,
+                persistente=False,
+                ativa=True,
+                target_type="GLOBAL",
+                target_sector=sector,
+                metadados=payload,
+                created_at=datetime.utcnow()
+            )
+            db.session.add(notif)
+            db.session.commit()
+            notif_id = notif.id
+        except Exception as db_err:
+            logger.debug(f"Erro ao persistir notificação de ordem de produção: {db_err}")
+
+        # Emissão central
+        socketio.emit("notificacao", {
+            "id": notif_id,
+            "titulo": titulo,
+            "mensagem": mensagem,
+            "tipo": tipo,
+            "canal": "PRODUCAO",
+            "prioridade": prioridade,
+            "persistente": False,
+            "created_at": datetime.utcnow().isoformat(),
+            "data": payload
+        }, room="global_notifications")
+
+        logger.info(f"Ordem de Produção #{ordem_numero} ({sector}) notificada: {novo_estado}")
+        return True
+    except Exception as e:
+        logger.error(f"Erro ao emitir notificação de ordem de produção: {str(e)}")
         return False
 
 

@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { orderService, clientService, vendaService } from "../../services";
-import { Search, FileText, Eye, Plus } from "lucide-react";
+import { Search, FileText, Eye, Plus, CheckCheck } from "lucide-react";
 import { formatCurrency, cn } from "../../lib/utils";
 import { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "../../components/Common/DataTable";
@@ -15,12 +15,13 @@ interface PedidosListProps {
 export default function PedidosList({ onOpenNewOrderForm }: PedidosListProps) {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeTab, setActiveTab] = useState<string>("Agendados");
+  const [activeTab, setActiveTab] = useState<string>("Todos");
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
 
   const { data: ordersResponse, isLoading } = useQuery({
     queryKey: ["orders", searchTerm],
-    queryFn: () => orderService.getAll({ search: searchTerm }),
+    queryFn: () => orderService.getAll({ search: searchTerm, per_page: 1000 }),
+    refetchInterval: 8000
   });
 
   const { data: clientsResponse } = useQuery({
@@ -43,6 +44,8 @@ export default function PedidosList({ onOpenNewOrderForm }: PedidosListProps) {
     }) => orderService.updateEstado(id, estado, justificativa),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
+      queryClient.invalidateQueries({ queryKey: ["pedidos"] });
+      queryClient.invalidateQueries({ queryKey: ["production-orders"] });
       toast.success("Estado do pedido atualizado com sucesso!");
     },
     onError: (err: any) => {
@@ -81,11 +84,14 @@ export default function PedidosList({ onOpenNewOrderForm }: PedidosListProps) {
   };
 
   const estadoMap: Record<string, string[]> = {
-    Agendados: ["Pendente", "Agendado", "PENDENTE", "AGENDADO"],
+    Todos: [],
+    Pendentes: ["Pendente", "PENDENTE"],
+    Agendados: ["Agendado", "AGENDADO"],
     Confirmados: ["Confirmado", "CONFIRMADO"],
-    Produção: ["Em Producao", "Em Produção", "EM_PRODUCAO", "EM_PREPARACAO"],
+    "Em Produção": ["Em Producao", "Em Produção", "EM_PRODUCAO", "EM_PREPARACAO"],
     Prontos: ["Pronto", "PRONTO"],
-    Concluídos: ["Em Entrega", "Entregue", "Concluido", "Concluído", "CONCLUIDO", "ENTREGUE"],
+    Entregues: ["Entregue", "ENTREGUE", "Em Entrega", "EM_ENTREGA"],
+    Concluídos: ["Concluido", "Concluído", "CONCLUIDO"],
     Cancelados: ["Cancelado", "CANCELADO"],
   };
 
@@ -97,13 +103,29 @@ export default function PedidosList({ onOpenNewOrderForm }: PedidosListProps) {
       .toUpperCase()
       .replace(/[\s.-]+/g, "_");
 
-  const visibleOrders =
-    orders?.filter((o: any) => {
+  const countsByTab = useMemo(() => {
+    const counts: Record<string, number> = { Todos: orders.length };
+    Object.keys(estadoMap).forEach((tab) => {
+      if (tab === "Todos") return;
+      const mapped = estadoMap[tab] || [];
+      counts[tab] = orders.filter((o: any) => {
+        const est = normalizarEstado(o.estado || o.status);
+        return mapped.some((st) => normalizarEstado(st) === est);
+      }).length;
+    });
+    return counts;
+  }, [orders]);
+
+  const visibleOrders = useMemo(() => {
+    return (orders || []).filter((o: any) => {
+      const clientName = (o.cliente?.nome || getClientName(o.clientId || o.cliente_id)).toLowerCase();
+      const orderNum = String(o.numero || o.id || "").toLowerCase();
       const matchesSearch =
-        getClientName(o.clientId || o.cliente_id)
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase()) ||
-        String(o.numero || o.id).toLowerCase().includes(searchTerm.toLowerCase());
+        !searchTerm.trim() ||
+        clientName.includes(searchTerm.toLowerCase()) ||
+        orderNum.includes(searchTerm.toLowerCase());
+
+      if (activeTab === "Todos") return matchesSearch;
 
       const mappedStatuses = estadoMap[activeTab] || [];
       const estado = normalizarEstado(o.estado || o.status);
@@ -112,7 +134,8 @@ export default function PedidosList({ onOpenNewOrderForm }: PedidosListProps) {
       );
 
       return matchesSearch && matchesStatus;
-    }) || [];
+    });
+  }, [orders, activeTab, searchTerm, clients]);
 
   const handleUpdateStatus = (
     id: string,
@@ -167,6 +190,10 @@ export default function PedidosList({ onOpenNewOrderForm }: PedidosListProps) {
             "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
           if (est === "Confirmado")
             colorClass = "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400";
+          else if (est === "Pronto")
+            colorClass = "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 font-extrabold ring-1 ring-emerald-500/30";
+          else if (est === "Agendado")
+            colorClass = "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-400";
           else if (
             est === "Concluido" ||
             est === "Entregue" ||
@@ -214,45 +241,59 @@ export default function PedidosList({ onOpenNewOrderForm }: PedidosListProps) {
       {
         id: "acoes",
         header: "Ações",
-        cell: ({ row }) => (
-          <div className="flex flex-wrap justify-end gap-1.5">
-            <button
-              type="button"
-              onClick={() =>
-                emitirDocumentoMutation.mutate({
-                  pedidoId: Number(row.original.id),
-                  tipo: "PROFORMA",
-                })
-              }
-              className="text-amber-800 bg-amber-100 hover:bg-amber-200 dark:bg-amber-900/40 dark:text-amber-300 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 shadow-sm"
-              title="Emitir Fatura Pró-Forma"
-            >
-              <FileText size={13} />
-              Proforma
-            </button>
-            <button
-              type="button"
-              onClick={() =>
-                emitirDocumentoMutation.mutate({
-                  pedidoId: Number(row.original.id),
-                  tipo: "FT",
-                })
-              }
-              className="text-blue-700 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all"
-              title="Emitir Fatura"
-            >
-              FT
-            </button>
-            <button
-              type="button"
-              onClick={() => setSelectedOrder(row.original)}
-              className="text-primary hover:text-primary-hover bg-primary/10 hover:bg-primary/20 px-2.5 py-1.5 rounded-lg transition-all flex items-center justify-center font-bold"
-              title="Ver detalhes"
-            >
-              <Eye size={16} />
-            </button>
-          </div>
-        ),
+        cell: ({ row }) => {
+          const isPronto = String(row.original.estado || '').toLowerCase().includes('pronto');
+          return (
+            <div className="flex flex-wrap justify-end gap-1.5">
+              {isPronto && (
+                <button
+                  type="button"
+                  onClick={() => handleUpdateStatus(row.original.id, 'Entregue')}
+                  className="text-white bg-emerald-600 hover:bg-emerald-700 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 shadow-sm"
+                  title="Marcar Pedido como Entregue ao Cliente"
+                >
+                  <CheckCheck size={13} />
+                  Entregar
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() =>
+                  emitirDocumentoMutation.mutate({
+                    pedidoId: Number(row.original.id),
+                    tipo: "PROFORMA",
+                  })
+                }
+                className="text-amber-800 bg-amber-100 hover:bg-amber-200 dark:bg-amber-900/40 dark:text-amber-300 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 shadow-sm"
+                title="Emitir Fatura Pró-Forma"
+              >
+                <FileText size={13} />
+                Proforma
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  emitirDocumentoMutation.mutate({
+                    pedidoId: Number(row.original.id),
+                    tipo: "FT",
+                  })
+                }
+                className="text-blue-700 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all"
+                title="Emitir Fatura"
+              >
+                FT
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedOrder(row.original)}
+                className="text-primary hover:text-primary-hover bg-primary/10 hover:bg-primary/20 px-2.5 py-1.5 rounded-lg transition-all flex items-center justify-center font-bold"
+                title="Ver detalhes"
+              >
+                <Eye size={16} />
+              </button>
+            </div>
+          );
+        },
       },
     ],
     [clients, emitirDocumentoMutation]
@@ -264,20 +305,33 @@ export default function PedidosList({ onOpenNewOrderForm }: PedidosListProps) {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         {/* Status Tabs */}
         <div className="flex overflow-x-auto hide-scrollbar gap-2 pb-1">
-          {Object.keys(estadoMap).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={cn(
-                "whitespace-nowrap px-4 py-2 rounded-full text-xs font-extrabold transition-all",
-                activeTab === tab
-                  ? "bg-gray-900 text-white dark:bg-white dark:text-gray-900 shadow-md"
-                  : "bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:border-gray-300"
-              )}
-            >
-              {tab}
-            </button>
-          ))}
+          {Object.keys(estadoMap).map((tab) => {
+            const count = countsByTab[tab] ?? 0;
+            return (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={cn(
+                  "whitespace-nowrap px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0",
+                  activeTab === tab
+                    ? "bg-gray-900 text-white dark:bg-white dark:text-gray-900 shadow-md"
+                    : "bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:border-gray-300"
+                )}
+              >
+                <span>{tab}</span>
+                <span
+                  className={cn(
+                    "px-1.5 py-0.5 rounded-full text-[10px] font-black shrink-0",
+                    activeTab === tab
+                      ? "bg-white/25 text-white dark:bg-black/20 dark:text-gray-900"
+                      : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
+                  )}
+                >
+                  {count}
+                </span>
+              </button>
+            );
+          })}
         </div>
 
         {/* Action button */}

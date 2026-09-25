@@ -1,8 +1,10 @@
-import { AppNotification, NOTIFICATION_TYPES, NotificationPriority } from './notificationTypes';
+import { AppNotification, NOTIFICATION_TYPES, NotificationPriority, NotificationMetadata } from './notificationTypes';
+import { formatCurrency} from '../../lib/utils';
 
 /**
- * Adaptador para normalizar eventos brutos vindos do backend ou de acções locais
- * para o modelo único de dados AppNotification.
+ * Adaptador para normalizar eventos brutos vindos do backend (WebSocket / REST API)
+ * ou de acções locais para o modelo canónico AppNotification seguindo o:
+ * Padrão Universal de Identificação em Notificações (Pedidos & Produção).
  */
 export class NotificationAdapter {
   /**
@@ -13,25 +15,46 @@ export class NotificationAdapter {
     const normalizedType = this.resolveType(eventName, raw);
     const config = NOTIFICATION_TYPES[normalizedType] || NOTIFICATION_TYPES['notificacao'];
 
+    // Extrair data ou metadados incorporados
+    const metadata: NotificationMetadata = {
+      ...(typeof raw.data === 'object' ? raw.data : {}),
+      ...(typeof raw.metadados === 'object' ? raw.metadados : {}),
+      ...(raw.pedido_id !== undefined ? { pedido_id: raw.pedido_id } : {}),
+      ...(raw.ordem_id !== undefined ? { ordem_id: raw.ordem_id } : {}),
+      ...(raw.numero ? { numero: raw.numero } : {}),
+      ...(raw.pedido_numero ? { pedido_numero: raw.pedido_numero } : {}),
+      ...(raw.ordem_numero ? { ordem_numero: raw.ordem_numero } : {}),
+      ...(raw.sector ? { sector: raw.sector } : {}),
+      ...(raw.cliente || raw.cliente_nome ? { cliente: raw.cliente || raw.cliente_nome } : {}),
+      ...(raw.produtos || raw.artigos ? { produtos: raw.produtos || raw.artigos } : {}),
+      ...(raw.antigo_estado || raw.estado_anterior ? { antigo_estado: raw.antigo_estado || raw.estado_anterior } : {}),
+      ...(raw.novo_estado || raw.estado_novo || raw.estado ? { novo_estado: raw.novo_estado || raw.estado_novo || raw.estado } : {}),
+      ...(raw.total !== undefined ? { total: Number(raw.total) } : {}),
+      ...(raw.origem ? { origem: raw.origem } : {}),
+    };
+
     // Determinar o ID
     const id = raw.id 
       ? String(raw.id) 
       : `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
+    // Determinar canal
+    const canal = this.resolveCanal(raw, eventName, normalizedType);
+
     // Determinar prioridade
     const priority = this.resolvePriority(raw, config.defaultPriority);
 
-    // Determinar título
-    const title = this.resolveTitle(raw, config.label, eventName);
+    // Determinar título segundo o Padrão Universal
+    const title = this.resolveTitle(raw, metadata, config.label, eventName);
 
-    // Determinar mensagem
-    const message = this.resolveMessage(raw, title, eventName);
+    // Determinar mensagem estruturada com marcadores e contexto
+    const message = this.resolveMessage(raw, metadata, title, eventName);
 
     // Determinar rota de acção
-    const actionUrl = this.resolveActionUrl(raw, config.defaultRoute);
+    const actionUrl = this.resolveActionUrl(raw, metadata, config.defaultRoute);
 
     // Timestamp
-    const timestamp = raw.timestamp || raw.data_criacao || raw.created_at || new Date().toISOString();
+    const timestamp = raw.timestamp || raw.created_at || raw.data_criacao || new Date().toISOString();
 
     return {
       id,
@@ -40,13 +63,26 @@ export class NotificationAdapter {
       message,
       priority,
       timestamp,
+      canal,
       read: Boolean(raw.read || raw.lida || false),
       sound: raw.sound !== false,
-      persistent: priority === 'critical' || Boolean(raw.persistent),
-      source: raw.source || raw.origem || eventName,
+      persistent: priority === 'critical' || Boolean(raw.persistent || raw.persistente),
+      source: raw.source || raw.origem || metadata.origem || eventName,
       actionUrl,
-      data: raw.data || raw,
+      data: metadata,
+      metadados: metadata,
     };
+  }
+
+  private static resolveCanal(raw: any, eventName: string, type: string): string {
+    if (raw.canal) return String(raw.canal).toUpperCase();
+    if (type.startsWith('pedido') || eventName.startsWith('pedido') || raw.data?.pedido_id) return 'PEDIDO';
+    if (type.includes('producao') || eventName.includes('producao') || raw.data?.ordem_id) return 'PRODUCAO';
+    if (type.includes('stock') || type.includes('inventario') || eventName.includes('stock')) return 'STOCK';
+    if (type.includes('requisicao') || eventName.includes('requisicao')) return 'REQUISICAO';
+    if (type.includes('caixa') || type.includes('pagamento')) return 'CAIXA';
+    if (type.includes('evento')) return 'EVENTOS';
+    return 'SISTEMA';
   }
 
   private static resolveType(eventName: string, raw: any): string {
@@ -80,29 +116,53 @@ export class NotificationAdapter {
     return defaultPriority;
   }
 
-  private static resolveTitle(raw: any, defaultLabel: string, eventName: string): string {
+  /**
+   * Padrão Universal de Identificação em Títulos:
+   * - Pedido: `Pedido #PED-XXXX: <Novo Estado>`
+   * - Produção: `Produção (<Setor>) #OP-XXXX: <Novo Estado>`
+   */
+  private static resolveTitle(raw: any, meta: NotificationMetadata, defaultLabel: string, eventName: string): string {
     if (raw.titulo) return String(raw.titulo);
     if (raw.title) return String(raw.title);
 
+    // Formatação padronizada para Pedidos
+    if (eventName === 'novo_pedido' || raw.origem === 'novo_pedido') {
+      const ref = meta.numero ? (meta.numero.startsWith('#') ? meta.numero : `#${meta.numero}`) : '#PED-NOVO';
+      return `Pedido ${ref}: Registado`;
+    }
+
+    if (
+      eventName === 'pedido_actualizado' ||
+      eventName === 'pedido_atualizado' ||
+      eventName === 'pedido_pronto' ||
+      eventName === 'pedido_cancelado' ||
+      meta.pedido_id ||
+      (meta.numero && meta.numero.includes('PED'))
+    ) {
+      const ref = meta.numero ? (meta.numero.startsWith('#') ? meta.numero : `#${meta.numero}`) : `#PED-${meta.pedido_id || ''}`;
+      const estado = meta.novo_estado || (eventName === 'pedido_pronto' ? 'Pronto para Levantamento' : eventName === 'pedido_cancelado' ? 'Cancelado' : 'Atualizado');
+      return `Pedido ${ref}: ${estado}`;
+    }
+
+    // Formatação padronizada para Ordens de Produção
+    if (
+      eventName === 'nova_ordem_producao' ||
+      eventName === 'ordem_producao_actualizada' ||
+      eventName === 'ordem_producao_atualizada' ||
+      eventName === 'producao_iniciada' ||
+      eventName === 'producao_concluida' ||
+      meta.ordem_id ||
+      meta.ordem_numero
+    ) {
+      const setor = meta.sector ? ` (${meta.sector})` : '';
+      const ref = meta.ordem_numero
+        ? (meta.ordem_numero.startsWith('#') ? meta.ordem_numero : `#${meta.ordem_numero}`)
+        : (meta.numero ? (meta.numero.startsWith('#') ? meta.numero : `#${meta.numero}`) : `#OP-${meta.ordem_id || ''}`);
+      const estado = meta.novo_estado || (eventName === 'producao_concluida' ? 'Concluída' : eventName === 'producao_iniciada' ? 'Em Produção' : 'Atualizada');
+      return `Produção${setor} ${ref}: ${estado}`;
+    }
+
     switch (eventName) {
-      case 'novo_pedido':
-        return 'Novo Pedido Recebido';
-      case 'nova_ordem_producao':
-        return raw.sector ? `Nova Ordem (${raw.sector})` : 'Nova Ordem de Produção';
-      case 'pedido_actualizado':
-      case 'pedido_atualizado':
-        return 'Pedido Atualizado';
-      case 'pedido_cancelado':
-        return 'Pedido Cancelado';
-      case 'pedido_pronto':
-        return 'Pedido Pronto para Entrega';
-      case 'ordem_producao_actualizada':
-      case 'ordem_producao_atualizada':
-        return 'Ordem de Produção Atualizada';
-      case 'producao_iniciada':
-        return 'Produção Iniciada';
-      case 'producao_concluida':
-        return 'Produção Concluída';
       case 'alerta_producao':
         return 'Alerta na Linha de Produção';
       case 'stock_baixo':
@@ -144,42 +204,92 @@ export class NotificationAdapter {
     }
   }
 
-  private static resolveMessage(raw: any, title: string, eventName: string): string {
+  /**
+   * Padrão Universal de Identificação em Mensagens:
+   * Corpo estruturado com marcadores:
+   * • Cliente: ...
+   * • Produtos / Artigos: ...
+   * • Transição: <Antigo Estado> ➔ <Novo Estado>
+   */
+  private static resolveMessage(raw: any, meta: NotificationMetadata, title: string, eventName: string): string {
+    // Se a mensagem já vier pré-formatada do backend com quebras/bullets, preserva
     if (raw.mensagem) return String(raw.mensagem);
     if (raw.message) return String(raw.message);
     if (raw.msg) return String(raw.msg);
 
-    // Gerar mensagens ricas a partir dos campos do payload
+    // 1. Mensagens ricas para Pedidos
+    if (
+      eventName === 'novo_pedido' ||
+      eventName === 'pedido_actualizado' ||
+      eventName === 'pedido_atualizado' ||
+      eventName === 'pedido_pronto' ||
+      eventName === 'pedido_cancelado' ||
+      meta.pedido_id ||
+      (meta.numero && meta.numero.includes('PED'))
+    ) {
+      const ref = meta.numero ? (meta.numero.startsWith('#') ? meta.numero : `#${meta.numero}`) : `#PED-${meta.pedido_id || ''}`;
+      const cliente = meta.cliente || meta.cliente_nome || 'Consumidor Final';
+      const produtos = meta.produtos || meta.artigos || '';
+      const novoEst = meta.novo_estado || meta.estado_novo || (eventName === 'pedido_pronto' ? 'PRONTO' : eventName === 'pedido_cancelado' ? 'CANCELADO' : 'REGISTADO');
+      const antigoEst = meta.antigo_estado || meta.estado_anterior || '';
+      const lines: string[] = [];
+      if (antigoEst && novoEst) {
+        lines.push(`O estado do Pedido ${ref} foi alterado para '${novoEst}'.`);
+      } else {
+        lines.push(`O Pedido ${ref} encontra-se no estado '${novoEst}'.`);
+      }
+
+      lines.push(`• Cliente: ${cliente}`);
+      if (produtos) {
+        lines.push(`• Produtos: ${produtos}`);
+      }
+      if (antigoEst && novoEst) {
+        lines.push(`• Transição: ${antigoEst} ➔ ${novoEst}`);
+      }
+
+      return lines.join('\n');
+    }
+
+    // 2. Mensagens ricas para Ordens de Produção
+    if (
+      eventName === 'nova_ordem_producao' ||
+      eventName === 'ordem_producao_actualizada' ||
+      eventName === 'ordem_producao_atualizada' ||
+      eventName === 'producao_iniciada' ||
+      eventName === 'producao_concluida' ||
+      meta.ordem_id ||
+      meta.ordem_numero
+    ) {
+      const ref = meta.ordem_numero
+        ? (meta.ordem_numero.startsWith('#') ? meta.ordem_numero : `#${meta.ordem_numero}`)
+        : (meta.numero ? (meta.numero.startsWith('#') ? meta.numero : `#${meta.numero}`) : `#OP-${meta.ordem_id || ''}`);
+      const setorStr = meta.sector ? ` (${meta.sector})` : '';
+      const cliente = meta.cliente || meta.cliente_nome || '';
+      const produtos = meta.produtos || meta.artigos || '';
+      const pedRef = meta.pedido_numero ? (meta.pedido_numero.startsWith('#') ? meta.pedido_numero : `#${meta.pedido_numero}`) : '';
+      const novoEst = meta.novo_estado || meta.estado_novo || (eventName === 'producao_concluida' ? 'PRONTO' : 'EM_PRODUCAO');
+      const antigoEst = meta.antigo_estado || meta.estado_anterior || '';
+
+      const lines: string[] = [];
+      lines.push(`A ordem de produção ${ref}${setorStr} passou para '${novoEst}'.`);
+      if (pedRef) {
+        lines.push(`• Pedido: ${pedRef}`);
+      }
+      if (cliente) {
+        lines.push(`• Cliente: ${cliente}`);
+      }
+      if (produtos) {
+        lines.push(`• Artigos: ${produtos}`);
+      }
+      if (antigoEst && novoEst) {
+        lines.push(`• Transição: ${antigoEst} ➔ ${novoEst}`);
+      }
+
+      return lines.join('\n');
+    }
+
+    // 3. Outros eventos do ERP
     switch (eventName) {
-      case 'novo_pedido': {
-        const num = raw.numero || raw.pedido_id || raw.id || '';
-        const total = typeof raw.total === 'number' ? ` no valor de ${raw.total.toFixed(2)} STN` : '';
-        const cliente = raw.cliente ? ` pelo cliente ${raw.cliente}` : '';
-        return num ? `Pedido #${num} registado${total}${cliente}.` : 'Novo pedido registado no sistema comercial.';
-      }
-      case 'nova_ordem_producao': {
-        const num = raw.numero || raw.ordem_id || raw.id || '';
-        const produto = raw.produto_nome || raw.produto || raw.nome || '';
-        const sector = raw.sector ? ` em ${raw.sector}` : '';
-        const qtd = raw.quantidade ? ` (${raw.quantidade} un)` : '';
-        return num ? `OP #${num}${sector}: ${produto || 'Produção requerida'}${qtd}` : 'Nova ordem enviada para confecção.';
-      }
-      case 'pedido_actualizado':
-      case 'pedido_atualizado': {
-        const num = raw.numero || raw.id || '';
-        const estado = raw.estado || raw.status || '';
-        return num && estado ? `O pedido #${num} mudou para o estado: ${estado}.` : 'O estado do pedido foi alterado.';
-      }
-      case 'pedido_cancelado': {
-        const num = raw.numero || raw.id || '';
-        const motivo = raw.motivo || raw.justificativa || '';
-        return num ? `Pedido #${num} foi cancelado.${motivo ? ` Motivo: ${motivo}` : ''}` : 'Um pedido foi cancelado no sistema.';
-      }
-      case 'pedido_pronto': {
-        const num = raw.numero || raw.id || '';
-        const cliente = raw.cliente ? ` para ${raw.cliente}` : '';
-        return num ? `Pedido #${num}${cliente} está finalizado e pronto para levantamento/entrega!` : 'Pedido finalizado!';
-      }
       case 'stock_baixo':
       case 'alerta_stock': {
         const item = raw.ingrediente || raw.material || raw.produto || raw.nome || '';
@@ -193,7 +303,7 @@ export class NotificationAdapter {
       case 'caixa_fechado': {
         const caixaId = raw.caixa_id || raw.id || '';
         const operador = raw.operador ? ` por ${raw.operador}` : '';
-        const valor = typeof raw.valor_final === 'number' ? ` com saldo final de ${raw.valor_final.toFixed(2)} STN` : '';
+        const valor = typeof raw.valor_final === 'number' ? ` com saldo final de ${formatCurrency(raw.valor_final)}` : '';
         return caixaId ? `Caixa #${caixaId} foi encerrado${operador}${valor}.` : 'Uma sessão de caixa foi encerrada.';
       }
       case 'caixa_aberto': {
@@ -216,7 +326,7 @@ export class NotificationAdapter {
         return cod ? `Requisição ${cod} foi rejeitada.${motivo}` : 'Requisição de material rejeitada.';
       }
       case 'pagamento_recebido': {
-        const val = typeof raw.valor === 'number' ? `${raw.valor.toFixed(2)} STN` : '';
+        const val = typeof raw.valor === 'number' ? formatCurrency(raw.valor) : '';
         const ref = raw.referencia || raw.recibo || '';
         return val ? `Recebimento de ${val} confirmado (${ref || 'comercial'}).` : 'Novo pagamento processado com sucesso.';
       }
@@ -225,9 +335,15 @@ export class NotificationAdapter {
     }
   }
 
-  private static resolveActionUrl(raw: any, defaultRoute?: string): string | undefined {
+  private static resolveActionUrl(raw: any, meta: NotificationMetadata, defaultRoute?: string): string | undefined {
     if (raw.actionUrl || raw.url || raw.link) {
       return raw.actionUrl || raw.url || raw.link;
+    }
+    if (meta.ordem_id || meta.ordem_numero || (meta.origem && meta.origem.includes('producao'))) {
+      return '/producao';
+    }
+    if (meta.pedido_id || (meta.numero && meta.numero.includes('PED'))) {
+      return '/pedidos';
     }
     return defaultRoute;
   }

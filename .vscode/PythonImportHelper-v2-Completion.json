@@ -4474,6 +4474,14 @@
         "documentation": {}
     },
     {
+        "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
         "label": "timedelta",
         "importPath": "datetime",
         "description": "datetime",
@@ -15303,11 +15311,29 @@
         "documentation": {}
     },
     {
+        "label": "format_products_summary",
+        "kind": 2,
+        "importPath": "backend.app.websocket.socket_manager",
+        "description": "backend.app.websocket.socket_manager",
+        "peekOfCode": "def format_products_summary(itens: Any) -> str:\n    \"\"\"Extrai uma string limpa e condensada com a lista de produtos e respetivas quantidades\"\"\"\n    if not itens:\n        return \"Sem artigos detalhados\"\n    produtos_str = []\n    try:\n        for it in (itens or []):\n            if isinstance(it, dict):\n                nome = it.get('descricao') or it.get('nome')\n                if not nome and it.get('produto'):",
+        "detail": "backend.app.websocket.socket_manager",
+        "documentation": {}
+    },
+    {
         "label": "notify_order_created",
         "kind": 2,
         "importPath": "backend.app.websocket.socket_manager",
         "description": "backend.app.websocket.socket_manager",
-        "peekOfCode": "def notify_order_created(pedido_id: int, pedido_numero: str, total: float = 0.0, cliente_nome: Optional[str] = None) -> bool:\n    \"\"\"\n    Notifica a criação de um novo pedido comercial com desduplicação (máximo 1 alerta por pedido).\n    Emite o evento 'novo_pedido' para sincronização de listas e 'notificacao' para alerta visual.\n    \"\"\"\n    titulo = \"Novo Pedido Recebido\"\n    mensagem = f\"Pedido #{pedido_numero} registado com sucesso.\"\n    if cliente_nome:\n        mensagem += f\" Cliente: {cliente_nome}.\"\n    payload = {",
+        "peekOfCode": "def notify_order_created(\n    pedido_id: int, \n    pedido_numero: str, \n    total: float = 0.0, \n    cliente_nome: Optional[str] = None,\n    produtos_resumo: Optional[str] = None\n) -> bool:\n    \"\"\"\n    Notifica a criação de um novo pedido comercial com o padrão completo de identificação:\n    - Referência: #PED-XXXX",
+        "detail": "backend.app.websocket.socket_manager",
+        "documentation": {}
+    },
+    {
+        "label": "notify_order_status_updated",
+        "kind": 2,
+        "importPath": "backend.app.websocket.socket_manager",
+        "description": "backend.app.websocket.socket_manager",
+        "peekOfCode": "def notify_order_status_updated(\n    pedido_id: int,\n    pedido_numero: str,\n    antigo_estado: str,\n    novo_estado: str,\n    cliente_nome: Optional[str] = None,\n    produtos_resumo: Optional[str] = None,\n    total: float = 0.0\n) -> bool:\n    \"\"\"",
         "detail": "backend.app.websocket.socket_manager",
         "documentation": {}
     },
@@ -15316,7 +15342,16 @@
         "kind": 2,
         "importPath": "backend.app.websocket.socket_manager",
         "description": "backend.app.websocket.socket_manager",
-        "peekOfCode": "def notify_production_orders(pedido_id: int, pedido_numero: str, sectores: List[Any]) -> bool:\n    \"\"\"\n    Notifica a geração de ordens de produção de forma CONSOLIDADA e DESDUPLICADA.\n    Gera exatamente UMA notificação operacional para os setores fabris (Cozinha/Pastelaria/Bar),\n    eliminando alertas duplicados ou disparos redundantes em cascata.\n    \"\"\"\n    # Normalizar e desduplicar nomes dos setores\n    sectores_limpos = []\n    for s in (sectores or []):\n        s_val = s.value if hasattr(s, 'value') else str(s)",
+        "peekOfCode": "def notify_production_orders(\n    pedido_id: int, \n    pedido_numero: str, \n    sectores: List[Any],\n    cliente_nome: Optional[str] = None,\n    produtos_resumo: Optional[str] = None\n) -> bool:\n    \"\"\"\n    Notifica a geração de ordens de produção de forma CONSOLIDADA e DESDUPLICADA com padrão de identificação:\n    - Referência: #PED-XXXX",
+        "detail": "backend.app.websocket.socket_manager",
+        "documentation": {}
+    },
+    {
+        "label": "notify_production_status_updated",
+        "kind": 2,
+        "importPath": "backend.app.websocket.socket_manager",
+        "description": "backend.app.websocket.socket_manager",
+        "peekOfCode": "def notify_production_status_updated(\n    ordem_id: int,\n    ordem_numero: str,\n    pedido_numero: str,\n    sector: str,\n    antigo_estado: str,\n    novo_estado: str,\n    cliente_nome: Optional[str] = None,\n    produtos_resumo: Optional[str] = None\n) -> bool:",
         "detail": "backend.app.websocket.socket_manager",
         "documentation": {}
     },
@@ -16279,7 +16314,7 @@
         "kind": 5,
         "importPath": "backend.run",
         "description": "backend.run",
-        "peekOfCode": "current_dir = os.path.dirname(os.path.abspath(__file__))\nload_dotenv(os.path.join(current_dir, '.env'))\nfrom app import create_app\nfrom app.websocket.socket_manager import socketio\napp = create_app()\nif __name__ == '__main__':\n    host = os.environ.get('HOST', '0.0.0.0')\n    port = int(os.environ.get('PORT', '8000'))\n    debug = os.environ.get('FLASK_DEBUG', '').lower() in ('1', 'true')\n    print(\"\\n\" + \"=\" * 65)",
+        "peekOfCode": "current_dir = os.path.dirname(os.path.abspath(__file__))\nload_dotenv(os.path.join(current_dir, '.env'))\n# Patch preventivo para Werkzeug 3.0+ em modo desenvolvimento (evita AssertionError: write() before start_response em upgrades WebSocket)\ntry:\n    import werkzeug.serving\n    _orig_run_wsgi = werkzeug.serving.WSGIRequestHandler.run_wsgi\n    def _safe_run_wsgi(self):\n        try:\n            return _orig_run_wsgi(self)\n        except AssertionError as e:",
         "detail": "backend.run",
         "documentation": {}
     },

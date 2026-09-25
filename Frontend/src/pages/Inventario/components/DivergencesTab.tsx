@@ -246,7 +246,7 @@ export const DivergencesTab: React.FC<DivergencesTabProps> = ({
                 <th className="px-4 py-3 text-right">Qtd Contada</th>
                 <th className="px-4 py-3 text-right">Desvio</th>
                 <th className="px-4 py-3 text-right">Custo Unit.</th>
-                <th className="px-4 py-3 text-right">Impacto (Kz)</th>
+                <th className="px-4 py-3 text-right">Impacto Financeiro</th>
                 <th className="px-4 py-3">Motivo da Divergência</th>
                 <th className="px-4 py-3">Observações / Auditoria</th>
               </tr>

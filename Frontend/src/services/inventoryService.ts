@@ -4,7 +4,7 @@ import { InventoryItem, QuarentenaItem, StockStatus, ContagemItem } from '../pag
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { formatCurrency } from '../lib/utils';
+import { formatCurrency} from '../lib/utils';
 
 const STORAGE_KEY_QUARENTENA = 'sigi_inventario_quarentena_v1';
 
@@ -312,6 +312,7 @@ export const inventoryService = {
    * Exporta a listagem de stock em folha Excel (.xlsx)
    */
   exportarInventarioExcel(items: InventoryItem[], armazemNome?: string) {
+    const moeda =  'STN';
     const dadosExcel = items.map((item, idx) => ({
       'Nº': idx + 1,
       'Código': item.codigo,
@@ -322,8 +323,8 @@ export const inventoryService = {
       'Stock Atual': item.stock_atual,
       'Unidade': item.unidade_medida,
       'Stock Mínimo': item.stock_minimo,
-      'Preço Unitário (Kz)': item.preco_compra,
-      'Valor Total em Stock (Kz)': item.valor_total,
+      [`Preço Unitário (${moeda})`]: item.preco_compra,
+      [`Valor Total em Stock (${moeda})`]: item.valor_total,
       'Estado': item.status_stock,
       'Lote': item.lote || '-',
       'Validade': item.validade || '-'
