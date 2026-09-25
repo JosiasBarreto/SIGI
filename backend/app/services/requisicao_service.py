@@ -15,7 +15,7 @@ from app.models.ficha_tecnica import FichaTecnica
 from app.repositories.requisicao_repos import RequisicaoRepository, OcorrenciaMaterialRepository
 from app.services.audit_service import AuditService
 from app.core.database import db
-from app.websocket.socket_manager import socketio
+from app.websocket.socket_manager import emit_sync_event
 from sqlalchemy import func
 
 class RequisicaoService:
@@ -35,7 +35,7 @@ class RequisicaoService:
             
         self.req_repo.create(req)
         AuditService.log_action(user_id, "CREATE", "requisicoes", req.id)
-        socketio.emit('nova_requisicao', {'numero': req.numero})
+        emit_sync_event('nova_requisicao', {'numero': req.numero})
         return req, None
 
     def aprovar_requisicao(self, req_id, itens_aprovacao, user_id):
@@ -53,7 +53,7 @@ class RequisicaoService:
         db.session.commit()
         
         AuditService.log_action(user_id, "APROVAR_REQUISICAO", "requisicoes", req.id)
-        socketio.emit('requisicao_aprovada', {'numero': req.numero})
+        emit_sync_event('requisicao_aprovada', {'numero': req.numero})
         return req, None
 
     def entregar_requisicao(self, req_id, data, user_id):
@@ -182,7 +182,7 @@ class RequisicaoService:
                 )
                 db.session.add(oc)
                 mat.quantidade_total = float(mat.quantidade_total) - qtd_dan # Perdeu total
-                socketio.emit('alerta_material', {'msg': 'Material Danificado reportado!'})
+                emit_sync_event('alerta_material', {'msg': 'Material Danificado reportado!'})
                 
             if qtd_per > 0:
                 oc = OcorrenciaMaterial(
@@ -192,7 +192,7 @@ class RequisicaoService:
                 )
                 db.session.add(oc)
                 mat.quantidade_total = float(mat.quantidade_total) - qtd_per
-                socketio.emit('alerta_material', {'msg': 'Material Perdido reportado!'})
+                emit_sync_event('alerta_material', {'msg': 'Material Perdido reportado!'})
                 
             dev_log = DevolucaoMaterial(
                 requisicao_id=req.id, material_id=mat.id,
@@ -241,7 +241,7 @@ class RequisicaoService:
                         db.session.add(oc)
                         mat.quantidade_total = float(mat.quantidade_total) - pendente
                         item.quantidade_perdida = float(item.quantidade_perdida) + pendente # Marcamos como perdida contabilizada
-                        socketio.emit('alerta_material', {'msg': 'Material Não Devolvido!'})
+                        emit_sync_event('alerta_material', {'msg': 'Material Não Devolvido!'})
                         
         req.estado = EstadoRequisicao.ENCERRADA.value
         db.session.commit()

@@ -324,7 +324,7 @@ export async function gerarModeloExcel(
         formulae: [ivaFormula],
         showErrorMessage: true,
         errorTitle: 'Taxa IVA Inválida',
-        error: 'Selecione uma taxa de IVA da lista suspensa (ex: 15%, 0%).'
+        error: 'Selecione uma taxa de IVA da lista suspensa (ex: 14%, 0%).'
       };
     }
 

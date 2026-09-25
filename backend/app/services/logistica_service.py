@@ -6,7 +6,7 @@ from app.models.logistica import (
 from app.repositories.logistica_repos import MotoristaRepository, ViaturaRepository, EntregaRepository
 from app.services.audit_service import AuditService
 from app.core.database import db
-from app.websocket.socket_manager import socketio
+from app.websocket.socket_manager import emit_sync_event
 
 class LogisticaService:
     def __init__(self):
@@ -74,9 +74,9 @@ class LogisticaService:
         entrega.estado = estado
         
         if estado == EstadoEntrega.EM_TRANSITO.value:
-            socketio.emit('entrega_iniciada', {'numero': entrega.numero})
+            emit_sync_event('entrega_iniciada', {'numero': entrega.numero})
         elif estado == EstadoEntrega.ENTREGUE.value:
-            socketio.emit('entrega_concluida', {'numero': entrega.numero})
+            emit_sync_event('entrega_concluida', {'numero': entrega.numero})
             
         db.session.commit()
         AuditService.log_action(user_id, "UPDATE_ESTADO", "entregas", entrega.id)
@@ -92,5 +92,5 @@ class LogisticaService:
         db.session.commit()
         
         AuditService.log_action(user_id, "REGISTO_OCORRENCIA", "ocorrencias_logisticas", ocorrencia.id)
-        socketio.emit('logistica_ocorrencia', {'entrega': entrega.numero, 'tipo': ocorrencia.tipo})
+        emit_sync_event('logistica_ocorrencia', {'entrega': entrega.numero, 'tipo': ocorrencia.tipo})
         return ocorrencia, None

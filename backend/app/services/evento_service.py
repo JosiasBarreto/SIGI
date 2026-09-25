@@ -12,7 +12,7 @@ from app.models.pedido import Pedido, EstadoPedido
 from app.repositories.evento_repos import EventoRepository, EspacoRepository
 from app.services.audit_service import AuditService
 from app.core.database import db
-from app.websocket.socket_manager import socketio
+from app.websocket.socket_manager import emit_sync_event
 
 class EventoService:
     def __init__(self):
@@ -312,7 +312,7 @@ class EventoService:
 
         AuditService.log_action(user_id, "CREATE", "eventos", evento.id, new_values={"numero": evento.numero, "total": float(evento.valor_total)})
         
-        socketio.emit('novo_evento', {'numero': evento.numero})
+        emit_sync_event('novo_evento', {'numero': evento.numero})
         
         return evento, None
 
@@ -426,7 +426,7 @@ class EventoService:
             print(f"Erro ao re-processar planeamento do evento: {ex}")
 
         AuditService.log_action(user_id, "UPDATE", "eventos", evento.id, new_values={"total": float(evento.valor_total or 0)})
-        socketio.emit('atualizacao_evento', {'id': evento.id, 'numero': evento.numero})
+        emit_sync_event('atualizacao_evento', {'id': evento.id, 'numero': evento.numero})
         return evento, None
 
     def alterar_estado(self, evento_id, estado, user_id):

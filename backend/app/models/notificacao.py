@@ -61,6 +61,16 @@ class Notificacao(BaseModel):
 
     expira_em = db.Column(db.DateTime, nullable=True)
 
+    # Evento canónico e Idempotência
+    event_id = db.Column(db.String(64), nullable=True, index=True)
+    event_type = db.Column(db.String(64), nullable=True, index=True)
+    entity_type = db.Column(db.String(64), nullable=True, index=True)
+    entity_id = db.Column(db.Integer, nullable=True, index=True)
+    aggregate_id = db.Column(db.String(128), nullable=True, index=True)
+    actor_user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    recipient_user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True)
+    recipient_role = db.Column(db.String(50), nullable=True, index=True)
+
     # Destinatários
     target_type = db.Column(db.String(20), nullable=False, default="GLOBAL", index=True)
     target_role = db.Column(db.String(50), nullable=True, index=True)
@@ -78,6 +88,7 @@ class Notificacao(BaseModel):
         lazy="joined"
     )
     target_user = db.relationship("User", foreign_keys=[target_user_id], lazy="select")
+    actor_user = db.relationship("User", foreign_keys=[actor_user_id], lazy="select")
     desativado_por_user = db.relationship("User", foreign_keys=[desativada_por], lazy="select")
 
     def to_dict(self, current_user_id: int = None) -> dict:
@@ -109,6 +120,14 @@ class Notificacao(BaseModel):
 
         return {
             "id": self.id,
+            "event_id": self.event_id,
+            "event_type": self.event_type,
+            "entity_type": self.entity_type,
+            "entity_id": self.entity_id,
+            "aggregate_id": self.aggregate_id,
+            "actor_user_id": self.actor_user_id,
+            "recipient_user_id": self.recipient_user_id,
+            "recipient_role": self.recipient_role,
             "titulo": self.titulo,
             "mensagem": self.mensagem,
             "tipo": self.tipo,

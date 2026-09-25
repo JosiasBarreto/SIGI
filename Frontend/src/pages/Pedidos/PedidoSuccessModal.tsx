@@ -20,9 +20,8 @@ import { documentService, commercialService, proformaService } from "../../servi
 import { externalNotificationService } from "../../services/notifications/externalNotificationService";
 import { notificationManager } from "../../services/notifications/notificationManager";
 import { formatCurrency } from "../../lib/utils";
-
+import { showOrderSummarySwal } from "../../components/Pedidos/orderSummarySwal";
 import { toast } from "react-toastify";
-import { showOrderSummarySwal } from "@/src/components/Pedidos/OrderSummarySwal";
 
 export interface PedidoSuccessModalProps {
   order: any;

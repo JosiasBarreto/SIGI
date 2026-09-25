@@ -1,6 +1,8 @@
 from app.websocket.socket_manager import (
     socketio,
     send_notification,
+    emit_sync_event,
+    emit_user_notification,
     notify_order_created,
     notify_order_status_updated,
     notify_production_orders,
@@ -17,6 +19,8 @@ from app.websocket.socket_manager import (
 __all__ = [
     "socketio",
     "send_notification",
+    "emit_sync_event",
+    "emit_user_notification",
     "notify_order_created",
     "notify_order_status_updated",
     "notify_production_orders",

@@ -11,7 +11,7 @@ from app.models.pedido import Pedido, ItemPedido
 from app.models.requisicao import Requisicao, RequisicaoItem, TipoRequisicao, SectorRequisicao, EstadoRequisicao, TipoItemRequisicao
 from app.services.producao_service import ProducaoService
 from app.services.audit_service import AuditService
-from app.websocket.socket_manager import socketio
+from app.websocket.socket_manager import emit_sync_event
 
 class PlanningEngine:
     """
@@ -207,6 +207,6 @@ class PlanningEngine:
             }
         )
 
-        socketio.emit('planeamento_concluido', {'evento_id': evento.id, 'numero': evento.numero})
+        emit_sync_event('planeamento_concluido', {'evento_id': evento.id, 'numero': evento.numero})
 
         return resumo_operacional, None

@@ -2216,6 +2216,14 @@
         "documentation": {}
     },
     {
+        "label": "db",
+        "importPath": "app.core.database",
+        "description": "app.core.database",
+        "isExtraImport": true,
+        "detail": "app.core.database",
+        "documentation": {}
+    },
+    {
         "label": "AuthService",
         "importPath": "app.services.auth_service",
         "description": "app.services.auth_service",
@@ -4195,6 +4203,38 @@
     },
     {
         "label": "date",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "datetime",
         "importPath": "datetime",
         "description": "datetime",
         "isExtraImport": true,
@@ -6757,779 +6797,219 @@
         "documentation": {}
     },
     {
-        "label": "Fornecedor",
-        "importPath": "app.models.fornecedor",
-        "description": "app.models.fornecedor",
+        "label": "Enum",
+        "importPath": "enum",
+        "description": "enum",
         "isExtraImport": true,
-        "detail": "app.models.fornecedor",
+        "detail": "enum",
         "documentation": {}
     },
     {
-        "label": "Fornecedor",
-        "importPath": "app.models.fornecedor",
-        "description": "app.models.fornecedor",
+        "label": "List",
+        "importPath": "typing",
+        "description": "typing",
         "isExtraImport": true,
-        "detail": "app.models.fornecedor",
+        "detail": "typing",
         "documentation": {}
     },
     {
-        "label": "Fornecedor",
-        "importPath": "app.models.fornecedor",
-        "description": "app.models.fornecedor",
+        "label": "Dict",
+        "importPath": "typing",
+        "description": "typing",
         "isExtraImport": true,
-        "detail": "app.models.fornecedor",
+        "detail": "typing",
         "documentation": {}
     },
     {
-        "label": "Fornecedor",
-        "importPath": "app.models.fornecedor",
-        "description": "app.models.fornecedor",
+        "label": "Any",
+        "importPath": "typing",
+        "description": "typing",
         "isExtraImport": true,
-        "detail": "app.models.fornecedor",
+        "detail": "typing",
         "documentation": {}
     },
     {
-        "label": "Ingrediente",
-        "importPath": "app.models.ingrediente",
-        "description": "app.models.ingrediente",
+        "label": "Optional",
+        "importPath": "typing",
+        "description": "typing",
         "isExtraImport": true,
-        "detail": "app.models.ingrediente",
+        "detail": "typing",
         "documentation": {}
     },
     {
-        "label": "Ingrediente",
-        "importPath": "app.models.ingrediente",
-        "description": "app.models.ingrediente",
+        "label": "Dict",
+        "importPath": "typing",
+        "description": "typing",
         "isExtraImport": true,
-        "detail": "app.models.ingrediente",
+        "detail": "typing",
         "documentation": {}
     },
     {
-        "label": "Ingrediente",
-        "importPath": "app.models.ingrediente",
-        "description": "app.models.ingrediente",
+        "label": "Optional",
+        "importPath": "typing",
+        "description": "typing",
         "isExtraImport": true,
-        "detail": "app.models.ingrediente",
+        "detail": "typing",
         "documentation": {}
     },
     {
-        "label": "Ingrediente",
-        "importPath": "app.models.ingrediente",
-        "description": "app.models.ingrediente",
+        "label": "Tuple",
+        "importPath": "typing",
+        "description": "typing",
         "isExtraImport": true,
-        "detail": "app.models.ingrediente",
+        "detail": "typing",
         "documentation": {}
     },
     {
-        "label": "Ingrediente",
-        "importPath": "app.models.ingrediente",
-        "description": "app.models.ingrediente",
+        "label": "Any",
+        "importPath": "typing",
+        "description": "typing",
         "isExtraImport": true,
-        "detail": "app.models.ingrediente",
+        "detail": "typing",
         "documentation": {}
     },
     {
-        "label": "Ingrediente",
-        "importPath": "app.models.ingrediente",
-        "description": "app.models.ingrediente",
+        "label": "Dict",
+        "importPath": "typing",
+        "description": "typing",
         "isExtraImport": true,
-        "detail": "app.models.ingrediente",
+        "detail": "typing",
         "documentation": {}
     },
     {
-        "label": "Ingrediente",
-        "importPath": "app.models.ingrediente",
-        "description": "app.models.ingrediente",
+        "label": "Optional",
+        "importPath": "typing",
+        "description": "typing",
         "isExtraImport": true,
-        "detail": "app.models.ingrediente",
+        "detail": "typing",
         "documentation": {}
     },
     {
-        "label": "Ingrediente",
-        "importPath": "app.models.ingrediente",
-        "description": "app.models.ingrediente",
+        "label": "List",
+        "importPath": "typing",
+        "description": "typing",
         "isExtraImport": true,
-        "detail": "app.models.ingrediente",
+        "detail": "typing",
         "documentation": {}
     },
     {
-        "label": "Ingrediente",
-        "importPath": "app.models.ingrediente",
-        "description": "app.models.ingrediente",
+        "label": "Dict",
+        "importPath": "typing",
+        "description": "typing",
         "isExtraImport": true,
-        "detail": "app.models.ingrediente",
+        "detail": "typing",
         "documentation": {}
     },
     {
-        "label": "Material",
-        "importPath": "app.models.material",
-        "description": "app.models.material",
+        "label": "Any",
+        "importPath": "typing",
+        "description": "typing",
         "isExtraImport": true,
-        "detail": "app.models.material",
+        "detail": "typing",
         "documentation": {}
     },
     {
-        "label": "TipoMaterial",
-        "importPath": "app.models.material",
-        "description": "app.models.material",
+        "label": "Optional",
+        "importPath": "typing",
+        "description": "typing",
         "isExtraImport": true,
-        "detail": "app.models.material",
+        "detail": "typing",
         "documentation": {}
     },
     {
-        "label": "EstadoMaterial",
-        "importPath": "app.models.material",
-        "description": "app.models.material",
+        "label": "Optional",
+        "importPath": "typing",
+        "description": "typing",
         "isExtraImport": true,
-        "detail": "app.models.material",
+        "detail": "typing",
         "documentation": {}
     },
     {
-        "label": "Material",
-        "importPath": "app.models.material",
-        "description": "app.models.material",
+        "label": "List",
+        "importPath": "typing",
+        "description": "typing",
         "isExtraImport": true,
-        "detail": "app.models.material",
+        "detail": "typing",
         "documentation": {}
     },
     {
-        "label": "TipoMaterial",
-        "importPath": "app.models.material",
-        "description": "app.models.material",
+        "label": "Dict",
+        "importPath": "typing",
+        "description": "typing",
         "isExtraImport": true,
-        "detail": "app.models.material",
+        "detail": "typing",
         "documentation": {}
     },
     {
-        "label": "EstadoMaterial",
-        "importPath": "app.models.material",
-        "description": "app.models.material",
+        "label": "Any",
+        "importPath": "typing",
+        "description": "typing",
         "isExtraImport": true,
-        "detail": "app.models.material",
+        "detail": "typing",
         "documentation": {}
     },
     {
-        "label": "Material",
-        "importPath": "app.models.material",
-        "description": "app.models.material",
+        "label": "Dict",
+        "importPath": "typing",
+        "description": "typing",
         "isExtraImport": true,
-        "detail": "app.models.material",
+        "detail": "typing",
         "documentation": {}
     },
     {
-        "label": "Material",
-        "importPath": "app.models.material",
-        "description": "app.models.material",
+        "label": "Any",
+        "importPath": "typing",
+        "description": "typing",
         "isExtraImport": true,
-        "detail": "app.models.material",
+        "detail": "typing",
         "documentation": {}
     },
     {
-        "label": "TipoMaterial",
-        "importPath": "app.models.material",
-        "description": "app.models.material",
+        "label": "Optional",
+        "importPath": "typing",
+        "description": "typing",
         "isExtraImport": true,
-        "detail": "app.models.material",
+        "detail": "typing",
         "documentation": {}
     },
     {
-        "label": "EstadoMaterial",
-        "importPath": "app.models.material",
-        "description": "app.models.material",
+        "label": "List",
+        "importPath": "typing",
+        "description": "typing",
         "isExtraImport": true,
-        "detail": "app.models.material",
+        "detail": "typing",
         "documentation": {}
     },
     {
-        "label": "Material",
-        "importPath": "app.models.material",
-        "description": "app.models.material",
+        "label": "Optional",
+        "importPath": "typing",
+        "description": "typing",
         "isExtraImport": true,
-        "detail": "app.models.material",
+        "detail": "typing",
         "documentation": {}
     },
     {
-        "label": "Material",
-        "importPath": "app.models.material",
-        "description": "app.models.material",
+        "label": "Dict",
+        "importPath": "typing",
+        "description": "typing",
         "isExtraImport": true,
-        "detail": "app.models.material",
+        "detail": "typing",
         "documentation": {}
     },
     {
-        "label": "Material",
-        "importPath": "app.models.material",
-        "description": "app.models.material",
+        "label": "Any",
+        "importPath": "typing",
+        "description": "typing",
         "isExtraImport": true,
-        "detail": "app.models.material",
+        "detail": "typing",
         "documentation": {}
     },
     {
-        "label": "Material",
-        "importPath": "app.models.material",
-        "description": "app.models.material",
+        "label": "List",
+        "importPath": "typing",
+        "description": "typing",
         "isExtraImport": true,
-        "detail": "app.models.material",
-        "documentation": {}
-    },
-    {
-        "label": "TipoMaterial",
-        "importPath": "app.models.material",
-        "description": "app.models.material",
-        "isExtraImport": true,
-        "detail": "app.models.material",
-        "documentation": {}
-    },
-    {
-        "label": "Material",
-        "importPath": "app.models.material",
-        "description": "app.models.material",
-        "isExtraImport": true,
-        "detail": "app.models.material",
-        "documentation": {}
-    },
-    {
-        "label": "Material",
-        "importPath": "app.models.material",
-        "description": "app.models.material",
-        "isExtraImport": true,
-        "detail": "app.models.material",
-        "documentation": {}
-    },
-    {
-        "label": "TipoMaterial",
-        "importPath": "app.models.material",
-        "description": "app.models.material",
-        "isExtraImport": true,
-        "detail": "app.models.material",
-        "documentation": {}
-    },
-    {
-        "label": "EstadoMaterial",
-        "importPath": "app.models.material",
-        "description": "app.models.material",
-        "isExtraImport": true,
-        "detail": "app.models.material",
-        "documentation": {}
-    },
-    {
-        "label": "Material",
-        "importPath": "app.models.material",
-        "description": "app.models.material",
-        "isExtraImport": true,
-        "detail": "app.models.material",
-        "documentation": {}
-    },
-    {
-        "label": "TipoMaterial",
-        "importPath": "app.models.material",
-        "description": "app.models.material",
-        "isExtraImport": true,
-        "detail": "app.models.material",
-        "documentation": {}
-    },
-    {
-        "label": "EstadoMaterial",
-        "importPath": "app.models.material",
-        "description": "app.models.material",
-        "isExtraImport": true,
-        "detail": "app.models.material",
-        "documentation": {}
-    },
-    {
-        "label": "Material",
-        "importPath": "app.models.material",
-        "description": "app.models.material",
-        "isExtraImport": true,
-        "detail": "app.models.material",
-        "documentation": {}
-    },
-    {
-        "label": "TipoMaterial",
-        "importPath": "app.models.material",
-        "description": "app.models.material",
-        "isExtraImport": true,
-        "detail": "app.models.material",
-        "documentation": {}
-    },
-    {
-        "label": "MovimentoStock",
-        "importPath": "app.models.movimento_stock",
-        "description": "app.models.movimento_stock",
-        "isExtraImport": true,
-        "detail": "app.models.movimento_stock",
-        "documentation": {}
-    },
-    {
-        "label": "TipoMovimento",
-        "importPath": "app.models.movimento_stock",
-        "description": "app.models.movimento_stock",
-        "isExtraImport": true,
-        "detail": "app.models.movimento_stock",
-        "documentation": {}
-    },
-    {
-        "label": "OrigemMovimento",
-        "importPath": "app.models.movimento_stock",
-        "description": "app.models.movimento_stock",
-        "isExtraImport": true,
-        "detail": "app.models.movimento_stock",
-        "documentation": {}
-    },
-    {
-        "label": "EntidadeMovimento",
-        "importPath": "app.models.movimento_stock",
-        "description": "app.models.movimento_stock",
-        "isExtraImport": true,
-        "detail": "app.models.movimento_stock",
-        "documentation": {}
-    },
-    {
-        "label": "MovimentoStock",
-        "importPath": "app.models.movimento_stock",
-        "description": "app.models.movimento_stock",
-        "isExtraImport": true,
-        "detail": "app.models.movimento_stock",
-        "documentation": {}
-    },
-    {
-        "label": "TipoMovimento",
-        "importPath": "app.models.movimento_stock",
-        "description": "app.models.movimento_stock",
-        "isExtraImport": true,
-        "detail": "app.models.movimento_stock",
-        "documentation": {}
-    },
-    {
-        "label": "OrigemMovimento",
-        "importPath": "app.models.movimento_stock",
-        "description": "app.models.movimento_stock",
-        "isExtraImport": true,
-        "detail": "app.models.movimento_stock",
-        "documentation": {}
-    },
-    {
-        "label": "EntidadeMovimento",
-        "importPath": "app.models.movimento_stock",
-        "description": "app.models.movimento_stock",
-        "isExtraImport": true,
-        "detail": "app.models.movimento_stock",
-        "documentation": {}
-    },
-    {
-        "label": "MovimentoStock",
-        "importPath": "app.models.movimento_stock",
-        "description": "app.models.movimento_stock",
-        "isExtraImport": true,
-        "detail": "app.models.movimento_stock",
-        "documentation": {}
-    },
-    {
-        "label": "MovimentoStock",
-        "importPath": "app.models.movimento_stock",
-        "description": "app.models.movimento_stock",
-        "isExtraImport": true,
-        "detail": "app.models.movimento_stock",
-        "documentation": {}
-    },
-    {
-        "label": "TipoMovimento",
-        "importPath": "app.models.movimento_stock",
-        "description": "app.models.movimento_stock",
-        "isExtraImport": true,
-        "detail": "app.models.movimento_stock",
-        "documentation": {}
-    },
-    {
-        "label": "OrigemMovimento",
-        "importPath": "app.models.movimento_stock",
-        "description": "app.models.movimento_stock",
-        "isExtraImport": true,
-        "detail": "app.models.movimento_stock",
-        "documentation": {}
-    },
-    {
-        "label": "EntidadeMovimento",
-        "importPath": "app.models.movimento_stock",
-        "description": "app.models.movimento_stock",
-        "isExtraImport": true,
-        "detail": "app.models.movimento_stock",
-        "documentation": {}
-    },
-    {
-        "label": "MovimentoStock",
-        "importPath": "app.models.movimento_stock",
-        "description": "app.models.movimento_stock",
-        "isExtraImport": true,
-        "detail": "app.models.movimento_stock",
-        "documentation": {}
-    },
-    {
-        "label": "TipoMovimento",
-        "importPath": "app.models.movimento_stock",
-        "description": "app.models.movimento_stock",
-        "isExtraImport": true,
-        "detail": "app.models.movimento_stock",
-        "documentation": {}
-    },
-    {
-        "label": "OrigemMovimento",
-        "importPath": "app.models.movimento_stock",
-        "description": "app.models.movimento_stock",
-        "isExtraImport": true,
-        "detail": "app.models.movimento_stock",
-        "documentation": {}
-    },
-    {
-        "label": "EntidadeMovimento",
-        "importPath": "app.models.movimento_stock",
-        "description": "app.models.movimento_stock",
-        "isExtraImport": true,
-        "detail": "app.models.movimento_stock",
-        "documentation": {}
-    },
-    {
-        "label": "MovimentoStock",
-        "importPath": "app.models.movimento_stock",
-        "description": "app.models.movimento_stock",
-        "isExtraImport": true,
-        "detail": "app.models.movimento_stock",
-        "documentation": {}
-    },
-    {
-        "label": "TipoMovimento",
-        "importPath": "app.models.movimento_stock",
-        "description": "app.models.movimento_stock",
-        "isExtraImport": true,
-        "detail": "app.models.movimento_stock",
-        "documentation": {}
-    },
-    {
-        "label": "OrigemMovimento",
-        "importPath": "app.models.movimento_stock",
-        "description": "app.models.movimento_stock",
-        "isExtraImport": true,
-        "detail": "app.models.movimento_stock",
-        "documentation": {}
-    },
-    {
-        "label": "EntidadeMovimento",
-        "importPath": "app.models.movimento_stock",
-        "description": "app.models.movimento_stock",
-        "isExtraImport": true,
-        "detail": "app.models.movimento_stock",
-        "documentation": {}
-    },
-    {
-        "label": "MovimentoStock",
-        "importPath": "app.models.movimento_stock",
-        "description": "app.models.movimento_stock",
-        "isExtraImport": true,
-        "detail": "app.models.movimento_stock",
-        "documentation": {}
-    },
-    {
-        "label": "TipoMovimento",
-        "importPath": "app.models.movimento_stock",
-        "description": "app.models.movimento_stock",
-        "isExtraImport": true,
-        "detail": "app.models.movimento_stock",
-        "documentation": {}
-    },
-    {
-        "label": "OrigemMovimento",
-        "importPath": "app.models.movimento_stock",
-        "description": "app.models.movimento_stock",
-        "isExtraImport": true,
-        "detail": "app.models.movimento_stock",
-        "documentation": {}
-    },
-    {
-        "label": "EntidadeMovimento",
-        "importPath": "app.models.movimento_stock",
-        "description": "app.models.movimento_stock",
-        "isExtraImport": true,
-        "detail": "app.models.movimento_stock",
-        "documentation": {}
-    },
-    {
-        "label": "MovimentoStock",
-        "importPath": "app.models.movimento_stock",
-        "description": "app.models.movimento_stock",
-        "isExtraImport": true,
-        "detail": "app.models.movimento_stock",
-        "documentation": {}
-    },
-    {
-        "label": "TipoMovimento",
-        "importPath": "app.models.movimento_stock",
-        "description": "app.models.movimento_stock",
-        "isExtraImport": true,
-        "detail": "app.models.movimento_stock",
-        "documentation": {}
-    },
-    {
-        "label": "OrigemMovimento",
-        "importPath": "app.models.movimento_stock",
-        "description": "app.models.movimento_stock",
-        "isExtraImport": true,
-        "detail": "app.models.movimento_stock",
-        "documentation": {}
-    },
-    {
-        "label": "EntidadeMovimento",
-        "importPath": "app.models.movimento_stock",
-        "description": "app.models.movimento_stock",
-        "isExtraImport": true,
-        "detail": "app.models.movimento_stock",
-        "documentation": {}
-    },
-    {
-        "label": "CategoriaProduto",
-        "importPath": "app.models.categoria_produto",
-        "description": "app.models.categoria_produto",
-        "isExtraImport": true,
-        "detail": "app.models.categoria_produto",
-        "documentation": {}
-    },
-    {
-        "label": "CategoriaProduto",
-        "importPath": "app.models.categoria_produto",
-        "description": "app.models.categoria_produto",
-        "isExtraImport": true,
-        "detail": "app.models.categoria_produto",
-        "documentation": {}
-    },
-    {
-        "label": "CategoriaProduto",
-        "importPath": "app.models.categoria_produto",
-        "description": "app.models.categoria_produto",
-        "isExtraImport": true,
-        "detail": "app.models.categoria_produto",
-        "documentation": {}
-    },
-    {
-        "label": "UnidadeMedida",
-        "importPath": "app.models.unidade_medida",
-        "description": "app.models.unidade_medida",
-        "isExtraImport": true,
-        "detail": "app.models.unidade_medida",
-        "documentation": {}
-    },
-    {
-        "label": "UnidadeMedida",
-        "importPath": "app.models.unidade_medida",
-        "description": "app.models.unidade_medida",
-        "isExtraImport": true,
-        "detail": "app.models.unidade_medida",
-        "documentation": {}
-    },
-    {
-        "label": "UnidadeMedida",
-        "importPath": "app.models.unidade_medida",
-        "description": "app.models.unidade_medida",
-        "isExtraImport": true,
-        "detail": "app.models.unidade_medida",
-        "documentation": {}
-    },
-    {
-        "label": "Armazem",
-        "importPath": "app.models.armazem",
-        "description": "app.models.armazem",
-        "isExtraImport": true,
-        "detail": "app.models.armazem",
-        "documentation": {}
-    },
-    {
-        "label": "ProdutoStockArmazem",
-        "importPath": "app.models.armazem",
-        "description": "app.models.armazem",
-        "isExtraImport": true,
-        "detail": "app.models.armazem",
-        "documentation": {}
-    },
-    {
-        "label": "IngredienteStockArmazem",
-        "importPath": "app.models.armazem",
-        "description": "app.models.armazem",
-        "isExtraImport": true,
-        "detail": "app.models.armazem",
-        "documentation": {}
-    },
-    {
-        "label": "MaterialStockArmazem",
-        "importPath": "app.models.armazem",
-        "description": "app.models.armazem",
-        "isExtraImport": true,
-        "detail": "app.models.armazem",
-        "documentation": {}
-    },
-    {
-        "label": "Armazem",
-        "importPath": "app.models.armazem",
-        "description": "app.models.armazem",
-        "isExtraImport": true,
-        "detail": "app.models.armazem",
-        "documentation": {}
-    },
-    {
-        "label": "ProdutoStockArmazem",
-        "importPath": "app.models.armazem",
-        "description": "app.models.armazem",
-        "isExtraImport": true,
-        "detail": "app.models.armazem",
-        "documentation": {}
-    },
-    {
-        "label": "MaterialStockArmazem",
-        "importPath": "app.models.armazem",
-        "description": "app.models.armazem",
-        "isExtraImport": true,
-        "detail": "app.models.armazem",
-        "documentation": {}
-    },
-    {
-        "label": "Armazem",
-        "importPath": "app.models.armazem",
-        "description": "app.models.armazem",
-        "isExtraImport": true,
-        "detail": "app.models.armazem",
-        "documentation": {}
-    },
-    {
-        "label": "Armazem",
-        "importPath": "app.models.armazem",
-        "description": "app.models.armazem",
-        "isExtraImport": true,
-        "detail": "app.models.armazem",
-        "documentation": {}
-    },
-    {
-        "label": "ProdutoStockArmazem",
-        "importPath": "app.models.armazem",
-        "description": "app.models.armazem",
-        "isExtraImport": true,
-        "detail": "app.models.armazem",
-        "documentation": {}
-    },
-    {
-        "label": "IngredienteStockArmazem",
-        "importPath": "app.models.armazem",
-        "description": "app.models.armazem",
-        "isExtraImport": true,
-        "detail": "app.models.armazem",
-        "documentation": {}
-    },
-    {
-        "label": "MaterialStockArmazem",
-        "importPath": "app.models.armazem",
-        "description": "app.models.armazem",
-        "isExtraImport": true,
-        "detail": "app.models.armazem",
-        "documentation": {}
-    },
-    {
-        "label": "Armazem",
-        "importPath": "app.models.armazem",
-        "description": "app.models.armazem",
-        "isExtraImport": true,
-        "detail": "app.models.armazem",
-        "documentation": {}
-    },
-    {
-        "label": "Armazem",
-        "importPath": "app.models.armazem",
-        "description": "app.models.armazem",
-        "isExtraImport": true,
-        "detail": "app.models.armazem",
-        "documentation": {}
-    },
-    {
-        "label": "ProdutoStockArmazem",
-        "importPath": "app.models.armazem",
-        "description": "app.models.armazem",
-        "isExtraImport": true,
-        "detail": "app.models.armazem",
-        "documentation": {}
-    },
-    {
-        "label": "MaterialStockArmazem",
-        "importPath": "app.models.armazem",
-        "description": "app.models.armazem",
-        "isExtraImport": true,
-        "detail": "app.models.armazem",
-        "documentation": {}
-    },
-    {
-        "label": "BaseRepository",
-        "importPath": "app.repositories.base_repository",
-        "description": "app.repositories.base_repository",
-        "isExtraImport": true,
-        "detail": "app.repositories.base_repository",
-        "documentation": {}
-    },
-    {
-        "label": "BaseRepository",
-        "importPath": "app.repositories.base_repository",
-        "description": "app.repositories.base_repository",
-        "isExtraImport": true,
-        "detail": "app.repositories.base_repository",
-        "documentation": {}
-    },
-    {
-        "label": "BaseRepository",
-        "importPath": "app.repositories.base_repository",
-        "description": "app.repositories.base_repository",
-        "isExtraImport": true,
-        "detail": "app.repositories.base_repository",
-        "documentation": {}
-    },
-    {
-        "label": "BaseRepository",
-        "importPath": "app.repositories.base_repository",
-        "description": "app.repositories.base_repository",
-        "isExtraImport": true,
-        "detail": "app.repositories.base_repository",
-        "documentation": {}
-    },
-    {
-        "label": "BaseRepository",
-        "importPath": "app.repositories.base_repository",
-        "description": "app.repositories.base_repository",
-        "isExtraImport": true,
-        "detail": "app.repositories.base_repository",
-        "documentation": {}
-    },
-    {
-        "label": "BaseRepository",
-        "importPath": "app.repositories.base_repository",
-        "description": "app.repositories.base_repository",
-        "isExtraImport": true,
-        "detail": "app.repositories.base_repository",
-        "documentation": {}
-    },
-    {
-        "label": "BaseRepository",
-        "importPath": "app.repositories.base_repository",
-        "description": "app.repositories.base_repository",
-        "isExtraImport": true,
-        "detail": "app.repositories.base_repository",
-        "documentation": {}
-    },
-    {
-        "label": "BaseRepository",
-        "importPath": "app.repositories.base_repository",
-        "description": "app.repositories.base_repository",
-        "isExtraImport": true,
-        "detail": "app.repositories.base_repository",
-        "documentation": {}
-    },
-    {
-        "label": "BaseRepository",
-        "importPath": "app.repositories.base_repository",
-        "description": "app.repositories.base_repository",
-        "isExtraImport": true,
-        "detail": "app.repositories.base_repository",
+        "detail": "typing",
         "documentation": {}
     },
     {
@@ -7866,6 +7346,992 @@
         "description": "typing",
         "isExtraImport": true,
         "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "time",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "time",
+        "description": "time",
+        "detail": "time",
+        "documentation": {}
+    },
+    {
+        "label": "threading",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "threading",
+        "description": "threading",
+        "detail": "threading",
+        "documentation": {}
+    },
+    {
+        "label": "dataclass",
+        "importPath": "dataclasses",
+        "description": "dataclasses",
+        "isExtraImport": true,
+        "detail": "dataclasses",
+        "documentation": {}
+    },
+    {
+        "label": "field",
+        "importPath": "dataclasses",
+        "description": "dataclasses",
+        "isExtraImport": true,
+        "detail": "dataclasses",
+        "documentation": {}
+    },
+    {
+        "label": "dataclass",
+        "importPath": "dataclasses",
+        "description": "dataclasses",
+        "isExtraImport": true,
+        "detail": "dataclasses",
+        "documentation": {}
+    },
+    {
+        "label": "field",
+        "importPath": "dataclasses",
+        "description": "dataclasses",
+        "isExtraImport": true,
+        "detail": "dataclasses",
+        "documentation": {}
+    },
+    {
+        "label": "dataclass",
+        "importPath": "dataclasses",
+        "description": "dataclasses",
+        "isExtraImport": true,
+        "detail": "dataclasses",
+        "documentation": {}
+    },
+    {
+        "label": "EventType",
+        "importPath": "app.notifications.events",
+        "description": "app.notifications.events",
+        "isExtraImport": true,
+        "detail": "app.notifications.events",
+        "documentation": {}
+    },
+    {
+        "label": "DomainEvent",
+        "importPath": "app.notifications.events",
+        "description": "app.notifications.events",
+        "isExtraImport": true,
+        "detail": "app.notifications.events",
+        "documentation": {}
+    },
+    {
+        "label": "DomainEvent",
+        "importPath": "app.notifications.events",
+        "description": "app.notifications.events",
+        "isExtraImport": true,
+        "detail": "app.notifications.events",
+        "documentation": {}
+    },
+    {
+        "label": "EventType",
+        "importPath": "app.notifications.events",
+        "description": "app.notifications.events",
+        "isExtraImport": true,
+        "detail": "app.notifications.events",
+        "documentation": {}
+    },
+    {
+        "label": "EntityType",
+        "importPath": "app.notifications.events",
+        "description": "app.notifications.events",
+        "isExtraImport": true,
+        "detail": "app.notifications.events",
+        "documentation": {}
+    },
+    {
+        "label": "EventPriority",
+        "importPath": "app.notifications.events",
+        "description": "app.notifications.events",
+        "isExtraImport": true,
+        "detail": "app.notifications.events",
+        "documentation": {}
+    },
+    {
+        "label": "NotificationConfig",
+        "importPath": "app.notifications.events",
+        "description": "app.notifications.events",
+        "isExtraImport": true,
+        "detail": "app.notifications.events",
+        "documentation": {}
+    },
+    {
+        "label": "generate_event_id",
+        "importPath": "app.notifications.events",
+        "description": "app.notifications.events",
+        "isExtraImport": true,
+        "detail": "app.notifications.events",
+        "documentation": {}
+    },
+    {
+        "label": "Notificacao",
+        "importPath": "app.models.notificacao",
+        "description": "app.models.notificacao",
+        "isExtraImport": true,
+        "detail": "app.models.notificacao",
+        "documentation": {}
+    },
+    {
+        "label": "NotificacaoLeitura",
+        "importPath": "app.models.notificacao",
+        "description": "app.models.notificacao",
+        "isExtraImport": true,
+        "detail": "app.models.notificacao",
+        "documentation": {}
+    },
+    {
+        "label": "Notificacao",
+        "importPath": "app.models.notificacao",
+        "description": "app.models.notificacao",
+        "isExtraImport": true,
+        "detail": "app.models.notificacao",
+        "documentation": {}
+    },
+    {
+        "label": "NotificacaoLeitura",
+        "importPath": "app.models.notificacao",
+        "description": "app.models.notificacao",
+        "isExtraImport": true,
+        "detail": "app.models.notificacao",
+        "documentation": {}
+    },
+    {
+        "label": "HistoricoSMS",
+        "importPath": "app.models.notificacao",
+        "description": "app.models.notificacao",
+        "isExtraImport": true,
+        "detail": "app.models.notificacao",
+        "documentation": {}
+    },
+    {
+        "label": "BaseModel",
+        "importPath": "pydantic",
+        "description": "pydantic",
+        "isExtraImport": true,
+        "detail": "pydantic",
+        "documentation": {}
+    },
+    {
+        "label": "Field",
+        "importPath": "pydantic",
+        "description": "pydantic",
+        "isExtraImport": true,
+        "detail": "pydantic",
+        "documentation": {}
+    },
+    {
+        "label": "NotificationPolicy",
+        "importPath": "app.notifications.policies",
+        "description": "app.notifications.policies",
+        "isExtraImport": true,
+        "detail": "app.notifications.policies",
+        "documentation": {}
+    },
+    {
+        "label": "RecipientTarget",
+        "importPath": "app.notifications.policies",
+        "description": "app.notifications.policies",
+        "isExtraImport": true,
+        "detail": "app.notifications.policies",
+        "documentation": {}
+    },
+    {
+        "label": "deduplicator",
+        "importPath": "app.notifications.deduplication",
+        "description": "app.notifications.deduplication",
+        "isExtraImport": true,
+        "detail": "app.notifications.deduplication",
+        "documentation": {}
+    },
+    {
+        "label": "NotificationRepository",
+        "importPath": "app.notifications.repository",
+        "description": "app.notifications.repository",
+        "isExtraImport": true,
+        "detail": "app.notifications.repository",
+        "documentation": {}
+    },
+    {
+        "label": "Fornecedor",
+        "importPath": "app.models.fornecedor",
+        "description": "app.models.fornecedor",
+        "isExtraImport": true,
+        "detail": "app.models.fornecedor",
+        "documentation": {}
+    },
+    {
+        "label": "Fornecedor",
+        "importPath": "app.models.fornecedor",
+        "description": "app.models.fornecedor",
+        "isExtraImport": true,
+        "detail": "app.models.fornecedor",
+        "documentation": {}
+    },
+    {
+        "label": "Fornecedor",
+        "importPath": "app.models.fornecedor",
+        "description": "app.models.fornecedor",
+        "isExtraImport": true,
+        "detail": "app.models.fornecedor",
+        "documentation": {}
+    },
+    {
+        "label": "Fornecedor",
+        "importPath": "app.models.fornecedor",
+        "description": "app.models.fornecedor",
+        "isExtraImport": true,
+        "detail": "app.models.fornecedor",
+        "documentation": {}
+    },
+    {
+        "label": "Ingrediente",
+        "importPath": "app.models.ingrediente",
+        "description": "app.models.ingrediente",
+        "isExtraImport": true,
+        "detail": "app.models.ingrediente",
+        "documentation": {}
+    },
+    {
+        "label": "Ingrediente",
+        "importPath": "app.models.ingrediente",
+        "description": "app.models.ingrediente",
+        "isExtraImport": true,
+        "detail": "app.models.ingrediente",
+        "documentation": {}
+    },
+    {
+        "label": "Ingrediente",
+        "importPath": "app.models.ingrediente",
+        "description": "app.models.ingrediente",
+        "isExtraImport": true,
+        "detail": "app.models.ingrediente",
+        "documentation": {}
+    },
+    {
+        "label": "Ingrediente",
+        "importPath": "app.models.ingrediente",
+        "description": "app.models.ingrediente",
+        "isExtraImport": true,
+        "detail": "app.models.ingrediente",
+        "documentation": {}
+    },
+    {
+        "label": "Ingrediente",
+        "importPath": "app.models.ingrediente",
+        "description": "app.models.ingrediente",
+        "isExtraImport": true,
+        "detail": "app.models.ingrediente",
+        "documentation": {}
+    },
+    {
+        "label": "Ingrediente",
+        "importPath": "app.models.ingrediente",
+        "description": "app.models.ingrediente",
+        "isExtraImport": true,
+        "detail": "app.models.ingrediente",
+        "documentation": {}
+    },
+    {
+        "label": "Ingrediente",
+        "importPath": "app.models.ingrediente",
+        "description": "app.models.ingrediente",
+        "isExtraImport": true,
+        "detail": "app.models.ingrediente",
+        "documentation": {}
+    },
+    {
+        "label": "Ingrediente",
+        "importPath": "app.models.ingrediente",
+        "description": "app.models.ingrediente",
+        "isExtraImport": true,
+        "detail": "app.models.ingrediente",
+        "documentation": {}
+    },
+    {
+        "label": "Ingrediente",
+        "importPath": "app.models.ingrediente",
+        "description": "app.models.ingrediente",
+        "isExtraImport": true,
+        "detail": "app.models.ingrediente",
+        "documentation": {}
+    },
+    {
+        "label": "Material",
+        "importPath": "app.models.material",
+        "description": "app.models.material",
+        "isExtraImport": true,
+        "detail": "app.models.material",
+        "documentation": {}
+    },
+    {
+        "label": "TipoMaterial",
+        "importPath": "app.models.material",
+        "description": "app.models.material",
+        "isExtraImport": true,
+        "detail": "app.models.material",
+        "documentation": {}
+    },
+    {
+        "label": "EstadoMaterial",
+        "importPath": "app.models.material",
+        "description": "app.models.material",
+        "isExtraImport": true,
+        "detail": "app.models.material",
+        "documentation": {}
+    },
+    {
+        "label": "Material",
+        "importPath": "app.models.material",
+        "description": "app.models.material",
+        "isExtraImport": true,
+        "detail": "app.models.material",
+        "documentation": {}
+    },
+    {
+        "label": "TipoMaterial",
+        "importPath": "app.models.material",
+        "description": "app.models.material",
+        "isExtraImport": true,
+        "detail": "app.models.material",
+        "documentation": {}
+    },
+    {
+        "label": "EstadoMaterial",
+        "importPath": "app.models.material",
+        "description": "app.models.material",
+        "isExtraImport": true,
+        "detail": "app.models.material",
+        "documentation": {}
+    },
+    {
+        "label": "Material",
+        "importPath": "app.models.material",
+        "description": "app.models.material",
+        "isExtraImport": true,
+        "detail": "app.models.material",
+        "documentation": {}
+    },
+    {
+        "label": "Material",
+        "importPath": "app.models.material",
+        "description": "app.models.material",
+        "isExtraImport": true,
+        "detail": "app.models.material",
+        "documentation": {}
+    },
+    {
+        "label": "TipoMaterial",
+        "importPath": "app.models.material",
+        "description": "app.models.material",
+        "isExtraImport": true,
+        "detail": "app.models.material",
+        "documentation": {}
+    },
+    {
+        "label": "EstadoMaterial",
+        "importPath": "app.models.material",
+        "description": "app.models.material",
+        "isExtraImport": true,
+        "detail": "app.models.material",
+        "documentation": {}
+    },
+    {
+        "label": "Material",
+        "importPath": "app.models.material",
+        "description": "app.models.material",
+        "isExtraImport": true,
+        "detail": "app.models.material",
+        "documentation": {}
+    },
+    {
+        "label": "Material",
+        "importPath": "app.models.material",
+        "description": "app.models.material",
+        "isExtraImport": true,
+        "detail": "app.models.material",
+        "documentation": {}
+    },
+    {
+        "label": "Material",
+        "importPath": "app.models.material",
+        "description": "app.models.material",
+        "isExtraImport": true,
+        "detail": "app.models.material",
+        "documentation": {}
+    },
+    {
+        "label": "Material",
+        "importPath": "app.models.material",
+        "description": "app.models.material",
+        "isExtraImport": true,
+        "detail": "app.models.material",
+        "documentation": {}
+    },
+    {
+        "label": "TipoMaterial",
+        "importPath": "app.models.material",
+        "description": "app.models.material",
+        "isExtraImport": true,
+        "detail": "app.models.material",
+        "documentation": {}
+    },
+    {
+        "label": "Material",
+        "importPath": "app.models.material",
+        "description": "app.models.material",
+        "isExtraImport": true,
+        "detail": "app.models.material",
+        "documentation": {}
+    },
+    {
+        "label": "Material",
+        "importPath": "app.models.material",
+        "description": "app.models.material",
+        "isExtraImport": true,
+        "detail": "app.models.material",
+        "documentation": {}
+    },
+    {
+        "label": "TipoMaterial",
+        "importPath": "app.models.material",
+        "description": "app.models.material",
+        "isExtraImport": true,
+        "detail": "app.models.material",
+        "documentation": {}
+    },
+    {
+        "label": "EstadoMaterial",
+        "importPath": "app.models.material",
+        "description": "app.models.material",
+        "isExtraImport": true,
+        "detail": "app.models.material",
+        "documentation": {}
+    },
+    {
+        "label": "Material",
+        "importPath": "app.models.material",
+        "description": "app.models.material",
+        "isExtraImport": true,
+        "detail": "app.models.material",
+        "documentation": {}
+    },
+    {
+        "label": "TipoMaterial",
+        "importPath": "app.models.material",
+        "description": "app.models.material",
+        "isExtraImport": true,
+        "detail": "app.models.material",
+        "documentation": {}
+    },
+    {
+        "label": "EstadoMaterial",
+        "importPath": "app.models.material",
+        "description": "app.models.material",
+        "isExtraImport": true,
+        "detail": "app.models.material",
+        "documentation": {}
+    },
+    {
+        "label": "Material",
+        "importPath": "app.models.material",
+        "description": "app.models.material",
+        "isExtraImport": true,
+        "detail": "app.models.material",
+        "documentation": {}
+    },
+    {
+        "label": "TipoMaterial",
+        "importPath": "app.models.material",
+        "description": "app.models.material",
+        "isExtraImport": true,
+        "detail": "app.models.material",
+        "documentation": {}
+    },
+    {
+        "label": "MovimentoStock",
+        "importPath": "app.models.movimento_stock",
+        "description": "app.models.movimento_stock",
+        "isExtraImport": true,
+        "detail": "app.models.movimento_stock",
+        "documentation": {}
+    },
+    {
+        "label": "TipoMovimento",
+        "importPath": "app.models.movimento_stock",
+        "description": "app.models.movimento_stock",
+        "isExtraImport": true,
+        "detail": "app.models.movimento_stock",
+        "documentation": {}
+    },
+    {
+        "label": "OrigemMovimento",
+        "importPath": "app.models.movimento_stock",
+        "description": "app.models.movimento_stock",
+        "isExtraImport": true,
+        "detail": "app.models.movimento_stock",
+        "documentation": {}
+    },
+    {
+        "label": "EntidadeMovimento",
+        "importPath": "app.models.movimento_stock",
+        "description": "app.models.movimento_stock",
+        "isExtraImport": true,
+        "detail": "app.models.movimento_stock",
+        "documentation": {}
+    },
+    {
+        "label": "MovimentoStock",
+        "importPath": "app.models.movimento_stock",
+        "description": "app.models.movimento_stock",
+        "isExtraImport": true,
+        "detail": "app.models.movimento_stock",
+        "documentation": {}
+    },
+    {
+        "label": "TipoMovimento",
+        "importPath": "app.models.movimento_stock",
+        "description": "app.models.movimento_stock",
+        "isExtraImport": true,
+        "detail": "app.models.movimento_stock",
+        "documentation": {}
+    },
+    {
+        "label": "OrigemMovimento",
+        "importPath": "app.models.movimento_stock",
+        "description": "app.models.movimento_stock",
+        "isExtraImport": true,
+        "detail": "app.models.movimento_stock",
+        "documentation": {}
+    },
+    {
+        "label": "EntidadeMovimento",
+        "importPath": "app.models.movimento_stock",
+        "description": "app.models.movimento_stock",
+        "isExtraImport": true,
+        "detail": "app.models.movimento_stock",
+        "documentation": {}
+    },
+    {
+        "label": "MovimentoStock",
+        "importPath": "app.models.movimento_stock",
+        "description": "app.models.movimento_stock",
+        "isExtraImport": true,
+        "detail": "app.models.movimento_stock",
+        "documentation": {}
+    },
+    {
+        "label": "MovimentoStock",
+        "importPath": "app.models.movimento_stock",
+        "description": "app.models.movimento_stock",
+        "isExtraImport": true,
+        "detail": "app.models.movimento_stock",
+        "documentation": {}
+    },
+    {
+        "label": "TipoMovimento",
+        "importPath": "app.models.movimento_stock",
+        "description": "app.models.movimento_stock",
+        "isExtraImport": true,
+        "detail": "app.models.movimento_stock",
+        "documentation": {}
+    },
+    {
+        "label": "OrigemMovimento",
+        "importPath": "app.models.movimento_stock",
+        "description": "app.models.movimento_stock",
+        "isExtraImport": true,
+        "detail": "app.models.movimento_stock",
+        "documentation": {}
+    },
+    {
+        "label": "EntidadeMovimento",
+        "importPath": "app.models.movimento_stock",
+        "description": "app.models.movimento_stock",
+        "isExtraImport": true,
+        "detail": "app.models.movimento_stock",
+        "documentation": {}
+    },
+    {
+        "label": "MovimentoStock",
+        "importPath": "app.models.movimento_stock",
+        "description": "app.models.movimento_stock",
+        "isExtraImport": true,
+        "detail": "app.models.movimento_stock",
+        "documentation": {}
+    },
+    {
+        "label": "TipoMovimento",
+        "importPath": "app.models.movimento_stock",
+        "description": "app.models.movimento_stock",
+        "isExtraImport": true,
+        "detail": "app.models.movimento_stock",
+        "documentation": {}
+    },
+    {
+        "label": "OrigemMovimento",
+        "importPath": "app.models.movimento_stock",
+        "description": "app.models.movimento_stock",
+        "isExtraImport": true,
+        "detail": "app.models.movimento_stock",
+        "documentation": {}
+    },
+    {
+        "label": "EntidadeMovimento",
+        "importPath": "app.models.movimento_stock",
+        "description": "app.models.movimento_stock",
+        "isExtraImport": true,
+        "detail": "app.models.movimento_stock",
+        "documentation": {}
+    },
+    {
+        "label": "MovimentoStock",
+        "importPath": "app.models.movimento_stock",
+        "description": "app.models.movimento_stock",
+        "isExtraImport": true,
+        "detail": "app.models.movimento_stock",
+        "documentation": {}
+    },
+    {
+        "label": "TipoMovimento",
+        "importPath": "app.models.movimento_stock",
+        "description": "app.models.movimento_stock",
+        "isExtraImport": true,
+        "detail": "app.models.movimento_stock",
+        "documentation": {}
+    },
+    {
+        "label": "OrigemMovimento",
+        "importPath": "app.models.movimento_stock",
+        "description": "app.models.movimento_stock",
+        "isExtraImport": true,
+        "detail": "app.models.movimento_stock",
+        "documentation": {}
+    },
+    {
+        "label": "EntidadeMovimento",
+        "importPath": "app.models.movimento_stock",
+        "description": "app.models.movimento_stock",
+        "isExtraImport": true,
+        "detail": "app.models.movimento_stock",
+        "documentation": {}
+    },
+    {
+        "label": "MovimentoStock",
+        "importPath": "app.models.movimento_stock",
+        "description": "app.models.movimento_stock",
+        "isExtraImport": true,
+        "detail": "app.models.movimento_stock",
+        "documentation": {}
+    },
+    {
+        "label": "TipoMovimento",
+        "importPath": "app.models.movimento_stock",
+        "description": "app.models.movimento_stock",
+        "isExtraImport": true,
+        "detail": "app.models.movimento_stock",
+        "documentation": {}
+    },
+    {
+        "label": "OrigemMovimento",
+        "importPath": "app.models.movimento_stock",
+        "description": "app.models.movimento_stock",
+        "isExtraImport": true,
+        "detail": "app.models.movimento_stock",
+        "documentation": {}
+    },
+    {
+        "label": "EntidadeMovimento",
+        "importPath": "app.models.movimento_stock",
+        "description": "app.models.movimento_stock",
+        "isExtraImport": true,
+        "detail": "app.models.movimento_stock",
+        "documentation": {}
+    },
+    {
+        "label": "MovimentoStock",
+        "importPath": "app.models.movimento_stock",
+        "description": "app.models.movimento_stock",
+        "isExtraImport": true,
+        "detail": "app.models.movimento_stock",
+        "documentation": {}
+    },
+    {
+        "label": "TipoMovimento",
+        "importPath": "app.models.movimento_stock",
+        "description": "app.models.movimento_stock",
+        "isExtraImport": true,
+        "detail": "app.models.movimento_stock",
+        "documentation": {}
+    },
+    {
+        "label": "OrigemMovimento",
+        "importPath": "app.models.movimento_stock",
+        "description": "app.models.movimento_stock",
+        "isExtraImport": true,
+        "detail": "app.models.movimento_stock",
+        "documentation": {}
+    },
+    {
+        "label": "EntidadeMovimento",
+        "importPath": "app.models.movimento_stock",
+        "description": "app.models.movimento_stock",
+        "isExtraImport": true,
+        "detail": "app.models.movimento_stock",
+        "documentation": {}
+    },
+    {
+        "label": "CategoriaProduto",
+        "importPath": "app.models.categoria_produto",
+        "description": "app.models.categoria_produto",
+        "isExtraImport": true,
+        "detail": "app.models.categoria_produto",
+        "documentation": {}
+    },
+    {
+        "label": "CategoriaProduto",
+        "importPath": "app.models.categoria_produto",
+        "description": "app.models.categoria_produto",
+        "isExtraImport": true,
+        "detail": "app.models.categoria_produto",
+        "documentation": {}
+    },
+    {
+        "label": "CategoriaProduto",
+        "importPath": "app.models.categoria_produto",
+        "description": "app.models.categoria_produto",
+        "isExtraImport": true,
+        "detail": "app.models.categoria_produto",
+        "documentation": {}
+    },
+    {
+        "label": "UnidadeMedida",
+        "importPath": "app.models.unidade_medida",
+        "description": "app.models.unidade_medida",
+        "isExtraImport": true,
+        "detail": "app.models.unidade_medida",
+        "documentation": {}
+    },
+    {
+        "label": "UnidadeMedida",
+        "importPath": "app.models.unidade_medida",
+        "description": "app.models.unidade_medida",
+        "isExtraImport": true,
+        "detail": "app.models.unidade_medida",
+        "documentation": {}
+    },
+    {
+        "label": "UnidadeMedida",
+        "importPath": "app.models.unidade_medida",
+        "description": "app.models.unidade_medida",
+        "isExtraImport": true,
+        "detail": "app.models.unidade_medida",
+        "documentation": {}
+    },
+    {
+        "label": "Armazem",
+        "importPath": "app.models.armazem",
+        "description": "app.models.armazem",
+        "isExtraImport": true,
+        "detail": "app.models.armazem",
+        "documentation": {}
+    },
+    {
+        "label": "ProdutoStockArmazem",
+        "importPath": "app.models.armazem",
+        "description": "app.models.armazem",
+        "isExtraImport": true,
+        "detail": "app.models.armazem",
+        "documentation": {}
+    },
+    {
+        "label": "IngredienteStockArmazem",
+        "importPath": "app.models.armazem",
+        "description": "app.models.armazem",
+        "isExtraImport": true,
+        "detail": "app.models.armazem",
+        "documentation": {}
+    },
+    {
+        "label": "MaterialStockArmazem",
+        "importPath": "app.models.armazem",
+        "description": "app.models.armazem",
+        "isExtraImport": true,
+        "detail": "app.models.armazem",
+        "documentation": {}
+    },
+    {
+        "label": "Armazem",
+        "importPath": "app.models.armazem",
+        "description": "app.models.armazem",
+        "isExtraImport": true,
+        "detail": "app.models.armazem",
+        "documentation": {}
+    },
+    {
+        "label": "ProdutoStockArmazem",
+        "importPath": "app.models.armazem",
+        "description": "app.models.armazem",
+        "isExtraImport": true,
+        "detail": "app.models.armazem",
+        "documentation": {}
+    },
+    {
+        "label": "MaterialStockArmazem",
+        "importPath": "app.models.armazem",
+        "description": "app.models.armazem",
+        "isExtraImport": true,
+        "detail": "app.models.armazem",
+        "documentation": {}
+    },
+    {
+        "label": "Armazem",
+        "importPath": "app.models.armazem",
+        "description": "app.models.armazem",
+        "isExtraImport": true,
+        "detail": "app.models.armazem",
+        "documentation": {}
+    },
+    {
+        "label": "Armazem",
+        "importPath": "app.models.armazem",
+        "description": "app.models.armazem",
+        "isExtraImport": true,
+        "detail": "app.models.armazem",
+        "documentation": {}
+    },
+    {
+        "label": "ProdutoStockArmazem",
+        "importPath": "app.models.armazem",
+        "description": "app.models.armazem",
+        "isExtraImport": true,
+        "detail": "app.models.armazem",
+        "documentation": {}
+    },
+    {
+        "label": "IngredienteStockArmazem",
+        "importPath": "app.models.armazem",
+        "description": "app.models.armazem",
+        "isExtraImport": true,
+        "detail": "app.models.armazem",
+        "documentation": {}
+    },
+    {
+        "label": "MaterialStockArmazem",
+        "importPath": "app.models.armazem",
+        "description": "app.models.armazem",
+        "isExtraImport": true,
+        "detail": "app.models.armazem",
+        "documentation": {}
+    },
+    {
+        "label": "Armazem",
+        "importPath": "app.models.armazem",
+        "description": "app.models.armazem",
+        "isExtraImport": true,
+        "detail": "app.models.armazem",
+        "documentation": {}
+    },
+    {
+        "label": "Armazem",
+        "importPath": "app.models.armazem",
+        "description": "app.models.armazem",
+        "isExtraImport": true,
+        "detail": "app.models.armazem",
+        "documentation": {}
+    },
+    {
+        "label": "ProdutoStockArmazem",
+        "importPath": "app.models.armazem",
+        "description": "app.models.armazem",
+        "isExtraImport": true,
+        "detail": "app.models.armazem",
+        "documentation": {}
+    },
+    {
+        "label": "MaterialStockArmazem",
+        "importPath": "app.models.armazem",
+        "description": "app.models.armazem",
+        "isExtraImport": true,
+        "detail": "app.models.armazem",
+        "documentation": {}
+    },
+    {
+        "label": "BaseRepository",
+        "importPath": "app.repositories.base_repository",
+        "description": "app.repositories.base_repository",
+        "isExtraImport": true,
+        "detail": "app.repositories.base_repository",
+        "documentation": {}
+    },
+    {
+        "label": "BaseRepository",
+        "importPath": "app.repositories.base_repository",
+        "description": "app.repositories.base_repository",
+        "isExtraImport": true,
+        "detail": "app.repositories.base_repository",
+        "documentation": {}
+    },
+    {
+        "label": "BaseRepository",
+        "importPath": "app.repositories.base_repository",
+        "description": "app.repositories.base_repository",
+        "isExtraImport": true,
+        "detail": "app.repositories.base_repository",
+        "documentation": {}
+    },
+    {
+        "label": "BaseRepository",
+        "importPath": "app.repositories.base_repository",
+        "description": "app.repositories.base_repository",
+        "isExtraImport": true,
+        "detail": "app.repositories.base_repository",
+        "documentation": {}
+    },
+    {
+        "label": "BaseRepository",
+        "importPath": "app.repositories.base_repository",
+        "description": "app.repositories.base_repository",
+        "isExtraImport": true,
+        "detail": "app.repositories.base_repository",
+        "documentation": {}
+    },
+    {
+        "label": "BaseRepository",
+        "importPath": "app.repositories.base_repository",
+        "description": "app.repositories.base_repository",
+        "isExtraImport": true,
+        "detail": "app.repositories.base_repository",
+        "documentation": {}
+    },
+    {
+        "label": "BaseRepository",
+        "importPath": "app.repositories.base_repository",
+        "description": "app.repositories.base_repository",
+        "isExtraImport": true,
+        "detail": "app.repositories.base_repository",
+        "documentation": {}
+    },
+    {
+        "label": "BaseRepository",
+        "importPath": "app.repositories.base_repository",
+        "description": "app.repositories.base_repository",
+        "isExtraImport": true,
+        "detail": "app.repositories.base_repository",
+        "documentation": {}
+    },
+    {
+        "label": "BaseRepository",
+        "importPath": "app.repositories.base_repository",
+        "description": "app.repositories.base_repository",
+        "isExtraImport": true,
+        "detail": "app.repositories.base_repository",
         "documentation": {}
     },
     {
@@ -8913,7 +9379,7 @@
         "documentation": {}
     },
     {
-        "label": "socketio",
+        "label": "emit_sync_event",
         "importPath": "app.websocket.socket_manager",
         "description": "app.websocket.socket_manager",
         "isExtraImport": true,
@@ -8929,7 +9395,7 @@
         "documentation": {}
     },
     {
-        "label": "socketio",
+        "label": "emit_sync_event",
         "importPath": "app.websocket.socket_manager",
         "description": "app.websocket.socket_manager",
         "isExtraImport": true,
@@ -8969,7 +9435,7 @@
         "documentation": {}
     },
     {
-        "label": "socketio",
+        "label": "emit_sync_event",
         "importPath": "app.websocket.socket_manager",
         "description": "app.websocket.socket_manager",
         "isExtraImport": true,
@@ -8985,7 +9451,7 @@
         "documentation": {}
     },
     {
-        "label": "socketio",
+        "label": "emit_sync_event",
         "importPath": "app.websocket.socket_manager",
         "description": "app.websocket.socket_manager",
         "isExtraImport": true,
@@ -9001,7 +9467,7 @@
         "documentation": {}
     },
     {
-        "label": "socketio",
+        "label": "emit_sync_event",
         "importPath": "app.websocket.socket_manager",
         "description": "app.websocket.socket_manager",
         "isExtraImport": true,
@@ -9062,30 +9528,6 @@
         "description": "app.repositories.financeiro_repos",
         "isExtraImport": true,
         "detail": "app.repositories.financeiro_repos",
-        "documentation": {}
-    },
-    {
-        "label": "Notificacao",
-        "importPath": "app.models.notificacao",
-        "description": "app.models.notificacao",
-        "isExtraImport": true,
-        "detail": "app.models.notificacao",
-        "documentation": {}
-    },
-    {
-        "label": "NotificacaoLeitura",
-        "importPath": "app.models.notificacao",
-        "description": "app.models.notificacao",
-        "isExtraImport": true,
-        "detail": "app.models.notificacao",
-        "documentation": {}
-    },
-    {
-        "label": "HistoricoSMS",
-        "importPath": "app.models.notificacao",
-        "description": "app.models.notificacao",
-        "isExtraImport": true,
-        "detail": "app.models.notificacao",
         "documentation": {}
     },
     {
@@ -9426,15 +9868,6 @@
         "documentation": {}
     },
     {
-        "label": "threading",
-        "kind": 6,
-        "isExtraImport": true,
-        "importPath": "threading",
-        "description": "threading",
-        "detail": "threading",
-        "documentation": {}
-    },
-    {
         "label": "smtplib",
         "kind": 6,
         "isExtraImport": true,
@@ -9537,14 +9970,6 @@
         "description": "app.repositories.requisicao_repos",
         "isExtraImport": true,
         "detail": "app.repositories.requisicao_repos",
-        "documentation": {}
-    },
-    {
-        "label": "dataclass",
-        "importPath": "dataclasses",
-        "description": "dataclasses",
-        "isExtraImport": true,
-        "detail": "dataclasses",
         "documentation": {}
     },
     {
@@ -9854,15 +10279,6 @@
         "description": "app.core.db_initializer",
         "isExtraImport": true,
         "detail": "app.core.db_initializer",
-        "documentation": {}
-    },
-    {
-        "label": "time",
-        "kind": 6,
-        "isExtraImport": true,
-        "importPath": "time",
-        "description": "time",
-        "detail": "time",
         "documentation": {}
     },
     {
@@ -10905,7 +11321,7 @@
         "kind": 2,
         "importPath": "backend.app.api.v1.evento_controller",
         "description": "backend.app.api.v1.evento_controller",
-        "peekOfCode": "def check_proximos():\n    from datetime import datetime, timedelta\n    from app.models.evento import Evento\n    from app.websocket.socket_manager import socketio\n    amanha = datetime.utcnow().date() + timedelta(days=1)\n    hoje = datetime.utcnow().date()\n    eventos = db.session.query(Evento).filter(\n        Evento.data_evento >= hoje,\n        Evento.data_evento <= amanha\n    ).all()",
+        "peekOfCode": "def check_proximos():\n    from datetime import datetime, timedelta\n    from app.models.evento import Evento\n    from app.websocket.socket_manager import emit_sync_event\n    amanha = datetime.utcnow().date() + timedelta(days=1)\n    hoje = datetime.utcnow().date()\n    eventos = db.session.query(Evento).filter(\n        Evento.data_evento >= hoje,\n        Evento.data_evento <= amanha\n    ).all()",
         "detail": "backend.app.api.v1.evento_controller",
         "documentation": {}
     },
@@ -13718,6 +14134,168 @@
         "documentation": {}
     },
     {
+        "label": "EventAggregator",
+        "kind": 6,
+        "importPath": "backend.app.notifications.aggregation",
+        "description": "backend.app.notifications.aggregation",
+        "peekOfCode": "class EventAggregator:\n    \"\"\"\n    Agregador de eventos relacionados a uma mesma entidade/transação de negócio.\n    Evita emissão de múltiplos avisos visuais quando uma ação gera várias sub-operações\n    (ex: criação de um pedido que gera 3 ordens de produção para Cozinha, Pastelaria e Bar).\n    \"\"\"\n    @staticmethod\n    def aggregate_production_orders(\n        pedido_numero: str,\n        ordens: List[Dict[str, Any]],",
+        "detail": "backend.app.notifications.aggregation",
+        "documentation": {}
+    },
+    {
+        "label": "DeduplicationManager",
+        "kind": 6,
+        "importPath": "backend.app.notifications.deduplication",
+        "description": "backend.app.notifications.deduplication",
+        "peekOfCode": "class DeduplicationManager:\n    \"\"\"\n    Gerenciador de Idempotência e Desduplicação de Eventos e Notificações.\n    Mantém uma janela deslizante em memória com expiração (TTL) para evitar\n    processamento duplicado concorrente ou em loops imediatos.\n    \"\"\"\n    def __init__(self, default_ttl_seconds: int = 45):\n        self.default_ttl = default_ttl_seconds\n        self._lock = threading.Lock()\n        # Chave -> (timestamp_de_registro, payload_hash/event_id)",
+        "detail": "backend.app.notifications.deduplication",
+        "documentation": {}
+    },
+    {
+        "label": "deduplicator",
+        "kind": 5,
+        "importPath": "backend.app.notifications.deduplication",
+        "description": "backend.app.notifications.deduplication",
+        "peekOfCode": "deduplicator = DeduplicationManager()",
+        "detail": "backend.app.notifications.deduplication",
+        "documentation": {}
+    },
+    {
+        "label": "EventPriority",
+        "kind": 6,
+        "importPath": "backend.app.notifications.events",
+        "description": "backend.app.notifications.events",
+        "peekOfCode": "class EventPriority(str, Enum):\n    BAIXA = \"baixa\"\n    NORMAL = \"media\"\n    ALTA = \"alta\"\n    URGENTE = \"urgente\"\nclass EventType(str, Enum):\n    # Pedidos\n    ORDER_CREATED = \"ORDER_CREATED\"\n    ORDER_UPDATED = \"ORDER_UPDATED\"\n    ORDER_SENT_TO_PRODUCTION = \"ORDER_SENT_TO_PRODUCTION\"",
+        "detail": "backend.app.notifications.events",
+        "documentation": {}
+    },
+    {
+        "label": "EventType",
+        "kind": 6,
+        "importPath": "backend.app.notifications.events",
+        "description": "backend.app.notifications.events",
+        "peekOfCode": "class EventType(str, Enum):\n    # Pedidos\n    ORDER_CREATED = \"ORDER_CREATED\"\n    ORDER_UPDATED = \"ORDER_UPDATED\"\n    ORDER_SENT_TO_PRODUCTION = \"ORDER_SENT_TO_PRODUCTION\"\n    ORDER_READY = \"ORDER_READY\"\n    ORDER_CANCELLED = \"ORDER_CANCELLED\"\n    # Produção\n    PRODUCTION_ORDER_CREATED = \"PRODUCTION_ORDER_CREATED\"\n    PRODUCTION_ORDER_UPDATED = \"PRODUCTION_ORDER_UPDATED\"",
+        "detail": "backend.app.notifications.events",
+        "documentation": {}
+    },
+    {
+        "label": "EntityType",
+        "kind": 6,
+        "importPath": "backend.app.notifications.events",
+        "description": "backend.app.notifications.events",
+        "peekOfCode": "class EntityType(str, Enum):\n    PEDIDO = \"PEDIDO\"\n    ORDEM_PRODUCAO = \"ORDEM_PRODUCAO\"\n    STOCK = \"STOCK\"\n    REQUISICAO = \"REQUISICAO\"\n    LOGISTICA = \"LOGISTICA\"\n    CAIXA = \"CAIXA\"\n    EVENTO = \"EVENTO\"\n    SISTEMA = \"SISTEMA\"\ndef generate_event_id() -> str:",
+        "detail": "backend.app.notifications.events",
+        "documentation": {}
+    },
+    {
+        "label": "NotificationConfig",
+        "kind": 6,
+        "importPath": "backend.app.notifications.events",
+        "description": "backend.app.notifications.events",
+        "peekOfCode": "class NotificationConfig:\n    enabled: bool = True\n    title: str = \"\"\n    message: str = \"\"\n    tipo: str = \"info\"  # info, warning, success, error, alerta\n    sound: bool = False\n    persistent: bool = False\n    channels: list = field(default_factory=lambda: [\"WEBSOCKET\"])\n@dataclass\nclass DomainEvent:",
+        "detail": "backend.app.notifications.events",
+        "documentation": {}
+    },
+    {
+        "label": "DomainEvent",
+        "kind": 6,
+        "importPath": "backend.app.notifications.events",
+        "description": "backend.app.notifications.events",
+        "peekOfCode": "class DomainEvent:\n    event_type: EventType\n    entity_type: EntityType\n    entity_id: Optional[int] = None\n    aggregate_id: Optional[str] = None\n    actor_user_id: Optional[int] = None\n    event_id: str = field(default_factory=generate_event_id)\n    timestamp: str = field(default_factory=lambda: datetime.utcnow().isoformat())\n    priority: EventPriority = EventPriority.NORMAL\n    notification: NotificationConfig = field(default_factory=NotificationConfig)",
+        "detail": "backend.app.notifications.events",
+        "documentation": {}
+    },
+    {
+        "label": "generate_event_id",
+        "kind": 2,
+        "importPath": "backend.app.notifications.events",
+        "description": "backend.app.notifications.events",
+        "peekOfCode": "def generate_event_id() -> str:\n    \"\"\"Gera um identificador único para o evento com prefixo padronizado evt_\"\"\"\n    return f\"evt_{uuid.uuid4().hex}\"\n@dataclass\nclass NotificationConfig:\n    enabled: bool = True\n    title: str = \"\"\n    message: str = \"\"\n    tipo: str = \"info\"  # info, warning, success, error, alerta\n    sound: bool = False",
+        "detail": "backend.app.notifications.events",
+        "documentation": {}
+    },
+    {
+        "label": "RecipientTarget",
+        "kind": 6,
+        "importPath": "backend.app.notifications.policies",
+        "description": "backend.app.notifications.policies",
+        "peekOfCode": "class RecipientTarget:\n    target_type: str  # \"GLOBAL\", \"ROLE\", \"SECTOR\", \"USER\"\n    target_id: Optional[str] = None  # user_id string, role name, or sector name\n    exclude_actor: bool = True\nclass NotificationPolicy:\n    \"\"\"\n    Política central de encaminhamento de destinatários para cada tipo de evento.\n    Garante o respeito a RBAC e impede que o autor da ação (Actor) receba\n    notificações redundantes (já que recebe feedback direto da API/UI).\n    \"\"\"",
+        "detail": "backend.app.notifications.policies",
+        "documentation": {}
+    },
+    {
+        "label": "NotificationPolicy",
+        "kind": 6,
+        "importPath": "backend.app.notifications.policies",
+        "description": "backend.app.notifications.policies",
+        "peekOfCode": "class NotificationPolicy:\n    \"\"\"\n    Política central de encaminhamento de destinatários para cada tipo de evento.\n    Garante o respeito a RBAC e impede que o autor da ação (Actor) receba\n    notificações redundantes (já que recebe feedback direto da API/UI).\n    \"\"\"\n    DEFAULT_POLICIES: Dict[str, List[RecipientTarget]] = {\n        EventType.ORDER_CREATED.value: [\n            RecipientTarget(target_type=\"ROLE\", target_id=\"balcao\", exclude_actor=True),\n            RecipientTarget(target_type=\"ROLE\", target_id=\"gerente\", exclude_actor=True),",
+        "detail": "backend.app.notifications.policies",
+        "documentation": {}
+    },
+    {
+        "label": "NotificationRepository",
+        "kind": 6,
+        "importPath": "backend.app.notifications.repository",
+        "description": "backend.app.notifications.repository",
+        "peekOfCode": "class NotificationRepository:\n    \"\"\"\n    Camada de persistência para Notificações com integridade referencial,\n    rastreio de eventos (event_id, aggregate_id) e proteção contra inserções duplicadas.\n    \"\"\"\n    @staticmethod\n    def exists_by_event_and_recipient(\n        event_id: str,\n        recipient_user_id: Optional[int] = None\n    ) -> bool:",
+        "detail": "backend.app.notifications.repository",
+        "documentation": {}
+    },
+    {
+        "label": "logger",
+        "kind": 5,
+        "importPath": "backend.app.notifications.repository",
+        "description": "backend.app.notifications.repository",
+        "peekOfCode": "logger = logging.getLogger(__name__)\nclass NotificationRepository:\n    \"\"\"\n    Camada de persistência para Notificações com integridade referencial,\n    rastreio de eventos (event_id, aggregate_id) e proteção contra inserções duplicadas.\n    \"\"\"\n    @staticmethod\n    def exists_by_event_and_recipient(\n        event_id: str,\n        recipient_user_id: Optional[int] = None",
+        "detail": "backend.app.notifications.repository",
+        "documentation": {}
+    },
+    {
+        "label": "NotificationPayloadSchema",
+        "kind": 6,
+        "importPath": "backend.app.notifications.schemas",
+        "description": "backend.app.notifications.schemas",
+        "peekOfCode": "class NotificationPayloadSchema(BaseModel):\n    enabled: bool = True\n    title: str = \"\"\n    message: str = \"\"\n    tipo: str = \"info\"\n    sound: bool = False\n    persistent: bool = False\n    channels: List[str] = [\"WEBSOCKET\"]\nclass DomainEventSchema(BaseModel):\n    event_id: str",
+        "detail": "backend.app.notifications.schemas",
+        "documentation": {}
+    },
+    {
+        "label": "DomainEventSchema",
+        "kind": 6,
+        "importPath": "backend.app.notifications.schemas",
+        "description": "backend.app.notifications.schemas",
+        "peekOfCode": "class DomainEventSchema(BaseModel):\n    event_id: str\n    event_type: str\n    entity_type: str\n    entity_id: Optional[int] = None\n    aggregate_id: str\n    actor_user_id: Optional[int] = None\n    timestamp: str\n    priority: str = \"media\"\n    notification: NotificationPayloadSchema",
+        "detail": "backend.app.notifications.schemas",
+        "documentation": {}
+    },
+    {
+        "label": "NotificationOutSchema",
+        "kind": 6,
+        "importPath": "backend.app.notifications.schemas",
+        "description": "backend.app.notifications.schemas",
+        "peekOfCode": "class NotificationOutSchema(BaseModel):\n    id: Optional[int] = None\n    event_id: str\n    event_type: str\n    titulo: str\n    mensagem: str\n    tipo: str\n    canal: str\n    prioridade: str\n    persistente: bool",
+        "detail": "backend.app.notifications.schemas",
+        "documentation": {}
+    },
+    {
+        "label": "NotificationService",
+        "kind": 6,
+        "importPath": "backend.app.notifications.service",
+        "description": "backend.app.notifications.service",
+        "peekOfCode": "class NotificationService:\n    \"\"\"\n    Serviço centralizado de Eventos e Notificações do SIGI ERP.\n    Garante a estrita separação entre:\n    1. Eventos técnicos de sincronização (KDS, tabelas, dashboards);\n    2. Notificações visuais destinas a utilizadores (toasts, central de notificações);\n    3. Idempotência e desduplicação rigorosa;\n    4. Políticas de destinatários (RBAC) e exclusão do Actor (quem fez a ação).\n    \"\"\"\n    @classmethod",
+        "detail": "backend.app.notifications.service",
+        "documentation": {}
+    },
+    {
+        "label": "logger",
+        "kind": 5,
+        "importPath": "backend.app.notifications.service",
+        "description": "backend.app.notifications.service",
+        "peekOfCode": "logger = logging.getLogger(__name__)\nclass NotificationService:\n    \"\"\"\n    Serviço centralizado de Eventos e Notificações do SIGI ERP.\n    Garante a estrita separação entre:\n    1. Eventos técnicos de sincronização (KDS, tabelas, dashboards);\n    2. Notificações visuais destinas a utilizadores (toasts, central de notificações);\n    3. Idempotência e desduplicação rigorosa;\n    4. Políticas de destinatários (RBAC) e exclusão do Actor (quem fez a ação).\n    \"\"\"",
+        "detail": "backend.app.notifications.service",
+        "documentation": {}
+    },
+    {
         "label": "CategoriaProdutoRepository",
         "kind": 6,
         "importPath": "backend.app.repositories.armazem_repos",
@@ -15311,6 +15889,24 @@
         "documentation": {}
     },
     {
+        "label": "emit_sync_event",
+        "kind": 2,
+        "importPath": "backend.app.websocket.socket_manager",
+        "description": "backend.app.websocket.socket_manager",
+        "peekOfCode": "def emit_sync_event(event_name: str, payload: dict, room: Optional[str] = None) -> bool:\n    \"\"\"\n    Emite evento técnico de sincronização de dados (tabelas, KDS, React Query, cache).\n    NÃO se destina a gerar toasts visuais na interface.\n    \"\"\"\n    try:\n        if room:\n            socketio.emit(event_name, payload, room=room)\n        else:\n            socketio.emit(event_name, payload)",
+        "detail": "backend.app.websocket.socket_manager",
+        "documentation": {}
+    },
+    {
+        "label": "emit_user_notification",
+        "kind": 2,
+        "importPath": "backend.app.websocket.socket_manager",
+        "description": "backend.app.websocket.socket_manager",
+        "peekOfCode": "def emit_user_notification(payload: dict, room: Optional[str] = None, exclude_user_id: Optional[str] = None) -> bool:\n    \"\"\"\n    Emite evento de notificação visual ('notificacao') direcionado à room apropriada.\n    \"\"\"\n    try:\n        target_room = room or \"global_notifications\"\n        socketio.emit(\"notificacao\", payload, room=target_room)\n        return True\n    except Exception as e:\n        logger.error(f\"Erro ao emitir notificação visual WebSocket: {e}\")",
+        "detail": "backend.app.websocket.socket_manager",
+        "documentation": {}
+    },
+    {
         "label": "format_products_summary",
         "kind": 2,
         "importPath": "backend.app.websocket.socket_manager",
@@ -15324,7 +15920,7 @@
         "kind": 2,
         "importPath": "backend.app.websocket.socket_manager",
         "description": "backend.app.websocket.socket_manager",
-        "peekOfCode": "def notify_order_created(\n    pedido_id: int, \n    pedido_numero: str, \n    total: float = 0.0, \n    cliente_nome: Optional[str] = None,\n    produtos_resumo: Optional[str] = None\n) -> bool:\n    \"\"\"\n    Notifica a criação de um novo pedido comercial com o padrão completo de identificação:\n    - Referência: #PED-XXXX",
+        "peekOfCode": "def notify_order_created(\n    pedido_id: int, \n    pedido_numero: str, \n    total: float = 0.0, \n    cliente_nome: Optional[str] = None,\n    produtos_resumo: Optional[str] = None,\n    actor_user_id: Optional[int] = None\n) -> bool:\n    \"\"\"\n    Notifica a criação de um novo pedido comercial delegando ao NotificationService.",
         "detail": "backend.app.websocket.socket_manager",
         "documentation": {}
     },
@@ -15333,7 +15929,7 @@
         "kind": 2,
         "importPath": "backend.app.websocket.socket_manager",
         "description": "backend.app.websocket.socket_manager",
-        "peekOfCode": "def notify_order_status_updated(\n    pedido_id: int,\n    pedido_numero: str,\n    antigo_estado: str,\n    novo_estado: str,\n    cliente_nome: Optional[str] = None,\n    produtos_resumo: Optional[str] = None,\n    total: float = 0.0\n) -> bool:\n    \"\"\"",
+        "peekOfCode": "def notify_order_status_updated(\n    pedido_id: int,\n    pedido_numero: str,\n    antigo_estado: str,\n    novo_estado: str,\n    cliente_nome: Optional[str] = None,\n    produtos_resumo: Optional[str] = None,\n    total: float = 0.0,\n    actor_user_id: Optional[int] = None\n) -> bool:",
         "detail": "backend.app.websocket.socket_manager",
         "documentation": {}
     },
@@ -15342,7 +15938,7 @@
         "kind": 2,
         "importPath": "backend.app.websocket.socket_manager",
         "description": "backend.app.websocket.socket_manager",
-        "peekOfCode": "def notify_production_orders(\n    pedido_id: int, \n    pedido_numero: str, \n    sectores: List[Any],\n    cliente_nome: Optional[str] = None,\n    produtos_resumo: Optional[str] = None\n) -> bool:\n    \"\"\"\n    Notifica a geração de ordens de produção de forma CONSOLIDADA e DESDUPLICADA com padrão de identificação:\n    - Referência: #PED-XXXX",
+        "peekOfCode": "def notify_production_orders(\n    pedido_id: int, \n    pedido_numero: str, \n    sectores: List[Any],\n    cliente_nome: Optional[str] = None,\n    produtos_resumo: Optional[str] = None,\n    actor_user_id: Optional[int] = None,\n    emit_visual_notification: bool = True\n) -> bool:\n    \"\"\"",
         "detail": "backend.app.websocket.socket_manager",
         "documentation": {}
     },
@@ -15351,7 +15947,7 @@
         "kind": 2,
         "importPath": "backend.app.websocket.socket_manager",
         "description": "backend.app.websocket.socket_manager",
-        "peekOfCode": "def notify_production_status_updated(\n    ordem_id: int,\n    ordem_numero: str,\n    pedido_numero: str,\n    sector: str,\n    antigo_estado: str,\n    novo_estado: str,\n    cliente_nome: Optional[str] = None,\n    produtos_resumo: Optional[str] = None\n) -> bool:",
+        "peekOfCode": "def notify_production_status_updated(\n    ordem_id: int,\n    ordem_numero: str,\n    pedido_numero: str,\n    sector: str,\n    antigo_estado: str,\n    novo_estado: str,\n    cliente_nome: Optional[str] = None,\n    produtos_resumo: Optional[str] = None,\n    actor_user_id: Optional[int] = None",
         "detail": "backend.app.websocket.socket_manager",
         "documentation": {}
     },

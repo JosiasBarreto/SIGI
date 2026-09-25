@@ -442,6 +442,10 @@ export default function NovoPedidoForm({ onSuccessRedirect }: NovoPedidoFormProp
       queryClient.invalidateQueries({ queryKey: ["minha-sessao-caixa"] });
 
       toast.success("Pedido registado com sucesso!");
+      notificationManager.startOrderSession({
+        pedidoId: createdOrder?.id,
+        numero: createdOrder?.numero,
+      }, 8000);
       setCompletedOrder({
         ...createdOrder,
         cliente: selectedClientObj || (isQuickClient ? { nome: newClientName } : null),

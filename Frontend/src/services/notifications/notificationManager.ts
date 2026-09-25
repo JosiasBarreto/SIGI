@@ -1,52 +1,73 @@
 import { toast, ToastOptions } from 'react-toastify';
-import { AppNotification, NOTIFICATION_TYPES } from './notificationTypes';
+import { AppNotification } from './notificationTypes';
 import { NotificationAdapter } from './notificationAdapter';
+import { notificationDeduplicator } from './NotificationDeduplicator';
+import { notificationPolicy } from './NotificationPolicy';
 import { notificationSoundManager } from './notificationSoundManager';
 import { osNotificationManager } from './osNotificationManager';
 
 type NotificationListener = (notification: AppNotification) => void;
 
+export interface OrderSessionConfig {
+  pedidoId?: string | number;
+  numero?: string;
+  durationMs?: number;
+}
+
 class NotificationManager {
   private listeners: Set<NotificationListener> = new Set();
   private orderEventListeners: Set<NotificationListener> = new Set();
-  // Cache de desduplicação: chave (hash/id) -> timestamp em ms
-  private recentEvents: Map<string, number> = new Map();
-  private readonly DEDUP_WINDOW_MS = 3000; // Ignora duplicados exatos recebidos dentro de 3 segundos
 
-  // Controlo de sessão ativa de criação/finalização de pedidos (evita enxurrada de 3-4 toasts soltos)
-  private orderSessionActive: boolean = false;
-  private orderSessionExpiry: number = 0;
-  private orderSessionReference: string | null = null;
+  // Controlo de sessão ativa de finalização de pedido
+  private orderSession: {
+    active: boolean;
+    expiry: number;
+    pedidoId?: string;
+    numero?: string;
+  } | null = null;
 
   /**
-   * Inicia um período de finalização de pedido onde múltiplos eventos relacionados
-   * (novo pedido, nova OP, pagamento, etc.) são agrupados no Modal/Swal do Pedido
-   * em vez de disparar 3 a 4 toasts flutuantes na tela.
+   * Inicia um período de finalização de pedido onde mensagens relacionadas
+   * a esse pedido específico são concentradas no Modal/Swal de resumo
    */
-  public startOrderSession(orderReference?: string | number, durationMs: number = 7000) {
-    this.orderSessionActive = true;
-    this.orderSessionExpiry = Date.now() + durationMs;
-    this.orderSessionReference = orderReference ? String(orderReference) : null;
+  public startOrderSession(config?: OrderSessionConfig | string | number, durationMs: number = 8000) {
+    const pedidoId = typeof config === 'object' ? config?.pedidoId : config;
+    const numero = typeof config === 'object' ? config?.numero : undefined;
+    const finalDuration = (typeof config === 'object' && config?.durationMs) ? config.durationMs : durationMs;
+
+    this.orderSession = {
+      active: true,
+      expiry: Date.now() + finalDuration,
+      pedidoId: pedidoId ? String(pedidoId) : undefined,
+      numero: numero ? String(numero) : undefined,
+    };
   }
 
   /**
-   * Encerra imediatamente a sessão de finalização do pedido
+   * Encerra imediatamente a sessão de pedido
    */
   public endOrderSession() {
-    this.orderSessionActive = false;
-    this.orderSessionReference = null;
+    this.orderSession = null;
   }
 
   /**
    * Verifica se existe uma sessão ativa de pedido
    */
-  public isOrderSessionActive(): boolean {
-    if (!this.orderSessionActive) return false;
-    if (Date.now() > this.orderSessionExpiry) {
-      this.orderSessionActive = false;
-      this.orderSessionReference = null;
+  public isOrderSessionActive(targetPedidoId?: string | number, targetNumero?: string): boolean {
+    if (!this.orderSession || !this.orderSession.active) return false;
+    if (Date.now() > this.orderSession.expiry) {
+      this.orderSession = null;
       return false;
     }
+
+    // Se a sessão foi iniciada com identificador de pedido, valida se coincide
+    if (this.orderSession.pedidoId && targetPedidoId) {
+      return String(this.orderSession.pedidoId) === String(targetPedidoId);
+    }
+    if (this.orderSession.numero && targetNumero) {
+      return String(this.orderSession.numero) === String(targetNumero);
+    }
+
     return true;
   }
 
@@ -61,42 +82,70 @@ class NotificationManager {
   }
 
   /**
-   * Processa qualquer evento recebido do Socket.IO ou da aplicação
+   * Processa qualquer evento recebido do Socket.IO ou da aplicação.
+   *
+   * FLUXO DE EXECUÇÃO:
+   * 1. Validar e normalizar payload
+   * 2. Verificar deduplicação por event_id / chave semântica
+   * 3. Registar como processado
+   * 4. Verificar política de originador (exclude_actor)
+   * 5. Adicionar ao NotificationContext / UI Store
+   * 6. Disparar Toast (se canal IN_APP ativo e não suprimido)
+   * 7. Tocar Som (se canal SOUND ativo)
+   * 8. Disparar OS Notification (se canal OS_NOTIFICATION ativo)
    */
   public handleEvent(eventName: string, payload: any): AppNotification | null {
+    if (!payload) return null;
+
+    // 1. Normalizar payload para o modelo canónico
     const notification = NotificationAdapter.fromBackendEvent(eventName, payload);
 
-    // Verificação de desduplicação
-    const dedupKey = this.buildDedupKey(notification);
-    const now = Date.now();
-    const lastSeen = this.recentEvents.get(dedupKey);
+    // 2. Chave de deduplicação semântica de fallback
+    const fallbackKey = notificationDeduplicator.buildSemanticFallbackKey(
+      notification.event_type || notification.type,
+      notification.entity_type,
+      notification.entity_id,
+      notification.data?.novo_estado,
+      notification.title,
+      notification.message
+    );
 
-    if (lastSeen && (now - lastSeen) < this.DEDUP_WINDOW_MS) {
-      // Evento duplicado descartado silenciosamente
+    // 3. Verificação de deduplicação idempotente
+    if (notificationDeduplicator.isDuplicate(notification.event_id, fallbackKey)) {
+      // Evento duplicado descartado silenciosamente ANTES de tocar qualquer som ou emitir toast
       return null;
     }
 
-    // Registar na janela de desduplicação
-    this.recentEvents.set(dedupKey, now);
-    this.cleanRecentEvents(now);
+    // 4. Registar na memória de deduplicação
+    notificationDeduplicator.markProcessed(notification.event_id, fallbackKey);
 
-    // 1. Tocar som apropriado
-    if (notification.sound !== false) {
-      const typeConfig = NOTIFICATION_TYPES[notification.type];
-      const preset = notification.priority === 'critical'
-        ? 'critical'
-        : notification.priority === 'high'
-        ? 'alarm'
-        : (typeConfig?.soundPreset || 'chime');
+    // 5. Verificar política de canais
+    const activeChannels = notificationPolicy.resolveActiveChannels(notification);
 
-      notificationSoundManager.play(preset);
-    }
+    // 6. Verificar se o utilizador atual é o próprio autor da ação (exclude_actor)
+    const isActor = notificationPolicy.isActorOriginator(notification);
 
-    // 2. Notificar ouvintes do React (Store / Context / Notificações Gerais)
+    // 7. Notificar ouvintes do React (NotificationContext / Centro de Notificações)
     this.notifyListeners(notification);
 
-    // 3. Notificar o modal de pedido caso esteja ativo
-    if (this.isOrderSessionActive() || this.orderEventListeners.size > 0) {
+    // 8. Notificar o modal de pedido caso esteja ativo
+    const isOrderRelated = [
+      'novo_pedido',
+      'pedido_actualizado',
+      'pedido_atualizado',
+      'nova_ordem_producao',
+      'ordem_producao_actualizada',
+      'ordem_producao_atualizada',
+      'pagamento_recebido',
+      'notificacao',
+    ].includes(notification.type);
+
+    const isSessionActive = this.isOrderSessionActive(
+      notification.data?.pedido_id,
+      notification.data?.numero
+    );
+
+    if (isSessionActive || this.orderEventListeners.size > 0) {
       this.orderEventListeners.forEach((listener) => {
         try {
           listener(notification);
@@ -106,29 +155,23 @@ class NotificationManager {
       });
     }
 
-    // 4. Apresentar notificação Toast de acordo com a prioridade
-    // Se a sessão de pedido estiver ativa, suprime toasts de eventos de fluxo de pedido
-    // para que todas as mensagens fiquem organizadas dentro do componente/modal/swal
-    const isOrderRelatedEvent = [
-      'novo_pedido',
-      'pedido_actualizado',
-      'nova_ordem_producao',
-      'ordem_producao_actualizada',
-      'pagamento_recebido',
-      'stock_baixo',
-      'notificacao',
-    ].includes(notification.type);
-
-    if (this.isOrderSessionActive() && isOrderRelatedEvent && notification.priority !== 'critical') {
-      // Suprimido da tela flutuante de toasts: fica organizado no componente/modal
-    } else {
-      this.showToast(notification);
+    // 9. Toast: Apresentar se o canal IN_APP estiver ativo, não for o autor com exclude_actor e não estiver em sessão de pedido
+    if (activeChannels.has('IN_APP') && !isActor) {
+      if (!(isSessionActive && isOrderRelated && notification.priority !== 'CRITICAL')) {
+        this.showToast(notification);
+      }
     }
 
-    // 5. Notificação do Sistema Operacional (se janela não estiver com foco ou para high/critical)
-    if (notification.priority !== 'low' && !this.isOrderSessionActive()) {
+    // 10. Som: Tocar APENAS se o canal SOUND estiver ativo e o som não estiver silenciado
+    if (activeChannels.has('SOUND') && !isActor && notification.sound !== false) {
+      const soundPreset = notificationPolicy.getSoundPreset(notification);
+      notificationSoundManager.play(soundPreset);
+    }
+
+    // 11. Notificação do Sistema Operativo (OS Notification)
+    if (activeChannels.has('OS_NOTIFICATION') && !isActor && !isSessionActive) {
       osNotificationManager.show(notification, (targetUrl) => {
-        if (targetUrl && window.location.pathname !== targetUrl) {
+        if (targetUrl && typeof window !== 'undefined' && window.location.pathname !== targetUrl) {
           window.location.href = targetUrl;
         }
       });
@@ -161,51 +204,40 @@ class NotificationManager {
    * Apresenta o Toast na interface de acordo com a prioridade
    */
   private showToast(notification: AppNotification) {
-    // Se for prioridade baixa (low), não incomodar o utilizador com toast invasivo
-    if (notification.priority === 'low') return;
+    const priority = notificationPolicy.normalizePriority(notification.priority);
+    if (priority === 'LOW') return;
+
+    const autoClose = notificationPolicy.getToastDuration(notification.priority);
 
     const options: ToastOptions = {
-      autoClose: notification.priority === 'critical' ? false : (notification.priority === 'high' ? 6000 : 4000),
+      autoClose,
       closeOnClick: true,
       pauseOnHover: true,
     };
 
     const displayMsg = notification.title && notification.message && notification.title !== notification.message
-      ? `${notification.title}: ${notification.message}`
+      ? `${notification.title}: ${notification.message.split('\n')[0]}`
       : (notification.message || notification.title);
 
-    switch (notification.priority) {
-      case 'critical':
+    switch (priority) {
+      case 'CRITICAL':
         toast.error(`🚨 ${displayMsg}`, options);
         break;
-      case 'high':
+      case 'HIGH':
         toast.warning(`⚠️ ${displayMsg}`, options);
         break;
-      case 'normal':
+      case 'NORMAL':
       default:
-        if (notification.type.includes('concluid') || notification.type.includes('pronto') || notification.type.includes('aprovad')) {
+        if (
+          notification.type.includes('concluid') ||
+          notification.type.includes('pronto') ||
+          notification.type.includes('aprovad')
+        ) {
           toast.success(`✓ ${displayMsg}`, options);
         } else {
           toast.info(`ℹ️ ${displayMsg}`, options);
         }
         break;
-    }
-  }
-
-  private buildDedupKey(notif: AppNotification): string {
-    if (notif.id && !notif.id.startsWith(Date.now().toString().slice(0, 7))) {
-      return `id:${notif.id}`;
-    }
-    return `hash:${notif.type}:${notif.title}:${notif.message}`;
-  }
-
-  private cleanRecentEvents(now: number) {
-    if (this.recentEvents.size > 200) {
-      for (const [key, timestamp] of this.recentEvents.entries()) {
-        if (now - timestamp > this.DEDUP_WINDOW_MS * 2) {
-          this.recentEvents.delete(key);
-        }
-      }
     }
   }
 }

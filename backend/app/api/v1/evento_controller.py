@@ -394,7 +394,7 @@ def faturar_evento(id):
 def check_proximos():
     from datetime import datetime, timedelta
     from app.models.evento import Evento
-    from app.websocket.socket_manager import socketio
+    from app.websocket.socket_manager import emit_sync_event
     
     amanha = datetime.utcnow().date() + timedelta(days=1)
     hoje = datetime.utcnow().date()
@@ -404,7 +404,7 @@ def check_proximos():
     ).all()
     
     for ev in eventos:
-        socketio.emit('alerta_evento_proximo', {'numero': ev.numero, 'titulo': ev.titulo, 'data': str(ev.data_evento)})
+        emit_sync_event('alerta_evento_proximo', {'numero': ev.numero, 'titulo': ev.titulo, 'data': str(ev.data_evento)})
         
     return jsonify({"msg": f"Checked {len(eventos)} upcoming events."}), 200
 

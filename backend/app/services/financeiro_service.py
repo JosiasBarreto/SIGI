@@ -12,7 +12,7 @@ from app.repositories.financeiro_repos import (
     ContaPagarRepository, ReceitaRepository, DespesaRepository
 )
 from app.services.audit_service import AuditService
-from app.websocket.socket_manager import send_notification, socketio
+from app.websocket.socket_manager import send_notification, emit_sync_event
 from app.core.database import db
 
 logger = logging.getLogger(__name__)
@@ -143,7 +143,7 @@ class FinanceiroService:
         AuditService.log_action(utilizador_id, "FECHAR", "caixas", caixa.id)
         payload = {"caixa_id": caixa.id, "numero": caixa.numero, "valor_final": float(caixa.valor_final or 0)}
         send_notification(utilizador_id, f"Caixa {caixa.numero} fechado. Saldo final: {float(caixa.valor_final or 0):.2f}.", "Caixa")
-        socketio.emit('caixa_fechado', payload, room=f"user_{utilizador_id}")
+        emit_sync_event('caixa_fechado', payload, room=f"user_{utilizador_id}")
         return caixa, None
 
     def get_valores_esperados(self, caixa_id, utilizador_id=None):
@@ -268,7 +268,7 @@ class FinanceiroService:
         AuditService.log_action(utilizador_id, "FECHAR_DETALHADO", "caixas", caixa.id)
         payload = {"caixa_id": caixa.id, "numero": caixa.numero, "valor_final": float(caixa.valor_final or 0)}
         send_notification(utilizador_id, f"Caixa {caixa.numero} fechado e conciliado.", "Caixa")
-        socketio.emit('caixa_fechado', payload, room=f"user_{utilizador_id}")
+        emit_sync_event('caixa_fechado', payload, room=f"user_{utilizador_id}")
         return caixa, None
 
     def registrar_movimento(self, caixa_id, data, utilizador_id):

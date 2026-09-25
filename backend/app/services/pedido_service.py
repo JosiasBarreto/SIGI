@@ -208,7 +208,7 @@ class PedidoService:
         try:
             from app.services.producao_service import ProducaoService
             prod_service = ProducaoService()
-            prod_service.gerar_ordens_por_pedido(pedido.id, user_id)
+            prod_service.gerar_ordens_por_pedido(pedido.id, user_id, emit_visual_notification=False)
         except Exception as e:
             print("⚠ Could not generate production orders automatically on creation:", e)
             
@@ -224,10 +224,11 @@ class PedidoService:
                 pedido_numero=pedido.numero,
                 total=float(pedido.valor_total or 0),
                 cliente_nome=cliente_nome,
-                produtos_resumo=produtos_resumo
+                produtos_resumo=produtos_resumo,
+                actor_user_id=user_id
             )
         except Exception as ws_err:
-            socketio.emit('novo_pedido', {'numero': pedido.numero, 'estado': pedido.estado.value if hasattr(pedido.estado, 'value') else str(pedido.estado)})
+            logger.error(f"Erro ao emitir evento de novo pedido: {ws_err}")
 
         # Disparar notificação por Email / WhatsApp ao cliente
         try:
@@ -339,9 +340,6 @@ class PedidoService:
                 prod_service = ProducaoService()
                 prod_service.gerar_ordens_por_pedido(pedido.id, user_id)
                 
-            if novo_estado_enum == EstadoPedido.PRONTO and old_estado != EstadoPedido.PRONTO.value:
-                socketio.emit('pedido_pronto', {'numero': pedido.numero, 'cliente': pedido.cliente.nome if pedido.cliente else 'Balcão'})
-                
             pedido.estado = novo_estado_enum.value
             
             db.session.commit()
@@ -362,14 +360,11 @@ class PedidoService:
                     novo_estado=novo_estado,
                     cliente_nome=cliente_nome,
                     produtos_resumo=produtos_resumo,
-                    total=float(pedido.valor_total or 0)
+                    total=float(pedido.valor_total or 0),
+                    actor_user_id=user_id
                 )
             except Exception as notif_err:
-                socketio.emit('pedido_atualizado', {
-                    'numero': pedido.numero, 
-                    'antigo_estado': old_estado, 
-                    'novo_estado': novo_estado
-                })
+                logger.error(f"Erro ao emitir atualização de estado do pedido: {notif_err}")
             
             # Disparar notificação ao cliente
             try:

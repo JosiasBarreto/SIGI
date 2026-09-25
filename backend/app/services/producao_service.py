@@ -91,7 +91,7 @@ class ProducaoService:
         return ficha, None
 
     # --- Criação Automática de Ordem ---
-    def gerar_ordens_por_pedido(self, pedido_id, user_id=None):
+    def gerar_ordens_por_pedido(self, pedido_id, user_id=None, emit_visual_notification=True):
         pedido = db.session.query(Pedido).filter_by(id=pedido_id).first()
         if not pedido: return False, "Pedido não encontrado"
         
@@ -224,11 +224,13 @@ class ProducaoService:
             estado_anterior = pedido.estado.value if hasattr(pedido.estado, 'value') else str(pedido.estado)
             pedido.estado = EstadoPedido.EM_PRODUCAO.value
             db.session.commit()
-            socketio.emit('pedido_atualizado', {
-                'numero': pedido.numero,
-                'antigo_estado': estado_anterior,
-                'novo_estado': EstadoPedido.EM_PRODUCAO.value,
-            })
+            if emit_visual_notification:
+                from app.websocket.socket_manager import emit_sync_event
+                emit_sync_event('pedido_atualizado', {
+                    'numero': pedido.numero,
+                    'antigo_estado': estado_anterior,
+                    'novo_estado': EstadoPedido.EM_PRODUCAO.value,
+                })
         for ordem in ordens_criadas:
             if user_id:
                 AuditService.log_action(user_id, "CREATE", "ordens_producao", ordem.id)
@@ -241,7 +243,9 @@ class ProducaoService:
             pedido_numero=pedido.numero, 
             sectores=[ordem.sector for ordem in ordens_criadas],
             cliente_nome=cliente_nome,
-            produtos_resumo=produtos_resumo
+            produtos_resumo=produtos_resumo,
+            actor_user_id=user_id,
+            emit_visual_notification=emit_visual_notification
         )
         return True, None
 
@@ -288,9 +292,9 @@ class ProducaoService:
 
         if processados:
             db.session.commit()
-            from app.websocket.socket_manager import notify_production_orders, format_products_summary
+            from app.websocket.socket_manager import notify_production_orders, format_products_summary, emit_sync_event
             for p in processados:
-                socketio.emit('pedido_atualizado', {
+                emit_sync_event('pedido_atualizado', {
                     'numero': p.numero,
                     'antigo_estado': 'Agendado',
                     'novo_estado': EstadoPedido.EM_PRODUCAO.value if hasattr(EstadoPedido.EM_PRODUCAO, 'value') else str(EstadoPedido.EM_PRODUCAO)
@@ -344,7 +348,8 @@ class ProducaoService:
                         novo_estado='Em Producao',
                         cliente_nome=cliente_nome,
                         produtos_resumo=format_products_summary(pedido.itens),
-                        total=float(pedido.valor_total or 0)
+                        total=float(pedido.valor_total or 0),
+                        actor_user_id=user_id
                     )
 
             # Notificar início de preparação da comanda
@@ -356,7 +361,8 @@ class ProducaoService:
                 antigo_estado=estado_antigo,
                 novo_estado=estado_novo_str,
                 cliente_nome=cliente_nome,
-                produtos_resumo=produtos_ordem_str
+                produtos_resumo=produtos_ordem_str,
+                actor_user_id=user_id
             )
             
         elif estado_novo_str in [EstadoProducao.PRONTO.value, 'Pronto', 'PRONTO']:
@@ -381,7 +387,8 @@ class ProducaoService:
                 antigo_estado=estado_antigo,
                 novo_estado=estado_novo_str,
                 cliente_nome=cliente_nome,
-                produtos_resumo=produtos_ordem_str
+                produtos_resumo=produtos_ordem_str,
+                actor_user_id=user_id
             )
 
             # Atualizar estado do Pedido se TODAS as Ordens de Produção do Pedido estiverem PRONTO
@@ -407,7 +414,8 @@ class ProducaoService:
                             novo_estado='Pronto',
                             cliente_nome=cliente_nome,
                             produtos_resumo=format_products_summary(pedido.itens),
-                            total=float(pedido.valor_total or 0)
+                            total=float(pedido.valor_total or 0),
+                            actor_user_id=user_id
                         )
             
         db.session.commit()

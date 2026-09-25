@@ -1,91 +1,49 @@
-// File: Frontend/src/contexts/SocketContext.tsx
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { io, Socket } from 'socket.io-client';
+import React, { createContext, useContext, useEffect, useState, useMemo } from 'react';
+import { socketManager } from '../services/socket/SocketManager';
+import { SocketConnectionStatus } from '../services/socket/socketTypes';
 
 interface SocketContextType {
-  socket: Socket | null;
   isConnected: boolean;
-  on: (event: string, callback: (...args: any[]) => void) => void;
+  status: SocketConnectionStatus;
+  on: (event: string, callback: (...args: any[]) => void) => () => void;
   off: (event: string, callback: (...args: any[]) => void) => void;
   emit: (event: string, ...args: any[]) => void;
+  reconnect: () => void;
 }
 
 const SocketContext = createContext<SocketContextType>({
-  socket: null,
   isConnected: false,
-  on: () => {},
+  status: 'disconnected',
+  on: () => () => {},
   off: () => {},
   emit: () => {},
+  reconnect: () => {},
 });
 
 export function SocketProvider({ children }: { children: React.ReactNode }) {
-  const [socket, setSocket] = useState<Socket | null>(null);
-  const [isConnected, setIsConnected] = useState(false);
-  const [authVersion, setAuthVersion] = useState(0);
+  const [status, setStatus] = useState<SocketConnectionStatus>(() => socketManager.getStatus());
 
   useEffect(() => {
-    const token = localStorage.getItem('access_token');
-    if (!token) {
-      setSocket(null);
-      setIsConnected(false);
-      return;
-    }
+    // Inicia a conexão única gerenciada pelo SocketManager
+    socketManager.connect();
 
-    const apiUrl = import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_URL || 'http://192.168.100.141:8000/api';
-    const socketUrl = apiUrl.replace(/\/api(?:\/v\d+)?\/?$/, '');
-    const newSocket = io(socketUrl, {
-      auth: { token },
-      path: '/socket.io',
-      transports: ['polling', 'websocket'],
-      reconnection: true,
-      reconnectionAttempts: Infinity,
-      timeout: 10000,
+    const unsubStatus = socketManager.onStatusChange((newStatus) => {
+      setStatus(newStatus);
     });
-
-    newSocket.on('connect', () => {
-      setIsConnected(true);
-      // Compatibility fallback for deployments that still use the explicit
-      // join event. The backend validates the same JWT before joining rooms.
-      
-    });
-    newSocket.on('disconnect', (reason) => {
-      console.warn('[Socket.IO] Desconectado:', reason);
-      setIsConnected(false);
-    });
-    newSocket.on('connect_error', (error) => {
-      console.error('[Socket.IO] Erro de conexão:', error);
-      console.error('[Socket.IO] URL:', socketUrl);
-      console.error('[Socket.IO] Transport:', newSocket.io.engine?.transport?.name);
-    
-      setIsConnected(false);
-    });
-    
-    setSocket(newSocket);
 
     return () => {
-      newSocket.disconnect();
+      unsubStatus();
     };
-  }, [authVersion]);
-
-  useEffect(() => {
-    const refreshAuthentication = () => setAuthVersion((version) => version + 1);
-    window.addEventListener('sigi:auth-changed', refreshAuthentication);
-    return () => window.removeEventListener('sigi:auth-changed', refreshAuthentication);
   }, []);
 
-  const value: SocketContextType = {
-    socket,
-    isConnected,
-    on: (event, cb) => {
-      socket?.on(event, cb);
-    },
-    off: (event, cb) => {
-      socket?.off(event, cb);
-    },
-    emit: (event, ...args) => {
-      socket?.emit(event, ...args);
-    }
-  };
+  const value = useMemo<SocketContextType>(() => ({
+    isConnected: status === 'connected',
+    status,
+    on: (event, cb) => socketManager.on(event, cb),
+    off: (event, cb) => socketManager.off(event, cb),
+    emit: (event, ...args) => socketManager.emit(event, ...args),
+    reconnect: () => socketManager.reconnectWithCurrentAuth(),
+  }), [status]);
 
   return (
     <SocketContext.Provider value={value}>

@@ -1,10 +1,8 @@
-import { AppNotification, NOTIFICATION_TYPES, NotificationPriority, NotificationMetadata } from './notificationTypes';
-import { formatCurrency} from '../../lib/utils';
+import { AppNotification, NOTIFICATION_TYPES, NotificationPriority, NotificationMetadata, NotificationChannel } from './notificationTypes';
 
 /**
  * Adaptador para normalizar eventos brutos vindos do backend (WebSocket / REST API)
- * ou de acções locais para o modelo canónico AppNotification seguindo o:
- * Padrão Universal de Identificação em Notificações (Pedidos & Produção).
+ * para o modelo canónico AppNotification segundo o contrato unificado de notificações.
  */
 export class NotificationAdapter {
   /**
@@ -15,7 +13,7 @@ export class NotificationAdapter {
     const normalizedType = this.resolveType(eventName, raw);
     const config = NOTIFICATION_TYPES[normalizedType] || NOTIFICATION_TYPES['notificacao'];
 
-    // Extrair data ou metadados incorporados
+    // 1. Extrair data ou metadados incorporados
     const metadata: NotificationMetadata = {
       ...(typeof raw.data === 'object' ? raw.data : {}),
       ...(typeof raw.metadados === 'object' ? raw.metadados : {}),
@@ -29,44 +27,61 @@ export class NotificationAdapter {
       ...(raw.produtos || raw.artigos ? { produtos: raw.produtos || raw.artigos } : {}),
       ...(raw.antigo_estado || raw.estado_anterior ? { antigo_estado: raw.antigo_estado || raw.estado_anterior } : {}),
       ...(raw.novo_estado || raw.estado_novo || raw.estado ? { novo_estado: raw.novo_estado || raw.estado_novo || raw.estado } : {}),
-      ...(raw.total !== undefined ? { total: Number(raw.total) } : {}),
       ...(raw.origem ? { origem: raw.origem } : {}),
     };
 
-    // Determinar o ID
-    const id = raw.id 
-      ? String(raw.id) 
-      : `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    // 2. Extrair identificadores contratuais do evento
+    const eventId = raw.event_id || raw.eventId || (raw.id ? String(raw.id) : undefined);
+    const id = eventId || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const eventType = raw.event_type || raw.eventType || raw.tipo || normalizedType;
+    const entityType = raw.entity_type || raw.entityType || raw.canal || this.resolveCanal(raw, eventName, normalizedType);
+    const entityId = raw.entity_id || raw.entityId || metadata.pedido_id || metadata.ordem_id || raw.id;
+    const aggregateId = raw.aggregate_id || raw.aggregateId || (entityType && entityId ? `${entityType}:${entityId}` : undefined);
+    const actorUserId = raw.actor_user_id || raw.actorUserId || raw.actor_id || raw.actorId;
+    const excludeActor = raw.exclude_actor !== undefined ? Boolean(raw.exclude_actor) : Boolean(raw.excludeActor);
 
-    // Determinar canal
+    // 3. Determinar canais
+    const channels: NotificationChannel[] = Array.isArray(raw.channels)
+      ? raw.channels
+      : (Array.isArray(raw.notification?.channels) ? raw.notification.channels : []);
+
+    // 4. Determinar canal
     const canal = this.resolveCanal(raw, eventName, normalizedType);
 
-    // Determinar prioridade
+    // 5. Determinar prioridade
     const priority = this.resolvePriority(raw, config.defaultPriority);
 
-    // Determinar título segundo o Padrão Universal
+    // 6. Determinar título
     const title = this.resolveTitle(raw, metadata, config.label, eventName);
 
-    // Determinar mensagem estruturada com marcadores e contexto
+    // 7. Determinar mensagem estruturada
     const message = this.resolveMessage(raw, metadata, title, eventName);
 
-    // Determinar rota de acção
+    // 8. Determinar rota de acção
     const actionUrl = this.resolveActionUrl(raw, metadata, config.defaultRoute);
 
-    // Timestamp
+    // 9. Timestamp
     const timestamp = raw.timestamp || raw.created_at || raw.data_criacao || new Date().toISOString();
 
     return {
       id,
+      event_id: eventId,
+      event_type: eventType,
+      entity_type: entityType,
+      entity_id: entityId,
+      aggregate_id: aggregateId,
+      actor_user_id: actorUserId,
+      exclude_actor: excludeActor,
       type: normalizedType,
       title,
       message,
       priority,
+      channels,
       timestamp,
       canal,
       read: Boolean(raw.read || raw.lida || false),
-      sound: raw.sound !== false,
-      persistent: priority === 'critical' || Boolean(raw.persistent || raw.persistente),
+      sound: raw.sound !== false && raw.notification?.sound !== false,
+      persistent: priority === 'CRITICAL' || Boolean(raw.persistent || raw.persistente),
       source: raw.source || raw.origem || metadata.origem || eventName,
       actionUrl,
       data: metadata,
@@ -76,6 +91,7 @@ export class NotificationAdapter {
 
   private static resolveCanal(raw: any, eventName: string, type: string): string {
     if (raw.canal) return String(raw.canal).toUpperCase();
+    if (raw.channel) return String(raw.channel).toUpperCase();
     if (type.startsWith('pedido') || eventName.startsWith('pedido') || raw.data?.pedido_id) return 'PEDIDO';
     if (type.includes('producao') || eventName.includes('producao') || raw.data?.ordem_id) return 'PRODUCAO';
     if (type.includes('stock') || type.includes('inventario') || eventName.includes('stock')) return 'STOCK';
@@ -90,11 +106,10 @@ export class NotificationAdapter {
     if (raw.tipo && NOTIFICATION_TYPES[raw.tipo]) return raw.tipo;
     if (NOTIFICATION_TYPES[eventName]) return eventName;
 
-    // Normalizações de variações comuns
     const lower = eventName.toLowerCase().replace(/[\s-]/g, '_');
     if (NOTIFICATION_TYPES[lower]) return lower;
-    if (lower === 'pedido_atualizado') return 'pedido_actualizado';
-    if (lower === 'ordem_producao_atualizada') return 'ordem_producao_actualizada';
+    if (lower === 'pedido_actualizado') return 'pedido_atualizado';
+    if (lower === 'ordem_producao_actualizada') return 'ordem_producao_atualizada';
     if (lower === 'alerta_material') return 'alerta_stock';
     if (lower === 'nova_requisicao') return 'requisicao_criada';
 
@@ -102,26 +117,17 @@ export class NotificationAdapter {
   }
 
   private static resolvePriority(raw: any, defaultPriority: NotificationPriority): NotificationPriority {
-    const p = String(raw.priority || raw.prioridade || raw.tipo || '').toLowerCase();
-    if (p === 'critical' || p === 'critica' || p === 'crítica') return 'critical';
-    if (p === 'high' || p === 'alta' || p === 'alto') return 'high';
-    if (p === 'normal' || p === 'media' || p === 'médio' || p === 'medio') return 'normal';
-    if (p === 'low' || p === 'baixa' || p === 'baixo') return 'low';
-
-    // Mapear se vier em formato tipo erro/warning/info
-    if (p === 'error' || p === 'danger') return 'high';
-    if (p === 'warning') return 'high';
-    if (p === 'info' || p === 'success') return 'normal';
+    const p = String(raw.priority || raw.prioridade || raw.notification?.priority || raw.tipo || '').toUpperCase();
+    if (p === 'CRITICAL' || p === 'CRITICA' || p === 'CRÍTICA' || p === 'ERROR' || p === 'DANGER') return 'CRITICAL';
+    if (p === 'HIGH' || p === 'ALTA' || p === 'ALTO' || p === 'WARNING') return 'HIGH';
+    if (p === 'LOW' || p === 'BAIXA' || p === 'BAIXO') return 'LOW';
+    if (p === 'NORMAL' || p === 'MEDIA' || p === 'MÉDIO' || p === 'INFO' || p === 'SUCCESS') return 'NORMAL';
 
     return defaultPriority;
   }
 
-  /**
-   * Padrão Universal de Identificação em Títulos:
-   * - Pedido: `Pedido #PED-XXXX: <Novo Estado>`
-   * - Produção: `Produção (<Setor>) #OP-XXXX: <Novo Estado>`
-   */
   private static resolveTitle(raw: any, meta: NotificationMetadata, defaultLabel: string, eventName: string): string {
+    if (raw.notification?.title) return String(raw.notification.title);
     if (raw.titulo) return String(raw.titulo);
     if (raw.title) return String(raw.title);
 
@@ -204,20 +210,13 @@ export class NotificationAdapter {
     }
   }
 
-  /**
-   * Padrão Universal de Identificação em Mensagens:
-   * Corpo estruturado com marcadores:
-   * • Cliente: ...
-   * • Produtos / Artigos: ...
-   * • Transição: <Antigo Estado> ➔ <Novo Estado>
-   */
   private static resolveMessage(raw: any, meta: NotificationMetadata, title: string, eventName: string): string {
-    // Se a mensagem já vier pré-formatada do backend com quebras/bullets, preserva
+    if (raw.notification?.message) return String(raw.notification.message);
     if (raw.mensagem) return String(raw.mensagem);
     if (raw.message) return String(raw.message);
     if (raw.msg) return String(raw.msg);
 
-    // 1. Mensagens ricas para Pedidos
+    // 1. Mensagens para Pedidos
     if (
       eventName === 'novo_pedido' ||
       eventName === 'pedido_actualizado' ||
@@ -232,6 +231,7 @@ export class NotificationAdapter {
       const produtos = meta.produtos || meta.artigos || '';
       const novoEst = meta.novo_estado || meta.estado_novo || (eventName === 'pedido_pronto' ? 'PRONTO' : eventName === 'pedido_cancelado' ? 'CANCELADO' : 'REGISTADO');
       const antigoEst = meta.antigo_estado || meta.estado_anterior || '';
+
       const lines: string[] = [];
       if (antigoEst && novoEst) {
         lines.push(`O estado do Pedido ${ref} foi alterado para '${novoEst}'.`);
@@ -250,7 +250,7 @@ export class NotificationAdapter {
       return lines.join('\n');
     }
 
-    // 2. Mensagens ricas para Ordens de Produção
+    // 2. Mensagens para Ordens de Produção
     if (
       eventName === 'nova_ordem_producao' ||
       eventName === 'ordem_producao_actualizada' ||
@@ -288,7 +288,7 @@ export class NotificationAdapter {
       return lines.join('\n');
     }
 
-    // 3. Outros eventos do ERP
+    // 3. Outros eventos
     switch (eventName) {
       case 'stock_baixo':
       case 'alerta_stock': {
@@ -303,8 +303,7 @@ export class NotificationAdapter {
       case 'caixa_fechado': {
         const caixaId = raw.caixa_id || raw.id || '';
         const operador = raw.operador ? ` por ${raw.operador}` : '';
-        const valor = typeof raw.valor_final === 'number' ? ` com saldo final de ${formatCurrency(raw.valor_final)}` : '';
-        return caixaId ? `Caixa #${caixaId} foi encerrado${operador}${valor}.` : 'Uma sessão de caixa foi encerrada.';
+        return caixaId ? `Caixa #${caixaId} foi encerrado${operador}.` : 'Uma sessão de caixa foi encerrada.';
       }
       case 'caixa_aberto': {
         const operador = raw.operador ? ` por ${raw.operador}` : '';
@@ -326,9 +325,8 @@ export class NotificationAdapter {
         return cod ? `Requisição ${cod} foi rejeitada.${motivo}` : 'Requisição de material rejeitada.';
       }
       case 'pagamento_recebido': {
-        const val = typeof raw.valor === 'number' ? formatCurrency(raw.valor) : '';
         const ref = raw.referencia || raw.recibo || '';
-        return val ? `Recebimento de ${val} confirmado (${ref || 'comercial'}).` : 'Novo pagamento processado com sucesso.';
+        return `Recebimento confirmado (${ref || 'comercial'}).`;
       }
       default:
         return title;

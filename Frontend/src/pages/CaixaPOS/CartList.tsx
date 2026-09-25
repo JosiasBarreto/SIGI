@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { ShoppingCart, Trash2, Minus, Plus, Tag, AlertCircle } from "lucide-react";
-
+import { getCurrencySymbol } from "../../lib/utils";
 
 interface CartItem {
   id: string | number;
@@ -36,7 +36,7 @@ interface CartListProps {
 const CartList: React.FC<CartListProps> = ({
   cart,
   showPriceWithIva = false,
-  currencySymbol =  "STN",
+  currencySymbol = getCurrencySymbol() || "STN",
   formatCurrency,
   removeItem,
   updateQty,
