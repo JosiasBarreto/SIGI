@@ -2224,6 +2224,14 @@
         "documentation": {}
     },
     {
+        "label": "db",
+        "importPath": "app.core.database",
+        "description": "app.core.database",
+        "isExtraImport": true,
+        "detail": "app.core.database",
+        "documentation": {}
+    },
+    {
         "label": "AuthService",
         "importPath": "app.services.auth_service",
         "description": "app.services.auth_service",
@@ -3921,6 +3929,22 @@
         "documentation": {}
     },
     {
+        "label": "text",
+        "importPath": "sqlalchemy",
+        "description": "sqlalchemy",
+        "isExtraImport": true,
+        "detail": "sqlalchemy",
+        "documentation": {}
+    },
+    {
+        "label": "inspect",
+        "importPath": "sqlalchemy",
+        "description": "sqlalchemy",
+        "isExtraImport": true,
+        "detail": "sqlalchemy",
+        "documentation": {}
+    },
+    {
         "label": "func",
         "importPath": "sqlalchemy",
         "description": "sqlalchemy",
@@ -3946,6 +3970,14 @@
     },
     {
         "label": "desc",
+        "importPath": "sqlalchemy",
+        "description": "sqlalchemy",
+        "isExtraImport": true,
+        "detail": "sqlalchemy",
+        "documentation": {}
+    },
+    {
+        "label": "func",
         "importPath": "sqlalchemy",
         "description": "sqlalchemy",
         "isExtraImport": true,
@@ -7190,6 +7222,38 @@
     },
     {
         "label": "Any",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Dict",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "List",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Any",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "Optional",
         "importPath": "typing",
         "description": "typing",
         "isExtraImport": true,
@@ -10808,7 +10872,7 @@
         "kind": 2,
         "importPath": "backend.app.api.v1.backup_controller",
         "description": "backend.app.api.v1.backup_controller",
-        "peekOfCode": "def list_backups():\n    return jsonify({'items': backup_service.list()}), 200\n@backup_bp.route('', methods=['POST'])\n@jwt_required()\n@requires_roles('Administrador')\ndef create_backup():\n    try:\n        result = backup_service.create()\n        AuditService.log_action(get_jwt_identity(), 'BACKUP', 'sistema', new_values={'filename': result['filename']}, modulo='CONFIGURACOES')\n        return jsonify(result), 201",
+        "peekOfCode": "def list_backups():\n    \"\"\"Lista todos os ficheiros de backup disponíveis no servidor.\"\"\"\n    items = backup_service.list()\n    return jsonify({'items': items, 'total': len(items)}), 200\n@backup_bp.route('', methods=['POST'])\n@jwt_required()\n@requires_roles('Administrador')\ndef create_backup():\n    \"\"\"Cria um novo backup completo (.sql).\"\"\"\n    try:",
         "detail": "backend.app.api.v1.backup_controller",
         "documentation": {}
     },
@@ -10817,7 +10881,7 @@
         "kind": 2,
         "importPath": "backend.app.api.v1.backup_controller",
         "description": "backend.app.api.v1.backup_controller",
-        "peekOfCode": "def create_backup():\n    try:\n        result = backup_service.create()\n        AuditService.log_action(get_jwt_identity(), 'BACKUP', 'sistema', new_values={'filename': result['filename']}, modulo='CONFIGURACOES')\n        return jsonify(result), 201\n    except Exception as error:\n        return jsonify({'msg': f'Não foi possível criar o backup: {error}'}), 500\n@backup_bp.route('/<path:filename>/download', methods=['GET'])\n@jwt_required()\n@requires_roles('Administrador')",
+        "peekOfCode": "def create_backup():\n    \"\"\"Cria um novo backup completo (.sql).\"\"\"\n    try:\n        result = backup_service.create()\n        AuditService.log_action(\n            get_jwt_identity(),\n            'BACKUP',\n            'sistema',\n            new_values={'filename': result['filename'], 'size': result.get('formatted_size')},\n            modulo='CONFIGURACOES'",
         "detail": "backend.app.api.v1.backup_controller",
         "documentation": {}
     },
@@ -10826,7 +10890,7 @@
         "kind": 2,
         "importPath": "backend.app.api.v1.backup_controller",
         "description": "backend.app.api.v1.backup_controller",
-        "peekOfCode": "def download_backup(filename):\n    for item in backup_service.list():\n        if item['filename'] == filename:\n            return send_file(os.path.join(backup_service._dir(), filename), as_attachment=True, download_name=filename)\n    return jsonify({'msg': 'Backup não encontrado'}), 404\n@backup_bp.route('/restore', methods=['POST'])\n@jwt_required()\n@requires_roles('Administrador')\ndef restore_backup():\n    try:",
+        "peekOfCode": "def download_backup(filename):\n    \"\"\"Descarrega o ficheiro .sql do backup.\"\"\"\n    clean_filename = os.path.basename(filename)\n    target_path = os.path.join(backup_service._dir(), clean_filename)\n    if os.path.exists(target_path) and clean_filename.endswith('.sql'):\n        return send_file(\n            target_path,\n            as_attachment=True,\n            download_name=clean_filename,\n            mimetype='application/sql'",
         "detail": "backend.app.api.v1.backup_controller",
         "documentation": {}
     },
@@ -10835,7 +10899,25 @@
         "kind": 2,
         "importPath": "backend.app.api.v1.backup_controller",
         "description": "backend.app.api.v1.backup_controller",
-        "peekOfCode": "def restore_backup():\n    try:\n        backup_service.restore(request.files.get('file'))\n        AuditService.log_action(get_jwt_identity(), 'RESTORE', 'sistema', modulo='CONFIGURACOES')\n        return jsonify({'msg': 'Restauro concluído. Reinicie o serviço para renovar as sessões ativas.'}), 200\n    except ValueError as error:\n        return jsonify({'msg': str(error)}), 400\n    except Exception as error:\n        return jsonify({'msg': f'Falha no restauro: {error}'}), 500",
+        "peekOfCode": "def restore_backup():\n    \"\"\"Restaura a base de dados a partir de um ficheiro .sql enviado por upload.\"\"\"\n    try:\n        uploaded = request.files.get('file')\n        if not uploaded:\n            return jsonify({'msg': 'Nenhum ficheiro .sql fornecido para restauro.'}), 400\n        result = backup_service.restore(uploaded_file=uploaded)\n        AuditService.log_action(\n            get_jwt_identity(),\n            'RESTORE',",
+        "detail": "backend.app.api.v1.backup_controller",
+        "documentation": {}
+    },
+    {
+        "label": "restore_from_existing",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.backup_controller",
+        "description": "backend.app.api.v1.backup_controller",
+        "peekOfCode": "def restore_from_existing(filename):\n    \"\"\"Restaura a base de dados a partir de um backup já existente no servidor.\"\"\"\n    try:\n        clean_filename = os.path.basename(filename)\n        result = backup_service.restore(filename=clean_filename)\n        AuditService.log_action(\n            get_jwt_identity(),\n            'RESTORE',\n            'sistema',\n            new_values={'source': clean_filename, 'method': result.get('method')},",
+        "detail": "backend.app.api.v1.backup_controller",
+        "documentation": {}
+    },
+    {
+        "label": "delete_backup",
+        "kind": 2,
+        "importPath": "backend.app.api.v1.backup_controller",
+        "description": "backend.app.api.v1.backup_controller",
+        "peekOfCode": "def delete_backup(filename):\n    \"\"\"Elimina um ficheiro de backup do servidor.\"\"\"\n    try:\n        clean_filename = os.path.basename(filename)\n        deleted = backup_service.delete(clean_filename)\n        if deleted:\n            AuditService.log_action(\n                get_jwt_identity(),\n                'DELETE_BACKUP',\n                'sistema',",
         "detail": "backend.app.api.v1.backup_controller",
         "documentation": {}
     },
@@ -10844,7 +10926,7 @@
         "kind": 5,
         "importPath": "backend.app.api.v1.backup_controller",
         "description": "backend.app.api.v1.backup_controller",
-        "peekOfCode": "backup_bp = Blueprint('backup', __name__)\n@backup_bp.route('', methods=['GET'])\n@jwt_required()\n@requires_roles('Administrador')\ndef list_backups():\n    return jsonify({'items': backup_service.list()}), 200\n@backup_bp.route('', methods=['POST'])\n@jwt_required()\n@requires_roles('Administrador')\ndef create_backup():",
+        "peekOfCode": "backup_bp = Blueprint('backup', __name__)\n@backup_bp.route('', methods=['GET'])\n@jwt_required()\n@requires_roles('Administrador')\ndef list_backups():\n    \"\"\"Lista todos os ficheiros de backup disponíveis no servidor.\"\"\"\n    items = backup_service.list()\n    return jsonify({'items': items, 'total': len(items)}), 200\n@backup_bp.route('', methods=['POST'])\n@jwt_required()",
         "detail": "backend.app.api.v1.backup_controller",
         "documentation": {}
     },
@@ -11960,7 +12042,7 @@
         "kind": 2,
         "importPath": "backend.app.api.v1.notificacao_controller",
         "description": "backend.app.api.v1.notificacao_controller",
-        "peekOfCode": "def obter_detalhes_notificacao(id: int):\n    \"\"\"\n    Obtém os detalhes de uma notificação com relatório de QUEM LEU e QUEM NÃO LEU.\n    ---\n    tags:\n      - Notificações\n    security:\n      - Bearer: []\n    responses:\n      200:",
+        "peekOfCode": "def obter_detalhes_notificacao(id: str):\n    \"\"\"\n    Obtém os detalhes de uma notificação com relatório de QUEM LEU e QUEM NÃO LEU.\n    ---\n    tags:\n      - Notificações\n    security:\n      - Bearer: []\n    responses:\n      200:",
         "detail": "backend.app.api.v1.notificacao_controller",
         "documentation": {}
     },
@@ -11978,7 +12060,7 @@
         "kind": 2,
         "importPath": "backend.app.api.v1.notificacao_controller",
         "description": "backend.app.api.v1.notificacao_controller",
-        "peekOfCode": "def marcar_como_lida(id: int):\n    \"\"\"\n    Marca uma notificação como lida pelo utilizador autenticado.\n    ---\n    tags:\n      - Notificações\n    security:\n      - Bearer: []\n    responses:\n      200:",
+        "peekOfCode": "def marcar_como_lida(id: str):\n    \"\"\"\n    Marca uma notificação como lida pelo utilizador autenticado.\n    ---\n    tags:\n      - Notificações\n    security:\n      - Bearer: []\n    responses:\n      200:",
         "detail": "backend.app.api.v1.notificacao_controller",
         "documentation": {}
     },
@@ -11996,7 +12078,7 @@
         "kind": 2,
         "importPath": "backend.app.api.v1.notificacao_controller",
         "description": "backend.app.api.v1.notificacao_controller",
-        "peekOfCode": "def desativar_notificacao(id: int):\n    \"\"\"\n    Desativa / arquiva uma notificação específica.\n    ---\n    tags:\n      - Notificações\n    security:\n      - Bearer: []\n    responses:\n      200:",
+        "peekOfCode": "def desativar_notificacao(id: str):\n    \"\"\"\n    Desativa / arquiva uma notificação específica.\n    ---\n    tags:\n      - Notificações\n    security:\n      - Bearer: []\n    responses:\n      200:",
         "detail": "backend.app.api.v1.notificacao_controller",
         "documentation": {}
     },
@@ -12014,7 +12096,7 @@
         "kind": 2,
         "importPath": "backend.app.api.v1.notificacao_controller",
         "description": "backend.app.api.v1.notificacao_controller",
-        "peekOfCode": "def alternar_persistente(id: int):\n    \"\"\"\n    Alterna ou define o status de notificação persistente (fixada).\n    ---\n    tags:\n      - Notificações\n    security:\n      - Bearer: []\n    parameters:\n      - in: body",
+        "peekOfCode": "def alternar_persistente(id: str):\n    \"\"\"\n    Alterna ou define o status de notificação persistente (fixada).\n    ---\n    tags:\n      - Notificações\n    security:\n      - Bearer: []\n    parameters:\n      - in: body",
         "detail": "backend.app.api.v1.notificacao_controller",
         "documentation": {}
     },
@@ -12023,7 +12105,7 @@
         "kind": 2,
         "importPath": "backend.app.api.v1.notificacao_controller",
         "description": "backend.app.api.v1.notificacao_controller",
-        "peekOfCode": "def excluir_notificacao(id: int):\n    \"\"\"\n    Exclui permanentemente uma notificação.\n    ---\n    tags:\n      - Notificações\n    security:\n      - Bearer: []\n    responses:\n      200:",
+        "peekOfCode": "def excluir_notificacao(id: str):\n    \"\"\"\n    Exclui permanentemente uma notificação.\n    ---\n    tags:\n      - Notificações\n    security:\n      - Bearer: []\n    responses:\n      200:",
         "detail": "backend.app.api.v1.notificacao_controller",
         "documentation": {}
     },
@@ -14228,7 +14310,7 @@
         "kind": 6,
         "importPath": "backend.app.notifications.policies",
         "description": "backend.app.notifications.policies",
-        "peekOfCode": "class NotificationPolicy:\n    \"\"\"\n    Política central de encaminhamento de destinatários para cada tipo de evento.\n    Garante o respeito a RBAC e impede que o autor da ação (Actor) receba\n    notificações redundantes (já que recebe feedback direto da API/UI).\n    \"\"\"\n    DEFAULT_POLICIES: Dict[str, List[RecipientTarget]] = {\n        EventType.ORDER_CREATED.value: [\n            RecipientTarget(target_type=\"ROLE\", target_id=\"balcao\", exclude_actor=True),\n            RecipientTarget(target_type=\"ROLE\", target_id=\"gerente\", exclude_actor=True),",
+        "peekOfCode": "class NotificationPolicy:\n    \"\"\"\n    Política central de encaminhamento de destinatários para cada tipo de evento.\n    Garante o respeito a RBAC e impede que o autor da ação (Actor) receba\n    notificações redundantes (já que recebe feedback direto da API/UI).\n    \"\"\"\n    DEFAULT_POLICIES: Dict[str, List[RecipientTarget]] = {\n        EventType.ORDER_CREATED.value: [\n            RecipientTarget(target_type=\"ROLE\", target_id=\"atendimento\", exclude_actor=True),\n            RecipientTarget(target_type=\"ROLE\", target_id=\"balcao\", exclude_actor=True),",
         "detail": "backend.app.notifications.policies",
         "documentation": {}
     },
@@ -15380,7 +15462,16 @@
         "kind": 6,
         "importPath": "backend.app.services.backup_service",
         "description": "backend.app.services.backup_service",
-        "peekOfCode": "class BackupService:\n    \"\"\"Backups SQL completos, sem expor credenciais ao cliente.\"\"\"\n    def _dir(self):\n        path = current_app.config['BACKUP_DIR']\n        os.makedirs(path, exist_ok=True)\n        return path\n    def _mysql_args(self, executable):\n        cfg = current_app.config\n        return [executable, '-h', cfg['MYSQL_HOST'], '-P', str(cfg['MYSQL_PORT']), '-u', cfg['MYSQL_USER']]\n    def _resolve_binary(self, configured_name, alternatives):",
+        "peekOfCode": "class BackupService:\n    \"\"\"\n    Serviço de Backup e Restauro Completo da Base de Dados.\n    Executa com binários nativos do MySQL (mysqldump / mysql) quando disponíveis\n    ou com motor Python nativo (SQLAlchemy / PyMySQL) em fallback, garantindo 100%\n    de sucesso em qualquer ambiente (Windows, Linux, Docker, XAMPP).\n    \"\"\"\n    def _dir(self) -> str:\n        path = current_app.config.get('BACKUP_DIR')\n        if not path:",
+        "detail": "backend.app.services.backup_service",
+        "documentation": {}
+    },
+    {
+        "label": "logger",
+        "kind": 5,
+        "importPath": "backend.app.services.backup_service",
+        "description": "backend.app.services.backup_service",
+        "peekOfCode": "logger = logging.getLogger(__name__)\nclass BackupService:\n    \"\"\"\n    Serviço de Backup e Restauro Completo da Base de Dados.\n    Executa com binários nativos do MySQL (mysqldump / mysql) quando disponíveis\n    ou com motor Python nativo (SQLAlchemy / PyMySQL) em fallback, garantindo 100%\n    de sucesso em qualquer ambiente (Windows, Linux, Docker, XAMPP).\n    \"\"\"\n    def _dir(self) -> str:\n        path = current_app.config.get('BACKUP_DIR')",
         "detail": "backend.app.services.backup_service",
         "documentation": {}
     },
@@ -15452,7 +15543,7 @@
         "kind": 6,
         "importPath": "backend.app.services.gestao_notificacao_service",
         "description": "backend.app.services.gestao_notificacao_service",
-        "peekOfCode": "class GestaoNotificacaoService:\n    \"\"\"\n    Serviço corporativo para Gestão de Notificações, Leitura Individual e Histórico de SMS.\n    Oferece rastreamento de quem leu / quem não leu, notificações persistentes,\n    desativação de lidas, envio manual de SMS/WhatsApp e métricas em tempo real.\n    \"\"\"\n    # -------------------------------------------------------------------------\n    # GESTÃO DE NOTIFICAÇÕES (CRIAÇÃO, LISTAGEM, LEITURA, STATUS)\n    # -------------------------------------------------------------------------\n    @staticmethod",
+        "peekOfCode": "class GestaoNotificacaoService:\n    \"\"\"\n    Serviço corporativo para Gestão de Notificações, Leitura Individual e Histórico de SMS.\n    Oferece rastreamento de quem leu / quem não leu, notificações persistentes,\n    desativação de lidas, envio manual de SMS/WhatsApp e métricas em tempo real.\n    \"\"\"\n    @staticmethod\n    def _build_user_filter(current_user: Optional[User]):\n        \"\"\"\n        Constrói filtro SQL robusto para notificações que o utilizador tem permissão para visualizar.",
         "detail": "backend.app.services.gestao_notificacao_service",
         "documentation": {}
     },
@@ -15461,7 +15552,7 @@
         "kind": 5,
         "importPath": "backend.app.services.gestao_notificacao_service",
         "description": "backend.app.services.gestao_notificacao_service",
-        "peekOfCode": "logger = logging.getLogger(__name__)\nclass GestaoNotificacaoService:\n    \"\"\"\n    Serviço corporativo para Gestão de Notificações, Leitura Individual e Histórico de SMS.\n    Oferece rastreamento de quem leu / quem não leu, notificações persistentes,\n    desativação de lidas, envio manual de SMS/WhatsApp e métricas em tempo real.\n    \"\"\"\n    # -------------------------------------------------------------------------\n    # GESTÃO DE NOTIFICAÇÕES (CRIAÇÃO, LISTAGEM, LEITURA, STATUS)\n    # -------------------------------------------------------------------------",
+        "peekOfCode": "logger = logging.getLogger(__name__)\nclass GestaoNotificacaoService:\n    \"\"\"\n    Serviço corporativo para Gestão de Notificações, Leitura Individual e Histórico de SMS.\n    Oferece rastreamento de quem leu / quem não leu, notificações persistentes,\n    desativação de lidas, envio manual de SMS/WhatsApp e métricas em tempo real.\n    \"\"\"\n    @staticmethod\n    def _build_user_filter(current_user: Optional[User]):\n        \"\"\"",
         "detail": "backend.app.services.gestao_notificacao_service",
         "documentation": {}
     },
@@ -15832,6 +15923,15 @@
         "description": "backend.app.services.venda_calculo_service",
         "peekOfCode": "CENT = Decimal('0.01')\ndef money(value):\n    try:\n        return Decimal(str(value or 0)).quantize(CENT, rounding=ROUND_HALF_UP)\n    except (InvalidOperation, ValueError):\n        raise ValueError('Valor monetário inválido.')\ndef decimal_value(value, field):\n    try:\n        return Decimal(str(value))\n    except (InvalidOperation, ValueError, TypeError):",
         "detail": "backend.app.services.venda_calculo_service",
+        "documentation": {}
+    },
+    {
+        "label": "WebSocketUpgradeMiddleware",
+        "kind": 6,
+        "importPath": "backend.app.websocket.socket_manager",
+        "description": "backend.app.websocket.socket_manager",
+        "peekOfCode": "class WebSocketUpgradeMiddleware:\n    \"\"\"\n    Middleware WSGI que intercepta pedidos de upgrade WebSocket no servidor Werkzeug\n    garantindo que status_set não seja nulo, prevenindo 'AssertionError: write() before start_response'.\n    \"\"\"\n    def __init__(self, wsgi_app):\n        self.wsgi_app = wsgi_app\n    def __call__(self, environ, start_response):\n        status_called = [False]\n        def custom_start_response(status, response_headers, exc_info=None):",
+        "detail": "backend.app.websocket.socket_manager",
         "documentation": {}
     },
     {
@@ -16910,7 +17010,7 @@
         "kind": 5,
         "importPath": "backend.run",
         "description": "backend.run",
-        "peekOfCode": "current_dir = os.path.dirname(os.path.abspath(__file__))\nload_dotenv(os.path.join(current_dir, '.env'))\n# Patch preventivo para Werkzeug 3.0+ em modo desenvolvimento (evita AssertionError: write() before start_response em upgrades WebSocket)\ntry:\n    import werkzeug.serving\n    _orig_run_wsgi = werkzeug.serving.WSGIRequestHandler.run_wsgi\n    def _safe_run_wsgi(self):\n        try:\n            return _orig_run_wsgi(self)\n        except AssertionError as e:",
+        "peekOfCode": "current_dir = os.path.dirname(os.path.abspath(__file__))\nload_dotenv(os.path.join(current_dir, '.env'))\n# Patch preventivo e resiliente para Werkzeug em modo desenvolvimento (evita AssertionError: write() before start_response)\ntry:\n    import werkzeug.serving\n    _orig_run_wsgi = werkzeug.serving.WSGIRequestHandler.run_wsgi\n    def _safe_run_wsgi(self):\n        try:\n            return _orig_run_wsgi(self)\n        except AssertionError as e:",
         "detail": "backend.run",
         "documentation": {}
     },
@@ -17027,7 +17127,7 @@
         "kind": 5,
         "importPath": "backend.upgrade_db",
         "description": "backend.upgrade_db",
-        "peekOfCode": "app = create_app()\nwith app.app_context():\n    queries = [\n        \"ALTER TABLE movimentacoes_armazem MODIFY COLUMN origem VARCHAR(50);\",\n        \"ALTER TABLE movimentacoes_armazem MODIFY COLUMN tipo VARCHAR(50);\",\n        \"ALTER TABLE movimentacoes_armazem MODIFY COLUMN entidade_tipo VARCHAR(50);\"\n    ]\n    for q in queries:\n        try:\n            db.session.execute(text(q))",
+        "peekOfCode": "app = create_app()\nwith app.app_context():\n    queries = [\n        \"ALTER TABLE movimentacoes_armazem MODIFY COLUMN origem VARCHAR(50);\",\n        \"ALTER TABLE movimentacoes_armazem MODIFY COLUMN tipo VARCHAR(50);\",\n        \"ALTER TABLE movimentacoes_armazem MODIFY COLUMN entidade_tipo VARCHAR(50);\",\n        \"ALTER TABLE notificacoes ADD COLUMN IF NOT EXISTS event_id VARCHAR(64) NULL;\",\n        \"ALTER TABLE notificacoes ADD COLUMN IF NOT EXISTS event_type VARCHAR(64) NULL;\",\n        \"ALTER TABLE notificacoes ADD COLUMN IF NOT EXISTS entity_type VARCHAR(64) NULL;\",\n        \"ALTER TABLE notificacoes ADD COLUMN IF NOT EXISTS entity_id INT NULL;\",",
         "detail": "backend.upgrade_db",
         "documentation": {}
     },

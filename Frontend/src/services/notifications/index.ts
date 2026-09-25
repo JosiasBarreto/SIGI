@@ -6,3 +6,4 @@ export * from './notificationSoundManager';
 export * from './osNotificationManager';
 export * from './notificationManager';
 export * from './externalNotificationService';
+export * from './notificationAuditService';

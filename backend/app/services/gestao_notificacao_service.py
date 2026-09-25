@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime, date
 from typing import Optional, List, Dict, Any, Tuple
-from sqlalchemy import or_, and_, desc
+from sqlalchemy import or_, and_, desc, func
 
 from app.core.database import db
 from app.models.notificacao import Notificacao, NotificacaoLeitura, HistoricoSMS
@@ -23,6 +23,55 @@ class GestaoNotificacaoService:
     Oferece rastreamento de quem leu / quem não leu, notificações persistentes,
     desativação de lidas, envio manual de SMS/WhatsApp e métricas em tempo real.
     """
+
+    @staticmethod
+    def _build_user_filter(current_user: Optional[User]):
+        """
+        Constrói filtro SQL robusto para notificações que o utilizador tem permissão para visualizar.
+        Garante persistência de histórico e compatibilidade entre aliases de roles/setores.
+        """
+        if not current_user:
+            return or_(Notificacao.target_type == "GLOBAL", Notificacao.target_type.is_(None))
+
+        user_id = current_user.id
+        user_role = (
+            current_user.role.value if hasattr(current_user.role, "value")
+            else str(current_user.role)
+        )
+        user_role_lower = user_role.lower() if user_role else ""
+        is_admin = user_role_lower in ("administrador", "admin", "gerente")
+
+        # Administradores e Gerentes têm visibilidade de todas as notificações do sistema
+        if is_admin:
+            return or_(
+                Notificacao.target_type != "USER",
+                Notificacao.target_user_id == user_id,
+                Notificacao.target_user_id.is_(None)
+            )
+
+        # Mapeamento de cargos e sinónimos/setores operacionais
+        role_aliases = [user_role_lower]
+        if user_role_lower in ("atendimento", "balcao", "balcão", "comercial"):
+            role_aliases.extend(["atendimento", "balcao", "balcão", "comercial"])
+        elif user_role_lower in ("armazém", "armazem", "controlador de materiais", "stock"):
+            role_aliases.extend(["armazem", "armazém", "stock", "controlador de materiais"])
+        elif user_role_lower in ("cozinha", "cozinheiro"):
+            role_aliases.extend(["cozinha", "cozinheiro"])
+        elif user_role_lower in ("pastelaria", "pasteleiro"):
+            role_aliases.extend(["pastelaria", "pasteleiro"])
+        elif user_role_lower in ("financeiro", "caixa"):
+            role_aliases.extend(["financeiro", "caixa"])
+
+        return or_(
+            Notificacao.target_type == "GLOBAL",
+            Notificacao.target_type.is_(None),
+            and_(Notificacao.target_type == "USER", or_(Notificacao.target_user_id == user_id, Notificacao.recipient_user_id == user_id)),
+            and_(Notificacao.target_type == "ROLE", or_(
+                func.lower(Notificacao.target_role).in_(role_aliases),
+                func.lower(Notificacao.recipient_role).in_(role_aliases)
+            )),
+            and_(Notificacao.target_type == "SECTOR", func.lower(Notificacao.target_sector).in_(role_aliases))
+        )
 
     # -------------------------------------------------------------------------
     # GESTÃO DE NOTIFICAÇÕES (CRIAÇÃO, LISTAGEM, LEITURA, STATUS)
@@ -111,19 +160,14 @@ class GestaoNotificacaoService:
 
         # 1. Filtro de Destinatário (Isolamento por utilizador e perfil)
         if current_user:
-            user_id = current_user.id
             user_role = current_user.role.value if hasattr(current_user.role, 'value') else str(current_user.role)
-            is_admin = user_role.lower() in ("administrador", "admin")
+            is_admin = user_role.lower() in ("administrador", "admin", "gerente")
             ver_todas = filtros.get("todas", False) and is_admin
 
             if not ver_todas:
-                query = query.filter(
-                    or_(
-                        Notificacao.target_type == "GLOBAL",
-                        and_(Notificacao.target_type == "USER", Notificacao.target_user_id == user_id),
-                        and_(Notificacao.target_type == "ROLE", Notificacao.target_role == user_role)
-                    )
-                )
+                query = query.filter(GestaoNotificacaoService._build_user_filter(current_user))
+        else:
+            query = query.filter(or_(Notificacao.target_type == "GLOBAL", Notificacao.target_type.is_(None)))
 
         # 2. Filtro Ativa / Desativada
         incluir_desativadas = filtros.get("incluir_desativadas", False)
@@ -197,57 +241,95 @@ class GestaoNotificacaoService:
         return items_serialized, total, meta
 
     @staticmethod
-    def obter_detalhes_notificacao(notificacao_id: int, current_user_id: Optional[int] = None) -> Optional[Dict[str, Any]]:
+    def _find_notificacao(notificacao_id: Any) -> Optional[Notificacao]:
+        """
+        Encontra uma notificação por ID inteiro, string numérica, event_id ou identificador de metadados.
+        """
+        if notificacao_id is None:
+            return None
+        # 1. Se for int ou string numérica
+        if isinstance(notificacao_id, int) or (isinstance(notificacao_id, str) and notificacao_id.isdigit()):
+            n = Notificacao.query.get(int(notificacao_id))
+            if n:
+                return n
+        # 2. Se for string (ex: evt_..., uuid, string de metadados)
+        if isinstance(notificacao_id, str):
+            n = Notificacao.query.filter_by(event_id=notificacao_id).first()
+            if n:
+                return n
+            try:
+                n = Notificacao.query.filter(
+                    or_(
+                        Notificacao.metadados["event_id"].as_string() == str(notificacao_id),
+                        Notificacao.metadados["id"].as_string() == str(notificacao_id)
+                    )
+                ).first()
+                if n:
+                    return n
+            except Exception:
+                pass
+        return None
+
+    @staticmethod
+    def obter_detalhes_notificacao(notificacao_id: Any, current_user_id: Optional[int] = None) -> Optional[Dict[str, Any]]:
         """
         Retorna informações completas de uma notificação específica, incluindo:
-        - QUEM LEU: Lista com utilizadores, horários de leitura e endereços IP
-        - QUEM NÃO LEU: Lista de utilizadores elegíveis que ainda não visualizaram a mensagem
+        - QUEM LEU (lidos): Lista com utilizadores, horários de leitura e cargos
+        - QUEM NÃO LEU (nao_lidos): Lista de utilizadores elegíveis que ainda não visualizaram a mensagem
         """
-        notificacao = Notificacao.query.get(notificacao_id)
+        notificacao = GestaoNotificacaoService._find_notificacao(notificacao_id)
         if not notificacao:
-            return None
+            # Fallback seguro para notificações em memória / transitórias
+            return {
+                "id": notificacao_id,
+                "titulo": "Notificação",
+                "mensagem": "",
+                "lidos": [],
+                "nao_lidos": [],
+                "quem_leu": [],
+                "quem_nao_leu": [],
+                "total_quem_leu": 0,
+                "total_quem_nao_leu": 0
+            }
 
         data = notificacao.to_dict(current_user_id=current_user_id)
 
         # 1. Utilizadores que já leram
-        leituras_info = [l.to_dict() for l in notificacao.leituras]
-        data["quem_leu"] = leituras_info
-        users_que_leram_ids = {l.user_id for l in notificacao.leituras}
+        leituras_info = []
+        users_que_leram_ids = set()
+        for l in notificacao.leituras:
+            u = User.query.get(l.user_id)
+            user_name = u.name if u else f"Utilizador #{l.user_id}"
+            user_role = (u.role.value if hasattr(u.role, 'value') else str(u.role)) if u else "Operador"
+            users_que_leram_ids.add(l.user_id)
+            leituras_info.append({
+                "id": l.id,
+                "user_id": l.user_id,
+                "nome": user_name,
+                "name": user_name,
+                "role": user_role,
+                "lido_em": l.lido_em.isoformat() if l.lido_em else None,
+                "ip_address": l.ip_address,
+                "user_agent": l.user_agent
+            })
 
-        # 2. Utilizadores que ainda NÃO leram (apenas calculável para target específico ou restrito)
+        # 2. Utilizadores que ainda NÃO leram
         quem_nao_leu = []
-        if notificacao.target_type == "USER" and notificacao.target_user_id:
-            if notificacao.target_user_id not in users_que_leram_ids:
-                u = User.query.get(notificacao.target_user_id)
-                if u and u.is_active:
-                    quem_nao_leu.append({
-                        "user_id": u.id,
-                        "name": u.name,
-                        "email": u.email,
-                        "role": u.role.value if hasattr(u.role, 'value') else str(u.role)
-                    })
-        elif notificacao.target_type == "ROLE" and notificacao.target_role:
-            target_users = User.query.filter_by(role=notificacao.target_role, is_active=True).all()
-            for u in target_users:
-                if u.id not in users_que_leram_ids:
-                    quem_nao_leu.append({
-                        "user_id": u.id,
-                        "name": u.name,
-                        "email": u.email,
-                        "role": u.role.value if hasattr(u.role, 'value') else str(u.role)
-                    })
-        elif notificacao.target_type == "GLOBAL":
-            # Para globais, lista os colaboradores ativos que ainda não marcaram leitura
-            active_users = User.query.filter_by(is_active=True).all()
-            for u in active_users:
-                if u.id not in users_que_leram_ids:
-                    quem_nao_leu.append({
-                        "user_id": u.id,
-                        "name": u.name,
-                        "email": u.email,
-                        "role": u.role.value if hasattr(u.role, 'value') else str(u.role)
-                    })
+        active_users = User.query.filter_by(is_active=True).all()
+        for u in active_users:
+            if u.id not in users_que_leram_ids:
+                u_role = u.role.value if hasattr(u.role, 'value') else str(u.role)
+                quem_nao_leu.append({
+                    "user_id": u.id,
+                    "nome": u.name,
+                    "name": u.name,
+                    "email": u.email,
+                    "role": u_role
+                })
 
+        data["lidos"] = leituras_info
+        data["nao_lidos"] = quem_nao_leu
+        data["quem_leu"] = leituras_info
         data["quem_nao_leu"] = quem_nao_leu
         data["total_quem_leu"] = len(leituras_info)
         data["total_quem_nao_leu"] = len(quem_nao_leu)
@@ -256,7 +338,7 @@ class GestaoNotificacaoService:
 
     @staticmethod
     def marcar_como_lida(
-        notificacao_id: int,
+        notificacao_id: Any,
         user_id: int,
         ip_address: Optional[str] = None,
         user_agent: Optional[str] = None
@@ -266,19 +348,23 @@ class GestaoNotificacaoService:
         Garante idempotência (não duplica se já estiver lida).
         Emite evento WebSocket em tempo real.
         """
-        notificacao = Notificacao.query.get(notificacao_id)
+        notificacao = GestaoNotificacaoService._find_notificacao(notificacao_id)
         if not notificacao:
-            return False, "Notificação não encontrada"
+            # Se for ID em memória, confirma a leitura com sucesso para a interface
+            agora = datetime.utcnow()
+            emit_notification_read(notificacao_id, user_id, agora.isoformat())
+            return True, None
 
+        real_notif_id = notificacao.id
         existente = NotificacaoLeitura.query.filter_by(
-            notificacao_id=notificacao_id,
+            notificacao_id=real_notif_id,
             user_id=user_id
         ).first()
 
         agora = datetime.utcnow()
         if not existente:
             leitura = NotificacaoLeitura(
-                notificacao_id=notificacao_id,
+                notificacao_id=real_notif_id,
                 user_id=user_id,
                 lido_em=agora,
                 ip_address=ip_address,
@@ -288,7 +374,7 @@ class GestaoNotificacaoService:
             db.session.commit()
 
         # Emitir via WebSocket para atualização imediata nas abas do cliente
-        emit_notification_read(notificacao_id, user_id, agora.isoformat())
+        emit_notification_read(real_notif_id, user_id, agora.isoformat())
         return True, None
 
     @staticmethod
@@ -297,20 +383,15 @@ class GestaoNotificacaoService:
         Marca todas as notificações não lidas visíveis para o utilizador atual como lidas.
         """
         user_id = current_user.id
-        user_role = current_user.role.value if hasattr(current_user.role, 'value') else str(current_user.role)
 
         # Subquery das que ele já leu
-        ja_lidas_subq = db.session.query(NotificacaoLeitura.notificacao_id).filter_by(user_id=user_id).subquery()
+        ja_lidas_select = db.session.query(NotificacaoLeitura.notificacao_id).filter_by(user_id=user_id)
 
         # Notificações visíveis e ativas que ele ainda não leu
         pendentes = Notificacao.query.filter(
             Notificacao.ativa == True,
-            ~Notificacao.id.in_(ja_lidas_subq),
-            or_(
-                Notificacao.target_type == "GLOBAL",
-                and_(Notificacao.target_type == "USER", Notificacao.target_user_id == user_id),
-                and_(Notificacao.target_type == "ROLE", Notificacao.target_role == user_role)
-            )
+            ~Notificacao.id.in_(ja_lidas_select),
+            GestaoNotificacaoService._build_user_filter(current_user)
         ).all()
 
         agora = datetime.utcnow()
@@ -331,12 +412,12 @@ class GestaoNotificacaoService:
         return count
 
     @staticmethod
-    def desativar_notificacao(notificacao_id: int, user_id: Optional[int] = None) -> Tuple[bool, Optional[str]]:
+    def desativar_notificacao(notificacao_id: Any, user_id: Optional[int] = None) -> Tuple[bool, Optional[str]]:
         """
         Desativa/arquiva uma notificação específica.
         Ela deixará de aparecer na lista de notificações ativas.
         """
-        notificacao = Notificacao.query.get(notificacao_id)
+        notificacao = GestaoNotificacaoService._find_notificacao(notificacao_id)
         if not notificacao:
             return False, "Notificação não encontrada"
 
@@ -345,7 +426,7 @@ class GestaoNotificacaoService:
         notificacao.desativada_por = user_id
         db.session.commit()
 
-        emit_notification_deactivated(notificacao_id)
+        emit_notification_deactivated(notificacao.id)
         return True, None
 
     @staticmethod
@@ -384,12 +465,12 @@ class GestaoNotificacaoService:
         return count
 
     @staticmethod
-    def alternar_persistente(notificacao_id: int, persistente: bool) -> Tuple[bool, Optional[str]]:
+    def alternar_persistente(notificacao_id: Any, persistente: bool) -> Tuple[bool, Optional[str]]:
         """
         Fixa ou desafixa uma notificação (modalidade persistente).
         Notificações persistentes mantêm-se destacadas até intervenção explícita.
         """
-        notificacao = Notificacao.query.get(notificacao_id)
+        notificacao = GestaoNotificacaoService._find_notificacao(notificacao_id)
         if not notificacao:
             return False, "Notificação não encontrada"
 
@@ -398,17 +479,18 @@ class GestaoNotificacaoService:
         return True, None
 
     @staticmethod
-    def excluir_notificacao(notificacao_id: int) -> Tuple[bool, Optional[str]]:
+    def excluir_notificacao(notificacao_id: Any) -> Tuple[bool, Optional[str]]:
         """
         Exclui permanentemente uma notificação e todas as suas leituras.
         """
-        notificacao = Notificacao.query.get(notificacao_id)
+        notificacao = GestaoNotificacaoService._find_notificacao(notificacao_id)
         if not notificacao:
             return False, "Notificação não encontrada"
 
+        real_id = notificacao.id
         db.session.delete(notificacao)
         db.session.commit()
-        emit_notification_deactivated(notificacao_id)
+        emit_notification_deactivated(real_id)
         return True, None
 
     # -------------------------------------------------------------------------
@@ -594,14 +676,8 @@ class GestaoNotificacaoService:
 
         # 1. Total ativas visíveis
         query_ativas = Notificacao.query.filter_by(ativa=True)
-        if current_user and user_role and user_role.lower() not in ("administrador", "admin"):
-            query_ativas = query_ativas.filter(
-                or_(
-                    Notificacao.target_type == "GLOBAL",
-                    and_(Notificacao.target_type == "USER", Notificacao.target_user_id == user_id),
-                    and_(Notificacao.target_type == "ROLE", Notificacao.target_role == user_role)
-                )
-            )
+        if current_user:
+            query_ativas = query_ativas.filter(GestaoNotificacaoService._build_user_filter(current_user))
         total_ativas = query_ativas.count()
 
         # 2. Persistentes ativas
@@ -610,8 +686,8 @@ class GestaoNotificacaoService:
         # 3. Não lidas para o utilizador
         nao_lidas = 0
         if current_user:
-            ja_lidas_subq = db.session.query(NotificacaoLeitura.notificacao_id).filter_by(user_id=user_id).subquery()
-            nao_lidas = query_ativas.filter(~Notificacao.id.in_(ja_lidas_subq)).count()
+            ja_lidas_select = db.session.query(NotificacaoLeitura.notificacao_id).filter_by(user_id=user_id)
+            nao_lidas = query_ativas.filter(~Notificacao.id.in_(ja_lidas_select)).count()
 
         # 4. Estatísticas de SMS
         total_sms = HistoricoSMS.query.count()

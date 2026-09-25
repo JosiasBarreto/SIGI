@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 current_dir = os.path.dirname(os.path.abspath(__file__))
 load_dotenv(os.path.join(current_dir, '.env'))
 
-# Patch preventivo para Werkzeug 3.0+ em modo desenvolvimento (evita AssertionError: write() before start_response em upgrades WebSocket)
+# Patch preventivo e resiliente para Werkzeug em modo desenvolvimento (evita AssertionError: write() before start_response)
 try:
     import werkzeug.serving
     _orig_run_wsgi = werkzeug.serving.WSGIRequestHandler.run_wsgi
@@ -20,7 +20,18 @@ try:
             if "write() before start_response" in str(e):
                 return
             raise
+        except Exception as e:
+            if "write() before start_response" in str(e):
+                return
+            raise
     werkzeug.serving.WSGIRequestHandler.run_wsgi = _safe_run_wsgi
+
+    _orig_log_error = werkzeug.serving.WSGIRequestHandler.log_error
+    def _safe_log_error(self, format, *args):
+        if args and any("write() before start_response" in str(a) for a in args):
+            return
+        return _orig_log_error(self, format, *args)
+    werkzeug.serving.WSGIRequestHandler.log_error = _safe_log_error
 except Exception:
     pass
 

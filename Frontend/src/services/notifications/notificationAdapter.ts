@@ -31,8 +31,9 @@ export class NotificationAdapter {
     };
 
     // 2. Extrair identificadores contratuais do evento
-    const eventId = raw.event_id || raw.eventId || (raw.id ? String(raw.id) : undefined);
-    const id = eventId || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const primaryDbId = (raw.id !== undefined && raw.id !== null && raw.id !== '') ? String(raw.id) : undefined;
+    const eventId = raw.event_id || raw.eventId || primaryDbId;
+    const id = primaryDbId || eventId || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const eventType = raw.event_type || raw.eventType || raw.tipo || normalizedType;
     const entityType = raw.entity_type || raw.entityType || raw.canal || this.resolveCanal(raw, eventName, normalizedType);
     const entityId = raw.entity_id || raw.entityId || metadata.pedido_id || metadata.ordem_id || raw.id;

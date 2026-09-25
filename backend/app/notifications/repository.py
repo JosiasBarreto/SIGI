@@ -70,35 +70,64 @@ class NotificationRepository:
         """
         Cria e persiste uma notificação na base de dados de forma segura.
         """
-        try:
-            notif = Notificacao(
-                event_id=event_id,
-                event_type=event_type,
-                entity_type=entity_type,
-                entity_id=entity_id,
-                aggregate_id=aggregate_id,
-                titulo=titulo,
-                mensagem=mensagem,
-                tipo=tipo,
-                canal=canal,
-                prioridade=prioridade,
-                persistente=persistente,
-                ativa=True,
-                target_type=target_type,
-                target_role=target_role or recipient_role,
-                target_sector=target_sector,
-                target_user_id=target_user_id or recipient_user_id,
-                actor_user_id=actor_user_id,
-                recipient_user_id=recipient_user_id,
-                recipient_role=recipient_role or target_role,
-                metadados=metadados or {},
-                created_by=created_by or actor_user_id,
-                created_at=datetime.utcnow()
-            )
-            db.session.add(notif)
-            db.session.commit()
-            return notif
-        except Exception as e:
-            db.session.rollback()
-            logger.error(f"Erro ao persistir notificação na BD: {e}")
-            return None
+        for attempt in range(2):
+            try:
+                notif = Notificacao(
+                    event_id=event_id,
+                    event_type=event_type,
+                    entity_type=entity_type,
+                    entity_id=entity_id,
+                    aggregate_id=aggregate_id,
+                    titulo=titulo,
+                    mensagem=mensagem,
+                    tipo=tipo,
+                    canal=canal,
+                    prioridade=prioridade,
+                    persistente=persistente,
+                    ativa=True,
+                    target_type=target_type,
+                    target_role=target_role or recipient_role,
+                    target_sector=target_sector,
+                    target_user_id=target_user_id or recipient_user_id,
+                    actor_user_id=actor_user_id,
+                    recipient_user_id=recipient_user_id,
+                    recipient_role=recipient_role or target_role,
+                    metadados=metadados or {},
+                    created_by=created_by or actor_user_id,
+                    created_at=datetime.utcnow()
+                )
+                db.session.add(notif)
+                db.session.commit()
+                return notif
+            except Exception as e:
+                db.session.rollback()
+                err_str = str(e)
+                if ("1054" in err_str or "Unknown column" in err_str or "event_id" in err_str) and attempt == 0:
+                    logger.warning("Coluna em falta detetada na tabela notificacoes. A aplicar migração automática...")
+                    from sqlalchemy import text
+                    migration_queries = [
+                        "ALTER TABLE notificacoes ADD COLUMN IF NOT EXISTS event_id VARCHAR(64) NULL;",
+                        "ALTER TABLE notificacoes ADD COLUMN IF NOT EXISTS event_type VARCHAR(64) NULL;",
+                        "ALTER TABLE notificacoes ADD COLUMN IF NOT EXISTS entity_type VARCHAR(64) NULL;",
+                        "ALTER TABLE notificacoes ADD COLUMN IF NOT EXISTS entity_id INT NULL;",
+                        "ALTER TABLE notificacoes ADD COLUMN IF NOT EXISTS aggregate_id VARCHAR(128) NULL;",
+                        "ALTER TABLE notificacoes ADD COLUMN IF NOT EXISTS actor_user_id INT NULL;",
+                        "ALTER TABLE notificacoes ADD COLUMN IF NOT EXISTS recipient_user_id INT NULL;",
+                        "ALTER TABLE notificacoes ADD COLUMN IF NOT EXISTS recipient_role VARCHAR(50) NULL;"
+                    ]
+                    for mq in migration_queries:
+                        try:
+                            db.session.execute(text(mq))
+                            db.session.commit()
+                        except Exception:
+                            db.session.rollback()
+                            try:
+                                db.session.execute(text(mq.replace(" IF NOT EXISTS", "")))
+                                db.session.commit()
+                            except Exception:
+                                db.session.rollback()
+                    continue
+                
+                logger.error(f"Erro ao persistir notificação na BD: {e}")
+                return None
+        return None

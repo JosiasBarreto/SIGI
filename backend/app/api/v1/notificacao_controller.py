@@ -114,9 +114,10 @@ def listar_notificacoes():
     }), 200
 
 
-@notificacao_bp.route("/<int:id>", methods=["GET"])
+@notificacao_bp.route("/<string:id>", methods=["GET"])
+@notificacao_bp.route("/<string:id>/leituras", methods=["GET"])
 @jwt_required()
-def obter_detalhes_notificacao(id: int):
+def obter_detalhes_notificacao(id: str):
     """
     Obtém os detalhes de uma notificação com relatório de QUEM LEU e QUEM NÃO LEU.
     ---
@@ -232,9 +233,9 @@ def criar_notificacao():
     }), 201
 
 
-@notificacao_bp.route("/<int:id>/ler", methods=["PATCH", "POST"])
+@notificacao_bp.route("/<string:id>/ler", methods=["PATCH", "POST"])
 @jwt_required()
-def marcar_como_lida(id: int):
+def marcar_como_lida(id: str):
     """
     Marca uma notificação como lida pelo utilizador autenticado.
     ---
@@ -298,9 +299,9 @@ def marcar_todas_como_lidas():
     }), 200
 
 
-@notificacao_bp.route("/<int:id>/desativar", methods=["PATCH", "POST"])
+@notificacao_bp.route("/<string:id>/desativar", methods=["PATCH", "POST"])
 @jwt_required()
-def desativar_notificacao(id: int):
+def desativar_notificacao(id: str):
     """
     Desativa / arquiva uma notificação específica.
     ---
@@ -341,13 +342,13 @@ def desativar_notificacoes_lidas():
       - Bearer: []
     parameters:
       - in: body
-        name: body
-        schema:
-          type: object
-          properties:
-            todas:
-              type: boolean
-              description: Se True e for Admin, desativa todas do sistema lidas. Se False, apenas as lidas do utilizador.
+      name: body
+      schema:
+        type: object
+        properties:
+          todas:
+            type: boolean
+            description: Se True e for Admin, desativa todas do sistema lidas. Se False, apenas as lidas do utilizador.
     responses:
       200:
         description: Notificações lidas desativadas com sucesso
@@ -371,9 +372,9 @@ def desativar_notificacoes_lidas():
     }), 200
 
 
-@notificacao_bp.route("/<int:id>/persistente", methods=["PATCH"])
+@notificacao_bp.route("/<string:id>/persistente", methods=["PATCH"])
 @jwt_required()
-def alternar_persistente(id: int):
+def alternar_persistente(id: str):
     """
     Alterna ou define o status de notificação persistente (fixada).
     ---
@@ -383,15 +384,15 @@ def alternar_persistente(id: int):
       - Bearer: []
     parameters:
       - in: body
-        name: body
-        required: true
-        schema:
-          type: object
-          required:
-            - persistente
-          properties:
-            persistente:
-              type: boolean
+      name: body
+      required: true
+      schema:
+        type: object
+        required:
+          - persistente
+        properties:
+          persistente:
+            type: boolean
     responses:
       200:
         description: Status de persistência atualizado
@@ -415,9 +416,9 @@ def alternar_persistente(id: int):
     }), 200
 
 
-@notificacao_bp.route("/<int:id>", methods=["DELETE"])
+@notificacao_bp.route("/<string:id>", methods=["DELETE"])
 @jwt_required()
-def excluir_notificacao(id: int):
+def excluir_notificacao(id: str):
     """
     Exclui permanentemente uma notificação.
     ---

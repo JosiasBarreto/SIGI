@@ -4,6 +4,7 @@ import {
   notificationManager,
   notificationSoundManager,
   osNotificationManager,
+  notificationAuditService,
   SoundSettings
 } from '../services/notifications';
 
@@ -13,6 +14,8 @@ const MAX_NOTIFICATIONS_STORED = 100;
 export interface NotificationContextProps {
   notifications: AppNotification[];
   unreadCount: number;
+  isLoading: boolean;
+  refreshNotifications: () => Promise<void>;
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
   deleteNotification: (id: string) => void;
@@ -42,6 +45,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     return [];
   });
 
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
   const [soundSettings, setSoundSettingsState] = useState<SoundSettings>(() =>
     notificationSoundManager.getSettings()
   );
@@ -49,6 +54,55 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const [osPermission, setOsPermission] = useState<NotificationPermission>(() =>
     osNotificationManager.getPermission()
   );
+
+  // Função para carregar o histórico real do Backend
+  const loadNotificationsFromBackend = useCallback(async () => {
+    const token = localStorage.getItem('access_token') || localStorage.getItem('token');
+    if (!token) return;
+
+    setIsLoading(true);
+    try {
+      const backendItems = await notificationAuditService.getHistorico({ per_page: 100 });
+      if (backendItems && backendItems.length > 0) {
+        setNotifications((prev) => {
+          const map = new Map<string, AppNotification>();
+          // Adiciona os itens do backend
+          backendItems.forEach((item) => map.set(String(item.id), item));
+          // Preserva itens locais mais recentes se existirem
+          prev.forEach((item) => {
+            if (!map.has(String(item.id))) {
+              map.set(String(item.id), item);
+            } else {
+              // Se o utilizador já marcou como lido localmente
+              const existing = map.get(String(item.id))!;
+              if (item.read) {
+                map.set(String(item.id), { ...existing, read: true });
+              }
+            }
+          });
+
+          const merged = Array.from(map.values())
+            .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+            .slice(0, MAX_NOTIFICATIONS_STORED);
+
+          try {
+            localStorage.setItem(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(merged));
+          } catch {}
+
+          return merged;
+        });
+      }
+    } catch (err) {
+      console.warn('[NotificationContext] Erro ao carregar histórico do backend:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Carregar do backend na inicialização
+  useEffect(() => {
+    loadNotificationsFromBackend();
+  }, [loadNotificationsFromBackend]);
 
   // Guardar no localStorage sempre que as notificações forem atualizadas
   useEffect(() => {
@@ -73,7 +127,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     return unsubscribe;
   }, []);
 
-  // Limpar ou atualizar quando utilizador faz logout
+  // Limpar ou recarregar quando o utilizador faz login/logout
   useEffect(() => {
     const handleAuthChange = () => {
       const token = localStorage.getItem('access_token') || localStorage.getItem('token');
@@ -82,11 +136,13 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         try {
           localStorage.removeItem(NOTIFICATIONS_STORAGE_KEY);
         } catch {}
+      } else {
+        loadNotificationsFromBackend();
       }
     };
     window.addEventListener('sigi:auth-changed', handleAuthChange);
     return () => window.removeEventListener('sigi:auth-changed', handleAuthChange);
-  }, []);
+  }, [loadNotificationsFromBackend]);
 
   const markAsRead = useCallback((id: string) => {
     setNotifications((prev) =>
@@ -100,6 +156,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   const deleteNotification = useCallback((id: string) => {
     setNotifications((prev) => prev.filter((item) => item.id !== id));
+    notificationAuditService.eliminarNotificacao(id);
   }, []);
 
   const clearNotifications = useCallback(() => {
@@ -164,6 +221,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     () => ({
       notifications,
       unreadCount,
+      isLoading,
+      refreshNotifications: loadNotificationsFromBackend,
       markAsRead,
       markAllAsRead,
       deleteNotification,
@@ -179,6 +238,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     [
       notifications,
       unreadCount,
+      isLoading,
+      loadNotificationsFromBackend,
       markAsRead,
       markAllAsRead,
       deleteNotification,

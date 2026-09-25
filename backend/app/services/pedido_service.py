@@ -208,7 +208,7 @@ class PedidoService:
         try:
             from app.services.producao_service import ProducaoService
             prod_service = ProducaoService()
-            prod_service.gerar_ordens_por_pedido(pedido.id, user_id, emit_visual_notification=False)
+            prod_service.gerar_ordens_por_pedido(pedido.id, user_id, emit_visual_notification=True)
         except Exception as e:
             print("⚠ Could not generate production orders automatically on creation:", e)
             

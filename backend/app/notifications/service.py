@@ -103,6 +103,14 @@ class NotificationService:
         # para as rooms apropriadas, excluindo a room do próprio utilizador que executou a ação.
         actor_id_str = str(event.actor_user_id) if event.actor_user_id else None
 
+        # Determinar tipo de alvo para persistência:
+        # Eventos operacionais do sistema devem ser GLOBAL para que fiquem no histórico do ERP
+        # acessível a todos os operadores autorizados. Apenas notificações privadas de utilizador são USER.
+        is_single_user = len(targets) == 1 and targets[0].target_type == "USER"
+        primary_target_type = "USER" if is_single_user else "GLOBAL"
+        primary_target_user_id = int(targets[0].target_id) if is_single_user and targets[0].target_id else None
+        primary_target_role = targets[0].target_id if (len(targets) == 1 and targets[0].target_type == "ROLE") else None
+
         # Persistir primeiro o registo canónico no banco de dados
         created_notif = NotificationRepository.create_notification(
             event_id=event.event_id,
@@ -116,8 +124,9 @@ class NotificationService:
             canal=canal,
             prioridade=priority_str,
             persistente=notif_cfg.persistent,
-            target_type="GLOBAL" if any(t.target_type == "GLOBAL" for t in targets) else targets[0].target_type,
-            target_role=targets[0].target_id if targets and targets[0].target_type == "ROLE" else None,
+            target_type=primary_target_type,
+            target_role=primary_target_role,
+            target_user_id=primary_target_user_id,
             actor_user_id=event.actor_user_id,
             metadados={
                 **event.data,

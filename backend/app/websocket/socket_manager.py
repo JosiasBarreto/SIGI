@@ -27,6 +27,33 @@ _sid_to_user: Dict[str, str] = {}
 _sid_to_role: Dict[str, str] = {}
 
 
+class WebSocketUpgradeMiddleware:
+    """
+    Middleware WSGI que intercepta pedidos de upgrade WebSocket no servidor Werkzeug
+    garantindo que status_set não seja nulo, prevenindo 'AssertionError: write() before start_response'.
+    """
+    def __init__(self, wsgi_app):
+        self.wsgi_app = wsgi_app
+
+    def __call__(self, environ, start_response):
+        status_called = [False]
+
+        def custom_start_response(status, response_headers, exc_info=None):
+            status_called[0] = True
+            return start_response(status, response_headers, exc_info)
+
+        app_iter = self.wsgi_app(environ, custom_start_response)
+
+        # Se o pedido foi um upgrade WebSocket e o backend fez hijack do socket sem start_response
+        if not status_called[0] and environ.get("HTTP_UPGRADE", "").lower() == "websocket":
+            try:
+                start_response("101 Switching Protocols", [("Upgrade", "websocket"), ("Connection", "Upgrade")])
+            except Exception:
+                pass
+
+        return app_iter
+
+
 def _get_jwt_secret() -> str:
     return os.getenv("JWT_SECRET_KEY", "sigi_erp_secret_key_change_in_production")
 
@@ -114,6 +141,16 @@ def handle_connect(auth=None):
             _sid_to_role[sid] = role
             role_slug = role.lower().replace(" ", "_")
             join_room(f"role_{role_slug}")
+            
+            # Normalizar acentos para garantir entrega de notificações (ex: armazém -> armazem)
+            normalized_slug = role.lower().replace(" ", "_").replace("á", "a").replace("ã", "a").replace("é", "e").replace("í", "i").replace("ó", "o").replace("ú", "u").replace("ç", "c")
+            if normalized_slug != role_slug:
+                join_room(f"role_{normalized_slug}")
+
+            # Entrar também na room de setor correspondente para ecrãs de produção
+            if normalized_slug in ["cozinha", "pastelaria", "bar", "armazem"]:
+                join_room(f"sector_{normalized_slug}")
+
             logger.info(f"WebSocket authenticated - User: {user_id}, Role: {role}, SID: {sid}")
         else:
             logger.info(f"WebSocket authenticated - User: {user_id}, SID: {sid}")

@@ -135,6 +135,15 @@ def run_safe_migrations(db):
         "ALTER TABLE inventario_items MODIFY COLUMN referencia_id INT NULL;",
         "ALTER TABLE inventario_items MODIFY COLUMN quantidade_contada DECIMAL(12,3) NULL;",
         "ALTER TABLE inventario_items MODIFY COLUMN diferenca DECIMAL(12,3) NULL;",
+        # Migração e compatibilidade para tabela notificacoes (Arquitetura de Notificações SIGI)
+        "ALTER TABLE notificacoes ADD COLUMN IF NOT EXISTS event_id VARCHAR(64) NULL;",
+        "ALTER TABLE notificacoes ADD COLUMN IF NOT EXISTS event_type VARCHAR(64) NULL;",
+        "ALTER TABLE notificacoes ADD COLUMN IF NOT EXISTS entity_type VARCHAR(64) NULL;",
+        "ALTER TABLE notificacoes ADD COLUMN IF NOT EXISTS entity_id INT NULL;",
+        "ALTER TABLE notificacoes ADD COLUMN IF NOT EXISTS aggregate_id VARCHAR(128) NULL;",
+        "ALTER TABLE notificacoes ADD COLUMN IF NOT EXISTS actor_user_id INT NULL;",
+        "ALTER TABLE notificacoes ADD COLUMN IF NOT EXISTS recipient_user_id INT NULL;",
+        "ALTER TABLE notificacoes ADD COLUMN IF NOT EXISTS recipient_role VARCHAR(50) NULL;",
     ]
     for q in queries:
         try:

@@ -11,14 +11,19 @@ import {
 export const commercialService = {
   // POS Checkout (Venda Direta)
   createVenda: async (data: VendaRequest): Promise<VendaResponse> => {
-    // Retorna 201 Created em sucesso
+    const payload = {
+      evento_id: null,
+      cliente_id: null,
+      ...data
+    };
     try {
-      return await apiClient.post<any, VendaResponse>('/v1/vendas', data);
+      return await apiClient.post<any, VendaResponse>('/v1/vendas', payload);
     } catch (err: any) {
-      if (err?.response?.status === 404 || err?.status === 404 || err?.response?.status === 405) {
-        return apiClient.post<any, VendaResponse>('/v1/comercial/vendas', data);
+      try {
+        return await apiClient.post<any, VendaResponse>('/v1/comercial/vendas', payload);
+      } catch (err2: any) {
+        throw err || err2;
       }
-      throw err;
     }
   },
 

@@ -42,6 +42,9 @@ def create_app(config_class=Config):
         cors_allowed_origins=app.config.get('SOCKETIO_CORS_ALLOWED_ORIGINS', '*'),
         message_queue=active_message_queue,
     )
+    from app.websocket.socket_manager import WebSocketUpgradeMiddleware
+    app.wsgi_app = WebSocketUpgradeMiddleware(app.wsgi_app)
+
     migrate.init_app(app, db)
     
     swagger_config = {

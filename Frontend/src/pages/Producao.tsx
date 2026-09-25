@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { productionService, productService, requestService, orderService, clientService } from '../services';
+import { useAuth } from '../components/AuthContext';
 import {
   ChefHat,
   Filter,
@@ -35,8 +36,62 @@ type ViewModeType = 'tabs' | 'kanban';
 
 export default function Producao() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [now, setNow] = useState(new Date());
-  const [selectedSector, setSelectedSector] = useState<SectorType>('Todos');
+
+  // Identificar se o utilizador possui setor específico (Cozinha ou Pastelaria)
+  const userDedicatedSector = useMemo<SectorType | null>(() => {
+    if (!user) {
+      try {
+        const stored = localStorage.getItem('user');
+        if (stored) {
+          const u = JSON.parse(stored);
+          const r = (u?.role || '').toLowerCase().trim();
+          const s = (u?.sector || u?.setor || '').toLowerCase().trim();
+          if (r === 'cozinha' || s === 'cozinha') return 'Cozinha';
+          if (r === 'pastelaria' || s === 'pastelaria') return 'Pastelaria';
+          if (r.includes('bar') || s.includes('bar')) return 'Bar';
+        }
+      } catch {
+        // fallback
+      }
+      return null;
+    }
+
+    const role = (user.role || '').toLowerCase().trim();
+    const rawSector = ((user as any).sector || (user as any).setor || '').toLowerCase().trim();
+
+    if (role === 'cozinha' || rawSector === 'cozinha') return 'Cozinha';
+    if (role === 'pastelaria' || rawSector === 'pastelaria') return 'Pastelaria';
+    if (role === 'bar' || role === 'bar e restaurante' || rawSector.includes('bar')) return 'Bar';
+    return null;
+  }, [user]);
+
+  // Se o utilizador for Cozinha -> abre Cozinha; se Pastelaria -> abre Pastelaria; outros -> 'Todos'
+  const [selectedSector, setSelectedSector] = useState<SectorType>(() => {
+    try {
+      const stored = localStorage.getItem('user');
+      if (stored) {
+        const u = JSON.parse(stored);
+        const r = (u?.role || '').toLowerCase().trim();
+        const s = (u?.sector || u?.setor || '').toLowerCase().trim();
+        if (r === 'cozinha' || s === 'cozinha') return 'Cozinha';
+        if (r === 'pastelaria' || s === 'pastelaria') return 'Pastelaria';
+        if (r.includes('bar') || s.includes('bar')) return 'Bar';
+      }
+    } catch {
+      // fallback
+    }
+    return 'Todos';
+  });
+
+  // Sincronizar quando os dados de autenticação carregarem
+  useEffect(() => {
+    if (userDedicatedSector) {
+      setSelectedSector(userDedicatedSector);
+    }
+  }, [userDedicatedSector]);
+
   const [selectedStateTab, setSelectedStateTab] = useState<StateTabType>('todos');
   const [viewMode, setViewMode] = useState<ViewModeType>('tabs');
   const [searchTerm, setSearchTerm] = useState('');
@@ -467,21 +522,35 @@ export default function Producao() {
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
         {/* Filtro de Setor */}
         <div className="flex items-center bg-gray-100 dark:bg-surface-dark p-1 rounded-xl gap-1 overflow-x-auto border border-gray-200/80 dark:border-border-dark">
-          {(['Todos', 'Cozinha', 'Pastelaria', 'Bar'] as SectorType[]).map((sec) => (
-            <button
-              key={sec}
-              onClick={() => setSelectedSector(sec)}
-              className={cn(
-                'px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap',
-                selectedSector === sec
-                  ? 'bg-white dark:bg-gray-800 text-primary dark:text-primary shadow-xs'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-              )}
-            >
-              {sectorIcons[sec]}
-              <span>{sec === 'Todos' ? 'Todos os Setores' : sec}</span>
-            </button>
-          ))}
+          {userDedicatedSector && user?.role !== 'Administrador' ? (
+            <div className="flex items-center gap-1.5 px-1.5 py-0.5">
+              <span className="text-[11px] font-bold text-gray-500 dark:text-gray-400">Posto:</span>
+              <button
+                onClick={() => setSelectedSector(userDedicatedSector)}
+                className="px-3 py-1.5 rounded-lg text-xs font-black bg-white dark:bg-gray-800 text-primary dark:text-primary shadow-xs flex items-center gap-1.5 border border-primary/30"
+              >
+                {sectorIcons[userDedicatedSector]}
+                <span>{userDedicatedSector}</span>
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse ml-0.5" title="Bancada Operacional Ativa" />
+              </button>
+            </div>
+          ) : (
+            (['Todos', 'Pastelaria', 'Cozinha', 'Bar'] as SectorType[]).map((sec) => (
+              <button
+                key={sec}
+                onClick={() => setSelectedSector(sec)}
+                className={cn(
+                  'px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer',
+                  selectedSector === sec
+                    ? 'bg-white dark:bg-gray-800 text-primary dark:text-primary shadow-xs'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                )}
+              >
+                {sectorIcons[sec]}
+                <span>{sec === 'Todos' ? 'Todos os Setores' : sec}</span>
+              </button>
+            ))
+          )}
         </div>
 
         {/* Caixa de Pesquisa Rápida */}
@@ -506,7 +575,7 @@ export default function Producao() {
       </div>
 
       {/* 3. BARRA DE ABAS POR ESTADO (COM RENDERIZAÇÃO LIMPA E ALTO CONTRASTE) */}
-      <div className="bg-gray-100/90 dark:bg-surface-dark p-1.5 rounded-2xl border border-gray-200 dark:border-border-dark shadow-xs flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+      <div className="bg-gray-100/90 dark:bg-surface-dark p-1.5 rounded-2xl border border-gray-200 dark:border-border-dark shadow-xs flex items-center gap-1.5  scrollbar-none">
         {/* Aba: Todos */}
         <button
           onClick={() => setSelectedStateTab('todos')}
@@ -675,6 +744,7 @@ export default function Producao() {
       </div>
 
       {/* 5. ÁREA DE EXIBIÇÃO: MODO ABAS (COM CARDS ESPAÇOSOS E ACESSÍVEIS) OU MODO KANBAN */}
+      
       {isLoading ? (
         <div className="p-16 text-center text-gray-500 font-bold flex flex-col items-center justify-center gap-3">
           <RefreshCw size={28} className="animate-spin text-primary" />
