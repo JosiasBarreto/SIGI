@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Settings,
   Save,
@@ -17,13 +17,21 @@ import {
   AlertCircle,
   Percent,
   Plus,
+  Download,
+  RotateCcw,
+  Clock,
+  Code2,
+  Info,
 } from "lucide-react";
 import { toast } from "react-toastify";
 import { useTheme } from "../components/Layout/ThemeContext";
 import { Palette } from "lucide-react";
-import { configService, fiscalService, productService } from "../services";
+import { configService, fiscalService, productService, backupService, BackupItemDTO } from "../services";
 import apiClient from "../api/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import PainelSobre from "./Configuracoes/PainerSobre";
+
+
 
 interface BackupItem {
   id: string;
@@ -606,7 +614,7 @@ export default function Configuracoes() {
   const queryClient = useQueryClient();
   const { palette, setPalette } = useTheme();
   const [activeTab, setActiveTab] = useState<
-    "geral" | "backup" | "iva" | "categorias" | "unidades"
+    "geral" | "backup" | "iva" | "categorias" | "unidades" | "sobre"
   >("geral");
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
@@ -633,35 +641,31 @@ export default function Configuracoes() {
     telemoveis: "",
   });
 
-  // Backup logs lists
-  const [backups, setBackups] = useState<BackupItem[]>(() => {
-    const saved = localStorage.getItem("sigi_backups");
-    return saved
-      ? JSON.parse(saved)
-      : [
-          {
-            id: "BKP-001",
-            filename: "sigi_db_backup_2026-06-18_0400.sql",
-            date: "2026-06-18 04:00",
-            size: "12.4 MB",
-            type: "Automático",
-          },
-          {
-            id: "BKP-002",
-            filename: "sigi_db_backup_2026-06-17_0400.sql",
-            date: "2026-06-17 04:00",
-            size: "12.3 MB",
-            type: "Automático",
-          },
-          {
-            id: "BKP-003",
-            filename: "sigi_db_backup_manual_2026-06-15.sql",
-            date: "2026-06-15 15:30",
-            size: "11.9 MB",
-            type: "Manual",
-          },
-        ];
-  });
+  // Estados para Gestão do Módulo de Backup Real do Backend
+  const [backups, setBackups] = useState<BackupItemDTO[]>([]);
+  const [loadingBackups, setLoadingBackups] = useState<boolean>(false);
+  const [creatingBackup, setCreatingBackup] = useState<boolean>(false);
+  const [restoringFilename, setRestoringFilename] = useState<string | null>(null);
+  const [uploadingRestore, setUploadingRestore] = useState<boolean>(false);
+
+  const loadBackups = useCallback(async () => {
+    setLoadingBackups(true);
+    try {
+      const list = await backupService.getAll();
+      setBackups(list);
+    } catch (error: any) {
+      toast.error(error?.message || "Erro ao carregar ficheiros de backup do servidor.");
+    } finally {
+      setLoadingBackups(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === "backup") {
+      loadBackups();
+    }
+  }, [activeTab, loadBackups]);
+
   const themes = [
     { key: "default", label: "Laranja", color: "#FF6B00" },
     { key: "theme-green", label: "Verde", color: "#16A34A" },
@@ -679,12 +683,6 @@ export default function Configuracoes() {
     { key: "theme-brown", label: "Castanho", color: "#8B5E3C" },
     { key: "theme-black", label: "Preto", color: "#1F2937" },
   ];
-
-  // Save backup logs list
-  const saveBackupsToStorage = (list: BackupItem[]) => {
-    setBackups(list);
-    //localStorage.setItem("sigi_backups", JSON.stringify(list));
-  };
 
   useEffect(() => {
     async function loadConfig() {
@@ -739,91 +737,85 @@ export default function Configuracoes() {
     }
   };
 
-  // Run Manual Backup Action
+  // 1. Criar novo snapshot de backup no servidor
   const triggerManualBackup = async () => {
-    setLoading(true);
+    setCreatingBackup(true);
     try {
-      const item: any = await apiClient.post('/v1/backups', {});
-      const record: BackupItem = { id: item.filename, filename: item.filename, date: new Date(item.created_at).toLocaleString(), size: `${(Number(item.size) / 1024 / 1024).toFixed(2)} MB`, type: 'Manual' };
-      saveBackupsToStorage([record, ...backups.filter((backup) => backup.id !== record.id)]);
-      window.open(`${apiClient.defaults.baseURL}/v1/backups/${encodeURIComponent(item.filename)}/download`, '_blank');
-      toast.success('Backup SQL completo criado e colocado para download.');
-      setLoading(false);
-      return;
+      await backupService.create();
+      toast.success("Snapshot .sql criado com sucesso no servidor!");
+      await loadBackups();
     } catch (error: any) {
-      toast.error(error?.message || 'Falha ao criar o backup no servidor.');
-      setLoading(false);
+      toast.error(error?.message || "Falha ao criar o snapshot de backup no servidor.");
+    } finally {
+      setCreatingBackup(false);
+    }
+  };
+
+  // 2. Descarregar o ficheiro .sql para o computador
+  const handleDownloadBackup = async (filename: string) => {
+    try {
+      await backupService.download(filename);
+      toast.info(`A iniciar descarregamento de "${filename}"...`);
+    } catch (error: any) {
+      toast.error(error?.message || "Erro ao descarregar o ficheiro .sql.");
+    }
+  };
+
+  // 3. Restaurar a base de dados a partir de um snapshot existente no servidor
+  const handleRestoreServerBackup = async (filename: string) => {
+    const confirm = window.confirm(
+      `Aviso Crítico: Tem a certeza que pretende restaurar a base de dados a partir do ficheiro "${filename}"? Todos os dados atuais do servidor serão substituídos.`
+    );
+    if (!confirm) return;
+
+    setRestoringFilename(filename);
+    try {
+      await backupService.restoreServerFile(filename);
+      toast.success("Base de dados restaurada com sucesso a partir do snapshot do servidor!");
+      await loadBackups();
+    } catch (error: any) {
+      toast.error(error?.message || `Não foi possível restaurar a base de dados a partir de "${filename}".`);
+    } finally {
+      setRestoringFilename(null);
+    }
+  };
+
+  // 4. Restaurar a base de dados via upload de ficheiro .sql local
+  const handleRestoreUploadFile = async (file: File) => {
+    if (!file.name.toLowerCase().endsWith('.sql')) {
+      toast.error("Por favor selecione um ficheiro com extensão .sql válida.");
       return;
     }
-    toast.info("A processar cópia de segurança dos dados...");
 
-    setTimeout(() => {
-      const dateNow = new Date();
-      const formatTime = dateNow
-        .toISOString()
-        .replace("T", " ")
-        .substring(0, 16);
-      const filename = `sigi_db_backup_manual_${
-        dateNow.toISOString().split("T")[0]
-      }_${dateNow.toTimeString().split(" ")[0].replace(/:/g, "")}.sql`;
-
-      const newBackup: BackupItem = {
-        id: `BKP-00${backups.length + 1}`,
-        filename,
-        date: formatTime,
-        size: `${(Math.random() * 5 + 10).toFixed(1)} MB`,
-        type: "Manual",
-      };
-
-      const updated = [newBackup, ...backups];
-      saveBackupsToStorage(updated);
-      setLoading(false);
-      toast.success("Cópia de segurança gerada com sucesso!");
-
-      // Start automatic download setup as requested in task 5 (download backup)
-      const dataStr =
-        "data:text/json;charset=utf-8," +
-        encodeURIComponent(JSON.stringify(formData));
-      const downloadAnchor = document.createElement("a");
-      downloadAnchor.setAttribute("href", dataStr);
-      downloadAnchor.setAttribute("download", filename);
-      document.body.appendChild(downloadAnchor);
-      downloadAnchor.click();
-      document.body.removeChild(downloadAnchor);
-    }, 1500);
-  };
-
-  // Restore simulation
-  const handleRestoreBackup = (filename: string, file?: File) => {
     const confirm = window.confirm(
-      `Aviso: Tem a certeza que pretende restaurar os dados para a versão de "${filename}"? Esta ação causará a reinicialização dos registos locais.`
+      `Aviso Crítico: Pretende carregar e restaurar a base de dados a partir do ficheiro local "${file.name}"? Esta ação substituirá a base de dados do servidor.`
     );
-    if (confirm) {
-      setLoading(true);
-      if (file) {
-        const body = new FormData();
-        body.append('file', file);
-        apiClient.post('/v1/backups/restore', body, { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 600000 })
-          .then(() => toast.success('Sistema restaurado. Reinicie o backend para renovar as sessões.'))
-          .catch((error: any) => toast.error(error?.message || 'Não foi possível restaurar o backup.'))
-          .finally(() => setLoading(false));
-        return;
-      }
-      toast.info(`A restaurar cópia de segurança: ${filename}...`);
-      setTimeout(() => {
-        setLoading(false);
-        toast.success(
-          "Sistema restaurado com sucesso para a versão selecionada!"
-        );
-      }, 2000);
+    if (!confirm) return;
+
+    setUploadingRestore(true);
+    try {
+      await backupService.restoreUpload(file);
+      toast.success("Base de dados restaurada com sucesso através do ficheiro enviado!");
+      await loadBackups();
+    } catch (error: any) {
+      toast.error(error?.message || "Erro ao restaurar a base de dados a partir do ficheiro enviado.");
+    } finally {
+      setUploadingRestore(false);
     }
   };
 
-  // Delete backup record from lists
-  const handleDeleteBackup = (id: string) => {
-    const updated = backups.filter((b) => b.id !== id);
-    saveBackupsToStorage(updated);
-    toast.success("Registo de backup removido do histórico.");
+  // 5. Eliminar ficheiro de backup do servidor
+  const handleDeleteBackup = async (filename: string) => {
+    const confirm = window.confirm(`Tem a certeza que deseja eliminar o ficheiro de backup "${filename}" do servidor?`);
+    if (!confirm) return;
+
+    try {
+      await backupService.delete(filename);
+      toast.success(`Ficheiro de backup "${filename}" eliminado do servidor.`);
+      setBackups((prev) => prev.filter((b) => b.filename !== filename));
+    } catch (error: any) {
+      toast.error(error?.message || "Erro ao eliminar o ficheiro de backup do servidor.");
+    }
   };
 
   if (fetching) {
@@ -855,7 +847,7 @@ export default function Configuracoes() {
         </div>
 
         <div className="flex gap-2">
-          {activeTab === "geral" ? (
+          {activeTab === "geral" && (
             <button
               onClick={handleSave}
               disabled={loading}
@@ -864,14 +856,15 @@ export default function Configuracoes() {
               <Save size={15} />{" "}
               {loading ? "A Guardar..." : "Guardar Alterações"}
             </button>
-          ) : (
+          )}
+          {activeTab === "backup" && (
             <button
               onClick={triggerManualBackup}
-              disabled={loading}
+              disabled={loading || creatingBackup}
               className="flex items-center gap-1 px-4 py-2 bg-success hover:bg-success/90 text-white text-xs font-bold rounded-lg shadow transition-all"
             >
               <HardDriveDownload size={15} />{" "}
-              {loading ? "Processando..." : "Backup & Descarregar Cópia"}
+              {creatingBackup ? "Processando..." : "Backup & Descarregar Cópia"}
             </button>
           )}
         </div>
@@ -884,7 +877,7 @@ export default function Configuracoes() {
           className={`flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-lg transition-colors ${
             activeTab === "geral"
               ? "bg-white dark:bg-surface-dark text-primary shadow"
-              : "text-gray-500 hover:text-gray-950"
+              : "text-gray-500 hover:text-gray-950 dark:hover:text-white"
           }`}
         >
           <Building size={14} /> Dados Corporativos
@@ -894,7 +887,7 @@ export default function Configuracoes() {
           className={`flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-lg transition-colors ${
             activeTab === "categorias"
               ? "bg-white dark:bg-surface-dark text-primary shadow"
-              : "text-gray-500 hover:text-gray-950"
+              : "text-gray-500 hover:text-gray-950 dark:hover:text-white"
           }`}
         >
           <Award size={14} /> Categorias
@@ -904,7 +897,7 @@ export default function Configuracoes() {
           className={`flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-lg transition-colors ${
             activeTab === "unidades"
               ? "bg-white dark:bg-surface-dark text-primary shadow"
-              : "text-gray-500 hover:text-gray-950"
+              : "text-gray-500 hover:text-gray-950 dark:hover:text-white"
           }`}
         >
           <FileText size={14} /> Unidades de Medida
@@ -914,7 +907,7 @@ export default function Configuracoes() {
           className={`flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-lg transition-colors ${
             activeTab === "iva"
               ? "bg-white dark:bg-surface-dark text-primary shadow"
-              : "text-gray-500 hover:text-gray-950"
+              : "text-gray-500 hover:text-gray-950 dark:hover:text-white"
           }`}
         >
           <Percent size={14} /> Taxas de IVA
@@ -924,10 +917,20 @@ export default function Configuracoes() {
           className={`flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-lg transition-colors ${
             activeTab === "backup"
               ? "bg-white dark:bg-surface-dark text-primary shadow"
-              : "text-gray-500 hover:text-gray-950"
+              : "text-gray-500 hover:text-gray-950 dark:hover:text-white"
           }`}
         >
           <HardDriveDownload size={14} /> Backup & Restauro
+        </button>
+        <button
+          onClick={() => setActiveTab("sobre")}
+          className={`flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-lg transition-colors ${
+            activeTab === "sobre"
+              ? "bg-white dark:bg-surface-dark text-primary shadow"
+              : "text-gray-500 hover:text-gray-950 dark:hover:text-white"
+          }`}
+        >
+          <Info size={14} /> Sobre
         </button>
       </div>
 
@@ -1272,125 +1275,166 @@ export default function Configuracoes() {
           {/* Action Columns */}
           <div className="lg:col-span-2 space-y-6">
             {/* Run Backup Area */}
-            <div className="bg-white dark:bg-surface-dark border p-6 rounded-2xl shadow-sm space-y-4">
-              <h2 className="text-md font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
-                <HardDriveDownload className="text-success" /> Gerador
-                Offline/Online de Backup
+            <div className="bg-white dark:bg-surface-dark border border-gray-200 dark:border-border-dark p-6 rounded-2xl shadow-sm space-y-4">
+              <h2 className="text-md font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <HardDriveDownload className="text-emerald-500" size={20} />
+                Gerador de Snapshot & Backup SQL
               </h2>
-              <p className="text-xs text-gray-500">
-                Crie uma cópia de segurança completa contendo dados estruturados
-                do ERP, incluindo encomendas, faturas, inventário, utilizadores,
-                audições dinâmicas e stocks em formato .sql universal para
-                descarregar de imediato.
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Crie um novo ficheiro .sql com a cópia de segurança completa da base de dados (encomendas, faturas, inventário, utilizadores e definições). O ficheiro será guardado no servidor e disponibilizado para descarregamento imediato.
               </p>
 
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 <button
                   onClick={triggerManualBackup}
-                  disabled={loading}
-                  className="bg-success hover:bg-success/90 text-white font-bold text-xs px-5 py-2.5 rounded-lg transition"
+                  disabled={creatingBackup}
+                  className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-xs transition flex items-center gap-2 cursor-pointer"
                 >
-                  {loading
-                    ? "A processar backup..."
-                    : "Criar Novo Backup Manual"}
+                  <Plus size={16} />
+                  <span>{creatingBackup ? "A gerar snapshot .sql no servidor..." : "Criar Novo Snapshot .SQL"}</span>
+                </button>
+
+                <button
+                  onClick={loadBackups}
+                  disabled={loadingBackups}
+                  className="bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 font-bold text-xs px-4 py-2.5 rounded-xl transition flex items-center gap-2 cursor-pointer"
+                  title="Atualizar lista do servidor"
+                >
+                  <RefreshCw size={14} className={loadingBackups ? "animate-spin" : ""} />
+                  <span>Atualizar Lista</span>
                 </button>
               </div>
             </div>
 
             {/* List backups */}
-            <div className="bg-white dark:bg-surface-dark border p-6 rounded-2xl shadow-sm space-y-4">
-              <h3 className="text-sm font-bold border-b pb-2 flex items-center gap-2 text-gray-900 dark:text-white">
-                Histórico Geral de Cópias de Segurança
-              </h3>
-
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs text-gray-500">
-                  <thead className="bg-gray-50 dark:bg-gray-800/50 font-bold border-b text-gray-700 dark:text-gray-300">
-                    <tr>
-                      <th className="px-4 py-2.5">FICHEIRO DE CÓPIA</th>
-                      <th className="px-4 py-2.5">PROCESSADO EM</th>
-                      <th className="px-4 py-2.5">TAMANHO</th>
-                      <th className="px-4 py-2.5 text-center">TIPO</th>
-                      <th className="px-4 py-2.5 text-right">AÇÕES</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200 dark:divide-gray-800 text-gray-800 dark:text-gray-200">
-                    {backups.map((bk: BackupItem) => (
-                      <tr
-                        key={bk.id}
-                        className="hover:bg-gray-50/50 dark:hover:bg-gray-800/30"
-                      >
-                        <td className="px-4 py-3 font-mono font-bold text-[11px]">
-                          {bk.filename}
-                        </td>
-                        <td className="px-4 py-3 text-gray-500">{bk.date}</td>
-                        <td className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-300">
-                          {bk.size}
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          <span
-                            className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${
-                              bk.type === "Manual"
-                                ? "bg-blue-100 text-blue-800"
-                                : "bg-purple-100 text-purple-800"
-                            }`}
-                          >
-                            {bk.type}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-right flex justify-end gap-1.5">
-                          <button
-                            onClick={() => handleRestoreBackup(bk.filename)}
-                            className="bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold px-2.5 py-1.5 rounded text-[10px]"
-                            title="Restaurar a partir desta versão"
-                          >
-                            Restaurar
-                          </button>
-                          <button
-                            onClick={() => handleDeleteBackup(bk.id)}
-                            className="text-error hover:bg-error/10 p-1.5 rounded"
-                            title="Apagar registo"
-                          >
-                            <Trash2 size={13} />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            <div className="bg-white dark:bg-surface-dark border border-gray-200 dark:border-border-dark p-6 rounded-2xl shadow-sm space-y-4">
+              <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
+                <h3 className="text-sm font-bold flex items-center gap-2 text-gray-900 dark:text-white">
+                  <FileText size={16} className="text-primary" />
+                  Histórico Real de Cópias de Segurança no Servidor
+                </h3>
+                <span className="text-xs font-semibold text-gray-500 bg-gray-100 dark:bg-gray-800 px-2.5 py-1 rounded-full">
+                  {backups.length} {backups.length === 1 ? "ficheiro" : "ficheiros"}
+                </span>
               </div>
+
+              {loadingBackups ? (
+                <div className="p-8 text-center text-gray-400 flex flex-col items-center gap-2">
+                  <RefreshCw size={24} className="animate-spin text-primary" />
+                  <span className="text-xs">A carregar cópias de segurança do servidor...</span>
+                </div>
+              ) : backups.length === 0 ? (
+                <div className="p-8 text-center text-gray-400 border border-dashed border-gray-200 dark:border-gray-800 rounded-xl space-y-2">
+                  <HardDriveDownload size={32} className="mx-auto text-gray-300 dark:text-gray-600" />
+                  <p className="text-xs font-semibold">Nenhuma cópia de segurança encontrada no servidor.</p>
+                  <p className="text-[11px]">Clique em "Criar Novo Snapshot .SQL" para gerar a primeira cópia.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs text-gray-500">
+                    <thead className="bg-gray-50 dark:bg-gray-800/50 font-bold border-b border-gray-100 dark:border-gray-800 text-gray-700 dark:text-gray-300">
+                      <tr>
+                        <th className="px-4 py-2.5">FICHEIRO .SQL</th>
+                        <th className="px-4 py-2.5">DATA DO SNAPSHOT</th>
+                        <th className="px-4 py-2.5">TAMANHO</th>
+                        <th className="px-4 py-2.5 text-center">ORIGEM</th>
+                        <th className="px-4 py-2.5 text-right">AÇÕES</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 dark:divide-gray-800 text-gray-800 dark:text-gray-200">
+                      {backups.map((bk: BackupItemDTO) => (
+                        <tr
+                          key={bk.id || bk.filename}
+                          className="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition"
+                        >
+                          <td className="px-4 py-3 font-mono font-bold text-[11px] text-gray-900 dark:text-white">
+                            {bk.filename}
+                          </td>
+                          <td className="px-4 py-3 text-gray-500 dark:text-gray-400">
+                            {bk.date || (bk.created_at ? new Date(bk.created_at).toLocaleString('pt-PT') : '-')}
+                          </td>
+                          <td className="px-4 py-3 font-semibold text-gray-700 dark:text-gray-300">
+                            {bk.formatted_size || bk.size}
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <span
+                              className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${
+                                bk.type === "Automático"
+                                  ? "bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300"
+                                  : "bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300"
+                              }`}
+                            >
+                              {bk.type || "Manual"}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              <button
+                                onClick={() => handleDownloadBackup(bk.filename)}
+                                className="bg-primary/10 hover:bg-primary/20 text-primary font-bold px-2.5 py-1.5 rounded-lg text-[10px] flex items-center gap-1 transition cursor-pointer"
+                                title="Descarregar ficheiro .sql"
+                              >
+                                <Download size={12} />
+                                <span>Download</span>
+                              </button>
+
+                              <button
+                                onClick={() => handleRestoreServerBackup(bk.filename)}
+                                disabled={restoringFilename === bk.filename}
+                                className="bg-amber-100 dark:bg-amber-950/60 hover:bg-amber-200 text-amber-900 dark:text-amber-200 font-bold px-2.5 py-1.5 rounded-lg text-[10px] flex items-center gap-1 transition cursor-pointer"
+                                title="Restaurar a base de dados a partir desta cópia"
+                              >
+                                <RotateCcw size={12} className={restoringFilename === bk.filename ? "animate-spin" : ""} />
+                                <span>{restoringFilename === bk.filename ? "A restaurar..." : "Restaurar"}</span>
+                              </button>
+
+                              <button
+                                onClick={() => handleDeleteBackup(bk.filename)}
+                                className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition cursor-pointer"
+                                title="Eliminar este backup do servidor"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </div>
 
           {/* Restore Dropper File Area */}
           <div className="space-y-6">
-            <div className="bg-white dark:bg-surface-dark border p-6 rounded-2xl shadow-sm text-center space-y-4">
+            <div className="bg-white dark:bg-surface-dark border border-gray-200 dark:border-border-dark p-6 rounded-2xl shadow-sm text-center space-y-4">
               <h3 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-1.5 justify-center">
-                <UploadCloud className="text-primary hover:animate-pulse" />{" "}
-                Carregar para Restauro
+                <UploadCloud className="text-primary hover:animate-pulse" size={20} />
+                Carregar Ficheiro .SQL para Restauro
               </h3>
-              <p className="text-xs text-gray-500">
-                Selecione ou arraste o ficheiro .sql de segurança previamente
-                descarregado para recuperar toda a base de dados do ERP.
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Envie um ficheiro .sql de cópia de segurança para restaurar a base de dados do servidor.
               </p>
 
               <div className="border-2 border-dashed border-gray-200 dark:border-gray-800 hover:border-primary/50 cursor-pointer p-6 rounded-xl transition text-center space-y-2">
                 <UploadCloud className="mx-auto text-gray-400" size={36} />
-                <p className="text-[11px] font-bold">
-                  Soltar ficheiro .sql de backup aqui
+                <p className="text-[11px] font-bold text-gray-800 dark:text-gray-200">
+                  {uploadingRestore ? "A carregar e restaurar..." : "Arraste ou selecione o ficheiro .sql"}
                 </p>
                 <p className="text-[9px] text-gray-400">
-                  ou clique para procurar no seu computador
+                  Ficheiro .sql de formato universal
                 </p>
                 <input
                   type="file"
                   accept=".sql"
+                  disabled={uploadingRestore}
                   className="hidden"
                   id="backup-restore-input"
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (file) {
-                      handleRestoreBackup(file.name, file);
+                      handleRestoreUploadFile(file);
                     }
                   }}
                 />
@@ -1402,21 +1446,23 @@ export default function Configuracoes() {
                 </label>
               </div>
 
-              <div className="p-3 bg-amber-50 dark:bg-amber-950/20 rounded-xl flex gap-2 text-left text-[10px] text-amber-800 dark:text-amber-350 border border-amber-100 dark:border-amber-900/50">
-                <AlertCircle className="shrink-0 text-amber-600" size={16} />
+              <div className="p-3 bg-amber-50 dark:bg-amber-950/20 rounded-xl flex gap-2 text-left text-[10px] text-amber-800 dark:text-amber-300 border border-amber-100 dark:border-amber-900/50">
+                <AlertCircle className="shrink-0 text-amber-600 dark:text-amber-400" size={16} />
                 <div>
                   <span className="font-bold block">
-                    Aviso Geral de Restauro:
+                    Aviso Importante de Restauro:
                   </span>
-                  Esta ação substituirá os pedidos de hoje, os saldos
-                  financeiros e as alterações de inventário pelas definições
-                  contidas no backup.
+                  O restauro substitui os dados atuais da base de dados do servidor. Recomenda-se criar um novo snapshot antes de proceder a um restauro.
                 </div>
               </div>
             </div>
           </div>
         </div>
       )}
+
+      {/* Painel Sobre a Aplicação & Desenvolvedor */}
+      {activeTab === "sobre" && <PainelSobre />}
+
     </div>
   );
 }

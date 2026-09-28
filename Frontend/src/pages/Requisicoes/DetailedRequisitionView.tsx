@@ -2,6 +2,7 @@ import React, { useState, useMemo } from "react";
 import { Package, Wrench, CheckCircle2, TrendingUp, RotateCcw, FileText, Eye, Printer } from "lucide-react";
 import { cn, formatCurrency } from "../../lib/utils";
 import Swal from "sweetalert2";
+import { toast } from "react-toastify";
 import { useAuth } from "../../components/AuthContext";
 import { DataTable } from "../../components/Common/DataTable";
 import { ColumnDef } from "@tanstack/react-table";
@@ -24,8 +25,8 @@ export function DetailedRequisitionView({
     const config = JSON.parse(localStorage.getItem("sigi_config") || "{}");
     const companyName = config.empresa || config.nome || "Sabor Imbatível, Lda.";
     const companyNif = config.nif || "500123456";
-    const companyLocation = config.endereco || config.localizacao || "Luanda, Angola";
-    const companyContact = config.telefone || config.contacto || "+244 923 456 789";
+    const companyLocation = config.endereco || config.localizacao || "São Tomé, São Tomé e Príncipe";
+    const companyContact = config.telefone || config.contacto || "+239 9956478";
     const currencySym = config.moeda_simbolo || config.moeda || "";
 
     // Determine occurrences
@@ -437,6 +438,22 @@ export function DetailedRequisitionView({
   });
 
   const handleApproveSubmit = () => {
+    // Validação: não permitir aprovar mais do que foi solicitado nem valores negativos
+    for (const idStr of Object.keys(approvedQuantities)) {
+      const itemId = Number(idStr);
+      const item = req.itens?.find((i: any) => i.id === itemId);
+      const val = Number(approvedQuantities[itemId]) || 0;
+      const maxAllowed = Number(item?.quantidade_solicitada) || 0;
+      if (val < 0) {
+        toast.error(`A quantidade aprovada para "${item?.nome || 'Item'}" não pode ser negativa.`);
+        return;
+      }
+      if (val > maxAllowed) {
+        toast.error(`A quantidade aprovada para "${item?.nome || 'Item'}" (${val}) excede a quantidade solicitada (${maxAllowed}).`);
+        return;
+      }
+    }
+
     const payload = {
       itens: Object.keys(approvedQuantities).map((idStr) => {
         const itemId = Number(idStr);
@@ -547,15 +564,32 @@ export function DetailedRequisitionView({
         header: "Qtd Apro.",
         cell: ({ row }) => {
           const item = row.original;
+          const maxQtd = Number(item.quantidade_solicitada) || 0;
+          const currentVal = approvedQuantities[item.id] ?? 0;
+          const isOver = currentVal > maxQtd;
           if (req.estado === "Pendente" || (req.estado === "Aprovada" && isArmazemOrAdmin)) {
             return (
-              <input
-                type="number"
-                step="any"
-                value={approvedQuantities[item.id] ?? ""}
-                onChange={(e) => setApprovedQuantities(prev => ({ ...prev, [item.id]: Number(e.target.value) }))}
-                className="w-20 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 px-2 py-1 rounded font-bold text-center text-xs outline-none focus:border-primary shadow-inner"
-              />
+              <div className="flex flex-col items-center">
+                <input
+                  type="number"
+                  step="any"
+                  min="0"
+                  max={maxQtd}
+                  value={approvedQuantities[item.id] ?? ""}
+                  onChange={(e) => setApprovedQuantities(prev => ({ ...prev, [item.id]: Number(e.target.value) }))}
+                  className={cn(
+                    "w-20 bg-gray-50 dark:bg-gray-900 border px-2 py-1 rounded font-bold text-center text-xs outline-none shadow-inner transition-all",
+                    isOver
+                      ? "border-rose-500 bg-rose-50 dark:bg-rose-950/40 text-rose-600 focus:border-rose-500"
+                      : "border-gray-200 dark:border-gray-800 focus:border-primary text-gray-900 dark:text-white"
+                  )}
+                />
+                {isOver && (
+                  <span className="text-[9px] font-bold text-rose-500 mt-0.5">
+                    Máx: {maxQtd}
+                  </span>
+                )}
+              </div>
             );
           }
           return <span className="font-bold text-blue-600 dark:text-blue-400">{Number(item.quantidade_aprovada)} {item.unidade_medida || "un"}</span>;

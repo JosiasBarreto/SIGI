@@ -226,7 +226,7 @@ export default function CaixaPOSPaymentModal({
             />
             <div className="pt-2 border-t border-amber-200/60 dark:border-amber-800/60">
               <label className="text-xs font-bold text-amber-800 dark:text-amber-300 block mb-1">
-                Valor do Sinal / Depósito Inicial (AOA)
+                Valor do Sinal / Depósito Inicial (STN)
               </label>
               <input
                 type="number"
@@ -357,12 +357,12 @@ export default function CaixaPOSPaymentModal({
               <div className="space-y-2 p-3 bg-gray-50 dark:bg-gray-800/40 border border-gray-200 dark:border-gray-700 rounded-xl">
                 <div>
                   <label className="text-[11px] font-bold text-gray-700 dark:text-gray-300 block mb-1">
-                    Valor Pago / Entrada pelo Cliente (AOA)
+                    Valor Pago / Entrada pelo Cliente (STN)
                   </label>
                   <input
                     type="number"
                     step="0.01"
-                    placeholder={`Total: ${total} AOA (ou insira valor pago)`}
+                    placeholder={`Total: ${total} STN (ou insira valor pago)`}
                     value={valorPago}
                     onChange={(e) => setValorPago(e.target.value)}
                     className="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg px-2.5 py-1.5 text-xs text-gray-900 dark:text-white font-bold"

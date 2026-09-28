@@ -18,17 +18,17 @@ export function initializeDatabase() {
     { id: "u6", name: "Pedro Motorista", email: "motorista@saborimbativel.com", contact: "9000006", role: "Motorista", status: "Ativo", lastAccess: new Date().toISOString() }
   ];
 
-  const clientCompanies = ["Banco de Poupança", "Telecom Nacional", "Seguros Plus", "Hospital Central", "Ministério das Finanças", "Universidade Agostinho Neto"];
+  const clientCompanies = ["Banco Internacional", "Telecom Nacional", "Seguros Plus", "Hospital Central", "Ministério das Finanças", "Universidade de São Tomé e Príncipe"];
   const clients: Client[] = Array.from({ length: 50 }, (_, i) => ({
     id: `c${i + 1}`,
     name: `Cliente ${i + 1} ${["Silva", "Santos", "Costa", "Oliveira"][Math.floor(Math.random() * 4)]}`,
     company: i < 15 ? clientCompanies[Math.floor(Math.random() * clientCompanies.length)] : undefined,
     nif: `5000${Math.floor(Math.random() * 90000) + 10000}`,
-    phone: `92${Math.floor(Math.random() * 9000000) + 1000000}`,
-    whatsapp: `92${Math.floor(Math.random() * 9000000) + 1000000}`,
+    phone: `+239 99${Math.floor(Math.random() * 90000) + 10000}`,
+    whatsapp: `+239 99${Math.floor(Math.random() * 90000) + 10000}`,
     email: `cliente${i + 1}@exemplo.com`,
-    address: `Rua Serpa Pinto, Edifício ${Math.floor(Math.random() * 100)}, Luanda`,
-    district: ["Luanda", "Talatona", "Belas", "Viana"][Math.floor(Math.random() * 4)],
+    address: `Avenida 12 de Julho, Edifício ${Math.floor(Math.random() * 100)}, São Tomé`,
+    district: ["Água Grande", "Mé-Zóchi", "Cantagalo", "Lobata"][Math.floor(Math.random() * 4)],
     notes: i % 5 === 0 ? "Cliente VIP de Catering" : ""
   }));
 
@@ -98,7 +98,7 @@ export function initializeDatabase() {
     const date = isToday ? new Date() : new Date(Date.now() + (Math.random() * 30 - 5) * 86400000);
     return {
       id: `e${i + 1}`, name, clientId: `c${Math.floor(Math.random() * 30) + 1}`,
-      location: ["Talatona Convention", "Ilha de Luanda", "Quinta de Belas", "Residência do Cliente"][Math.floor(Math.random() * 4)],
+      location: ["Hotel Praia", "Omali Lodge", "Club Santana", "Residência do Cliente"][Math.floor(Math.random() * 4)],
       date: date.toISOString().split("T")[0], startTime: "18:00", endTime: "02:00",
       guests: Math.floor(Math.random() * 400) + 50, status: isToday ? "Em Andamento" : "Agendado", notes: "Atenção a restrições alimentares VIP"
     };

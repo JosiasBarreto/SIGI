@@ -144,6 +144,21 @@ def run_safe_migrations(db):
         "ALTER TABLE notificacoes ADD COLUMN IF NOT EXISTS actor_user_id INT NULL;",
         "ALTER TABLE notificacoes ADD COLUMN IF NOT EXISTS recipient_user_id INT NULL;",
         "ALTER TABLE notificacoes ADD COLUMN IF NOT EXISTS recipient_role VARCHAR(50) NULL;",
+        # Compatibilidade para tabelas materiais, ocorrencias_materiais e requisicoes (previne Data truncated 1265 e Enum mismatch)
+        "ALTER TABLE materiais MODIFY COLUMN estado VARCHAR(50) DEFAULT 'Disponivel';",
+        "ALTER TABLE materiais MODIFY COLUMN tipo VARCHAR(50) NOT NULL DEFAULT 'Reutilizavel';",
+        "ALTER TABLE ocorrencias_materiais MODIFY COLUMN tipo VARCHAR(50) NOT NULL;",
+        "ALTER TABLE ocorrencias_materiais MODIFY COLUMN estado VARCHAR(50) DEFAULT 'Aberta';",
+        "ALTER TABLE requisicoes MODIFY COLUMN estado VARCHAR(50) DEFAULT 'Pendente';",
+        "ALTER TABLE requisicoes MODIFY COLUMN tipo VARCHAR(50) NOT NULL DEFAULT 'Inicial';",
+        "ALTER TABLE requisicoes MODIFY COLUMN sector VARCHAR(50) NOT NULL DEFAULT 'Cozinha';",
+        "ALTER TABLE requisicoes_itens MODIFY COLUMN tipo_item VARCHAR(50) NOT NULL;",
+        "ALTER TABLE requisicoes_itens ADD COLUMN IF NOT EXISTS quantidade_aprovada DECIMAL(10,3) DEFAULT 0.000;",
+        "ALTER TABLE requisicoes_itens ADD COLUMN IF NOT EXISTS quantidade_entregue DECIMAL(10,3) DEFAULT 0.000;",
+        "ALTER TABLE requisicoes_itens ADD COLUMN IF NOT EXISTS quantidade_devolvida DECIMAL(10,3) DEFAULT 0.000;",
+        "ALTER TABLE requisicoes_itens ADD COLUMN IF NOT EXISTS quantidade_danificada DECIMAL(10,3) DEFAULT 0.000;",
+        "ALTER TABLE requisicoes_itens ADD COLUMN IF NOT EXISTS quantidade_perdida DECIMAL(10,3) DEFAULT 0.000;",
+        "ALTER TABLE requisicoes_itens ADD COLUMN IF NOT EXISTS observacao TEXT NULL;",
     ]
     for q in queries:
         try:

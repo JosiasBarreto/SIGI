@@ -105,12 +105,19 @@ class Inventario(BaseModel):
         quantidade_sobra = 0.0
         valor_estimado_falta = 0.0
         valor_estimado_sobra = 0.0
+        valor_total_sistema = 0.0
+        valor_total_contado = 0.0
 
         for it in self.items:
+            unit_price = float(it.obter_preco_unitario() or 0.0)
+            qtd_sis = float(it.quantidade_sistema or 0.0)
+            valor_total_sistema += qtd_sis * unit_price
+
             if it.quantidade_contada is not None:
                 itens_contados += 1
-                diff = float(it.diferenca or 0.0)
-                unit_price = it.obter_preco_unitario()
+                qtd_cnt = float(it.quantidade_contada or 0.0)
+                valor_total_contado += qtd_cnt * unit_price
+                diff = float(it.diferenca if it.diferenca is not None else (qtd_cnt - qtd_sis))
 
                 if diff == 0.0:
                     itens_sem_divergencia += 1
@@ -124,6 +131,9 @@ class Inventario(BaseModel):
                     quantidade_sobra += diff
                     valor_estimado_sobra += diff * unit_price
 
+        ajuste_liquido = valor_estimado_sobra - valor_estimado_falta
+        acuracia = round((itens_sem_divergencia / itens_contados * 100), 1) if itens_contados > 0 else 0.0
+
         return {
             "total_itens": total_itens,
             "itens_contados": itens_contados,
@@ -135,6 +145,10 @@ class Inventario(BaseModel):
             "quantidade_sobra": round(quantidade_sobra, 3),
             "valor_estimado_falta": round(valor_estimado_falta, 2),
             "valor_estimado_sobra": round(valor_estimado_sobra, 2),
+            "valor_total_sistema": round(valor_total_sistema, 2),
+            "valor_total_contado": round(valor_total_contado, 2),
+            "ajuste_liquido_financeiro": round(ajuste_liquido, 2),
+            "acuracia_percentual": acuracia,
             "percentagem_concluida": round((itens_contados / total_itens * 100), 1) if total_itens > 0 else 0.0
         }
 

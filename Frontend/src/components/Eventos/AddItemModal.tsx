@@ -881,7 +881,7 @@ export default function AddItemModal({
 
                     <div>
                       <label className="text-xs font-extrabold text-gray-700 dark:text-gray-300 block mb-1">
-                        Preço Unitário Sem IVA (AOA)
+                        Preço Unitário Sem IVA (STN)
                       </label>
                       <input
                         type="number"

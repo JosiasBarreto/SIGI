@@ -32,9 +32,9 @@ import { formatCurrency, cn } from "../lib/utils";
 
 // Seeded local storage fallback for a unified experience
 const DUMMY_DELIVERIES = [
-  { id: "DLV-201", order: "PED-102", client: "Maria Santos", address: "Morro Bento, Luanda", date: "2026-06-19", status: "Concluída", motorista: "Pedro Entregador" },
-  { id: "DLV-202", order: "PED-105", client: "Supermercado Kero", address: "Benfica, Luanda", date: "2026-06-19", status: "Pendente", motorista: "Pedro Entregador" },
-  { id: "DLV-203", order: "PED-112", client: "Clínica Sagrada", address: "Maianga, Luanda", date: "2026-06-20", status: "Pendente", motorista: "Helena Rosa" }
+  { id: "DLV-201", order: "PED-102", client: "Maria Santos", address: "Água Grande, São Tomé", date: "2026-06-19", status: "Concluída", motorista: "Pedro Entregador" },
+  { id: "DLV-202", order: "PED-105", client: "Supermercado CK", address: "Trindade, São Tomé", date: "2026-06-19", status: "Pendente", motorista: "Pedro Entregador" },
+  { id: "DLV-203", order: "PED-112", client: "Clínica Central", address: "Neves, São Tomé", date: "2026-06-20", status: "Pendente", motorista: "Helena Rosa" }
 ];
 
 export default function Relatorios() {
@@ -86,7 +86,7 @@ export default function Relatorios() {
   const savedReceivables = localStorage.getItem("sigi_receivables");
   const receivables = savedReceivables ? JSON.parse(savedReceivables) : [
     { id: "REC-001", client: "Supermercado Kero", doc: "FAT-2026/089", dueDate: "2026-06-15", amount: 450000, paid: 150000, status: "Vencida" },
-    { id: "REC-002", client: "Colégio Angolano", doc: "FAT-2026/094", dueDate: "2026-06-25", amount: 820000, paid: 820000, status: "Paga" },
+    { id: "REC-002", client: "Colégio Nacional", doc: "FAT-2026/094", dueDate: "2026-06-25", amount: 820000, paid: 820000, status: "Paga" },
     { id: "REC-003", client: "Clínica Sagrada Esperança", doc: "FAT-2026/102", dueDate: "2026-07-02", amount: 310000, paid: 0, status: "Pendente" },
   ];
 

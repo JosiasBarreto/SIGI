@@ -491,15 +491,41 @@ class ArmazemService:
         AuditService.log_action(user_id, "SAIDA_STOCK", "produtos", produto.id, new_values={'quantidade': quantidade, 'motivo': data.get('motivo'), 'novo_stock': float(produto.stock_atual)})
         return produto, None
 
+    def generate_codigo_material(self) -> str:
+        """Gera de forma segura e garantida o próximo código sequencial de material (MAT-XXXX) livre de duplicações."""
+        from sqlalchemy import text
+        try:
+            sql = text("SELECT codigo FROM materiais WHERE codigo LIKE 'MAT-%'")
+            rows = db.session.execute(sql).fetchall()
+            existing_nums = set()
+            for r in rows:
+                if r and r[0]:
+                    val = str(r[0]).replace('MAT-', '').strip()
+                    if val.isdigit():
+                        existing_nums.add(int(val))
+            next_num = 1
+            while next_num in existing_nums:
+                next_num += 1
+            return f"MAT-{next_num:04d}"
+        except Exception:
+            from sqlalchemy import func
+            max_id = db.session.query(func.max(Material.id)).scalar() or 0
+            return f"MAT-{(max_id + 1):04d}"
+
     # --- Material ---
     def create_material(self, data, user_id):
         armazem_id = data.pop('armazem_id', None)
         
-        # Auto-generate unique code if not specified
-        if not data.get('codigo'):
-            from sqlalchemy import func
-            max_id = db.session.query(func.max(Material.id)).scalar() or 0
-            data['codigo'] = f"MAT-{(max_id + 1):04d}"
+        # Auto-generate unique code if not specified or empty
+        codigo = data.get('codigo')
+        if not codigo or not str(codigo).strip():
+            data['codigo'] = self.generate_codigo_material()
+        else:
+            data['codigo'] = str(codigo).strip()
+            # Validar se o código já existe
+            existente = db.session.query(Material).filter_by(codigo=data['codigo']).first()
+            if existente:
+                return None, f"Já existe um material cadastrado com o código '{data['codigo']}'. Por favor, utilize outro código."
             
         # Initial quantity logic
         qty = data.get('quantidade_total', 0)
@@ -508,18 +534,25 @@ class ArmazemService:
         allowed_cols = {c.name for c in Material.__table__.columns}
         material_data = {k: v for k, v in data.items() if k in allowed_cols}
         
-        material = Material(**material_data, created_by=user_id)
-        self.material_repo.create(material)
-        
-        armazem = self._get_target_armazem(armazem_id)
-        stock_relation = MaterialStockArmazem(
-            material_id=material.id,
-            armazem_id=armazem.id,
-            stock_atual=float(qty or 0),
-            stock_minimo=0
-        )
-        db.session.add(stock_relation)
-        db.session.commit()
+        try:
+            material = Material(**material_data, created_by=user_id)
+            self.material_repo.create(material)
+            
+            armazem = self._get_target_armazem(armazem_id)
+            stock_relation = MaterialStockArmazem(
+                material_id=material.id,
+                armazem_id=armazem.id,
+                stock_atual=float(qty or 0),
+                stock_minimo=0
+            )
+            db.session.add(stock_relation)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            err_str = str(e)
+            if "Duplicate entry" in err_str and "materiais.uq_materiais_codigo" in err_str:
+                return None, f"O código '{data.get('codigo')}' já se encontra em uso por outro material. Por favor, forneça outro código ou deixe o campo vazio para geração automática."
+            return None, f"Erro ao criar material: {e}"
         
         AuditService.log_action(user_id, "CREATE", "materiais", material.id, new_values=data)
         return material, None
@@ -547,6 +580,13 @@ class ArmazemService:
             diff = qty_total - float(material.quantidade_total)
             material.quantidade_total = qty_total
             material.quantidade_disponivel = float(material.quantidade_disponivel) + diff
+
+        if 'codigo' in data and data['codigo']:
+            codigo_novo = str(data['codigo']).strip()
+            existente = db.session.query(Material).filter(Material.codigo == codigo_novo, Material.id != material.id).first()
+            if existente:
+                return None, f"Já existe outro material registado com o código '{codigo_novo}'."
+            data['codigo'] = codigo_novo
 
         for key, val in data.items():
             if hasattr(material, key):

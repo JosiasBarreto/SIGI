@@ -2232,6 +2232,14 @@
         "documentation": {}
     },
     {
+        "label": "db",
+        "importPath": "app.core.database",
+        "description": "app.core.database",
+        "isExtraImport": true,
+        "detail": "app.core.database",
+        "documentation": {}
+    },
+    {
         "label": "AuthService",
         "importPath": "app.services.auth_service",
         "description": "app.services.auth_service",
@@ -5059,22 +5067,6 @@
         "documentation": {}
     },
     {
-        "label": "InventarioReportService",
-        "importPath": "app.services.inventario_report_service",
-        "description": "app.services.inventario_report_service",
-        "isExtraImport": true,
-        "detail": "app.services.inventario_report_service",
-        "documentation": {}
-    },
-    {
-        "label": "InventarioReportService",
-        "importPath": "app.services.inventario_report_service",
-        "description": "app.services.inventario_report_service",
-        "isExtraImport": true,
-        "detail": "app.services.inventario_report_service",
-        "documentation": {}
-    },
-    {
         "label": "InventarioExcelService",
         "importPath": "app.services.inventario_excel_service",
         "description": "app.services.inventario_excel_service",
@@ -5660,6 +5652,14 @@
         "documentation": {}
     },
     {
+        "label": "Produto",
+        "importPath": "app.models.produto",
+        "description": "app.models.produto",
+        "isExtraImport": true,
+        "detail": "app.models.produto",
+        "documentation": {}
+    },
+    {
         "label": "TipoProduto",
         "importPath": "app.models.produto",
         "description": "app.models.produto",
@@ -6082,6 +6082,14 @@
         "description": "app.schemas.requisicao_schema",
         "isExtraImport": true,
         "detail": "app.schemas.requisicao_schema",
+        "documentation": {}
+    },
+    {
+        "label": "Empresa",
+        "importPath": "app.models.empresa",
+        "description": "app.models.empresa",
+        "isExtraImport": true,
+        "detail": "app.models.empresa",
         "documentation": {}
     },
     {
@@ -6834,6 +6842,38 @@
         "description": "enum",
         "isExtraImport": true,
         "detail": "enum",
+        "documentation": {}
+    },
+    {
+        "label": "TypeDecorator",
+        "importPath": "sqlalchemy.types",
+        "description": "sqlalchemy.types",
+        "isExtraImport": true,
+        "detail": "sqlalchemy.types",
+        "documentation": {}
+    },
+    {
+        "label": "String",
+        "importPath": "sqlalchemy.types",
+        "description": "sqlalchemy.types",
+        "isExtraImport": true,
+        "detail": "sqlalchemy.types",
+        "documentation": {}
+    },
+    {
+        "label": "TypeDecorator",
+        "importPath": "sqlalchemy.types",
+        "description": "sqlalchemy.types",
+        "isExtraImport": true,
+        "detail": "sqlalchemy.types",
+        "documentation": {}
+    },
+    {
+        "label": "String",
+        "importPath": "sqlalchemy.types",
+        "description": "sqlalchemy.types",
+        "isExtraImport": true,
+        "detail": "sqlalchemy.types",
         "documentation": {}
     },
     {
@@ -7727,6 +7767,14 @@
         "documentation": {}
     },
     {
+        "label": "Ingrediente",
+        "importPath": "app.models.ingrediente",
+        "description": "app.models.ingrediente",
+        "isExtraImport": true,
+        "detail": "app.models.ingrediente",
+        "documentation": {}
+    },
+    {
         "label": "Material",
         "importPath": "app.models.material",
         "description": "app.models.material",
@@ -7744,6 +7792,14 @@
     },
     {
         "label": "EstadoMaterial",
+        "importPath": "app.models.material",
+        "description": "app.models.material",
+        "isExtraImport": true,
+        "detail": "app.models.material",
+        "documentation": {}
+    },
+    {
+        "label": "Material",
         "importPath": "app.models.material",
         "description": "app.models.material",
         "isExtraImport": true,
@@ -9860,14 +9916,6 @@
         "documentation": {}
     },
     {
-        "label": "PageBreak",
-        "importPath": "reportlab.platypus",
-        "description": "reportlab.platypus",
-        "isExtraImport": true,
-        "detail": "reportlab.platypus",
-        "documentation": {}
-    },
-    {
         "label": "KeepTogether",
         "importPath": "reportlab.platypus",
         "description": "reportlab.platypus",
@@ -11898,7 +11946,7 @@
         "kind": 2,
         "importPath": "backend.app.api.v1.inventario_controller",
         "description": "backend.app.api.v1.inventario_controller",
-        "peekOfCode": "def exportar_excel(id):\n    \"\"\"\n    Gera ficheiro Excel profissional (.xlsx) com 7 abas formatadas\n    \"\"\"\n    user_id = get_jwt_identity()\n    user_nome = _obter_nome_usuario(user_id)\n    from app.models.inventario import Inventario\n    inv = Inventario.query.get(id)\n    if not inv:\n        return jsonify({\"success\": False, \"msg\": \"Inventário não encontrado.\"}), 404",
+        "peekOfCode": "def exportar_excel(id):\n    \"\"\"\n    Gera livro de trabalho Excel profissional (.xlsx) com 5 abas formatadas\n    \"\"\"\n    user_id = get_jwt_identity()\n    user_nome = _obter_nome_usuario(user_id)\n    from app.models.inventario import Inventario\n    inv = Inventario.query.get(id)\n    if not inv:\n        return jsonify({\"success\": False, \"msg\": \"Inventário não encontrado.\"}), 404",
         "detail": "backend.app.api.v1.inventario_controller",
         "documentation": {}
     },
@@ -11907,7 +11955,7 @@
         "kind": 2,
         "importPath": "backend.app.api.v1.inventario_controller",
         "description": "backend.app.api.v1.inventario_controller",
-        "peekOfCode": "def exportar_pdf(id):\n    \"\"\"\n    Gera documento PDF oficial formatado via ReportLab com layout corporativo e assinaturas\n    \"\"\"\n    from app.models.inventario import Inventario\n    inv = Inventario.query.get(id)\n    if not inv:\n        return jsonify({\"success\": False, \"msg\": \"Inventário não encontrado.\"}), 404\n    try:\n        pdf_stream = InventarioPdfService.gerar_pdf_inventario(id)",
+        "peekOfCode": "def exportar_pdf(id):\n    \"\"\"\n    Gera documento PDF oficial formatado via ReportLab com layout corporativo, KPIs e assinaturas\n    \"\"\"\n    from app.models.inventario import Inventario\n    inv = Inventario.query.get(id)\n    if not inv:\n        return jsonify({\"success\": False, \"msg\": \"Inventário não encontrado.\"}), 404\n    try:\n        pdf_stream = InventarioPdfService.gerar_pdf_inventario(id)",
         "detail": "backend.app.api.v1.inventario_controller",
         "documentation": {}
     },
@@ -13707,7 +13755,16 @@
         "kind": 6,
         "importPath": "backend.app.models.material",
         "description": "backend.app.models.material",
-        "peekOfCode": "class TipoMaterial(str, Enum):\n    REUTILIZAVEL = 'Reutilizavel'\n    CONSUMIVEL = 'Consumivel'\nclass EstadoMaterial(str, Enum):\n    DISPONIVEL = 'Disponivel'\n    RESERVADO = 'Reservado'\n    EM_USO = 'Em Uso'\n    DANIFICADO = 'Danificado'\n    MANUTENCAO = 'Manutencao'\nclass Material(BaseModel):",
+        "peekOfCode": "class TipoMaterial(str, Enum):\n    REUTILIZAVEL = 'Reutilizavel'\n    CONSUMIVEL = 'Consumivel'\n    @classmethod\n    def normalize(cls, val):\n        if val is None:\n            return cls.REUTILIZAVEL.value\n        if isinstance(val, cls):\n            return val.value\n        s = str(val).strip()",
+        "detail": "backend.app.models.material",
+        "documentation": {}
+    },
+    {
+        "label": "TipoMaterialType",
+        "kind": 6,
+        "importPath": "backend.app.models.material",
+        "description": "backend.app.models.material",
+        "peekOfCode": "class TipoMaterialType(TypeDecorator):\n    impl = String(50)\n    cache_ok = True\n    def process_bind_param(self, value, dialect):\n        return TipoMaterial.normalize(value) if value is not None else TipoMaterial.REUTILIZAVEL.value\n    def process_result_value(self, value, dialect):\n        return TipoMaterial.normalize(value) if value is not None else TipoMaterial.REUTILIZAVEL.value\nclass EstadoMaterial(str, Enum):\n    DISPONIVEL = 'Disponivel'\n    RESERVADO = 'Reservado'",
         "detail": "backend.app.models.material",
         "documentation": {}
     },
@@ -13716,7 +13773,16 @@
         "kind": 6,
         "importPath": "backend.app.models.material",
         "description": "backend.app.models.material",
-        "peekOfCode": "class EstadoMaterial(str, Enum):\n    DISPONIVEL = 'Disponivel'\n    RESERVADO = 'Reservado'\n    EM_USO = 'Em Uso'\n    DANIFICADO = 'Danificado'\n    MANUTENCAO = 'Manutencao'\nclass Material(BaseModel):\n    __tablename__ = 'materiais'\n    codigo = db.Column(db.String(50), unique=True, nullable=True)\n    nome = db.Column(db.String(100), nullable=False)",
+        "peekOfCode": "class EstadoMaterial(str, Enum):\n    DISPONIVEL = 'Disponivel'\n    RESERVADO = 'Reservado'\n    EM_USO = 'Em Uso'\n    DANIFICADO = 'Danificado'\n    MANUTENCAO = 'Manutencao'\n    @classmethod\n    def normalize(cls, val):\n        if val is None:\n            return cls.DISPONIVEL.value",
+        "detail": "backend.app.models.material",
+        "documentation": {}
+    },
+    {
+        "label": "EstadoMaterialType",
+        "kind": 6,
+        "importPath": "backend.app.models.material",
+        "description": "backend.app.models.material",
+        "peekOfCode": "class EstadoMaterialType(TypeDecorator):\n    impl = String(50)\n    cache_ok = True\n    def process_bind_param(self, value, dialect):\n        return EstadoMaterial.normalize(value) if value is not None else EstadoMaterial.DISPONIVEL.value\n    def process_result_value(self, value, dialect):\n        return EstadoMaterial.normalize(value) if value is not None else EstadoMaterial.DISPONIVEL.value\nclass Material(BaseModel):\n    __tablename__ = 'materiais'\n    codigo = db.Column(db.String(50), unique=True, nullable=True)",
         "detail": "backend.app.models.material",
         "documentation": {}
     },
@@ -13725,7 +13791,7 @@
         "kind": 6,
         "importPath": "backend.app.models.material",
         "description": "backend.app.models.material",
-        "peekOfCode": "class Material(BaseModel):\n    __tablename__ = 'materiais'\n    codigo = db.Column(db.String(50), unique=True, nullable=True)\n    nome = db.Column(db.String(100), nullable=False)\n    categoria = db.Column(db.String(100), nullable=True)\n    tipo = db.Column(db.Enum(TipoMaterial), nullable=False)\n    quantidade_total = db.Column(db.Numeric(10, 2), default=0)\n    quantidade_disponivel = db.Column(db.Numeric(10, 2), default=0)\n    quantidade_reservada = db.Column(db.Numeric(10, 2), default=0)\n    estado = db.Column(db.Enum(EstadoMaterial), default=EstadoMaterial.DISPONIVEL)",
+        "peekOfCode": "class Material(BaseModel):\n    __tablename__ = 'materiais'\n    codigo = db.Column(db.String(50), unique=True, nullable=True)\n    nome = db.Column(db.String(100), nullable=False)\n    categoria = db.Column(db.String(100), nullable=True)\n    tipo = db.Column(TipoMaterialType, nullable=False, default=TipoMaterial.REUTILIZAVEL.value)\n    quantidade_total = db.Column(db.Numeric(10, 2), default=0)\n    quantidade_disponivel = db.Column(db.Numeric(10, 2), default=0)\n    quantidade_reservada = db.Column(db.Numeric(10, 2), default=0)\n    estado = db.Column(EstadoMaterialType, default=EstadoMaterial.DISPONIVEL.value)",
         "detail": "backend.app.models.material",
         "documentation": {}
     },
@@ -14040,7 +14106,16 @@
         "kind": 6,
         "importPath": "backend.app.models.requisicao",
         "description": "backend.app.models.requisicao",
-        "peekOfCode": "class TipoRequisicao(str, Enum):\n    INICIAL = 'Inicial'\n    COMPLEMENTAR = 'Complementar'\nclass SectorRequisicao(str, Enum):\n    COZINHA = 'Cozinha'\n    PASTELARIA = 'Pastelaria'\n    BAR = 'Bar'\n    EVENTOS = 'Eventos'\n    LOGISTICA = 'Logistica'\n    ALUGUER = 'Aluguer'",
+        "peekOfCode": "class TipoRequisicao(str, Enum):\n    INICIAL = 'Inicial'\n    COMPLEMENTAR = 'Complementar'\n    @classmethod\n    def normalize(cls, val):\n        if val is None:\n            return cls.INICIAL.value\n        if isinstance(val, cls):\n            return val.value\n        s = str(val).strip()",
+        "detail": "backend.app.models.requisicao",
+        "documentation": {}
+    },
+    {
+        "label": "TipoRequisicaoType",
+        "kind": 6,
+        "importPath": "backend.app.models.requisicao",
+        "description": "backend.app.models.requisicao",
+        "peekOfCode": "class TipoRequisicaoType(TypeDecorator):\n    impl = String(50)\n    cache_ok = True\n    def process_bind_param(self, value, dialect):\n        return TipoRequisicao.normalize(value) if value is not None else TipoRequisicao.INICIAL.value\n    def process_result_value(self, value, dialect):\n        return TipoRequisicao.normalize(value) if value is not None else TipoRequisicao.INICIAL.value\nclass SectorRequisicao(str, Enum):\n    COZINHA = 'Cozinha'\n    PASTELARIA = 'Pastelaria'",
         "detail": "backend.app.models.requisicao",
         "documentation": {}
     },
@@ -14049,7 +14124,16 @@
         "kind": 6,
         "importPath": "backend.app.models.requisicao",
         "description": "backend.app.models.requisicao",
-        "peekOfCode": "class SectorRequisicao(str, Enum):\n    COZINHA = 'Cozinha'\n    PASTELARIA = 'Pastelaria'\n    BAR = 'Bar'\n    EVENTOS = 'Eventos'\n    LOGISTICA = 'Logistica'\n    ALUGUER = 'Aluguer'\n    OUTRO = 'Outro'\nclass EstadoRequisicao(str, Enum):\n    PENDENTE = 'Pendente'",
+        "peekOfCode": "class SectorRequisicao(str, Enum):\n    COZINHA = 'Cozinha'\n    PASTELARIA = 'Pastelaria'\n    BAR = 'Bar'\n    EVENTOS = 'Eventos'\n    LOGISTICA = 'Logistica'\n    ALUGUER = 'Aluguer'\n    OUTRO = 'Outro'\n    @classmethod\n    def normalize(cls, val):",
+        "detail": "backend.app.models.requisicao",
+        "documentation": {}
+    },
+    {
+        "label": "SectorRequisicaoType",
+        "kind": 6,
+        "importPath": "backend.app.models.requisicao",
+        "description": "backend.app.models.requisicao",
+        "peekOfCode": "class SectorRequisicaoType(TypeDecorator):\n    impl = String(50)\n    cache_ok = True\n    def process_bind_param(self, value, dialect):\n        return SectorRequisicao.normalize(value) if value is not None else SectorRequisicao.COZINHA.value\n    def process_result_value(self, value, dialect):\n        return SectorRequisicao.normalize(value) if value is not None else SectorRequisicao.COZINHA.value\nclass EstadoRequisicao(str, Enum):\n    PENDENTE = 'Pendente'\n    APROVADA = 'Aprovada'",
         "detail": "backend.app.models.requisicao",
         "documentation": {}
     },
@@ -14058,16 +14142,16 @@
         "kind": 6,
         "importPath": "backend.app.models.requisicao",
         "description": "backend.app.models.requisicao",
-        "peekOfCode": "class EstadoRequisicao(str, Enum):\n    PENDENTE = 'Pendente'\n    APROVADA = 'Aprovada'\n    ENTREGUE = 'Entregue'\n    EM_USO = 'Em Uso'\n    DEVOLUCAO_PARCIAL = 'Devolucao Parcial'\n    DEVOLVIDA = 'Devolvida'\n    ENCERRADA = 'Encerrada'\n    CANCELADA = 'Cancelada'\nclass Requisicao(BaseModel):",
+        "peekOfCode": "class EstadoRequisicao(str, Enum):\n    PENDENTE = 'Pendente'\n    APROVADA = 'Aprovada'\n    ENTREGUE = 'Entregue'\n    EM_USO = 'Em Uso'\n    DEVOLUCAO_PARCIAL = 'Devolucao Parcial'\n    DEVOLVIDA = 'Devolvida'\n    ENCERRADA = 'Encerrada'\n    CANCELADA = 'Cancelada'\n    @classmethod",
         "detail": "backend.app.models.requisicao",
         "documentation": {}
     },
     {
-        "label": "Requisicao",
+        "label": "EstadoRequisicaoType",
         "kind": 6,
         "importPath": "backend.app.models.requisicao",
         "description": "backend.app.models.requisicao",
-        "peekOfCode": "class Requisicao(BaseModel):\n    __tablename__ = 'requisicoes'\n    numero = db.Column(db.String(50), unique=True, nullable=False)\n    tipo = db.Column(db.String(50), nullable=False)\n    sector = db.Column(db.String(50), nullable=False)\n    turno_id = db.Column(db.Integer, db.ForeignKey('turnos.id'), nullable=True) \n    responsavel_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)\n    evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=True)\n    data_requisicao = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)\n    estado = db.Column(db.String(50), default='Pendente')",
+        "peekOfCode": "class EstadoRequisicaoType(TypeDecorator):\n    impl = String(50)\n    cache_ok = True\n    def process_bind_param(self, value, dialect):\n        return EstadoRequisicao.normalize(value) if value is not None else EstadoRequisicao.PENDENTE.value\n    def process_result_value(self, value, dialect):\n        return EstadoRequisicao.normalize(value) if value is not None else EstadoRequisicao.PENDENTE.value\nclass TipoItemRequisicao(str, Enum):\n    INGREDIENTE = 'Ingrediente'\n    MATERIAL = 'Material'",
         "detail": "backend.app.models.requisicao",
         "documentation": {}
     },
@@ -14076,34 +14160,16 @@
         "kind": 6,
         "importPath": "backend.app.models.requisicao",
         "description": "backend.app.models.requisicao",
-        "peekOfCode": "class TipoItemRequisicao(str, Enum):\n    INGREDIENTE = 'Ingrediente'\n    MATERIAL = 'Material'\n    CONSUMIVEL = 'Consumivel'\nclass RequisicaoItem(db.Model):\n    __tablename__ = 'requisicoes_itens'\n    id = db.Column(db.Integer, primary_key=True)\n    requisicao_id = db.Column(db.Integer, db.ForeignKey('requisicoes.id'), nullable=False)\n    tipo_item = db.Column(db.String(50), nullable=False)\n    item_id = db.Column(db.Integer, nullable=False)",
+        "peekOfCode": "class TipoItemRequisicao(str, Enum):\n    INGREDIENTE = 'Ingrediente'\n    MATERIAL = 'Material'\n    CONSUMIVEL = 'Consumivel'\n    @classmethod\n    def normalize(cls, val):\n        if val is None:\n            return cls.INGREDIENTE.value\n        if isinstance(val, cls):\n            return val.value",
         "detail": "backend.app.models.requisicao",
         "documentation": {}
     },
     {
-        "label": "RequisicaoItem",
+        "label": "TipoItemRequisicaoType",
         "kind": 6,
         "importPath": "backend.app.models.requisicao",
         "description": "backend.app.models.requisicao",
-        "peekOfCode": "class RequisicaoItem(db.Model):\n    __tablename__ = 'requisicoes_itens'\n    id = db.Column(db.Integer, primary_key=True)\n    requisicao_id = db.Column(db.Integer, db.ForeignKey('requisicoes.id'), nullable=False)\n    tipo_item = db.Column(db.String(50), nullable=False)\n    item_id = db.Column(db.Integer, nullable=False)\n    quantidade_solicitada = db.Column(db.Numeric(10, 3), nullable=False)\n    quantidade_aprovada = db.Column(db.Numeric(10, 3), default=0)\n    quantidade_entregue = db.Column(db.Numeric(10, 3), default=0)\n    quantidade_devolvida = db.Column(db.Numeric(10, 3), default=0)",
-        "detail": "backend.app.models.requisicao",
-        "documentation": {}
-    },
-    {
-        "label": "EntregaRequisicao",
-        "kind": 6,
-        "importPath": "backend.app.models.requisicao",
-        "description": "backend.app.models.requisicao",
-        "peekOfCode": "class EntregaRequisicao(db.Model):\n    __tablename__ = 'entregas_requisicao'\n    id = db.Column(db.Integer, primary_key=True)\n    requisicao_id = db.Column(db.Integer, db.ForeignKey('requisicoes.id'), nullable=False)\n    armazem_responsavel_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)\n    data_entrega = db.Column(db.Date, default=datetime.utcnow, nullable=False)\n    hora_entrega = db.Column(db.Time, default=datetime.utcnow, nullable=False)\n    observacao = db.Column(db.Text, nullable=True)\n    armazem_responsavel = db.relationship('User', foreign_keys=[armazem_responsavel_id])\nclass DevolucaoMaterial(db.Model):",
-        "detail": "backend.app.models.requisicao",
-        "documentation": {}
-    },
-    {
-        "label": "DevolucaoMaterial",
-        "kind": 6,
-        "importPath": "backend.app.models.requisicao",
-        "description": "backend.app.models.requisicao",
-        "peekOfCode": "class DevolucaoMaterial(db.Model):\n    __tablename__ = 'devolucoes_materiais'\n    id = db.Column(db.Integer, primary_key=True)\n    requisicao_id = db.Column(db.Integer, db.ForeignKey('requisicoes.id'), nullable=False)\n    material_id = db.Column(db.Integer, db.ForeignKey('materiais.id'), nullable=False)\n    quantidade_entregue = db.Column(db.Numeric(10, 3), nullable=False)\n    quantidade_devolvida = db.Column(db.Numeric(10, 3), default=0)\n    quantidade_danificada = db.Column(db.Numeric(10, 3), default=0)\n    quantidade_perdida = db.Column(db.Numeric(10, 3), default=0)\n    data_devolucao = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)",
+        "peekOfCode": "class TipoItemRequisicaoType(TypeDecorator):\n    impl = String(50)\n    cache_ok = True\n    def process_bind_param(self, value, dialect):\n        return TipoItemRequisicao.normalize(value) if value is not None else TipoItemRequisicao.INGREDIENTE.value\n    def process_result_value(self, value, dialect):\n        return TipoItemRequisicao.normalize(value) if value is not None else TipoItemRequisicao.INGREDIENTE.value\nclass TipoOcorrencia(str, Enum):\n    PERDA = 'Perda'\n    DANIFICADO = 'Danificado'",
         "detail": "backend.app.models.requisicao",
         "documentation": {}
     },
@@ -14112,7 +14178,16 @@
         "kind": 6,
         "importPath": "backend.app.models.requisicao",
         "description": "backend.app.models.requisicao",
-        "peekOfCode": "class TipoOcorrencia(str, Enum):\n    PERDA = 'Perda'\n    DANIFICADO = 'Danificado'\n    NAO_DEVOLVIDO = 'Nao Devolvido'\nclass EstadoOcorrencia(str, Enum):\n    ABERTA = 'Aberta'\n    ANALISE = 'Analise'\n    RESOLVIDA = 'Resolvida'\nclass OcorrenciaMaterial(BaseModel):\n    __tablename__ = 'ocorrencias_materiais'",
+        "peekOfCode": "class TipoOcorrencia(str, Enum):\n    PERDA = 'Perda'\n    DANIFICADO = 'Danificado'\n    NAO_DEVOLVIDO = 'Nao Devolvido'\n    @classmethod\n    def normalize(cls, val):\n        if val is None:\n            return cls.DANIFICADO.value\n        if isinstance(val, cls):\n            return val.value",
+        "detail": "backend.app.models.requisicao",
+        "documentation": {}
+    },
+    {
+        "label": "TipoOcorrenciaType",
+        "kind": 6,
+        "importPath": "backend.app.models.requisicao",
+        "description": "backend.app.models.requisicao",
+        "peekOfCode": "class TipoOcorrenciaType(TypeDecorator):\n    impl = String(50)\n    cache_ok = True\n    def process_bind_param(self, value, dialect):\n        return TipoOcorrencia.normalize(value) if value is not None else TipoOcorrencia.DANIFICADO.value\n    def process_result_value(self, value, dialect):\n        return TipoOcorrencia.normalize(value) if value is not None else TipoOcorrencia.DANIFICADO.value\nclass EstadoOcorrencia(str, Enum):\n    ABERTA = 'Aberta'\n    ANALISE = 'Analise'",
         "detail": "backend.app.models.requisicao",
         "documentation": {}
     },
@@ -14121,7 +14196,52 @@
         "kind": 6,
         "importPath": "backend.app.models.requisicao",
         "description": "backend.app.models.requisicao",
-        "peekOfCode": "class EstadoOcorrencia(str, Enum):\n    ABERTA = 'Aberta'\n    ANALISE = 'Analise'\n    RESOLVIDA = 'Resolvida'\nclass OcorrenciaMaterial(BaseModel):\n    __tablename__ = 'ocorrencias_materiais'\n    numero = db.Column(db.String(50), unique=True, nullable=False)\n    material_id = db.Column(db.Integer, db.ForeignKey('materiais.id'), nullable=False)\n    responsavel_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)\n    tipo = db.Column(db.Enum(TipoOcorrencia, values_callable=lambda x: [e.value for e in x]), nullable=False)",
+        "peekOfCode": "class EstadoOcorrencia(str, Enum):\n    ABERTA = 'Aberta'\n    ANALISE = 'Analise'\n    RESOLVIDA = 'Resolvida'\n    @classmethod\n    def normalize(cls, val):\n        if val is None:\n            return cls.ABERTA.value\n        if isinstance(val, cls):\n            return val.value",
+        "detail": "backend.app.models.requisicao",
+        "documentation": {}
+    },
+    {
+        "label": "EstadoOcorrenciaType",
+        "kind": 6,
+        "importPath": "backend.app.models.requisicao",
+        "description": "backend.app.models.requisicao",
+        "peekOfCode": "class EstadoOcorrenciaType(TypeDecorator):\n    impl = String(50)\n    cache_ok = True\n    def process_bind_param(self, value, dialect):\n        return EstadoOcorrencia.normalize(value) if value is not None else EstadoOcorrencia.ABERTA.value\n    def process_result_value(self, value, dialect):\n        return EstadoOcorrencia.normalize(value) if value is not None else EstadoOcorrencia.ABERTA.value\nclass Requisicao(BaseModel):\n    __tablename__ = 'requisicoes'\n    numero = db.Column(db.String(50), unique=True, nullable=False)",
+        "detail": "backend.app.models.requisicao",
+        "documentation": {}
+    },
+    {
+        "label": "Requisicao",
+        "kind": 6,
+        "importPath": "backend.app.models.requisicao",
+        "description": "backend.app.models.requisicao",
+        "peekOfCode": "class Requisicao(BaseModel):\n    __tablename__ = 'requisicoes'\n    numero = db.Column(db.String(50), unique=True, nullable=False)\n    tipo = db.Column(TipoRequisicaoType, nullable=False, default=TipoRequisicao.INICIAL.value)\n    sector = db.Column(SectorRequisicaoType, nullable=False, default=SectorRequisicao.COZINHA.value)\n    turno_id = db.Column(db.Integer, db.ForeignKey('turnos.id'), nullable=True)\n    responsavel_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)\n    evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=True)\n    data_requisicao = db.Column(db.DateTime, default=datetime.utcnow)\n    estado = db.Column(EstadoRequisicaoType, default=EstadoRequisicao.PENDENTE.value)",
+        "detail": "backend.app.models.requisicao",
+        "documentation": {}
+    },
+    {
+        "label": "RequisicaoItem",
+        "kind": 6,
+        "importPath": "backend.app.models.requisicao",
+        "description": "backend.app.models.requisicao",
+        "peekOfCode": "class RequisicaoItem(db.Model):\n    __tablename__ = 'requisicoes_itens'\n    id = db.Column(db.Integer, primary_key=True)\n    requisicao_id = db.Column(db.Integer, db.ForeignKey('requisicoes.id', ondelete='CASCADE'), nullable=False)\n    tipo_item = db.Column(TipoItemRequisicaoType, nullable=False)\n    item_id = db.Column(db.Integer, nullable=False)\n    quantidade_solicitada = db.Column(db.Numeric(10, 3), default=0)\n    quantidade_aprovada = db.Column(db.Numeric(10, 3), default=0)\n    quantidade_entregue = db.Column(db.Numeric(10, 3), default=0)\n    quantidade_devolvida = db.Column(db.Numeric(10, 3), default=0)",
+        "detail": "backend.app.models.requisicao",
+        "documentation": {}
+    },
+    {
+        "label": "EntregaRequisicao",
+        "kind": 6,
+        "importPath": "backend.app.models.requisicao",
+        "description": "backend.app.models.requisicao",
+        "peekOfCode": "class EntregaRequisicao(db.Model):\n    __tablename__ = 'entregas_requisicao'\n    id = db.Column(db.Integer, primary_key=True)\n    requisicao_id = db.Column(db.Integer, db.ForeignKey('requisicoes.id'), nullable=False)\n    armazem_responsavel_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)\n    data_entrega = db.Column(db.Date, default=datetime.utcnow)\n    hora_entrega = db.Column(db.Time, nullable=True)\n    observacao = db.Column(db.Text, nullable=True)\n    armazem_responsavel = db.relationship('User')\nclass DevolucaoMaterial(db.Model):",
+        "detail": "backend.app.models.requisicao",
+        "documentation": {}
+    },
+    {
+        "label": "DevolucaoMaterial",
+        "kind": 6,
+        "importPath": "backend.app.models.requisicao",
+        "description": "backend.app.models.requisicao",
+        "peekOfCode": "class DevolucaoMaterial(db.Model):\n    __tablename__ = 'devolucoes_materiais'\n    id = db.Column(db.Integer, primary_key=True)\n    requisicao_id = db.Column(db.Integer, db.ForeignKey('requisicoes.id'), nullable=False)\n    material_id = db.Column(db.Integer, db.ForeignKey('materiais.id'), nullable=False)\n    quantidade_entregue = db.Column(db.Numeric(10, 3), default=0)\n    quantidade_devolvida = db.Column(db.Numeric(10, 3), default=0)\n    quantidade_danificada = db.Column(db.Numeric(10, 3), default=0)\n    quantidade_perdida = db.Column(db.Numeric(10, 3), default=0)\n    data_devolucao = db.Column(db.DateTime, default=datetime.utcnow)",
         "detail": "backend.app.models.requisicao",
         "documentation": {}
     },
@@ -14130,7 +14250,7 @@
         "kind": 6,
         "importPath": "backend.app.models.requisicao",
         "description": "backend.app.models.requisicao",
-        "peekOfCode": "class OcorrenciaMaterial(BaseModel):\n    __tablename__ = 'ocorrencias_materiais'\n    numero = db.Column(db.String(50), unique=True, nullable=False)\n    material_id = db.Column(db.Integer, db.ForeignKey('materiais.id'), nullable=False)\n    responsavel_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)\n    tipo = db.Column(db.Enum(TipoOcorrencia, values_callable=lambda x: [e.value for e in x]), nullable=False)\n    quantidade = db.Column(db.Numeric(10, 3), nullable=False)\n    valor_estimado = db.Column(db.Numeric(10, 2), default=0)\n    justificacao = db.Column(db.Text, nullable=False)\n    data_ocorrencia = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)",
+        "peekOfCode": "class OcorrenciaMaterial(BaseModel):\n    __tablename__ = 'ocorrencias_materiais'\n    id = db.Column(db.Integer, primary_key=True)\n    numero = db.Column(db.String(50), unique=True, nullable=False)\n    material_id = db.Column(db.Integer, db.ForeignKey('materiais.id'), nullable=False)\n    responsavel_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)\n    tipo = db.Column(TipoOcorrenciaType, nullable=False, default=TipoOcorrencia.DANIFICADO.value)\n    estado = db.Column(EstadoOcorrenciaType, default=EstadoOcorrencia.ABERTA.value)\n    quantidade = db.Column(db.Numeric(10, 3), default=0)\n    valor_estimado = db.Column(db.Numeric(10, 2), default=0)",
         "detail": "backend.app.models.requisicao",
         "documentation": {}
     },
@@ -15183,7 +15303,7 @@
         "kind": 6,
         "importPath": "backend.app.schemas.requisicao_schema",
         "description": "backend.app.schemas.requisicao_schema",
-        "peekOfCode": "class RequisicaoItemSchema(Schema):\n    id = fields.Int(dump_only=True)\n    tipo_item = fields.Str(required=False, allow_none=True, load_default='Ingrediente')\n    item_id = fields.Int(required=True)\n    nome = fields.Method(\"get_item_nome\", dump_only=True)\n    codigo = fields.Method(\"get_item_codigo\", dump_only=True)\n    unidade_medida = fields.Method(\"get_item_unidade\", dump_only=True)\n    quantidade_solicitada = fields.Decimal(required=True)\n    quantidade_aprovada = fields.Decimal(required=False)\n    quantidade_entregue = fields.Decimal(required=False)",
+        "peekOfCode": "class RequisicaoItemSchema(Schema):\n    id = fields.Int(dump_only=True)\n    requisicao_id = fields.Int(dump_only=True)\n    tipo_item = fields.Str(required=True)\n    item_id = fields.Int(required=True)\n    quantidade_solicitada = fields.Decimal(as_string=True, required=True)\n    quantidade_aprovada = fields.Decimal(as_string=True, dump_default=\"0.000\")\n    quantidade_entregue = fields.Decimal(as_string=True, dump_default=\"0.000\")\n    quantidade_devolvida = fields.Decimal(as_string=True, dump_default=\"0.000\")\n    quantidade_danificada = fields.Decimal(as_string=True, dump_default=\"0.000\")",
         "detail": "backend.app.schemas.requisicao_schema",
         "documentation": {}
     },
@@ -15192,7 +15312,7 @@
         "kind": 6,
         "importPath": "backend.app.schemas.requisicao_schema",
         "description": "backend.app.schemas.requisicao_schema",
-        "peekOfCode": "class RequisicaoSchema(Schema):\n    id = fields.Int(dump_only=True)\n    numero = fields.Str(dump_only=True)\n    tipo = fields.Str(required=False, allow_none=True, load_default='Interna')\n    sector = fields.Str(required=False, allow_none=True, load_default='Cozinha')\n    turno_id = fields.Int(required=False, allow_none=True)\n    turno_nome = fields.Function(lambda obj: obj.turno.nome if obj.turno else None, dump_only=True)\n    responsavel_id = fields.Int(dump_only=True)\n    responsavel_nome = fields.Function(lambda obj: obj.responsavel.name if obj.responsavel else None, dump_only=True)\n    data_requisicao = fields.DateTime(dump_only=True)",
+        "peekOfCode": "class RequisicaoSchema(Schema):\n    id = fields.Int(dump_only=True)\n    numero = fields.Str(dump_only=True)\n    tipo = fields.Str(required=True)\n    sector = fields.Str(required=True)\n    turno_id = fields.Int(allow_none=True)\n    turno_nome = fields.Function(lambda obj: obj.turno.nome if (obj.turno and hasattr(obj.turno, 'nome')) else None, dump_only=True)\n    responsavel_id = fields.Int(allow_none=True)\n    responsavel_nome = fields.Function(lambda obj: obj.responsavel.name if (obj.responsavel and hasattr(obj.responsavel, 'name')) else None, dump_only=True)\n    evento_id = fields.Int(allow_none=True)",
         "detail": "backend.app.schemas.requisicao_schema",
         "documentation": {}
     },
@@ -15201,7 +15321,7 @@
         "kind": 6,
         "importPath": "backend.app.schemas.requisicao_schema",
         "description": "backend.app.schemas.requisicao_schema",
-        "peekOfCode": "class AprovarRequisicaoSchema(Schema):\n    itens = fields.List(fields.Dict(), required=True) # List of dicts with item_id and quantidade_aprovada\nclass EntregaRequisicaoSchema(Schema):\n    observacao = fields.Str(required=False, allow_none=True)\nclass DevolucaoMaterialSchema(Schema):\n    material_id = fields.Int(required=True)\n    quantidade_devolvida = fields.Decimal(required=True)\n    quantidade_danificada = fields.Decimal(required=False)\n    quantidade_perdida = fields.Decimal(required=False)\n    observacao = fields.Str(required=False, allow_none=True)",
+        "peekOfCode": "class AprovarRequisicaoSchema(Schema):\n    itens = fields.List(fields.Dict(), required=True)\nclass EntregaRequisicaoSchema(Schema):\n    observacao = fields.Str(allow_none=True)\nclass DevolucaoMaterialSchema(Schema):\n    material_id = fields.Int(required=True)\n    quantidade_devolvida = fields.Decimal(as_string=True, load_default=0)\n    quantidade_danificada = fields.Decimal(as_string=True, load_default=0)\n    quantidade_perdida = fields.Decimal(as_string=True, load_default=0)\n    justificacao = fields.Str(allow_none=True)",
         "detail": "backend.app.schemas.requisicao_schema",
         "documentation": {}
     },
@@ -15210,7 +15330,7 @@
         "kind": 6,
         "importPath": "backend.app.schemas.requisicao_schema",
         "description": "backend.app.schemas.requisicao_schema",
-        "peekOfCode": "class EntregaRequisicaoSchema(Schema):\n    observacao = fields.Str(required=False, allow_none=True)\nclass DevolucaoMaterialSchema(Schema):\n    material_id = fields.Int(required=True)\n    quantidade_devolvida = fields.Decimal(required=True)\n    quantidade_danificada = fields.Decimal(required=False)\n    quantidade_perdida = fields.Decimal(required=False)\n    observacao = fields.Str(required=False, allow_none=True)\n    justificacao = fields.Str(required=False, allow_none=True)\nclass OcorrenciaMaterialSchema(Schema):",
+        "peekOfCode": "class EntregaRequisicaoSchema(Schema):\n    observacao = fields.Str(allow_none=True)\nclass DevolucaoMaterialSchema(Schema):\n    material_id = fields.Int(required=True)\n    quantidade_devolvida = fields.Decimal(as_string=True, load_default=0)\n    quantidade_danificada = fields.Decimal(as_string=True, load_default=0)\n    quantidade_perdida = fields.Decimal(as_string=True, load_default=0)\n    justificacao = fields.Str(allow_none=True)\n    observacao = fields.Str(allow_none=True)\nclass OcorrenciaMaterialSchema(Schema):",
         "detail": "backend.app.schemas.requisicao_schema",
         "documentation": {}
     },
@@ -15219,7 +15339,7 @@
         "kind": 6,
         "importPath": "backend.app.schemas.requisicao_schema",
         "description": "backend.app.schemas.requisicao_schema",
-        "peekOfCode": "class DevolucaoMaterialSchema(Schema):\n    material_id = fields.Int(required=True)\n    quantidade_devolvida = fields.Decimal(required=True)\n    quantidade_danificada = fields.Decimal(required=False)\n    quantidade_perdida = fields.Decimal(required=False)\n    observacao = fields.Str(required=False, allow_none=True)\n    justificacao = fields.Str(required=False, allow_none=True)\nclass OcorrenciaMaterialSchema(Schema):\n    id = fields.Int(dump_only=True)\n    numero = fields.Str(dump_only=True)",
+        "peekOfCode": "class DevolucaoMaterialSchema(Schema):\n    material_id = fields.Int(required=True)\n    quantidade_devolvida = fields.Decimal(as_string=True, load_default=0)\n    quantidade_danificada = fields.Decimal(as_string=True, load_default=0)\n    quantidade_perdida = fields.Decimal(as_string=True, load_default=0)\n    justificacao = fields.Str(allow_none=True)\n    observacao = fields.Str(allow_none=True)\nclass OcorrenciaMaterialSchema(Schema):\n    id = fields.Int(dump_only=True)\n    numero = fields.Str(dump_only=True)",
         "detail": "backend.app.schemas.requisicao_schema",
         "documentation": {}
     },
@@ -15228,7 +15348,7 @@
         "kind": 6,
         "importPath": "backend.app.schemas.requisicao_schema",
         "description": "backend.app.schemas.requisicao_schema",
-        "peekOfCode": "class OcorrenciaMaterialSchema(Schema):\n    id = fields.Int(dump_only=True)\n    numero = fields.Str(dump_only=True)\n    material_id = fields.Int(required=True)\n    material_nome = fields.Function(lambda obj: obj.material.nome if obj.material else None, dump_only=True)\n    material_codigo = fields.Function(lambda obj: obj.material.codigo if obj.material else None, dump_only=True)\n    responsavel_id = fields.Int(dump_only=True)\n    responsavel_nome = fields.Function(lambda obj: obj.responsavel.name if obj.responsavel else None, dump_only=True)\n    tipo = fields.Str(required=False, allow_none=True, load_default='Danificado')\n    quantidade = fields.Decimal(required=True)",
+        "peekOfCode": "class OcorrenciaMaterialSchema(Schema):\n    id = fields.Int(dump_only=True)\n    numero = fields.Str(dump_only=True)\n    material_id = fields.Int(dump_only=True)\n    material_nome = fields.Function(lambda obj: obj.material.nome if (obj.material and hasattr(obj.material, 'nome')) else None, dump_only=True)\n    material_codigo = fields.Function(lambda obj: obj.material.codigo if (obj.material and hasattr(obj.material, 'codigo')) else None, dump_only=True)\n    responsavel_id = fields.Int(dump_only=True)\n    responsavel_nome = fields.Function(lambda obj: obj.responsavel.name if (obj.responsavel and hasattr(obj.responsavel, 'name')) else None, dump_only=True)\n    tipo = fields.Function(lambda obj: obj.tipo.value if hasattr(obj.tipo, 'value') else str(obj.tipo), dump_only=True)\n    estado = fields.Function(lambda obj: obj.estado.value if hasattr(obj.estado, 'value') else str(obj.estado), dump_only=True)",
         "detail": "backend.app.schemas.requisicao_schema",
         "documentation": {}
     },
@@ -15561,7 +15681,7 @@
         "kind": 6,
         "importPath": "backend.app.services.inventario_excel_service",
         "description": "backend.app.services.inventario_excel_service",
-        "peekOfCode": "class InventarioExcelService:\n    @staticmethod\n    def gerar_excel_inventario(inventario_id: int, user_nome: str = \"Administrador\") -> io.BytesIO:\n        inventario = Inventario.query.get(inventario_id)\n        if not inventario:\n            raise ValueError(\"Inventário não encontrado para exportação.\")\n        wb = openpyxl.Workbook()\n        # Remove a folha padrão criada automaticamente\n        wb.remove(wb.active)\n        # Paleta de Estilos Profissional SIGI",
+        "peekOfCode": "class InventarioExcelService:\n    @staticmethod\n    def gerar_excel_inventario(inventario_id: int, user_nome: str = \"Administrador\") -> io.BytesIO:\n        inventario = Inventario.query.get(inventario_id)\n        if not inventario:\n            raise ValueError(\"Inventário não encontrado para exportação Excel.\")\n        empresa = Empresa.query.first()\n        nome_empresa = empresa.nome if empresa and empresa.nome else \"SABOR IMBATÍVEL\"\n        nif_empresa = empresa.nif if empresa and empresa.nif else \"500000000\"\n        wb = openpyxl.Workbook()",
         "detail": "backend.app.services.inventario_excel_service",
         "documentation": {}
     },
@@ -15579,7 +15699,7 @@
         "kind": 6,
         "importPath": "backend.app.services.inventario_pdf_service",
         "description": "backend.app.services.inventario_pdf_service",
-        "peekOfCode": "class InventarioPdfService:\n    @staticmethod\n    def gerar_pdf_inventario(inventario_id: int) -> io.BytesIO:\n        inventario = Inventario.query.get(inventario_id)\n        if not inventario:\n            raise ValueError(\"Inventário não encontrado para geração de PDF.\")\n        empresa = Empresa.query.first()\n        nome_empresa = empresa.nome if empresa else \"SABOR IMBATÍVEL\"\n        nif_empresa = empresa.nif if empresa else \"500000000\"\n        buffer = io.BytesIO()",
+        "peekOfCode": "class InventarioPdfService:\n    @staticmethod\n    def gerar_pdf_inventario(inventario_id: int) -> io.BytesIO:\n        inventario = Inventario.query.get(inventario_id)\n        if not inventario:\n            raise ValueError(\"Inventário não encontrado para geração do relatório PDF.\")\n        empresa = Empresa.query.first()\n        nome_empresa = empresa.nome if empresa and empresa.nome else \"SABOR IMBATÍVEL\"\n        nif_empresa = empresa.nif if empresa and empresa.nif else \"500000000\"\n        endereco_empresa = getattr(empresa, 'endereco', None) or \"São Tomé e Príncipe\"",
         "detail": "backend.app.services.inventario_pdf_service",
         "documentation": {}
     },

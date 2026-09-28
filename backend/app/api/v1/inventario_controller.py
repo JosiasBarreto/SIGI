@@ -571,7 +571,7 @@ def relatorio_por_armazem(armazem_id):
 @jwt_required()
 def exportar_excel(id):
     """
-    Gera ficheiro Excel profissional (.xlsx) com 7 abas formatadas
+    Gera livro de trabalho Excel profissional (.xlsx) com 5 abas formatadas
     """
     user_id = get_jwt_identity()
     user_nome = _obter_nome_usuario(user_id)
@@ -583,7 +583,7 @@ def exportar_excel(id):
 
     try:
         excel_stream = InventarioExcelService.gerar_excel_inventario(id, user_nome)
-        filename = f"inventario_{inv.numero}.xlsx"
+        filename = f"relatorio_inventario_{inv.numero or inv.id}.xlsx"
         return send_file(
             excel_stream,
             mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -591,14 +591,16 @@ def exportar_excel(id):
             download_name=filename
         )
     except Exception as e:
-        return jsonify({"success": False, "msg": f"Erro ao gerar Excel: {str(e)}"}), 500
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "msg": f"Erro ao gerar Excel de Inventário: {str(e)}"}), 500
 
 
 @inventario_bp.route('/<int:id>/exportar/pdf', methods=['GET'])
 @jwt_required()
 def exportar_pdf(id):
     """
-    Gera documento PDF oficial formatado via ReportLab com layout corporativo e assinaturas
+    Gera documento PDF oficial formatado via ReportLab com layout corporativo, KPIs e assinaturas
     """
     from app.models.inventario import Inventario
     inv = Inventario.query.get(id)
@@ -607,7 +609,7 @@ def exportar_pdf(id):
 
     try:
         pdf_stream = InventarioPdfService.gerar_pdf_inventario(id)
-        filename = f"relatorio_inventario_{inv.numero}.pdf"
+        filename = f"relatorio_inventario_{inv.numero or inv.id}.pdf"
         return send_file(
             pdf_stream,
             mimetype="application/pdf",
@@ -615,4 +617,6 @@ def exportar_pdf(id):
             download_name=filename
         )
     except Exception as e:
-        return jsonify({"success": False, "msg": f"Erro ao gerar PDF: {str(e)}"}), 500
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "msg": f"Erro ao gerar PDF de Inventário: {str(e)}"}), 500

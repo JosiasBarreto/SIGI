@@ -9,7 +9,11 @@ import {
   Filter,
   ArrowRightLeft,
   Calendar,
-  AlertTriangle
+  AlertTriangle,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight
 } from 'lucide-react';
 import { warehouseService } from '../../../services';
 import { MovimentoItem } from '../types';
@@ -20,6 +24,14 @@ export const StockMovementsTab: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [tipoFilter, setTipoFilter] = useState<string>('all');
+
+  // Paginação
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, tipoFilter]);
 
   const carregarMovimentos = async () => {
     setIsLoading(true);
@@ -57,6 +69,12 @@ export const StockMovementsTab: React.FC = () => {
     });
   }, [movimentos, tipoFilter, searchTerm]);
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const safePage = Math.min(currentPage, totalPages);
+  const paginatedMovimentos = useMemo(() => {
+    const start = (safePage - 1) * pageSize;
+    return filtered.slice(start, start + pageSize);
+  }, [filtered, safePage, pageSize]);
   const renderBadgeTipo = (tipo: string) => {
     const t = (tipo || '').toLowerCase();
     if (t.includes('entrada')) {
@@ -153,7 +171,7 @@ export const StockMovementsTab: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800/60">
-              {filtered.map((m, idx) => {
+              {paginatedMovimentos.map((m, idx) => {
                 const dataFormatada = m.created_at 
                   ? new Date(m.created_at).toLocaleString('pt-PT') 
                   : (m.data ? new Date(m.data).toLocaleString('pt-PT') : '-');
@@ -209,6 +227,73 @@ export const StockMovementsTab: React.FC = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination Bar */}
+        {filtered.length > 0 && (
+          <div className="p-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/20 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-gray-500">
+            <div className="flex items-center gap-2">
+              <span>Mostrar</span>
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="px-2 py-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-md font-semibold text-gray-800 dark:text-gray-200 focus:outline-none cursor-pointer"
+              >
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+              <span>registos por página</span>
+            </div>
+
+            <div>
+              Mostrando <span className="font-bold text-gray-900 dark:text-white">{(safePage - 1) * pageSize + 1}</span> – <span className="font-bold text-gray-900 dark:text-white">{Math.min(safePage * pageSize, filtered.length)}</span> de <span className="font-bold text-gray-900 dark:text-white">{filtered.length}</span> movimentações
+            </div>
+
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setCurrentPage(1)}
+                disabled={safePage <= 1}
+                className="p-1.5 text-gray-500 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 transition cursor-pointer"
+                title="Primeira Página"
+              >
+                <ChevronsLeft size={16} />
+              </button>
+              <button
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={safePage <= 1}
+                className="p-1.5 text-gray-500 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 transition cursor-pointer"
+                title="Página Anterior"
+              >
+                <ChevronLeft size={16} />
+              </button>
+
+              <span className="px-3 font-bold text-gray-700 dark:text-gray-300">
+                Página {safePage} de {totalPages}
+              </span>
+
+              <button
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={safePage >= totalPages}
+                className="p-1.5 text-gray-500 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 transition cursor-pointer"
+                title="Próxima Página"
+              >
+                <ChevronRight size={16} />
+              </button>
+              <button
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={safePage >= totalPages}
+                className="p-1.5 text-gray-500 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 transition cursor-pointer"
+                title="Última Página"
+              >
+                <ChevronsRight size={16} />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

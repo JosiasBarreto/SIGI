@@ -529,14 +529,14 @@ export default function Vendas() {
               <div class="section-title">Emitente</div>
               <strong>Sabor Imbatível, S.A.</strong><br/>
               NIF: 500123456<br/>
-              Rua Deolinda Rodrigues, Luanda<br/>
-              Contacto: +244 923 123 456
+              Avenida 12 de Julho, São Tomé<br/>
+              Contacto: +239 9956478
             </div>
             <div>
               <div class="section-title">Destinatário / Adquirente</div>
               <strong>${venda.cliente_nome || 'Cliente Geral'}</strong><br/>
               NIF: ${venda.cliente_id ? 'Consulte Ficha' : 'Consumidor Final'}<br/>
-              Luanda, Angola
+              São Tomé, São Tomé e Príncipe
             </div>
           </div>
           
@@ -588,11 +588,11 @@ export default function Vendas() {
           
           <div style="font-size: 13px; font-weight: bold; margin-top: 40px; padding: 15px; background: #f8fafc; border-radius: 8px;">
             Estado de Liquidação: ${venda.estado.toUpperCase()}<br/>
-            Série Comercial certificada pela AGT de Angola. Obrigado pela sua confiança!
+            Documento emitido em conformidade com as normas fiscais de São Tomé e Príncipe. Obrigado pela sua confiança!
           </div>
 
           <div class="footer">
-            SIGI ERP • Processado por Computador • Sabor Imbatível, S.A.
+            SIGI • Processado por Computador • Sabor Imbatível, S.A.
           </div>
         </body>
       </html>
@@ -613,7 +613,7 @@ export default function Vendas() {
       cancelButtonText: 'Cancelar'
     }).then((result) => {
       if (result.isConfirmed) {
-        toast.success("A abrir cópia oficial AGT...");
+        toast.success("A abrir cópia oficial...");
         handlePrint(venda); // Render print helper as official PDF layout inside new tab
       }
     });
@@ -1092,7 +1092,7 @@ export default function Vendas() {
               <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-150">
                 <div className="text-gray-500 font-bold text-xs uppercase tracking-wider">Informação do Emitente</div>
                 <div className="font-bold text-gray-900 dark:text-white mt-2">Sabor Imbatível, S.A.</div>
-                <div className="text-xs text-gray-500 mt-1">NIF: 500123456 • Luanda, Angola</div>
+                <div className="text-xs text-gray-500 mt-1">NIF: 500123456 • São Tomé, São Tomé e Príncipe</div>
               </div>
 
               <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-150">
@@ -1644,7 +1644,7 @@ export default function Vendas() {
             <input
               type={sendMethod === 'email' ? 'email' : 'text'}
               required
-              placeholder={sendMethod === 'email' ? 'exemplo@cliente.com' : '+244 9XX XXX XXX'}
+              placeholder={sendMethod === 'email' ? 'exemplo@cliente.com' : '+239 9XX XXX X'}
               value={sendContact}
               onChange={(e) => setSendContact(e.target.value)}
               className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50"

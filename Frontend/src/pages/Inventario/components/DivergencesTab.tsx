@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   AlertOctagon, 
   CheckCircle2, 
@@ -9,7 +9,11 @@ import {
   FileText, 
   Save, 
   AlertTriangle,
-  RotateCcw
+  RotateCcw,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight
 } from 'lucide-react';
 import { InventoryItem, ContagemItem } from '../types';
 import { formatCurrency } from '../../../lib/utils';
@@ -34,6 +38,14 @@ export const DivergencesTab: React.FC<DivergencesTabProps> = ({
   const [observacaoGeral, setObservacaoGeral] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+
+  // Paginação
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [contagens]);
 
   // Lista de itens que foram contados e possuem divergência
   const divergenciasList: ContagemItem[] = useMemo(() => {
@@ -71,6 +83,13 @@ export const DivergencesTab: React.FC<DivergencesTabProps> = ({
 
     return list;
   }, [items, contagens, motivos, observacoes]);
+
+  const totalPages = Math.max(1, Math.ceil(divergenciasList.length / pageSize));
+  const safePage = Math.min(currentPage, totalPages);
+  const paginatedDivergencias = useMemo(() => {
+    const start = (safePage - 1) * pageSize;
+    return divergenciasList.slice(start, start + pageSize);
+  }, [divergenciasList, safePage, pageSize]);
 
   // Totais e balanço financeiro da conferência
   const balancoFinanceiro = useMemo(() => {
@@ -252,7 +271,7 @@ export const DivergencesTab: React.FC<DivergencesTabProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800/60">
-              {divergenciasList.map(div => (
+              {paginatedDivergencias.map(div => (
                 <tr key={div.key} className="hover:bg-gray-50/70 dark:hover:bg-gray-800/40 transition-colors">
                   <td className="px-4 py-3 font-mono text-xs font-semibold text-gray-500">
                     {div.codigo}
@@ -288,7 +307,7 @@ export const DivergencesTab: React.FC<DivergencesTabProps> = ({
                     <select
                       value={motivos[div.key] || 'Quebra Operacional / Manuseamento'}
                       onChange={e => handleUpdateMotivo(div.key, e.target.value)}
-                      className="w-full px-2.5 py-1.5 text-xs bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:ring-1 focus:ring-primary"
+                      className="w-full px-2.5 py-1.5 text-xs bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:ring-1 focus:ring-primary cursor-pointer"
                     >
                       <option value="Quebra Operacional / Manuseamento">Quebra Operacional / Manuseamento</option>
                       <option value="Perda Volátil / Evaporação / Degelo">Perda Volátil / Evaporação / Degelo</option>
@@ -324,6 +343,73 @@ export const DivergencesTab: React.FC<DivergencesTabProps> = ({
             </tbody>
           </table>
         </div>
+
+        {/* Pagination Bar */}
+        {divergenciasList.length > 0 && (
+          <div className="p-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/20 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-gray-500">
+            <div className="flex items-center gap-2">
+              <span>Mostrar</span>
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="px-2 py-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-md font-semibold text-gray-800 dark:text-gray-200 focus:outline-none cursor-pointer"
+              >
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+              <span>registos por página</span>
+            </div>
+
+            <div>
+              Mostrando <span className="font-bold text-gray-900 dark:text-white">{(safePage - 1) * pageSize + 1}</span> – <span className="font-bold text-gray-900 dark:text-white">{Math.min(safePage * pageSize, divergenciasList.length)}</span> de <span className="font-bold text-gray-900 dark:text-white">{divergenciasList.length}</span> divergências
+            </div>
+
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setCurrentPage(1)}
+                disabled={safePage <= 1}
+                className="p-1.5 text-gray-500 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 transition cursor-pointer"
+                title="Primeira Página"
+              >
+                <ChevronsLeft size={16} />
+              </button>
+              <button
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={safePage <= 1}
+                className="p-1.5 text-gray-500 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 transition cursor-pointer"
+                title="Página Anterior"
+              >
+                <ChevronLeft size={16} />
+              </button>
+
+              <span className="px-3 font-bold text-gray-700 dark:text-gray-300">
+                Página {safePage} de {totalPages}
+              </span>
+
+              <button
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={safePage >= totalPages}
+                className="p-1.5 text-gray-500 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 transition cursor-pointer"
+                title="Próxima Página"
+              >
+                <ChevronRight size={16} />
+              </button>
+              <button
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={safePage >= totalPages}
+                className="p-1.5 text-gray-500 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 transition cursor-pointer"
+                title="Última Página"
+              >
+                <ChevronsRight size={16} />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Confirmation Modal */}

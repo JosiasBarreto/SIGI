@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   ClipboardCheck,
@@ -8,6 +8,9 @@ import {
   Warehouse,
   Calendar,
   ChevronRight,
+  ChevronLeft,
+  ChevronsLeft,
+  ChevronsRight,
   FileSpreadsheet,
   FileText,
   Clock,
@@ -53,6 +56,14 @@ export const OfficialInventoryList: React.FC<OfficialInventoryListProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
 
+  // Paginação
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [estadoFilter, armazemFilter, tipoFilter, searchTerm]);
+
   // Busca lista de inventários
   const {
     data: listData,
@@ -89,6 +100,13 @@ export const OfficialInventoryList: React.FC<OfficialInventoryListProps> = ({
       return true;
     });
   }, [rawSessions, estadoFilter, armazemFilter, tipoFilter, searchTerm]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredSessions.length / pageSize));
+  const safePage = Math.min(currentPage, totalPages);
+  const paginatedSessions = useMemo(() => {
+    const start = (safePage - 1) * pageSize;
+    return filteredSessions.slice(start, start + pageSize);
+  }, [filteredSessions, safePage, pageSize]);
 
   // Estatísticas dos inventários
   const stats = useMemo(() => {
@@ -308,7 +326,7 @@ export const OfficialInventoryList: React.FC<OfficialInventoryListProps> = ({
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800/60">
-                {filteredSessions.map((sessao) => {
+                {paginatedSessions.map((sessao) => {
                   const perc = sessao.percentagem_concluida ?? 0;
                   return (
                     <tr
@@ -425,6 +443,73 @@ export const OfficialInventoryList: React.FC<OfficialInventoryListProps> = ({
                 })}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {/* Pagination Bar */}
+        {filteredSessions.length > 0 && !isLoading && (
+          <div className="p-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/20 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-gray-500">
+            <div className="flex items-center gap-2">
+              <span>Mostrar</span>
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="px-2 py-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-md font-semibold text-gray-800 dark:text-gray-200 focus:outline-none cursor-pointer"
+              >
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+              <span>registos por página</span>
+            </div>
+
+            <div>
+              Mostrando <span className="font-bold text-gray-900 dark:text-white">{(safePage - 1) * pageSize + 1}</span> – <span className="font-bold text-gray-900 dark:text-white">{Math.min(safePage * pageSize, filteredSessions.length)}</span> de <span className="font-bold text-gray-900 dark:text-white">{filteredSessions.length}</span> sessões
+            </div>
+
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setCurrentPage(1)}
+                disabled={safePage <= 1}
+                className="p-1.5 text-gray-500 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 transition cursor-pointer"
+                title="Primeira Página"
+              >
+                <ChevronsLeft size={16} />
+              </button>
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={safePage <= 1}
+                className="p-1.5 text-gray-500 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 transition cursor-pointer"
+                title="Página Anterior"
+              >
+                <ChevronLeft size={16} />
+              </button>
+
+              <span className="px-3 font-bold text-gray-700 dark:text-gray-300">
+                Página {safePage} de {totalPages}
+              </span>
+
+              <button
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={safePage >= totalPages}
+                className="p-1.5 text-gray-500 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 transition cursor-pointer"
+                title="Próxima Página"
+              >
+                <ChevronRight size={16} />
+              </button>
+              <button
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={safePage >= totalPages}
+                className="p-1.5 text-gray-500 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 transition cursor-pointer"
+                title="Última Página"
+              >
+                <ChevronsRight size={16} />
+              </button>
+            </div>
           </div>
         )}
       </div>

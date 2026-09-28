@@ -295,8 +295,7 @@ export default function SetupWizard({ onComplete }: { onComplete: () => void }) 
                         onChange={(e) => setMoeda(e.target.value)}
                         className="w-full pl-9 pr-3 py-2 text-sm bg-gray-50 dark:bg-neutral-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none focus:ring-2 focus:ring-primary/50 text-gray-900 dark:text-gray-100 appearance-none"
                       >
-                        <option value="STN">STN (Dobra)</option>
-                        <option value="AOA">AOA (Kwanza)</option>
+                        <option value="STN">STN (Dobra - São Tomé e Príncipe)</option>
                         <option value="EUR">EUR (Euro)</option>
                         <option value="USD">USD (Dólar)</option>
                       </select>

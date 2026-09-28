@@ -26,7 +26,11 @@ import {
   Check,
   Building2,
   Lock,
-  Sparkles
+  Sparkles,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight
 } from 'lucide-react';
 import { 
   InventarioSessao, 
@@ -73,6 +77,14 @@ export const OfficialInventoryDetail: React.FC<OfficialInventoryDetailProps> = (
   const [searchTerm, setSearchTerm] = useState('');
   const [tipoFiltro, setTipoFiltro] = useState<'TODOS' | 'PRODUTO' | 'MATERIAL'>('TODOS');
   const [modoCego, setModoCego] = useState<boolean>(true); // Auditoria Cega ativada por defeito
+  
+  // Paginação
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, tipoFiltro, conferenciaFiltro, subTab]);
   
   // Cache de edições locais antes de auto-save / lote
   const [editedCounts, setEditedCounts] = useState<Record<number, number | ''>>({});
@@ -182,6 +194,13 @@ export const OfficialInventoryDetail: React.FC<OfficialInventoryDetailProps> = (
       return true;
     });
   }, [rawItens, searchTerm, tipoFiltro, subTab, conferenciaFiltro]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredItens.length / pageSize));
+  const safePage = Math.min(currentPage, totalPages);
+  const paginatedItens = useMemo(() => {
+    const start = (safePage - 1) * pageSize;
+    return filteredItens.slice(start, start + pageSize);
+  }, [filteredItens, safePage, pageSize]);
 
   // Contagem de itens pendentes
   const itensPendentes = useMemo(() => {
@@ -972,7 +991,8 @@ export const OfficialInventoryDetail: React.FC<OfficialInventoryDetailProps> = (
                 Nenhum artigo localizado com os filtros selecionados.
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <>
+                <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse text-xs">
                   <thead>
                     <tr className="border-b border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30 text-gray-500 font-bold">
@@ -987,7 +1007,7 @@ export const OfficialInventoryDetail: React.FC<OfficialInventoryDetailProps> = (
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100 dark:divide-gray-800/60">
-                    {filteredItens.map((item) => {
+                    {paginatedItens.map((item) => {
                       const isCounted = item.quantidade_contada !== null;
                       const localVal = editedCounts[item.id] !== undefined ? editedCounts[item.id] : (item.quantidade_contada ?? '');
                       const isSaving = savingItemIds[item.id];
@@ -1098,6 +1118,74 @@ export const OfficialInventoryDetail: React.FC<OfficialInventoryDetailProps> = (
                   </tbody>
                 </table>
               </div>
+
+              {/* Pagination Bar */}
+              {filteredItens.length > 0 && (
+                <div className="p-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/20 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-gray-500">
+                  <div className="flex items-center gap-2">
+                    <span>Mostrar</span>
+                    <select
+                      value={pageSize}
+                      onChange={(e) => {
+                        setPageSize(Number(e.target.value));
+                        setCurrentPage(1);
+                      }}
+                      className="px-2 py-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-md font-semibold text-gray-800 dark:text-gray-200 focus:outline-none cursor-pointer"
+                    >
+                      <option value={10}>10</option>
+                      <option value={25}>25</option>
+                      <option value={50}>50</option>
+                      <option value={100}>100</option>
+                    </select>
+                    <span>registos por página</span>
+                  </div>
+
+                  <div>
+                    Mostrando <span className="font-bold text-gray-900 dark:text-white">{(safePage - 1) * pageSize + 1}</span> – <span className="font-bold text-gray-900 dark:text-white">{Math.min(safePage * pageSize, filteredItens.length)}</span> de <span className="font-bold text-gray-900 dark:text-white">{filteredItens.length}</span> artigos
+                  </div>
+
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => setCurrentPage(1)}
+                      disabled={safePage <= 1}
+                      className="p-1.5 text-gray-500 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 transition cursor-pointer"
+                      title="Primeira Página"
+                    >
+                      <ChevronsLeft size={16} />
+                    </button>
+                    <button
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      disabled={safePage <= 1}
+                      className="p-1.5 text-gray-500 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 transition cursor-pointer"
+                      title="Página Anterior"
+                    >
+                      <ChevronLeft size={16} />
+                    </button>
+
+                    <span className="px-3 font-bold text-gray-700 dark:text-gray-300">
+                      Página {safePage} de {totalPages}
+                    </span>
+
+                    <button
+                      onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={safePage >= totalPages}
+                      className="p-1.5 text-gray-500 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 transition cursor-pointer"
+                      title="Próxima Página"
+                    >
+                      <ChevronRight size={16} />
+                    </button>
+                    <button
+                      onClick={() => setCurrentPage(totalPages)}
+                      disabled={safePage >= totalPages}
+                      className="p-1.5 text-gray-500 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 transition cursor-pointer"
+                      title="Última Página"
+                    >
+                      <ChevronsRight size={16} />
+                    </button>
+                  </div>
+                </div>
+              )}
+              </>
             )}
           </div>
         )}
@@ -1180,7 +1268,8 @@ export const OfficialInventoryDetail: React.FC<OfficialInventoryDetailProps> = (
                 Nenhum registo encontrado para este filtro de conferência.
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <>
+                <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse text-xs">
                   <thead>
                     <tr className="border-b border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30 text-gray-500 font-bold">
@@ -1194,7 +1283,7 @@ export const OfficialInventoryDetail: React.FC<OfficialInventoryDetailProps> = (
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100 dark:divide-gray-800/60">
-                    {filteredItens.map((item) => {
+                    {paginatedItens.map((item) => {
                       const temDesvio = item.diferenca !== null && item.diferenca !== 0;
                       const selectedMotivo = editedMotivos[item.id] || item.motivo_ajuste || '';
 
@@ -1306,6 +1395,74 @@ export const OfficialInventoryDetail: React.FC<OfficialInventoryDetailProps> = (
                   </tbody>
                 </table>
               </div>
+
+              {/* Pagination Bar */}
+              {filteredItens.length > 0 && (
+                <div className="p-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/20 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-gray-500">
+                  <div className="flex items-center gap-2">
+                    <span>Mostrar</span>
+                    <select
+                      value={pageSize}
+                      onChange={(e) => {
+                        setPageSize(Number(e.target.value));
+                        setCurrentPage(1);
+                      }}
+                      className="px-2 py-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-md font-semibold text-gray-800 dark:text-gray-200 focus:outline-none cursor-pointer"
+                    >
+                      <option value={10}>10</option>
+                      <option value={25}>25</option>
+                      <option value={50}>50</option>
+                      <option value={100}>100</option>
+                    </select>
+                    <span>registos por página</span>
+                  </div>
+
+                  <div>
+                    Mostrando <span className="font-bold text-gray-900 dark:text-white">{(safePage - 1) * pageSize + 1}</span> – <span className="font-bold text-gray-900 dark:text-white">{Math.min(safePage * pageSize, filteredItens.length)}</span> de <span className="font-bold text-gray-900 dark:text-white">{filteredItens.length}</span> artigos
+                  </div>
+
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => setCurrentPage(1)}
+                      disabled={safePage <= 1}
+                      className="p-1.5 text-gray-500 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 transition cursor-pointer"
+                      title="Primeira Página"
+                    >
+                      <ChevronsLeft size={16} />
+                    </button>
+                    <button
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      disabled={safePage <= 1}
+                      className="p-1.5 text-gray-500 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 transition cursor-pointer"
+                      title="Página Anterior"
+                    >
+                      <ChevronLeft size={16} />
+                    </button>
+
+                    <span className="px-3 font-bold text-gray-700 dark:text-gray-300">
+                      Página {safePage} de {totalPages}
+                    </span>
+
+                    <button
+                      onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={safePage >= totalPages}
+                      className="p-1.5 text-gray-500 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 transition cursor-pointer"
+                      title="Próxima Página"
+                    >
+                      <ChevronRight size={16} />
+                    </button>
+                    <button
+                      onClick={() => setCurrentPage(totalPages)}
+                      disabled={safePage >= totalPages}
+                      className="p-1.5 text-gray-500 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 transition cursor-pointer"
+                      title="Última Página"
+                    >
+                      <ChevronsRight size={16} />
+                    </button>
+                  </div>
+                </div>
+              )}
+              </>
             )}
           </div>
         )}

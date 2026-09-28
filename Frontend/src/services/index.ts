@@ -597,9 +597,9 @@ const getCompanyConfig = () => {
     return {
       empresa: 'Sabor Imbatível, S.A.',
       nif: '500123456',
-      telefone: '923000000',
-      email: 'comercial@saborimbativel.co.ao',
-      endereco: 'Luanda, Angola',
+      telefone: '+239 9956478',
+      email: 'comercial@saborimbativel.st',
+      endereco: 'São Tomé, São Tomé e Príncipe',
       licenca: '001/SIGI/2026',
       moeda: ''
     };
@@ -2370,3 +2370,4 @@ export const calendarioService = {
 export * from './commercial/commercialService';
 export * from './inventoryService';
 export * from './inventoryAuditService';
+export * from './backupService';

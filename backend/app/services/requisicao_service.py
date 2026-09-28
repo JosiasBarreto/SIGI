@@ -113,7 +113,7 @@ class RequisicaoService:
                     if mat:
                         mat.quantidade_disponivel = float(mat.quantidade_disponivel or 0) - float(item.quantidade_entregue)
                         if float(mat.quantidade_disponivel) <= 0:
-                            mat.estado = 'Em Uso'
+                            mat.estado = EstadoMaterial.EM_USO.value
                         mov = MovimentoStock(
                             tipo=TipoMovimento.SAIDA, origem=OrigemMovimento.REQUISICAO,
                             entidade_tipo=EntidadeMovimento.MATERIAL, referencia_id=mat.id,
@@ -163,8 +163,10 @@ class RequisicaoService:
             mat = db.session.query(Material).filter_by(id=mat_id).first()
             
             # Se devolução inteira -> volta para armazém
-            if qtd_dev > 0:
+            if qtd_dev > 0 and mat:
                 mat.quantidade_disponivel = float(mat.quantidade_disponivel) + qtd_dev
+                if float(mat.quantidade_disponivel) > 0 and mat.estado in [EstadoMaterial.EM_USO.value, 'Em Uso', 'EM_USO']:
+                    mat.estado = EstadoMaterial.DISPONIVEL.value
                 mov = MovimentoStock(
                     tipo=TipoMovimento.ENTRADA, origem=OrigemMovimento.DEVOLUCAO,
                     entidade_tipo=EntidadeMovimento.MATERIAL, referencia_id=mat.id,
@@ -174,33 +176,34 @@ class RequisicaoService:
                 db.session.add(mov)
                 
             # Gerar Ocorrencia para Danos ou Perdas
-            if qtd_dan > 0:
+            if qtd_dan > 0 and mat:
                 oc = OcorrenciaMaterial(
                     numero=f"OC-{str(uuid.uuid4())[:8].upper()}", material_id=mat.id,
-                    responsavel_id=user_id, tipo=TipoOcorrencia.DANIFICADO,
+                    responsavel_id=user_id, tipo=TipoOcorrencia.DANIFICADO.value,
                     quantidade=qtd_dan, justificacao=d_data.get('justificacao', 'Dano reportado na devolução')
                 )
                 db.session.add(oc)
                 mat.quantidade_total = float(mat.quantidade_total) - qtd_dan # Perdeu total
                 emit_sync_event('alerta_material', {'msg': 'Material Danificado reportado!'})
                 
-            if qtd_per > 0:
+            if qtd_per > 0 and mat:
                 oc = OcorrenciaMaterial(
                     numero=f"OC-{str(uuid.uuid4())[:8].upper()}", material_id=mat.id,
-                    responsavel_id=user_id, tipo=TipoOcorrencia.PERDA,
+                    responsavel_id=user_id, tipo=TipoOcorrencia.PERDA.value,
                     quantidade=qtd_per, justificacao=d_data.get('justificacao', 'Perda reportada na devolução')
                 )
                 db.session.add(oc)
                 mat.quantidade_total = float(mat.quantidade_total) - qtd_per
                 emit_sync_event('alerta_material', {'msg': 'Material Perdido reportado!'})
                 
-            dev_log = DevolucaoMaterial(
-                requisicao_id=req.id, material_id=mat.id,
-                quantidade_entregue=req_item.quantidade_entregue,
-                quantidade_devolvida=qtd_dev, quantidade_danificada=qtd_dan,
-                quantidade_perdida=qtd_per, observacao=d_data.get('observacao')
-            )
-            db.session.add(dev_log)
+            if mat:
+                dev_log = DevolucaoMaterial(
+                    requisicao_id=req.id, material_id=mat.id,
+                    quantidade_entregue=req_item.quantidade_entregue,
+                    quantidade_devolvida=qtd_dev, quantidade_danificada=qtd_dan,
+                    quantidade_perdida=qtd_per, observacao=d_data.get('observacao')
+                )
+                db.session.add(dev_log)
 
         # Checar se todos os reutilizáveis foram devolvidos/contabilizados
         todos_devolvidos = True
@@ -235,7 +238,7 @@ class RequisicaoService:
                     if pendente > 0:
                         oc = OcorrenciaMaterial(
                             numero=f"OC-{str(uuid.uuid4())[:8].upper()}", material_id=mat.id,
-                            responsavel_id=user_id, tipo=TipoOcorrencia.NAO_DEVOLVIDO,
+                            responsavel_id=user_id, tipo=TipoOcorrencia.NAO_DEVOLVIDO.value,
                             quantidade=pendente, justificacao="Encerramento de requisição com itens pendentes."
                         )
                         db.session.add(oc)

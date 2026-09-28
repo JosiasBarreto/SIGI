@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Package, 
   Search, 
@@ -14,7 +14,11 @@ import {
   TrendingDown,
   AlertTriangle,
   Boxes,
-  CheckCircle2
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight
 } from 'lucide-react';
 import { InventoryItem, StockStatus, ItemType } from '../types';
 import { formatCurrency } from '../../../lib/utils';
@@ -47,6 +51,14 @@ export const StockOverviewTab: React.FC<StockOverviewTabProps> = ({
   const [selectedTipo, setSelectedTipo] = useState<string>('all');
   const [selectedCategoria, setSelectedCategoria] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
+
+  // Paginação
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedArmazem, selectedTipo, selectedCategoria, selectedStatus]);
 
   // Categorias únicas
   const categorias = useMemo(() => {
@@ -117,6 +129,12 @@ export const StockOverviewTab: React.FC<StockOverviewTabProps> = ({
     });
   }, [items, searchTerm, selectedArmazem, selectedTipo, selectedCategoria, selectedStatus]);
 
+  const totalPages = Math.max(1, Math.ceil(filteredItems.length / pageSize));
+  const safePage = Math.min(currentPage, totalPages);
+  const paginatedItems = useMemo(() => {
+    const start = (safePage - 1) * pageSize;
+    return filteredItems.slice(start, start + pageSize);
+  }, [filteredItems, safePage, pageSize]);
   const handleExportExcel = () => {
     const armNome = selectedArmazem !== 'all' 
       ? armazens.find(a => String(a.id) === selectedArmazem)?.nome 
@@ -416,7 +434,7 @@ export const StockOverviewTab: React.FC<StockOverviewTabProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800/60">
-              {filteredItems.map(item => (
+              {paginatedItems.map(item => (
                 <tr key={item.id} className="hover:bg-gray-50/70 dark:hover:bg-gray-800/40 transition-colors">
                   <td className="px-4 py-3.5 font-mono text-xs font-semibold text-gray-500 dark:text-gray-400">
                     {item.codigo}
@@ -456,21 +474,21 @@ export const StockOverviewTab: React.FC<StockOverviewTabProps> = ({
                       <button
                         onClick={() => onOpenSingleAdjust(item)}
                         title="Ajustar saldo fisicamente com justificação"
-                        className="p-1.5 text-gray-600 hover:text-primary hover:bg-primary/10 rounded-md transition"
+                        className="p-1.5 text-gray-600 hover:text-primary hover:bg-primary/10 rounded-md transition cursor-pointer"
                       >
                         <SlidersHorizontal size={15} />
                       </button>
                       <button
                         onClick={() => onOpenTransfer(item)}
                         title="Transferir stock para outro armazém"
-                        className="p-1.5 text-gray-600 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/40 rounded-md transition"
+                        className="p-1.5 text-gray-600 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/40 rounded-md transition cursor-pointer"
                       >
                         <ArrowRightLeft size={15} />
                       </button>
                       <button
                         onClick={() => onOpenQuarantine(item)}
                         title="Isolar item com avaria ou vencimento para Quarentena"
-                        className="p-1.5 text-gray-600 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40 rounded-md transition"
+                        className="p-1.5 text-gray-600 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40 rounded-md transition cursor-pointer"
                       >
                         <ShieldAlert size={15} />
                       </button>
@@ -491,6 +509,73 @@ export const StockOverviewTab: React.FC<StockOverviewTabProps> = ({
             </tbody>
           </table>
         </div>
+
+        {/* Pagination Bar */}
+        {filteredItems.length > 0 && (
+          <div className="p-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/20 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-gray-500">
+            <div className="flex items-center gap-2">
+              <span>Mostrar</span>
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="px-2 py-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-md font-semibold text-gray-800 dark:text-gray-200 focus:outline-none cursor-pointer"
+              >
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+              <span>registos por página</span>
+            </div>
+
+            <div>
+              Mostrando <span className="font-bold text-gray-900 dark:text-white">{(safePage - 1) * pageSize + 1}</span> – <span className="font-bold text-gray-900 dark:text-white">{Math.min(safePage * pageSize, filteredItems.length)}</span> de <span className="font-bold text-gray-900 dark:text-white">{filteredItems.length}</span> artigos
+            </div>
+
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setCurrentPage(1)}
+                disabled={safePage <= 1}
+                className="p-1.5 text-gray-500 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 transition cursor-pointer"
+                title="Primeira Página"
+              >
+                <ChevronsLeft size={16} />
+              </button>
+              <button
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={safePage <= 1}
+                className="p-1.5 text-gray-500 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 transition cursor-pointer"
+                title="Página Anterior"
+              >
+                <ChevronLeft size={16} />
+              </button>
+
+              <span className="px-3 font-bold text-gray-700 dark:text-gray-300">
+                Página {safePage} de {totalPages}
+              </span>
+
+              <button
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={safePage >= totalPages}
+                className="p-1.5 text-gray-500 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 transition cursor-pointer"
+                title="Próxima Página"
+              >
+                <ChevronRight size={16} />
+              </button>
+              <button
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={safePage >= totalPages}
+                className="p-1.5 text-gray-500 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 transition cursor-pointer"
+                title="Última Página"
+              >
+                <ChevronsRight size={16} />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

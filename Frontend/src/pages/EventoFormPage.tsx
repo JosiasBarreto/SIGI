@@ -1213,7 +1213,7 @@ export default function EventoFormPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="text-xs font-extrabold text-gray-700 dark:text-gray-300 uppercase block mb-1">
-                Valor Entregue / A Pagar (AOA)
+                Valor Entregue / A Pagar (STN)
               </label>
               <input
                 type="number"

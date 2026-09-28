@@ -9,7 +9,11 @@ import {
   CheckCircle2, 
   Clock, 
   FileText,
-  Filter
+  Filter,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight
 } from 'lucide-react';
 import { QuarentenaItem, InventoryItem } from '../types';
 import { inventoryService } from '../../../services/inventoryService';
@@ -30,6 +34,14 @@ export const QuarantineTab: React.FC<QuarantineTabProps> = ({
   const [actionItem, setActionItem] = useState<{ item: QuarentenaItem; type: 'descarte' | 'reintegrar' } | null>(null);
   const [justificativa, setJustificativa] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Paginação
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedStatus]);
 
   const carregarQuarentena = async () => {
     const itens = await inventoryService.getQuarentenaItems();
@@ -76,6 +88,12 @@ export const QuarantineTab: React.FC<QuarantineTabProps> = ({
     });
   }, [quarentenaItems, selectedStatus, searchTerm]);
 
+  const totalPages = Math.max(1, Math.ceil(filteredItems.length / pageSize));
+  const safePage = Math.min(currentPage, totalPages);
+  const paginatedItems = useMemo(() => {
+    const start = (safePage - 1) * pageSize;
+    return filteredItems.slice(start, start + pageSize);
+  }, [filteredItems, safePage, pageSize]);
   const handleConfirmAction = async () => {
     if (!actionItem) return;
     setIsProcessing(true);
@@ -204,7 +222,7 @@ export const QuarantineTab: React.FC<QuarantineTabProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800/60">
-              {filteredItems.map(item => (
+              {paginatedItems.map(item => (
                 <tr key={item.id} className="hover:bg-gray-50/70 dark:hover:bg-gray-800/40 transition-colors">
                   <td className="px-4 py-3 font-mono text-xs text-gray-500">
                     {new Date(item.data_bloqueio).toLocaleDateString('pt-PT')}
@@ -262,14 +280,14 @@ export const QuarantineTab: React.FC<QuarantineTabProps> = ({
                         <button
                           onClick={() => setActionItem({ item, type: 'descarte' })}
                           title="Baixar por quebra extraordinária (Descarte Total)"
-                          className="px-2 py-1 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-300 rounded text-xs font-bold transition border border-red-200 dark:border-red-800/50"
+                          className="px-2 py-1 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-300 rounded text-xs font-bold transition border border-red-200 dark:border-red-800/50 cursor-pointer"
                         >
                           Descarte
                         </button>
                         <button
                           onClick={() => setActionItem({ item, type: 'reintegrar' })}
                           title="Reintegrar ao stock ativo após inspeção"
-                          className="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 rounded text-xs font-bold transition border border-emerald-200 dark:border-emerald-800/50"
+                          className="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 rounded text-xs font-bold transition border border-emerald-200 dark:border-emerald-800/50 cursor-pointer"
                         >
                           Reintegrar
                         </button>
@@ -293,6 +311,73 @@ export const QuarantineTab: React.FC<QuarantineTabProps> = ({
             </tbody>
           </table>
         </div>
+
+        {/* Pagination Bar */}
+        {filteredItems.length > 0 && (
+          <div className="p-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/20 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-gray-500">
+            <div className="flex items-center gap-2">
+              <span>Mostrar</span>
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="px-2 py-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-md font-semibold text-gray-800 dark:text-gray-200 focus:outline-none cursor-pointer"
+              >
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+              <span>registos por página</span>
+            </div>
+
+            <div>
+              Mostrando <span className="font-bold text-gray-900 dark:text-white">{(safePage - 1) * pageSize + 1}</span> – <span className="font-bold text-gray-900 dark:text-white">{Math.min(safePage * pageSize, filteredItems.length)}</span> de <span className="font-bold text-gray-900 dark:text-white">{filteredItems.length}</span> itens em quarentena
+            </div>
+
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setCurrentPage(1)}
+                disabled={safePage <= 1}
+                className="p-1.5 text-gray-500 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 transition cursor-pointer"
+                title="Primeira Página"
+              >
+                <ChevronsLeft size={16} />
+              </button>
+              <button
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={safePage <= 1}
+                className="p-1.5 text-gray-500 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 transition cursor-pointer"
+                title="Página Anterior"
+              >
+                <ChevronLeft size={16} />
+              </button>
+
+              <span className="px-3 font-bold text-gray-700 dark:text-gray-300">
+                Página {safePage} de {totalPages}
+              </span>
+
+              <button
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={safePage >= totalPages}
+                className="p-1.5 text-gray-500 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 transition cursor-pointer"
+                title="Próxima Página"
+              >
+                <ChevronRight size={16} />
+              </button>
+              <button
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={safePage >= totalPages}
+                className="p-1.5 text-gray-500 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 transition cursor-pointer"
+                title="Última Página"
+              >
+                <ChevronsRight size={16} />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Action Dialog Modal */}
