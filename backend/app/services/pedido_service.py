@@ -79,7 +79,7 @@ class PedidoService:
         
         return cliente, None
 
-    def create_pedido(self, data, user_id):
+    def create_pedido(self, data, user_id, notificar_cliente=True):
         itens_data = data.pop('itens', [])
         
         # Validar itens para proibir ingredientes
@@ -230,27 +230,27 @@ class PedidoService:
         except Exception as ws_err:
             logger.error(f"Erro ao emitir evento de novo pedido: {ws_err}")
 
-        # Disparar notificação por Email / WhatsApp ao cliente
-        try:
-            from app.services.notification_service import NotificationService
-            if pedido.cliente and (pedido.cliente.email or pedido.cliente.telefone):
-                contact = pedido.cliente.email if pedido.cliente.email else pedido.cliente.telefone
-                method = "email" if pedido.cliente.email else "whatsapp"
-                NotificationService.send_pedido_async(pedido.id, contact, method=method, trigger="creation")
-        except Exception as e:
-            print("⚠ Erro ao disparar notificação do pedido:", e)
+        # Nota: O envio de email ao cliente foi desativado para pedidos. 
+        # Apenas a fatura comercial é enviada ao cliente.
 
         return pedido, None
 
     def add_pagamento(self, pedido_id, data, user_id):
-        pedido = db.session.query(Pedido).get(pedido_id)
+        pedido = db.session.query(Pedido).filter_by(id=pedido_id).with_for_update().first()
         if not pedido: return None, "Pedido não encontrado"
+        estado_pedido = pedido.estado.value if hasattr(pedido.estado, 'value') else str(pedido.estado)
+        if estado_pedido.lower() == 'cancelado':
+            return None, "Não é possível registar pagamento num pedido cancelado."
         
         valor_entregue = float(data.get('valor', 0))
         if valor_entregue <= 0: return None, "Valor do pagamento deve ser positivo"
         
-        saldo_pendente = float(pedido.saldo)
-        valor_pagar_real = min(valor_entregue, saldo_pendente)
+        saldo_pendente = float(pedido.saldo or 0)
+        if saldo_pendente <= 0.005:
+            return None, "Este pedido já se encontra totalmente liquidado."
+        if valor_entregue > saldo_pendente + 0.005:
+            return None, "O valor do pagamento não pode ser superior ao saldo do pedido."
+        valor_pagar_real = valor_entregue
         
         from app.models.caixa import Caixa, MovimentoCaixa, TipoMovimentoCaixa
         from app.models.financeiro import Pagamento, EstadoPagamento
@@ -260,7 +260,7 @@ class PedidoService:
         
         pagamento = Pagamento(
             pedido_id=pedido.id,
-            valor=valor_entregue,
+            valor=valor_pagar_real,
             forma_pagamento_id=data.get('forma_pagamento_id'),
             referencia=data.get('referencia'),
             observacoes=data.get('observacoes', ''),
@@ -270,7 +270,7 @@ class PedidoService:
         db.session.add(pagamento)
         
         pedido.valor_pago = float(pedido.valor_pago) + valor_pagar_real
-        pedido.saldo = float(pedido.valor_total) - float(pedido.valor_pago)
+        pedido.saldo = max(0.0, float(pedido.valor_total) - float(pedido.valor_pago))
         
         if pedido.saldo <= 0:
             pedido.estado_pagamento = EstadoPagamento.PAGO
@@ -366,15 +366,16 @@ class PedidoService:
             except Exception as notif_err:
                 logger.error(f"Erro ao emitir atualização de estado do pedido: {notif_err}")
             
-            # Disparar notificação ao cliente
-            try:
-                from app.services.notification_service import NotificationService
-                if pedido.cliente and (pedido.cliente.email or pedido.cliente.telefone):
-                    contact = pedido.cliente.email if pedido.cliente.email else pedido.cliente.telefone
-                    method = "email" if pedido.cliente.email else "whatsapp"
-                    NotificationService.send_pedido_async(pedido.id, contact, method=method, trigger="status_update")
-            except Exception as e:
-                print("⚠ Erro ao notificar alteração de estado:", e)
+            # Disparar notificação ao cliente APENAS quando o estado for "Pronto"
+            if novo_estado_enum == EstadoPedido.PRONTO or str(novo_estado).lower() == 'pronto':
+                try:
+                    from app.services.notification_service import NotificationService
+                    if pedido.cliente and (pedido.cliente.email or pedido.cliente.telefone):
+                        contact = pedido.cliente.email if pedido.cliente.email else pedido.cliente.telefone
+                        method = "email" if pedido.cliente.email else "whatsapp"
+                        NotificationService.send_pedido_async(pedido.id, contact, method=method, trigger="pronto")
+                except Exception as e:
+                    print("⚠ Erro ao notificar cliente que o pedido está pronto:", e)
 
             return pedido, None
         except Exception as e:

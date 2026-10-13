@@ -78,9 +78,10 @@ const ProductGrid: React.FC<ProductGridProps> = ({
           const quantity = Number(p.quantity || p.stock_atual || 0);
           const unit = p.unit || p.unidade_medida_sigla;
 
-          const iva = Number(p.taxa_iva || 0);
+          const rawTaxa = p.taxa_iva ?? (p as any).iva_taxa ?? (p as any).iva;
+          const iva = (rawTaxa !== null && rawTaxa !== undefined && !isNaN(Number(rawTaxa))) ? Number(rawTaxa) : 0;
 
-          const priceWithIva = iva ? p.preco_venda_com_iva : price;
+          const priceWithIva = p.preco_venda_com_iva != null ? Number(p.preco_venda_com_iva) : (iva > 0 ? price * (1 + iva / 100) : price);
           const displayPrice = showPriceWithIva ? priceWithIva : price;
           const secondaryPrice = showPriceWithIva ? price : priceWithIva;
 
@@ -121,12 +122,12 @@ const ProductGrid: React.FC<ProductGridProps> = ({
                   </span>
                   <span
                     className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
-                      iva
+                      iva > 0
                         ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
                         : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300"
                     }`}
                   >
-                    {iva ? "IVA Incluído" : "Isento a Iva"}
+                    {iva > 0 ? `IVA ${iva}% Incluído` : "Isento de IVA"}
                   </span>
                 </div>
 

@@ -48,19 +48,29 @@ export function createService<T>(endpoint: string, _fakeCollection?: string) {
           };
         }
         
-        // If response is an object but might be missing pagination metadata
-        if (response && Array.isArray(response.items)) {
+        // If response is an object, check for items, users, data, or collection key
+        const rawCollection = Array.isArray(response?.items)
+          ? response.items
+          : Array.isArray(response?.users)
+          ? response.users
+          : Array.isArray(response?.data)
+          ? response.data
+          : (_fakeCollection && Array.isArray(response?.[_fakeCollection]))
+          ? response[_fakeCollection]
+          : undefined;
+
+        if (response && rawCollection) {
           const page = Number(response.page || params?.page || 1);
           const perPage = Number(response.per_page || params?.per_page || 10);
           
-          // Se backend mandou tudo dentro de items ignorando a paginação
-          if (response.items.length > perPage && !response.total) {
-              const total = response.items.length;
+          // Se backend mandou tudo dentro da lista ignorando a paginação
+          if (rawCollection.length > perPage && !response.total) {
+              const total = rawCollection.length;
               const pages = Math.max(1, Math.ceil(total / perPage));
               const startIndex = (page - 1) * perPage;
               const endIndex = startIndex + perPage;
               return {
-                 items: response.items.slice(startIndex, endIndex),
+                 items: rawCollection.slice(startIndex, endIndex),
                  total,
                  pages,
                  page
@@ -70,7 +80,7 @@ export function createService<T>(endpoint: string, _fakeCollection?: string) {
           // Se a API não retornou pages/total, vamos inferir de forma inteligente
           let inferredPages = response.pages;
           if (inferredPages === undefined || inferredPages === null) {
-              if (response.items.length < perPage) {
+              if (rawCollection.length < perPage) {
                   inferredPages = page; // Estamos na última página
               } else {
                   inferredPages = -1; // Tem mais itens, total desconhecido
@@ -79,15 +89,15 @@ export function createService<T>(endpoint: string, _fakeCollection?: string) {
           
           let inferredTotal = response.total;
           if (inferredTotal === undefined || inferredTotal === null) {
-              if (response.items.length < perPage) {
-                  inferredTotal = (page - 1) * perPage + response.items.length;
+              if (rawCollection.length < perPage) {
+                  inferredTotal = (page - 1) * perPage + rawCollection.length;
               } else {
                   inferredTotal = -1;
               }
           }
 
           return {
-            items: response.items,
+            items: rawCollection,
             total: inferredTotal,
             pages: inferredPages,
             page: page
@@ -1239,12 +1249,17 @@ const normalizeEventoPayload = (data: Partial<EventoDTO>): any => {
     const numericId = Number(rawId);
     const validId = !isNaN(numericId) && numericId > 0 ? numericId : null;
 
+    const rawTaxa = it.taxa_iva ?? it.iva;
+    const taxaIvaVal = (rawTaxa !== null && rawTaxa !== undefined && !isNaN(Number(rawTaxa)))
+      ? Number(rawTaxa)
+      : 0;
+
     const itemObj: any = {
       tipo_item: tipoItem,
       descricao: String(it.descricao || it.nome || 'Item do Evento').trim(),
       quantidade: Math.max(1, Number(it.quantidade || it.qty || 1)),
       preco_unitario: Number(it.preco_unitario || it.preco || 0),
-      taxa_iva: Number(it.taxa_iva ?? it.iva ?? 15)
+      taxa_iva: taxaIvaVal
     };
 
     if (validId) {
@@ -1291,36 +1306,33 @@ export const eventService = {
     id: string | number,
     payload: {
       tipo_documento?: 'FT' | 'FR' | 'PROFORMA' | string;
-      pagamento_inicial?: {
+      pagamento?: {
         valor: number;
         forma_pagamento_id: number;
         codigo_transferencia?: string | null;
         emissor?: string | null;
+        referencia?: string | null;
+        observacoes?: string | null;
       };
-      pagamento?: any;
+      pagamento_inicial?: any;
     }
   ): Promise<any> => {
     let tipoDoc = payload.tipo_documento || 'FT';
-    let pagInicial = payload.pagamento_inicial;
+    const pagData = payload.pagamento || payload.pagamento_inicial;
 
-    if (!pagInicial && payload.pagamento) {
-      if (payload.pagamento.tipo_documento) {
-        tipoDoc = payload.pagamento.tipo_documento;
-      }
-      if (payload.pagamento.valor != null) {
-        pagInicial = {
-          valor: Number(payload.pagamento.valor),
-          forma_pagamento_id: Number(payload.pagamento.forma_pagamento_id || 1),
-          codigo_transferencia: payload.pagamento.codigo_transferencia || null,
-          emissor: payload.pagamento.emissor || null,
-        };
-      }
-    }
+    const pagamentoObj = pagData ? {
+      valor: Number(pagData.valor || 0),
+      forma_pagamento_id: Number(pagData.forma_pagamento_id || 1),
+      codigo_transferencia: pagData.codigo_transferencia || null,
+      emissor: pagData.emissor || null,
+      referencia: pagData.referencia || pagData.observacoes || null,
+      observacoes: pagData.observacoes || null
+    } : null;
 
     const body: any = {
       tipo_documento: tipoDoc,
-      pagamento_inicial: pagInicial || null,
-      pagamento: pagInicial || {}
+      pagamento: pagamentoObj,
+      pagamento_inicial: pagamentoObj
     };
 
     return apiClient.post<any, any>(`/v1/eventos/${id}/faturar`, body);

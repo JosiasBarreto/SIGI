@@ -14,8 +14,97 @@ export interface PaginatedData<T> {
   page: number;
 }
 
+/**
+ * Extrai a mensagem de texto ou "sms" enviada pelo backend a partir de qualquer estrutura
+ * (incluindo { sms: "..." }, { mensagem: "..." }, { msg: "..." }, { detail: "..." }, { error: "..." }, etc.)
+ */
+export function extractBackendErrorMessage(errOrData: any): string {
+  if (!errOrData) return '';
+  if (typeof errOrData === 'string') return errOrData;
+
+  const data = errOrData.response?.data !== undefined ? errOrData.response.data : errOrData;
+  if (!data) {
+    if (typeof errOrData.message === 'string' && errOrData.message !== '[object Object]') {
+      return errOrData.message;
+    }
+    return '';
+  }
+  if (typeof data === 'string') return data;
+
+  // 1. Procurar propriedades comuns de mensagem, incluindo "sms" do backend
+  const candidate =
+    data.sms ||
+    data.mensagem ||
+    data.msg ||
+    data.message ||
+    data.detail ||
+    data.detalhe ||
+    data.error ||
+    data.erro ||
+    data.descricao ||
+    data.motivo ||
+    data.reason ||
+    data.title ||
+    data.details?.exception ||
+    data.details?.message ||
+    data.details?.msg ||
+    data.details?.sms;
+
+  if (candidate) {
+    if (typeof candidate === 'string') return candidate;
+    if (Array.isArray(candidate)) {
+      return candidate
+        .map((item) => {
+          if (typeof item === 'string') return item;
+          if (item?.msg) return item.msg;
+          if (item?.message) return item.message;
+          if (item?.detail) return item.detail;
+          if (item?.sms) return item.sms;
+          return JSON.stringify(item);
+        })
+        .join('; ');
+    }
+    if (typeof candidate === 'object') {
+      return (
+        candidate.sms ||
+        candidate.message ||
+        candidate.msg ||
+        candidate.detail ||
+        candidate.error ||
+        JSON.stringify(candidate)
+      );
+    }
+  }
+
+  // 2. Verificar array ou objeto de erros múltiplos
+  if (data.errors) {
+    if (Array.isArray(data.errors)) {
+      return data.errors
+        .map((e: any) =>
+          typeof e === 'string'
+            ? e
+            : e?.msg || e?.message || e?.sms || JSON.stringify(e)
+        )
+        .join('; ');
+    }
+    if (typeof data.errors === 'object') {
+      const vals = Object.values(data.errors);
+      return vals
+        .map((v: any) => (Array.isArray(v) ? v.join(', ') : String(v)))
+        .join('; ');
+    }
+  }
+
+  // 3. Fallback para errOrData.message
+  if (typeof errOrData.message === 'string' && errOrData.message !== '[object Object]') {
+    return errOrData.message;
+  }
+
+  return '';
+}
+
 const apiClient: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://192.168.100.141:8000/api',
+  baseURL: import.meta.env.VITE_API_URL || 'https://thereof-mustang-commissioner-ferry.trycloudflare.com/api',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -41,8 +130,6 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response: AxiosResponse<any>) => {
     // Return standard responses directly, or map if needed
-    // The previous implementation mapped success response. Let's just return response.data
-    // but ensure it aligns with callers expecting .data to be the payload if not using ApiResponse wrapper
     return response.data;
   },
   async (error: AxiosError<any>) => {
@@ -85,8 +172,11 @@ apiClient.interceptors.response.use(
       }
     }
 
-    let standardError: any = error.response?.data
-      ? (typeof error.response.data === 'object' ? { ...error.response.data } : { message: String(error.response.data) })
+    const rawData = error.response?.data;
+    const backendMsg = extractBackendErrorMessage(rawData);
+
+    let standardError: any = rawData
+      ? (typeof rawData === 'object' ? { ...rawData } : { message: String(rawData) })
       : {
           success: false,
           message: error.message || 'Network error occurred',
@@ -98,30 +188,49 @@ apiClient.interceptors.response.use(
     standardError.statusCode = error.response?.status;
     standardError.response = error.response;
 
+    // Se o backend forneceu uma mensagem específica (sms, msg, detail, etc.), usar essa mensagem
+    if (backendMsg) {
+      standardError.message = backendMsg;
+      standardError.sms = backendMsg;
+    }
+
     if (error.response?.status) {
       const status = error.response.status;
-      const dataDetail = error.response.data?.detail || error.response.data?.message;
 
       switch (status) {
         case 400:
-          standardError.message = dataDetail || 'Erro de Negócio: O pedido é inválido ou contém dados incorretos.';
+          standardError.message = backendMsg || 'Erro de Negócio: O pedido é inválido ou contém dados incorretos.';
           standardError.error_code = 'BUSINESS_ERROR_400';
           break;
+        case 401:
+          standardError.message = backendMsg || 'Não autenticado: Sessão inválida ou expirada.';
+          standardError.error_code = 'UNAUTHORIZED_401';
+          break;
         case 403:
-          standardError.message = dataDetail || 'Acesso Negado: Não tem permissões para realizar esta ação.';
+          standardError.message = backendMsg || 'Acesso Negado: Não tem permissões para realizar esta ação.';
           standardError.error_code = 'FORBIDDEN_403';
           break;
+        case 404:
+          standardError.message = backendMsg || 'Registo não encontrado no sistema.';
+          standardError.error_code = 'NOT_FOUND_404';
+          break;
         case 409:
-          standardError.message = dataDetail || 'Conflito Financeiro: O estado do pagamento ou venda não permite esta ação.';
+          standardError.message = backendMsg || 'Conflito Operacional: O estado atual não permite esta ação.';
           standardError.error_code = 'CONFLICT_409';
           break;
         case 422:
-          standardError.message = dataDetail || 'Erro de Validação: Verifique os dados introduzidos.';
+          standardError.message = backendMsg || 'Erro de Validação: Verifique os dados introduzidos.';
           standardError.error_code = 'VALIDATION_ERROR_422';
           break;
         case 500:
-          standardError.message = dataDetail || 'Erro do Servidor: Ocorreu um problema no servidor. Tente novamente mais tarde.';
+          // Se o backend enviou mensagem ("sms", "detail", "msg", etc.), mostra essa mensagem real!
+          standardError.message = backendMsg || rawData?.details?.exception || 'Erro do Servidor: Ocorreu um problema no servidor.';
           standardError.error_code = 'SERVER_ERROR_500';
+          break;
+        default:
+          if (backendMsg) {
+            standardError.message = backendMsg;
+          }
           break;
       }
     }

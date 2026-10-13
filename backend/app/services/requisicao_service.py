@@ -5,7 +5,7 @@ from app.models.requisicao import (
     OcorrenciaMaterial, TipoRequisicao, SectorRequisicao, EstadoRequisicao, 
     TipoItemRequisicao, TipoOcorrencia, EstadoOcorrencia
 )
-from app.models.material import Material, TipoMaterial
+from app.models.material import Material, TipoMaterial, EstadoMaterial
 from app.models.ingrediente import Ingrediente
 from app.models.movimento_stock import MovimentoStock, TipoMovimento, OrigemMovimento, EntidadeMovimento
 from app.models.pedido import Pedido, EstadoPedido
@@ -15,8 +15,9 @@ from app.models.ficha_tecnica import FichaTecnica
 from app.repositories.requisicao_repos import RequisicaoRepository, OcorrenciaMaterialRepository
 from app.services.audit_service import AuditService
 from app.core.database import db
-from app.websocket.socket_manager import emit_sync_event
+from app.websocket.socket_manager import emit_sync_event, notify_requisicao_users
 from sqlalchemy import func
+from sqlalchemy.exc import SQLAlchemyError
 
 class RequisicaoService:
     def __init__(self):
@@ -35,7 +36,8 @@ class RequisicaoService:
             
         self.req_repo.create(req)
         AuditService.log_action(user_id, "CREATE", "requisicoes", req.id)
-        emit_sync_event('nova_requisicao', {'numero': req.numero})
+        emit_sync_event('nova_requisicao', {'numero': req.numero, 'requisicao_id': req.id})
+        notify_requisicao_users(req.id, req.numero, req.estado, f"Nova Requisição #{req.numero} criada.")
         return req, None
 
     def aprovar_requisicao(self, req_id, itens_aprovacao, user_id):
@@ -53,7 +55,8 @@ class RequisicaoService:
         db.session.commit()
         
         AuditService.log_action(user_id, "APROVAR_REQUISICAO", "requisicoes", req.id)
-        emit_sync_event('requisicao_aprovada', {'numero': req.numero})
+        emit_sync_event('requisicao_aprovada', {'numero': req.numero, 'requisicao_id': req.id})
+        notify_requisicao_users(req.id, req.numero, req.estado, f"Requisição #{req.numero} foi Aprovada.")
         return req, None
 
     def entregar_requisicao(self, req_id, data, user_id):
@@ -62,20 +65,35 @@ class RequisicaoService:
         if req.estado != EstadoRequisicao.APROVADA.value:
             return None, "Requisição não está Aprovada"
             
+        # A base de dados requer data e hora da entrega. Atribuí-las
+        # explicitamente evita que uma consulta de stock dispare um autoflush
+        # de uma entrega incompleta.
+        agora = datetime.utcnow()
         entrega = EntregaRequisicao(
             requisicao_id=req.id,
             armazem_responsavel_id=user_id,
+            data_entrega=agora.date(),
+            hora_entrega=agora.time().replace(microsecond=0),
             observacao=data.get('observacao')
         )
         db.session.add(entrega)
+
+        # Persiste antes das consultas abaixo, para que uma eventual falha de
+        # integridade não apareça como "Query-invoked autoflush".
+        try:
+            db.session.flush()
+        except SQLAlchemyError:
+            db.session.rollback()
+            return None, "Não foi possível registar a entrega da requisição"
         
         # O armazém entrega a mesma qtd aprovada (ou pode ser custom, simplificamos assumindo = aprovada)
         for item in req.itens:
             if item.quantidade_aprovada > 0:
                 item.quantidade_entregue = item.quantidade_aprovada
                 
+                tipo_item_str = str(item.tipo_item or '').lower()
                 # Baixar Stock do Armazem
-                if item.tipo_item == TipoItemRequisicao.INGREDIENTE.value:
+                if tipo_item_str == 'ingrediente':
                     ing = db.session.query(Ingrediente).filter_by(id=item.item_id).first()
                     if ing:
                         ing.stock_atual = float(ing.stock_atual or 0) - float(item.quantidade_entregue)
@@ -89,7 +107,7 @@ class RequisicaoService:
                     else:
                         db.session.rollback()
                         return None, f"Ingrediente com ID {item.item_id} não encontrado no sistema"
-                elif item.tipo_item == TipoItemRequisicao.CONSUMIVEL.value:
+                elif tipo_item_str in ['consumivel', 'revenda', 'acabado', 'produto', 'produto acabado']:
                     from app.models.produto import Produto
                     from app.models.stock_movement import StockMovement, TipoMovimentoStock
                     prod = db.session.query(Produto).filter_by(id=item.item_id).first()
@@ -107,7 +125,7 @@ class RequisicaoService:
                         db.session.add(mov)
                     else:
                         db.session.rollback()
-                        return None, f"Produto Consumível com ID {item.item_id} não encontrado no sistema"
+                        return None, f"Produto (Revenda/Consumível) com ID {item.item_id} não encontrado no sistema"
                 else:
                     mat = db.session.query(Material).filter_by(id=item.item_id).first()
                     if mat:
@@ -129,6 +147,8 @@ class RequisicaoService:
         db.session.commit()
         
         AuditService.log_action(user_id, "ENTREGAR_REQUISICAO", "requisicoes", req.id)
+        emit_sync_event('requisicao_entregue', {'numero': req.numero, 'requisicao_id': req.id})
+        notify_requisicao_users(req.id, req.numero, req.estado, f"Requisição #{req.numero} foi Entregue (Em Uso).")
         return req, None
 
     def devolver_material(self, req_id, devolucoes_data, user_id):
@@ -249,6 +269,8 @@ class RequisicaoService:
         req.estado = EstadoRequisicao.ENCERRADA.value
         db.session.commit()
         AuditService.log_action(user_id, "ENCERRAR_REQUISICAO", "requisicoes", req.id)
+        emit_sync_event('requisicao_encerrada', {'numero': req.numero, 'requisicao_id': req.id})
+        notify_requisicao_users(req.id, req.numero, req.estado, f"Requisição #{req.numero} foi Encerrada.")
         return req, None
 
 class GeradorRequisicaoAutomatica:

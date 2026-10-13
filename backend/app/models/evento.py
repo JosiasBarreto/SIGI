@@ -220,7 +220,7 @@ class Evento(BaseModel):
     def calcular_resumo_financeiro(self):
         """
         Calcula os totais discriminados do evento:
-        - Produtos (Acabados, Revenda ou Consumíveis/Ingredientes) respeitam SEMPRE a sua taxa de IVA individual.
+        - Produtos (Acabados, Revenda ou Consumíveis/Ingredientes) usam o preço final do catálogo; não recebem IVA adicional no evento.
         - Serviços, Alugueres, Deslocação, Mão de Obra e Outros respeitam a configuração de IVA do Evento (cobrar_iva_servicos).
         """
         subtotal_produtos = 0.0
@@ -245,11 +245,10 @@ class Evento(BaseModel):
             tipo_str = str(it.tipo_item.value if hasattr(it.tipo_item, 'value') else it.tipo_item).lower()
 
             if 'produto' in tipo_str:
-                # Regra de ouro: Produtos respeitam sempre a taxa de IVA individual da ficha do produto
-                taxa_p = float(it.taxa_iva or (it.produto.taxa_iva.percentagem if (it.produto and it.produto.taxa_iva) else 0.0))
-                iva_val = base * (taxa_p / 100.0)
+                # Produto é preço comercial final. Aplicar IVA aqui criava uma
+                # segunda cobrança, inclusive quando a ficha não tem IVA.
+                iva_val = 0.0
                 subtotal_produtos += base
-                total_iva_produtos += iva_val
             elif 'servico' in tipo_str or 'serviço' in tipo_str:
                 iva_val = base * (taxa_servicos / 100.0) if cobrar_iva else 0.0
                 subtotal_servicos += base
@@ -265,16 +264,14 @@ class Evento(BaseModel):
             else:
                 subtotal_outros += base
 
-        # 2. Processar produtos oriundos de Pedido vinculado se existir
-        if self.pedido and self.pedido.itens:
-            for item in self.pedido.itens:
-                q = float(item.quantidade or 0)
-                pu = float(item.preco_unitario or 0)
-                desc = float(item.desconto or 0)
-                base = max(0.0, (q * pu) - desc)
-                iva_val = float(item.valor_iva or 0)
-                subtotal_produtos += base
-                total_iva_produtos += iva_val
+        # A linked Pedido is an operational record generated from the product
+        # rows above.  Its lines are not a second commercial charge.  Counting
+        # them here doubled every event that had a production pedido (for
+        # example 1,201.75 STN became 2,403.50 STN).  Legacy events without
+        # EventoItem still fall through to their legacy service/reservation
+        # collections below; we deliberately do not use Pedido as a fallback
+        # because it cannot distinguish a technical production order from an
+        # independently billable line.
 
         # 3. Processar coleções legadas (servicos, reservas_espaco, reservas_material)
         for s in (self.servicos or []):

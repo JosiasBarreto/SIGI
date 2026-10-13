@@ -101,7 +101,7 @@ def devolver_material(id):
 
 @requisicao_bp.route('/<int:id>/encerrar', methods=['PUT'])
 @jwt_required()
-@requires_roles('Administrador', 'Controlador de Materiais')
+@requires_roles('Administrador', 'Controlador de Materiais', 'Armazém')
 def encerrar_requisicao(id):
     user_id = get_jwt_identity()
     result, error = req_service.encerrar_requisicao(id, user_id)

@@ -54,10 +54,11 @@ const CartList: React.FC<CartListProps> = ({
       ) : (
         cart.map((item) => {
           const precoSemIva = Number(item.preco_venda || item.salePrice || 0);
-          const iva = Number(item.taxa_iva || 0);
+          const rawTaxa = item.taxa_iva ?? (item as any).iva_taxa ?? (item as any).iva;
+          const iva = (rawTaxa !== null && rawTaxa !== undefined && !isNaN(Number(rawTaxa))) ? Number(rawTaxa) : 0;
           const preco_iva = Number(item.preco_venda_com_iva || 0);
 
-          const precoComIva = iva > 0 && preco_iva > 0 ? preco_iva : precoSemIva;
+          const precoComIva = preco_iva > 0 ? preco_iva : (iva > 0 ? precoSemIva * (1 + iva/100) : precoSemIva);
           const precoUnitario = showPriceWithIva ? precoComIva : precoSemIva;
           const grossTotal = precoUnitario * item.qty;
 
@@ -118,7 +119,7 @@ const CartList: React.FC<CartListProps> = ({
                   )}
 
                   <p className="text-[10px] text-gray-500 dark:text-gray-400">
-                    IVA {iva}% • {iva ? "Com IVA" : "Sem IVA"} • Stock: {stock} un
+                    {iva > 0 ? `IVA ${iva}% • Com IVA` : "Isento de IVA"} • Stock: {stock} un
                   </p>
                 </div>
 

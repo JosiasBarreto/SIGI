@@ -2240,6 +2240,14 @@
         "documentation": {}
     },
     {
+        "label": "db",
+        "importPath": "app.core.database",
+        "description": "app.core.database",
+        "isExtraImport": true,
+        "detail": "app.core.database",
+        "documentation": {}
+    },
+    {
         "label": "AuthService",
         "importPath": "app.services.auth_service",
         "description": "app.services.auth_service",
@@ -3826,6 +3834,14 @@
     },
     {
         "label": "OcorrenciaMaterial",
+        "importPath": "app.models.requisicao",
+        "description": "app.models.requisicao",
+        "isExtraImport": true,
+        "detail": "app.models.requisicao",
+        "documentation": {}
+    },
+    {
+        "label": "EntregaRequisicao",
         "importPath": "app.models.requisicao",
         "description": "app.models.requisicao",
         "isExtraImport": true,
@@ -7903,6 +7919,14 @@
         "documentation": {}
     },
     {
+        "label": "EstadoMaterial",
+        "importPath": "app.models.material",
+        "description": "app.models.material",
+        "isExtraImport": true,
+        "detail": "app.models.material",
+        "documentation": {}
+    },
+    {
         "label": "Material",
         "importPath": "app.models.material",
         "description": "app.models.material",
@@ -9595,6 +9619,14 @@
         "documentation": {}
     },
     {
+        "label": "notify_requisicao_users",
+        "importPath": "app.websocket.socket_manager",
+        "description": "app.websocket.socket_manager",
+        "isExtraImport": true,
+        "detail": "app.websocket.socket_manager",
+        "documentation": {}
+    },
+    {
         "label": "socketio",
         "importPath": "app.websocket.socket_manager",
         "description": "app.websocket.socket_manager",
@@ -10082,6 +10114,14 @@
         "description": "app.repositories.requisicao_repos",
         "isExtraImport": true,
         "detail": "app.repositories.requisicao_repos",
+        "documentation": {}
+    },
+    {
+        "label": "SQLAlchemyError",
+        "importPath": "sqlalchemy.exc",
+        "description": "sqlalchemy.exc",
+        "isExtraImport": true,
+        "detail": "sqlalchemy.exc",
         "documentation": {}
     },
     {
@@ -12990,7 +13030,7 @@
         "kind": 2,
         "importPath": "backend.app.core.errors",
         "description": "backend.app.core.errors",
-        "peekOfCode": "def register_error_handlers(app):\n    @app.errorhandler(Exception)\n    def handle_exception(e):\n        # We need to extract the user_id if available, though get_jwt_identity could fail if out of context\n        user_id = None\n        try:\n            user_id = get_jwt_identity()\n        except:\n            pass\n        # If it's a known HTTP exception",
+        "peekOfCode": "def register_error_handlers(app):\n    @app.errorhandler(Exception)\n    def handle_exception(e):\n        # Um flush falhado invalida a transação. Libere a sessão antes de\n        # persistir o log do próprio erro.\n        db.session.rollback()\n        # We need to extract the user_id if available, though get_jwt_identity could fail if out of context\n        user_id = None\n        try:\n            user_id = get_jwt_identity()",
         "detail": "backend.app.core.errors",
         "documentation": {}
     },
@@ -14160,7 +14200,7 @@
         "kind": 6,
         "importPath": "backend.app.models.requisicao",
         "description": "backend.app.models.requisicao",
-        "peekOfCode": "class TipoItemRequisicao(str, Enum):\n    INGREDIENTE = 'Ingrediente'\n    MATERIAL = 'Material'\n    CONSUMIVEL = 'Consumivel'\n    @classmethod\n    def normalize(cls, val):\n        if val is None:\n            return cls.INGREDIENTE.value\n        if isinstance(val, cls):\n            return val.value",
+        "peekOfCode": "class TipoItemRequisicao(str, Enum):\n    INGREDIENTE = 'Ingrediente'\n    MATERIAL = 'Material'\n    CONSUMIVEL = 'Consumivel'\n    REVENDA = 'Revenda'\n    ACABADO = 'Acabado'\n    PRODUTO = 'Produto'\n    @classmethod\n    def normalize(cls, val):\n        if val is None:",
         "detail": "backend.app.models.requisicao",
         "documentation": {}
     },
@@ -14232,7 +14272,7 @@
         "kind": 6,
         "importPath": "backend.app.models.requisicao",
         "description": "backend.app.models.requisicao",
-        "peekOfCode": "class EntregaRequisicao(db.Model):\n    __tablename__ = 'entregas_requisicao'\n    id = db.Column(db.Integer, primary_key=True)\n    requisicao_id = db.Column(db.Integer, db.ForeignKey('requisicoes.id'), nullable=False)\n    armazem_responsavel_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)\n    data_entrega = db.Column(db.Date, default=datetime.utcnow)\n    hora_entrega = db.Column(db.Time, nullable=True)\n    observacao = db.Column(db.Text, nullable=True)\n    armazem_responsavel = db.relationship('User')\nclass DevolucaoMaterial(db.Model):",
+        "peekOfCode": "class EntregaRequisicao(db.Model):\n    __tablename__ = 'entregas_requisicao'\n    id = db.Column(db.Integer, primary_key=True)\n    requisicao_id = db.Column(db.Integer, db.ForeignKey('requisicoes.id'), nullable=False)\n    armazem_responsavel_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)\n    data_entrega = db.Column(db.Date, default=lambda: datetime.utcnow().date(), nullable=False)\n    hora_entrega = db.Column(db.Time, default=lambda: datetime.utcnow().time(), nullable=False)\n    observacao = db.Column(db.Text, nullable=True)\n    armazem_responsavel = db.relationship('User')\nclass DevolucaoMaterial(db.Model):",
         "detail": "backend.app.models.requisicao",
         "documentation": {}
     },
@@ -16109,6 +16149,15 @@
         "documentation": {}
     },
     {
+        "label": "broadcast_production_update",
+        "kind": 2,
+        "importPath": "backend.app.websocket.socket_manager",
+        "description": "backend.app.websocket.socket_manager",
+        "peekOfCode": "def broadcast_production_update(op_numero, estado):\n    \"\"\"\n    Utility to broadcast a production update internally\n    \"\"\"\n    socketio.emit('production_update', {'numero': op_numero, 'estado': estado}, room=\"producao\")\ndef emit_sync_event(event_name: str, payload: dict, room: Optional[str] = None) -> bool:\n    \"\"\"\n    Emite evento técnico de sincronização de dados (tabelas, KDS, React Query, cache).\n    NÃO se destina a gerar toasts visuais na interface.\n    \"\"\"",
+        "detail": "backend.app.websocket.socket_manager",
+        "documentation": {}
+    },
+    {
         "label": "emit_sync_event",
         "kind": 2,
         "importPath": "backend.app.websocket.socket_manager",
@@ -16159,6 +16208,15 @@
         "importPath": "backend.app.websocket.socket_manager",
         "description": "backend.app.websocket.socket_manager",
         "peekOfCode": "def notify_production_orders(\n    pedido_id: int, \n    pedido_numero: str, \n    sectores: List[Any],\n    cliente_nome: Optional[str] = None,\n    produtos_resumo: Optional[str] = None,\n    actor_user_id: Optional[int] = None,\n    emit_visual_notification: bool = True\n) -> bool:\n    \"\"\"",
+        "detail": "backend.app.websocket.socket_manager",
+        "documentation": {}
+    },
+    {
+        "label": "notify_requisicao_users",
+        "kind": 2,
+        "importPath": "backend.app.websocket.socket_manager",
+        "description": "backend.app.websocket.socket_manager",
+        "peekOfCode": "def notify_requisicao_users(requisicao_id, numero, estado, mensagem):\n    \"\"\"\n    Notifica apenas os utilizadores com permissão no módulo de requisições:\n    Administrador, Armazém, Controlador de Materiais e o responsável da requisição.\n    Atualiza a mesma notificação (identificada por requisicao_id) em vez de duplicar.\n    \"\"\"\n    try:\n        from app.models.user import User\n        from app.models.requisicao import Requisicao\n        target_roles = ['Administrador', 'Armazém', 'Armazem', 'Controlador de Materiais']",
         "detail": "backend.app.websocket.socket_manager",
         "documentation": {}
     },
@@ -16609,6 +16667,42 @@
         "importPath": "backend.tests.test_financeiro",
         "description": "backend.tests.test_financeiro",
         "peekOfCode": "def test_contas_receber(client, token):\n    headers = {\"Authorization\": f\"Bearer {token}\"}\n    res = client.post('/api/v1/financeiro/contas-receber', headers=headers, json={\n        \"cliente_id\": 1,\n        \"valor_original\": 1000,\n        \"vencimento\": \"2026-12-31\"\n    })\n    assert res.status_code == 201\n    conta_id = res.get_json()[\"id\"]\n    res_pag = client.post(f'/api/v1/financeiro/contas-receber/{conta_id}/receber', headers=headers, json={\"valor\": 500})",
+        "detail": "backend.tests.test_financeiro",
+        "documentation": {}
+    },
+    {
+        "label": "test_pagamento_recusa_venda_cancelada_liquidada_e_excesso",
+        "kind": 2,
+        "importPath": "backend.tests.test_financeiro",
+        "description": "backend.tests.test_financeiro",
+        "peekOfCode": "def test_pagamento_recusa_venda_cancelada_liquidada_e_excesso(test_app):\n    \"\"\"A proteção financeira deve existir no serviço, não apenas na UI.\"\"\"\n    from app.models.financeiro import FormaPagamento\n    from app.models.comercial import EstadoVenda\n    from app.models.caixa import MovimentoCaixa\n    from app.services.comercial_service import ComercialService\n    from app.services.financeiro_service import FinanceiroService\n    with test_app.app_context():\n        forma = FormaPagamento(nome=\"Dinheiro\")\n        db.session.add(forma)",
+        "detail": "backend.tests.test_financeiro",
+        "documentation": {}
+    },
+    {
+        "label": "test_venda_do_pedido_guarda_snapshot_fiscal",
+        "kind": 2,
+        "importPath": "backend.tests.test_financeiro",
+        "description": "backend.tests.test_financeiro",
+        "peekOfCode": "def test_venda_do_pedido_guarda_snapshot_fiscal(test_app):\n    \"\"\"Editar o pedido posteriormente não pode alterar valores já faturados.\"\"\"\n    from app.models.pedido import Pedido, TipoPedido, OrigemPedido\n    from app.services.comercial_service import ComercialService\n    with test_app.app_context():\n        pedido = Pedido(\n            numero=\"PED-SNAPSHOT-1\", tipo=TipoPedido.SIMPLES.value,\n            origem=OrigemPedido.BALCAO.value, valor_total=10, saldo=10,\n        )\n        db.session.add(pedido)",
+        "detail": "backend.tests.test_financeiro",
+        "documentation": {}
+    },
+    {
+        "label": "test_evento_parcial_emite_ft_e_reutiliza_documento",
+        "kind": 2,
+        "importPath": "backend.tests.test_financeiro",
+        "description": "backend.tests.test_financeiro",
+        "peekOfCode": "def test_evento_parcial_emite_ft_e_reutiliza_documento(test_app):\n    \"\"\"Entrada de evento deve gerar FT e não duplicar a fatura ao liquidar.\"\"\"\n    from datetime import date, time\n    from app.models.caixa import MovimentoCaixa\n    from app.models.comercial import Venda, TipoDocumento, EstadoVenda\n    from app.models.evento import Evento, EventoItem\n    from app.models.financeiro import FormaPagamento\n    from app.services.comercial_service import ComercialService\n    from app.services.financeiro_service import FinanceiroService\n    with test_app.app_context():",
+        "detail": "backend.tests.test_financeiro",
+        "documentation": {}
+    },
+    {
+        "label": "test_evento_nao_duplica_itens_no_pedido_tecnico",
+        "kind": 2,
+        "importPath": "backend.tests.test_financeiro",
+        "description": "backend.tests.test_financeiro",
+        "peekOfCode": "def test_evento_nao_duplica_itens_no_pedido_tecnico(test_app):\n    \"\"\"O pedido operacional de um evento não é uma segunda venda.\"\"\"\n    from datetime import date, time\n    from app.models.evento import Evento, EventoItem\n    from app.models.item_pedido import ItemPedido\n    from app.models.pedido import Pedido, TipoPedido, OrigemPedido\n    with test_app.app_context():\n        pedido = Pedido(\n            numero=\"PED-EVT-NAO-DUPLICAR\", tipo=TipoPedido.SIMPLES.value,\n            origem=OrigemPedido.BALCAO.value, valor_total=100, saldo=100,",
         "detail": "backend.tests.test_financeiro",
         "documentation": {}
     },

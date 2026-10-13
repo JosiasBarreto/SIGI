@@ -118,6 +118,7 @@ export default function CaixaPOS() {
 
   // Payment Modal State
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [isSubmittingPOS, setIsSubmittingPOS] = useState(false);
 
   // Cart Table Modal State
   const [isCartModalOpen, setIsCartModalOpen] = useState(false);
@@ -427,6 +428,7 @@ export default function CaixaPOS() {
       toast.error("Adicione produtos ao carrinho para gerar Pró-Forma.");
       return;
     }
+    setIsSubmittingPOS(true);
     try {
       notificationManager.startOrderSession(undefined, 8000);
       const payload: ProformaCreatePayload = {
@@ -441,15 +443,26 @@ export default function CaixaPOS() {
           if (cat.includes("servi") || cat.includes("servic")) {
             tipoItem = "Servico";
           }
-          const preco = Number(i.preco_venda_com_iva || i.salePrice || i.preco_venda || 0);
+          // Taxa de IVA real do backend. Se for null/undefined/isento, a taxa é 0%. NUNCA inventar 15%!
+          const rawTaxa = i.taxa_iva ?? (i as any).iva_taxa ?? (i as any).iva;
+          const taxaIva = (rawTaxa !== null && rawTaxa !== undefined && !isNaN(Number(rawTaxa)))
+            ? Number(rawTaxa)
+            : 0;
+
+          // Se tiver taxa de IVA > 0, o preço unitário base sem IVA é preco_venda (se existir);
+          // Se for isento (taxaIva === 0), o preco_unitario é preco_venda_com_iva (que já é o preço final).
+          const precoSemIva = Number(i.preco_venda || i.salePrice || 0);
+          const precoComIva = Number(i.preco_venda_com_iva || i.salePrice || i.preco_venda || 0);
+          const precoUnitario = taxaIva > 0 && precoSemIva > 0 ? precoSemIva : precoComIva;
+
           return {
             item_id: Number(i.id) || null,
             item_tipo: tipoItem,
             descricao: i.name || i.nome || "Item de Venda",
-            preco_unitario: preco,
+            preco_unitario: precoUnitario,
             quantidade: Number(i.qty || 1),
             desconto: Number(i.desconto_valor || 0),
-            taxa_iva: Number(i.taxa_iva ?? (i as any).iva_taxa ?? (i as any).iva ?? 15),
+            taxa_iva: taxaIva,
           };
         }),
       };
@@ -474,6 +487,7 @@ export default function CaixaPOS() {
   };
 
   const confirmPayment = async () => {
+    if (isSubmittingPOS || createVenda.isPending || checkoutPedido.isPending) return;
     if (!isCaixaAberta || !caixaId) {
       toast.error("É necessário abrir uma caixa antes de realizar esta operação.");
       return;
@@ -775,6 +789,8 @@ export default function CaixaPOS() {
         err?.message ||
         "Erro ao concluir a venda no caixa.";
       toast.error(errMsg);
+    } finally {
+      setIsSubmittingPOS(false);
     }
   };
 
@@ -1448,7 +1464,7 @@ export default function CaixaPOS() {
         setValorCashMixto={setValorCashMixto}
         valorPosMixto={valorPosMixto}
         setValorPosMixto={setValorPosMixto}
-        isSubmitting={createVenda.isPending || checkoutPedido.isPending}
+        isSubmitting={isSubmittingPOS || createVenda.isPending || checkoutPedido.isPending}
         onConfirm={confirmPayment}
         onEmitirProforma={handleGerarProformaDirect}
       />

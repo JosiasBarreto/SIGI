@@ -152,15 +152,7 @@ export default function Login() {
             Esqueceu sua senha?
           </Link>
 
-          <div className="w-full pt-4 mt-2 border-t border-gray-100 dark:border-neutral-800">
-            <Link
-              to="/setup"
-              className="inline-flex items-center gap-2 text-xs font-semibold text-primary hover:text-primary/80 transition-colors py-2 px-3 rounded-xl hover:bg-primary/5 dark:hover:bg-primary/10"
-            >
-              <Sparkles className="w-4 h-4 text-primary" />
-              Primeiro Acesso / Assistente de Registo Inicial
-            </Link>
-          </div>
+          
         </div>
       </div>
     </div>

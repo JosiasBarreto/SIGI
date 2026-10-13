@@ -25,6 +25,7 @@ export interface EventoItemForm {
   quantidade: number;
   unidade: string;
   preco_unitario: number;
+  preco_sem_iva?: number;
   percentual_desconto?: number;
   valor_desconto?: number;
   taxa_iva?: number;
@@ -35,6 +36,10 @@ export interface EventoItemForm {
   sugestao_politica_id?: number | null;
   sugestao_origem?: string | null;
 }
+
+// Prices selected from the product catalogue already include IVA.  IVA is
+// added separately only to services, venues and rentals.
+const isProdutoEvento = (tipo: string) => String(tipo || '').toLowerCase().includes('produto');
 
 export default function EventoFormPage() {
   const navigate = useNavigate();
@@ -176,7 +181,7 @@ export default function EventoFormPage() {
           preco_unitario: Number(it.preco_unitario || 0),
           percentual_desconto: Number(it.percentual_desconto || 0),
           valor_desconto: Number(it.valor_desconto || 0),
-          taxa_iva: Number(it.taxa_iva || 15),
+          taxa_iva: it.taxa_iva != null && !isNaN(Number(it.taxa_iva)) ? Number(it.taxa_iva) : 0,
           observacoes: it.observacoes || '',
           sugestao_politica_id: it.sugestao_politica_id || null,
           sugestao_origem: it.sugestao_origem || null
@@ -185,10 +190,33 @@ export default function EventoFormPage() {
     }
   }, [eventoEditData]);
 
-  // Handle Add Item from Modal
+  // Handle Add Item from Modal (Acumula quantidade se o produto já existir no evento)
   const handleAddItemFromModal = (newItemData: EventoItemForm) => {
-    setItens(prev => [...prev, newItemData]);
-    toast.success(`Item "${newItemData.descricao}" adicionado ao evento!`);
+    const existingIndex = itens.findIndex(item => {
+      if (newItemData.produto_id && item.produto_id) {
+        return Number(item.produto_id) === Number(newItemData.produto_id);
+      }
+      return String(item.descricao || '').trim().toLowerCase() === String(newItemData.descricao || '').trim().toLowerCase() && item.tipo_item === newItemData.tipo_item;
+    });
+
+    if (existingIndex >= 0) {
+      const currentQty = Number(itens[existingIndex].quantidade || 1);
+      const addQty = Number(newItemData.quantidade || 1);
+      const newQty = currentQty + addQty;
+      setItens(prev => {
+        const next = [...prev];
+        next[existingIndex] = {
+          ...next[existingIndex],
+          quantidade: newQty
+        };
+        return next;
+      });
+      // Toast disparado apenas 1 vez (fora do updater de estado para evitar duplicação)
+      toast.success(`Quantidade de "${newItemData.descricao}" aumentada para ${newQty}!`);
+    } else {
+      setItens(prev => [...prev, newItemData]);
+      toast.success(`"${newItemData.descricao}" adicionado ao carrinho!`);
+    }
   };
 
   const handleRemoveItem = (index: number) => {
@@ -212,60 +240,88 @@ export default function EventoFormPage() {
     });
   };
 
-  // ACCURATE Real-time Financial Calculations (Preço Sem IVA + IVA = Total Geral)
+  // ACCURATE Real-time Financial Calculations (Preços de produtos já contêm IVA embutido ou são isentos)
   const calculatedResumo = useMemo(() => {
     let subtotalProdutos = 0;
     let subtotalCozinhaPastelaria = 0;
     let subtotalRevenda = 0;
+    let totalIvaEmbutidoProdutos = 0;
+    let totalProdutosIsentos = 0;
+
     let subtotalServicos = 0;
     let subtotalAlugueres = 0;
-    let totalIvaProdutos = 0;
     let totalIvaServicos = 0;
 
     itens.forEach(it => {
-      const sub = Number(it.quantidade || 0) * Number(it.preco_unitario || 0);
+      const qty = Number(it.quantidade || 0);
+      const precoFinalUnitario = Number(it.preco_unitario || 0);
+      const sub = qty * precoFinalUnitario;
       const desc = Number(it.valor_desconto || 0) || (sub * (Number(it.percentual_desconto || 0) / 100));
       const liquid = Math.max(0, sub - desc);
-      const iva = cobrarIvaServicos ? (liquid * (Number(it.taxa_iva || 15) / 100)) : 0;
 
-      if (['Produto', 'ProdutoCozinha', 'ProdutoPastelaria'].includes(it.tipo_item)) {
+      const produto = isProdutoEvento(it.tipo_item);
+      const taxaIva = Number(it.taxa_iva ?? (produto ? 0 : (cobrarIvaServicos ? taxaIvaServicos : 0)));
+
+      if (produto) {
+        // Produtos já trazem IVA embutido (ou são isentos). Nunca somar IVA adicional ao total!
         subtotalProdutos += liquid;
-        subtotalCozinhaPastelaria += liquid;
-        totalIvaProdutos += iva;
-      } else if (it.tipo_item === 'ProdutoRevenda') {
-        subtotalProdutos += liquid;
-        subtotalRevenda += liquid;
-        totalIvaProdutos += iva;
-      } else if (it.tipo_item === 'Espaco' || it.tipo_item === 'Material') {
-        subtotalAlugueres += liquid;
-        totalIvaServicos += iva;
+        if (['Produto', 'ProdutoCozinha', 'ProdutoPastelaria'].includes(it.tipo_item)) {
+          subtotalCozinhaPastelaria += liquid;
+        } else if (it.tipo_item === 'ProdutoRevenda') {
+          subtotalRevenda += liquid;
+        }
+
+        if (taxaIva > 0) {
+          const baseUnit = precoFinalUnitario / (1 + taxaIva / 100);
+          totalIvaEmbutidoProdutos += (precoFinalUnitario - baseUnit) * qty;
+        } else {
+          totalProdutosIsentos += liquid;
+        }
       } else {
-        subtotalServicos += liquid;
+        // Serviços, Espaços e Materiais têm IVA calculado se cobrarIvaServicos estiver ativo
+        const iva = cobrarIvaServicos ? (liquid * (taxaIva / 100)) : 0;
+        if (it.tipo_item === 'Espaco' || it.tipo_item === 'Material') {
+          subtotalAlugueres += liquid;
+        } else {
+          subtotalServicos += liquid;
+        }
         totalIvaServicos += iva;
       }
     });
 
-    const subtotalGeralSemIva = subtotalProdutos + subtotalServicos + subtotalAlugueres + Number(valorDeslocacao || 0) + Number(outrosEncargos || 0) - Number(descontoTotal || 0);
-    const totalIvaGeral = totalIvaProdutos + totalIvaServicos;
-    const totalGeral = subtotalGeralSemIva + totalIvaGeral;
+    const subtotalServicosEAlugueres = subtotalServicos + subtotalAlugueres;
+    const encargosLiquidos = Number(valorDeslocacao || 0) + Number(outrosEncargos || 0) - Number(descontoTotal || 0);
+    const subtotalGeralSemIva = (subtotalProdutos - totalIvaEmbutidoProdutos) + subtotalServicosEAlugueres + encargosLiquidos;
+    const totalGeral = subtotalProdutos + subtotalServicosEAlugueres + encargosLiquidos + totalIvaServicos;
 
     return {
       subtotalProdutos,
       subtotalCozinhaPastelaria,
       subtotalRevenda,
+      totalIvaEmbutidoProdutos,
+      totalProdutosIsentos,
       subtotalServicos,
       subtotalAlugueres,
+      subtotalServicosEAlugueres,
       subtotalGeralSemIva,
-      totalIvaGeral,
-      totalGeral
+      totalIvaServicos,
+      totalIvaGeral: totalIvaServicos,
+      totalGeral: Math.max(0, totalGeral)
     };
   }, [itens, valorDeslocacao, outrosEncargos, descontoTotal, cobrarIvaServicos]);
 
-  // Selected client object for name display
+  // Selected client object or fallback to Consumidor Final
+  const consumidorFinalClient = useMemo(() => {
+    return clientes.find((c: any) => {
+      const name = String(c.nome || c.name || '').toLowerCase();
+      return name.includes('consumidor') || name.includes('final');
+    }) || null;
+  }, [clientes]);
+
   const selectedClientObj = useMemo(() => {
-    if (!clienteId) return null;
-    return clientes.find((c: any) => String(c.id) === String(clienteId));
-  }, [clienteId, clientes]);
+    if (!clienteId) return consumidorFinalClient;
+    return clientes.find((c: any) => String(c.id) === String(clienteId)) || consumidorFinalClient;
+  }, [clienteId, clientes, consumidorFinalClient]);
 
   // Save Mutation
   const saveMutation = useMutation({
@@ -280,18 +336,29 @@ export default function EventoFormPage() {
       if (paymentInfo && result && result.id) {
         try {
           const formaId = paymentInfo.metodo_pagamento === 'Dinheiro' ? 1 : (paymentInfo.metodo_pagamento === 'Transferência Bancária' ? 2 : 3);
-          const tipoDoc = paymentInfo.valor_pago >= (calculatedResumo.totalGeral || 1) ? 'FR' : 'FT';
+          // The server is the fiscal source of truth.  In particular it may
+          // normalise IVA/discounts, so never decide FR versus FT from a
+          // stale browser total.
+          const totalFiscal = Number(
+            result?.resumo_financeiro?.total_geral ?? result?.valor_total ?? calculatedResumo.totalGeral
+          );
+          const tipoDoc = Math.abs(paymentInfo.valor_pago - totalFiscal) <= 0.005 ? 'FR' : 'FT';
           await eventService.faturar(result.id, {
             tipo_documento: tipoDoc,
-            pagamento_inicial: {
+            // This is the contract consumed by the backend.  A partial entry
+            // emits FT; only a full settlement is eligible for FR.
+            pagamento: {
               valor: paymentInfo.valor_pago,
               forma_pagamento_id: formaId,
               codigo_transferencia: paymentInfo.codigo_comprovativo || null,
-              emissor: paymentInfo.banco_emissor || null
+              emissor: paymentInfo.banco_emissor || null,
+              observacoes: paymentInfo.observacoes || null,
             }
           });
-        } catch {
-          // ignore payment error after event creation
+        } catch (error) {
+          // The event exists, but hiding an invoice/payment failure made the
+          // list show a pending balance with no explanation.
+          throw error;
         }
       }
 
@@ -314,10 +381,16 @@ export default function EventoFormPage() {
     const formattedHoraInicio = horaInicio && horaInicio.trim() ? horaInicio.slice(0, 5) : '12:00';
     const formattedHoraFim = horaFim && horaFim.trim() ? horaFim.slice(0, 5) : '22:00';
 
+    const finalClienteId = clienteId ? Number(clienteId) : (consumidorFinalClient?.id || null);
+    const finalClienteNome = clienteId
+      ? (selectedClientObj?.nome || selectedClientObj?.name || 'Cliente')
+      : (consumidorFinalClient?.nome || 'Consumidor Final');
+
     const payload: any = {
       titulo: titulo.trim() || 'Novo Evento',
       tipo_evento: tipoEvento || 'Casamento',
-      cliente_id: clienteId ? Number(clienteId) : null,
+      cliente_id: finalClienteId,
+      cliente_nome: finalClienteNome,
       local_evento: localEvento || '',
       numero_convidados: Number(numeroConvidados || 100),
       data_evento: dataEvento ? String(dataEvento).split('T')[0] : new Date().toISOString().split('T')[0],
@@ -335,6 +408,7 @@ export default function EventoFormPage() {
         const numericId = Number(rawId);
         const validItemId = !isNaN(numericId) && numericId > 0 ? numericId : null;
 
+        const isProd = isProdutoEvento(it.tipo_item);
         let itemTipoVal = 'Produto';
         if (['Servico', 'Serviço', 'SERVICO'].includes(it.tipo_item)) {
           itemTipoVal = 'Servico';
@@ -344,9 +418,9 @@ export default function EventoFormPage() {
           tipo_item: itemTipoVal,
           descricao: it.descricao || 'Item do Evento',
           quantidade: Math.max(1, Number(it.quantidade || 1)),
-          unidade: it.unidade || 'Pessoa',
+          unidade: it.unidade || 'Unidade',
           preco_unitario: Number(it.preco_unitario || 0),
-          taxa_iva: Number(it.taxa_iva || 15),
+          taxa_iva: isProd ? 0 : (cobrarIvaServicos ? Number(it.taxa_iva ?? taxaIvaServicos ?? 0) : 0),
           observacoes: it.observacoes || ''
         };
 
@@ -374,15 +448,8 @@ export default function EventoFormPage() {
     saveMutation.mutate({ payload: buildPayload('RASCUNHO') });
   };
 
-  // Open Payment Modal or Validate Mandatory Client
+  // Open Payment Modal (Cliente opcional - Padrão Consumidor Final)
   const handleOpenConfirmModal = () => {
-    if (!clienteId) {
-      toast.error('É OBRIGATÓRIO selecionar um Cliente para o evento antes de continuar!');
-      const el = document.getElementById('cliente-select-container');
-      if (el) el.scrollIntoView({ behavior: 'smooth' });
-      return;
-    }
-
     if (!titulo.trim()) {
       toast.error('O título do evento é obrigatório.');
       return;
@@ -409,6 +476,11 @@ export default function EventoFormPage() {
 
     const valorPagoNum = parseFloat(valorPagoInput) || 0;
 
+    if (valorPagoNum <= 0) {
+      toast.error('Informe um valor de pagamento superior a zero.');
+      return;
+    }
+
     const paymentInfo = {
       metodo_pagamento: metodoPagamento,
       condicao_pagamento: condicaoPagamento,
@@ -425,11 +497,6 @@ export default function EventoFormPage() {
 
   // Pro-Forma Emission Logic
   const handleEmitirProforma = async () => {
-    if (!clienteId) {
-      toast.error('É OBRIGATÓRIO selecionar um Cliente para emitir Fatura Pró-Forma.');
-      return;
-    }
-
     if (!titulo.trim()) {
       toast.error('Informe o título do evento antes de emitir a Pró-Forma.');
       return;
@@ -442,8 +509,9 @@ export default function EventoFormPage() {
 
     setIsProformaSubmitting(true);
     try {
-      const payload = {
-        cliente_id: Number(clienteId),
+      const finalClienteId = clienteId ? Number(clienteId) : (consumidorFinalClient?.id || 1);
+      const payload: any = {
+        cliente_id: Number(finalClienteId),
         origem: 'EVENTO',
         observacoes: `Pró-Forma do Evento: ${titulo}`,
         itens: itens.map((it) => ({
@@ -453,7 +521,7 @@ export default function EventoFormPage() {
           preco_unitario: Number(it.preco_unitario || 0),
           quantidade: Number(it.quantidade || 1),
           desconto: Number(it.valor_desconto || 0),
-          taxa_iva: Number(it.taxa_iva || 15),
+          taxa_iva: isProdutoEvento(it.tipo_item) ? 0 : (cobrarIvaServicos ? Number(it.taxa_iva ?? taxaIvaServicos ?? 0) : 0),
         })),
       };
 
@@ -591,15 +659,20 @@ export default function EventoFormPage() {
                   </select>
                 </div>
 
-                {/* CLIENT SELECTION (MANDATORY) */}
-                <div id="cliente-select-container" className="space-y-1 p-2 rounded-xl border border-dashed border-rose-200 dark:border-rose-900/40 bg-rose-50/30 dark:bg-rose-950/10">
+                {/* CLIENT SELECTION (OPTIONAL - DEFAULT CONSUMIDOR FINAL) */}
+                <div id="cliente-select-container" className="space-y-1.5 p-3 rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-50/70 dark:bg-gray-800/40 shadow-xs">
                   <div className="flex items-center justify-between">
-                    <label className="text-[11px] font-extrabold text-rose-700 dark:text-rose-400 uppercase flex items-center gap-1">
-                      Cliente Atribuído <span className="text-rose-600 font-black">* (Obrigatório)</span>
+                    <label className="text-[11px] font-extrabold text-gray-700 dark:text-gray-300 uppercase flex items-center gap-1.5">
+                      <Users size={13} className="text-primary" />
+                      Cliente Atribuído <span className="text-gray-400 font-semibold lowercase text-[10px]">(opcional)</span>
                     </label>
-                    {!clienteId && (
-                      <span className="text-[10px] font-extrabold text-rose-600 bg-rose-100 dark:bg-rose-900/50 px-2 py-0.5 rounded">
-                        Selecione um cliente
+                    {!clienteId ? (
+                      <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200/60 dark:border-emerald-800/40 px-2 py-0.5 rounded-md flex items-center gap-1">
+                        ✓ Padrão: Consumidor Final
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-md">
+                        Cliente Selecionado
                       </span>
                     )}
                   </div>
@@ -774,66 +847,103 @@ export default function EventoFormPage() {
                   </button>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-3.5">
                   {filteredItens.map((item, idx) => {
                     const realIndex = itens.indexOf(item);
+                    const isProd = isProdutoEvento(item.tipo_item);
+                    const qty = Number(item.quantidade || 1);
+                    const precoFinalUnitario = Number(item.preco_unitario || 0);
+                    const taxaIva = Number(item.taxa_iva ?? (isProd ? 0 : (cobrarIvaServicos ? taxaIvaServicos : 0)));
+
+                    let precoSemIvaUnit = item.preco_sem_iva;
+                    if (precoSemIvaUnit === undefined || precoSemIvaUnit === null) {
+                      precoSemIvaUnit = isProd && taxaIva > 0 ? precoFinalUnitario / (1 + taxaIva / 100) : precoFinalUnitario;
+                    }
+
+                    const valorIvaUnit = isProd
+                      ? (taxaIva > 0 ? precoFinalUnitario - precoSemIvaUnit : 0)
+                      : precoFinalUnitario * (taxaIva / 100);
+
+                    // PRODUTOS NUNCA RECEBEM IVA EXTRA (preço já tem IVA ou é isento)
+                    const totalLinha = isProd
+                      ? qty * precoFinalUnitario
+                      : qty * (precoFinalUnitario + (cobrarIvaServicos ? valorIvaUnit : 0));
+
                     const getDestinationBadge = () => {
-                      if (item.tipo_item === 'ProdutoCozinha') return { label: '🍳 Cozinha / Menu', color: 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300' };
-                      if (item.tipo_item === 'ProdutoPastelaria') return { label: '🥐 Pastelaria / Bolo', color: 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300' };
-                      if (item.tipo_item === 'ProdutoRevenda') return { label: '🍾 Revenda / Bebida', color: 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300' };
-                      if (item.tipo_item === 'Material') return { label: '🚚 Logística / Material', color: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-950 dark:text-cyan-300' };
-                      if (item.tipo_item === 'Espaco') return { label: '🏛️ Aluguer Espaço', color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' };
-                      return { label: '💼 Serviço / Equipa', color: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300' };
+                      if (item.tipo_item === 'ProdutoCozinha') return { label: '🍳 Cozinha / Menu', color: 'bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-900/50' };
+                      if (item.tipo_item === 'ProdutoPastelaria') return { label: '🥐 Pastelaria / Doces', color: 'bg-purple-100 dark:bg-purple-950/70 text-purple-800 dark:text-purple-300 border-purple-200 dark:border-purple-900/50' };
+                      if (item.tipo_item === 'ProdutoRevenda') return { label: '🍾 Revenda / Bebida', color: 'bg-blue-100 dark:bg-blue-950/70 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-900/50' };
+                      if (item.tipo_item === 'Material') return { label: '🚚 Logística / Aluguer', color: 'bg-cyan-100 dark:bg-cyan-950/70 text-cyan-800 dark:text-cyan-300 border-cyan-200 dark:border-cyan-900/50' };
+                      if (item.tipo_item === 'Espaco') return { label: '🏛️ Aluguer Espaço', color: 'bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900/50' };
+                      return { label: '💼 Serviço / Equipa', color: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-300 border-slate-200 dark:border-slate-700' };
                     };
 
                     const badge = getDestinationBadge();
-                    const subtotalSemIva = Number(item.quantidade || 0) * Number(item.preco_unitario || 0);
-                    const ivaValor = subtotalSemIva * (Number(item.taxa_iva || 15) / 100);
-                    const totalLinhaComIva = subtotalSemIva + ivaValor;
 
                     return (
                       <div
                         key={realIndex}
-                        className="p-3.5 bg-gray-50/80 dark:bg-gray-800/40 border border-gray-200 dark:border-gray-700/80 rounded-xl space-y-2 relative transition-all hover:border-primary/40"
+                        className="p-4 bg-white dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700/80 rounded-2xl space-y-3 shadow-xs hover:shadow-md hover:border-primary/40 transition-all"
                       >
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2">
-                            <span className={`px-2 py-0.5 text-[10px] font-black rounded uppercase ${badge.color}`}>
+                        {/* Header: Categoria, Status Fiscal e Ação */}
+                        <div className="flex items-center justify-between gap-2 border-b pb-2.5 border-gray-100 dark:border-gray-700/60">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className={`px-2.5 py-0.5 text-[10px] font-black rounded-lg uppercase border ${badge.color}`}>
                               #{realIndex + 1} • {badge.label}
                             </span>
+
+                            {isProd ? (
+                              taxaIva > 0 ? (
+                                <span className="px-2 py-0.5 text-[10px] font-extrabold rounded-md bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border border-amber-200/50 dark:border-amber-800/40">
+                                  c/ IVA incluído ({taxaIva}%)
+                                </span>
+                              ) : (
+                                <span className="px-2 py-0.5 text-[10px] font-black rounded-md bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200/50 dark:border-emerald-800/40 flex items-center gap-1">
+                                  ✓ Isento de IVA
+                                </span>
+                              )
+                            ) : (
+                              <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">
+                                {cobrarIvaServicos ? `IVA Tributável (${taxaIva}%)` : 'IVA Não Cobrado'}
+                              </span>
+                            )}
                           </div>
 
                           <button
                             type="button"
                             onClick={() => handleRemoveItem(realIndex)}
-                            className="p-1 text-gray-400 hover:text-rose-500 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
+                            className="p-1.5 text-gray-400 hover:text-rose-500 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
                             title="Remover Item"
                           >
-                            <Trash2 size={15} />
+                            <Trash2 size={16} />
                           </button>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
-                          {/* READ-ONLY DESCRICAO */}
-                          <div className="md:col-span-5 space-y-1">
-                            <label className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1">
-                              Descrição da Linha <Lock size={10} className="text-gray-400" />
-                            </label>
-                            <div className="w-full bg-gray-100 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-lg px-2.5 py-1.5 text-xs font-bold text-gray-800 dark:text-gray-200 flex items-center justify-between select-none">
-                              <span className="truncate">{item.descricao}</span>
-                            </div>
+                        {/* Corpo: Título e Controles */}
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                          {/* Nome do Item */}
+                          <div className="md:col-span-6 space-y-1">
+                            <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider block">
+                              Descrição do Item
+                            </span>
+                            <h4 className="text-xs font-black text-gray-900 dark:text-white leading-snug">
+                              {item.descricao}
+                            </h4>
+                            <span className="text-[11px] text-gray-500 dark:text-gray-400 font-medium">
+                              Unidade: <strong className="text-gray-700 dark:text-gray-300">{item.unidade || 'Unidade'}</strong>
+                            </span>
                           </div>
 
-                          {/* Quantidade Inline Counter */}
+                          {/* Seletor de Quantidade Premium */}
                           <div className="md:col-span-3 space-y-1">
-                            <label className="text-[10px] font-bold text-gray-400 uppercase block">
-                              Qtd ({item.unidade || 'Unidade'})
-                            </label>
-                            <div className="flex items-center gap-1">
+                            <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider block">
+                              Quantidade
+                            </span>
+                            <div className="flex items-center gap-1.5 bg-gray-50 dark:bg-gray-900/60 p-1 rounded-xl border border-gray-200 dark:border-gray-700 w-fit">
                               <button
                                 type="button"
                                 onClick={() => handleUpdateItemQty(realIndex, -1)}
-                                className="p-1.5 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-lg text-gray-700 dark:text-gray-200"
+                                className="p-1.5 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-700 dark:text-gray-200 shadow-xs"
                               >
                                 <Minus size={13} />
                               </button>
@@ -841,41 +951,72 @@ export default function EventoFormPage() {
                                 type="number"
                                 min="1"
                                 value={item.quantidade}
-                                onChange={(e) => handleItemChange(realIndex, 'quantidade', parseFloat(e.target.value) || 1)}
-                                className="w-16 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1 text-xs font-extrabold text-center text-gray-900 dark:text-white"
+                                onChange={(e) => handleItemChange(realIndex, 'quantidade', Math.max(1, parseFloat(e.target.value) || 1))}
+                                className="w-14 bg-transparent border-none text-xs font-black text-center text-gray-900 dark:text-white focus:ring-0 p-0"
                               />
                               <button
                                 type="button"
                                 onClick={() => handleUpdateItemQty(realIndex, 1)}
-                                className="p-1.5 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-lg text-gray-700 dark:text-gray-200"
+                                className="p-1.5 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-700 dark:text-gray-200 shadow-xs"
                               >
                                 <Plus size={13} />
                               </button>
                             </div>
                           </div>
 
-                          {/* READ-ONLY PREÇO UNITÁRIO SEM IVA */}
-                          <div className="md:col-span-4 space-y-1">
-                            <label className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1">
-                              Preço Unit. Sem IVA <Lock size={10} className="text-gray-400" />
-                            </label>
-                            <div className="w-full bg-gray-100 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-lg px-2.5 py-1.5 text-xs font-extrabold text-primary select-none">
-                              {formatMoeda(item.preco_unitario)}
-                            </div>
+                          {/* Preço Unitário */}
+                          <div className="md:col-span-3 space-y-1 text-right">
+                            <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider block">
+                              {isProd ? 'Preço Final Unit. (c/ IVA)' : 'Preço Unitário Base'}
+                            </span>
+                            <span className="text-sm font-black text-primary block">
+                              {formatMoeda(precoFinalUnitario)}
+                            </span>
                           </div>
                         </div>
 
-                        <div className="flex items-center justify-between pt-2 border-t border-gray-200/60 dark:border-gray-700/60 text-xs">
+                        {/* Barra de Especificação de Impostos (Anti-Erros de IVA) */}
+                        <div className="bg-gray-50/80 dark:bg-gray-900/40 p-2.5 rounded-xl border border-gray-100 dark:border-gray-800/80 grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px]">
+                          <div>
+                            <span className="text-gray-400 block text-[10px] uppercase font-bold">Preço (sem IVA)</span>
+                            <strong className="text-gray-800 dark:text-gray-200 font-extrabold">{formatMoeda(precoSemIvaUnit)}</strong>
+                          </div>
+
+                          <div>
+                            <span className="text-gray-400 block text-[10px] uppercase font-bold">Taxa de IVA</span>
+                            {isProd ? (
+                              taxaIva > 0 ? (
+                                <strong className="text-amber-600 dark:text-amber-400 font-bold">{taxaIva}% ({formatMoeda(valorIvaUnit)})</strong>
+                              ) : (
+                                <strong className="text-emerald-600 dark:text-emerald-400 font-bold">Isento de IVA</strong>
+                              )
+                            ) : (
+                              cobrarIvaServicos ? (
+                                <strong className="text-amber-600 dark:text-amber-400 font-bold">{taxaIva}% ({formatMoeda(valorIvaUnit)})</strong>
+                              ) : (
+                                <span className="text-gray-400 font-medium">Não Aplicado</span>
+                              )
+                            )}
+                          </div>
+
+                          <div>
+                            <span className="text-gray-400 block text-[10px] uppercase font-bold">Preço Final (c/ IVA)</span>
+                            <strong className="text-gray-900 dark:text-white font-black">{formatMoeda(isProd ? precoFinalUnitario : (precoFinalUnitario + (cobrarIvaServicos ? valorIvaUnit : 0)))}</strong>
+                          </div>
+                        </div>
+
+                        {/* Rodapé da Linha: Subtotal e Total Definitivo */}
+                        <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-700/60 text-xs">
                           <span className="text-[11px] text-gray-500">
-                            Subtotal Sem IVA: <strong className="text-gray-900 dark:text-white font-black">{formatMoeda(subtotalSemIva)}</strong>
+                            Subtotal Sem IVA: <strong className="text-gray-800 dark:text-gray-200 font-black">{formatMoeda(qty * precoSemIvaUnit)}</strong>
                           </span>
 
-                          <div className="flex items-center gap-3">
-                            <span className="text-[11px] text-amber-600 dark:text-amber-400 font-bold">
-                              IVA ({item.taxa_iva || 15}%): {formatMoeda(ivaValor)}
+                          <div className="flex items-center gap-2">
+                            <span className="text-[11px] text-gray-500">
+                              {isProd ? 'Total Linha (c/ IVA incluído):' : 'Total Linha:'}
                             </span>
-                            <span className="text-xs font-black text-primary bg-primary/10 px-2 py-0.5 rounded">
-                              Total com IVA: {formatMoeda(totalLinhaComIva)}
+                            <span className="text-sm font-black text-primary bg-primary/10 px-2.5 py-0.5 rounded-lg">
+                              {formatMoeda(totalLinha)}
                             </span>
                           </div>
                         </div>
@@ -896,12 +1037,12 @@ export default function EventoFormPage() {
 
               <div className="space-y-2.5 text-xs">
                 <div className="flex justify-between text-gray-600 dark:text-gray-400">
-                  <span>Cozinha & Pastelaria (Sem IVA):</span>
+                  <span>Cozinha & Pastelaria (IVA incluído):</span>
                   <span className="font-bold text-amber-600 dark:text-amber-400">{formatMoeda(calculatedResumo.subtotalCozinhaPastelaria)}</span>
                 </div>
 
                 <div className="flex justify-between text-gray-600 dark:text-gray-400">
-                  <span>Revenda & Bebidas (Sem IVA):</span>
+                  <span>Revenda & Bebidas (IVA incluído):</span>
                   <span className="font-bold text-blue-600 dark:text-blue-400">{formatMoeda(calculatedResumo.subtotalRevenda)}</span>
                 </div>
 
@@ -1002,21 +1143,34 @@ export default function EventoFormPage() {
           <div className="flex items-center gap-4 sm:gap-6 w-full sm:w-auto justify-between sm:justify-start">
             <div>
               <span className="text-[10px] text-gray-400 font-bold uppercase block">
-                Subtotal Sem IVA
+                Produtos (c/ IVA)
               </span>
               <span className="text-xs font-extrabold text-gray-800 dark:text-gray-200">
-                {formatMoeda(calculatedResumo.subtotalGeralSemIva)}
+                {formatMoeda(calculatedResumo.subtotalProdutos)}
               </span>
             </div>
 
-            <div>
-              <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold uppercase block">
-                IVA (15%)
-              </span>
-              <span className="text-xs font-extrabold text-amber-600 dark:text-amber-400">
-                {formatMoeda(calculatedResumo.totalIvaGeral)}
-              </span>
-            </div>
+            {calculatedResumo.subtotalServicosEAlugueres > 0 && (
+              <div>
+                <span className="text-[10px] text-gray-400 font-bold uppercase block">
+                  Serviços
+                </span>
+                <span className="text-xs font-extrabold text-gray-800 dark:text-gray-200">
+                  {formatMoeda(calculatedResumo.subtotalServicosEAlugueres)}
+                </span>
+              </div>
+            )}
+
+            {calculatedResumo.totalIvaServicos > 0 && (
+              <div>
+                <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold uppercase block">
+                  IVA Serviços
+                </span>
+                <span className="text-xs font-extrabold text-amber-600 dark:text-amber-400">
+                  {formatMoeda(calculatedResumo.totalIvaServicos)}
+                </span>
+              </div>
+            )}
 
             <div className="pl-3 border-l border-gray-200 dark:border-gray-700">
               <span className="text-[10px] text-primary font-black uppercase block">

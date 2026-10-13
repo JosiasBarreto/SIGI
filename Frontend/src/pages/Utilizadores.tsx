@@ -11,11 +11,13 @@ import {
   XCircle,
   Edit2,
   Key,
+  AlertTriangle,
 } from "lucide-react";
 import { toast } from "react-toastify";
 import Swal from "sweetalert2";
 import { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "../components/Common/DataTable";
+import { extractBackendErrorMessage } from "../api/client";
 
 export default function Utilizadores() {
   const queryClient = useQueryClient();
@@ -30,12 +32,25 @@ export default function Utilizadores() {
     role: "Atendimento",
   });
 
-  const { data: response, isLoading } = useQuery({
+  const {
+    data: response,
+    isLoading,
+    isError,
+    error: queryError,
+  } = useQuery({
     queryKey: ["users"],
     queryFn: () => userService.getAll({ per_page: 1000 }),
+    retry: 1,
   });
 
-  const users: UserDTO[] = response?.items || [];
+  const users: UserDTO[] = useMemo(() => {
+    if (!response) return [];
+    if (Array.isArray(response.items)) return response.items;
+    if (Array.isArray((response as any).users)) return (response as any).users;
+    if (Array.isArray((response as any).data)) return (response as any).data;
+    if (Array.isArray(response)) return response;
+    return [];
+  }, [response]);
 
   const filteredUsers = useMemo(() => {
     return users.filter((user) => {
@@ -51,11 +66,21 @@ export default function Utilizadores() {
 
   const toggleStatusMutation = useMutation({
     mutationFn: (id: number | string) => userService.toggleStatus(String(id)),
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
-      toast.success("Estado do utilizador atualizado com sucesso.");
+      const successMsg =
+        data?.sms ||
+        data?.message ||
+        data?.msg ||
+        "Estado do utilizador atualizado com sucesso.";
+      toast.success(successMsg);
     },
-    onError: () => toast.error("Erro ao atualizar estado do utilizador."),
+    onError: (err: any) => {
+      const errorMsg =
+        extractBackendErrorMessage(err) ||
+        "Erro ao atualizar estado do utilizador no servidor.";
+      toast.error(errorMsg);
+    },
   });
 
   const handleToggleStatus = (id: number, currentStatus: boolean) => {
@@ -210,22 +235,32 @@ export default function Utilizadores() {
 
   const createMutation = useMutation({
     mutationFn: (data: CreateUserDTO) => userService.create(data),
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
-      toast.success("Utilizador criado com sucesso.");
+      const successMsg =
+        data?.sms ||
+        data?.message ||
+        data?.msg ||
+        "Utilizador criado com sucesso.";
+      toast.success(successMsg);
       Swal.fire({
         icon: "success",
         title: "Convite Enviado",
-        text: `As credenciais de acesso e o link de acesso foram enviados para ${
-          data.email || newUser.email
-        }. O utilizador terá de redefinir a palavra-passe no primeiro acesso.`,
+        text:
+          data?.sms ||
+          `As credenciais de acesso e o link de acesso foram enviados para ${
+            data?.email || newUser.email
+          }. O utilizador terá de redefinir a palavra-passe no primeiro acesso.`,
         confirmButtonColor: "#3085d6",
       });
       setShowModal(false);
       setNewUser({ name: "", email: "", role: "Atendimento" });
     },
-    onError: () => {
-      toast.error("Erro ao criar utilizador.");
+    onError: (err: any) => {
+      const errorMsg =
+        extractBackendErrorMessage(err) ||
+        "Erro ao criar utilizador no servidor.";
+      toast.error(errorMsg);
     },
   });
 
@@ -234,14 +269,24 @@ export default function Utilizadores() {
       id: string | number;
       payload: Partial<CreateUserDTO>;
     }) => userService.update(String(data.id), data.payload as any),
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
-      toast.success("Utilizador atualizado com sucesso.");
+      const successMsg =
+        data?.sms ||
+        data?.message ||
+        data?.msg ||
+        "Utilizador atualizado com sucesso.";
+      toast.success(successMsg);
       setShowModal(false);
       setEditingUser(null);
       setNewUser({ name: "", email: "", role: "Atendimento" });
     },
-    onError: () => toast.error("Erro ao atualizar utilizador."),
+    onError: (err: any) => {
+      const errorMsg =
+        extractBackendErrorMessage(err) ||
+        "Erro ao atualizar utilizador no servidor.";
+      toast.error(errorMsg);
+    },
   });
 
   const handleCreateOrUpdate = (e: React.FormEvent) => {
@@ -297,6 +342,23 @@ export default function Utilizadores() {
           <Plus size={18} /> Novo Utilizador
         </button>
       </div>
+
+      {isError && (
+        <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-300 flex items-center justify-between gap-3 shadow-xs">
+          <div className="flex items-center gap-2.5">
+            <AlertTriangle size={18} className="shrink-0 text-red-600 dark:text-red-400" />
+            <span className="text-sm font-medium">
+              {extractBackendErrorMessage(queryError) || "Erro ao carregar lista de utilizadores do servidor."}
+            </span>
+          </div>
+          <button
+            onClick={() => queryClient.invalidateQueries({ queryKey: ["users"] })}
+            className="text-xs font-bold underline hover:no-underline text-red-700 dark:text-red-300 shrink-0"
+          >
+            Tentar novamente
+          </button>
+        </div>
+      )}
 
       <DataTable
         data={filteredUsers}

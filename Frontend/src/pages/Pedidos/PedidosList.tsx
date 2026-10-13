@@ -66,6 +66,8 @@ export default function PedidosList({ onOpenNewOrderForm }: PedidosListProps) {
         `${venda.tipo_documento} emitida: ${venda.numero_documento || venda.numero}`
       );
       queryClient.invalidateQueries({ queryKey: ["vendas"] });
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+      queryClient.invalidateQueries({ queryKey: ["pedidos"] });
       if (variables.tipo === "PROFORMA") {
         vendaService
           .imprimirVendaPdf(venda.id)
@@ -242,47 +244,56 @@ export default function PedidosList({ onOpenNewOrderForm }: PedidosListProps) {
         id: "acoes",
         header: "Ações",
         cell: ({ row }) => {
-          const isPronto = String(row.original.estado || '').toLowerCase().includes('pronto');
+          const est = normalizarEstado(row.original.estado || row.original.status);
+          const isCancelled = est === "CANCELADO";
+          const isPronto = est.includes("PRONTO");
           return (
             <div className="flex flex-wrap justify-end gap-1.5">
-              {isPronto && (
+              {isPronto && !isCancelled && (
                 <button
                   type="button"
+                  disabled={updateMutation.isPending}
                   onClick={() => handleUpdateStatus(row.original.id, 'Entregue')}
-                  className="text-white bg-emerald-600 hover:bg-emerald-700 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 shadow-sm"
+                  className="text-white bg-emerald-600 hover:bg-emerald-700 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 shadow-sm disabled:opacity-50"
                   title="Marcar Pedido como Entregue ao Cliente"
                 >
                   <CheckCheck size={13} />
                   Entregar
                 </button>
               )}
-              <button
-                type="button"
-                onClick={() =>
-                  emitirDocumentoMutation.mutate({
-                    pedidoId: Number(row.original.id),
-                    tipo: "PROFORMA",
-                  })
-                }
-                className="text-amber-800 bg-amber-100 hover:bg-amber-200 dark:bg-amber-900/40 dark:text-amber-300 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 shadow-sm"
-                title="Emitir Fatura Pró-Forma"
-              >
-                <FileText size={13} />
-                Proforma
-              </button>
-              <button
-                type="button"
-                onClick={() =>
-                  emitirDocumentoMutation.mutate({
-                    pedidoId: Number(row.original.id),
-                    tipo: "FT",
-                  })
-                }
-                className="text-blue-700 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all"
-                title="Emitir Fatura"
-              >
-                FT
-              </button>
+              {!isCancelled && (
+                <>
+                  <button
+                    type="button"
+                    disabled={emitirDocumentoMutation.isPending}
+                    onClick={() =>
+                      emitirDocumentoMutation.mutate({
+                        pedidoId: Number(row.original.id),
+                        tipo: "PROFORMA",
+                      })
+                    }
+                    className="text-amber-800 bg-amber-100 hover:bg-amber-200 dark:bg-amber-900/40 dark:text-amber-300 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 shadow-sm disabled:opacity-50"
+                    title="Emitir Fatura Pró-Forma"
+                  >
+                    <FileText size={13} />
+                    Proforma
+                  </button>
+                  <button
+                    type="button"
+                    disabled={emitirDocumentoMutation.isPending}
+                    onClick={() =>
+                      emitirDocumentoMutation.mutate({
+                        pedidoId: Number(row.original.id),
+                        tipo: "FT",
+                      })
+                    }
+                    className="text-blue-700 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all disabled:opacity-50"
+                    title="Emitir Fatura"
+                  >
+                    FT
+                  </button>
+                </>
+              )}
               <button
                 type="button"
                 onClick={() => setSelectedOrder(row.original)}

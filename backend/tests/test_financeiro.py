@@ -169,3 +169,161 @@ def test_contas_receber(client, token):
     res_pag = client.post(f'/api/v1/financeiro/contas-receber/{conta_id}/receber', headers=headers, json={"valor": 500})
     assert res_pag.status_code == 200
     assert float(res_pag.get_json()["saldo"]) == 500
+
+
+def test_pagamento_recusa_venda_cancelada_liquidada_e_excesso(test_app):
+    """A proteção financeira deve existir no serviço, não apenas na UI."""
+    from app.models.financeiro import FormaPagamento
+    from app.models.comercial import EstadoVenda
+    from app.models.caixa import MovimentoCaixa
+    from app.services.comercial_service import ComercialService
+    from app.services.financeiro_service import FinanceiroService
+
+    with test_app.app_context():
+        forma = FormaPagamento(nome="Dinheiro")
+        db.session.add(forma)
+        db.session.commit()
+        caixa, erro = FinanceiroService().abrir_caixa(0, 1)
+        assert erro is None
+
+        service = ComercialService()
+        venda = service.create_venda({
+            "tipo_documento": "FT",
+            "itens": [{"descricao": "Serviço", "quantidade": 1, "preco_unitario": 10}],
+        }, 1)
+
+        with pytest.raises(ValueError, match="superior ao saldo"):
+            service.add_pagamento(venda.id, {"valor": 11, "forma_pagamento_id": forma.id}, 1)
+        db.session.rollback()
+        assert MovimentoCaixa.query.filter_by(caixa_id=caixa.id).count() == 1  # abertura apenas
+
+        pagamento = service.add_pagamento(venda.id, {"valor": 10, "forma_pagamento_id": forma.id}, 1)
+        assert float(pagamento.valor) == 10
+        assert venda.estado == EstadoVenda.PAGO
+        assert float(venda.saldo) == 0
+        with pytest.raises(ValueError, match="totalmente liquidada"):
+            service.add_pagamento(venda.id, {"valor": 1, "forma_pagamento_id": forma.id}, 1)
+        db.session.rollback()
+
+        cancelada = service.create_venda({
+            "tipo_documento": "FT",
+            "itens": [{"descricao": "Outro serviço", "quantidade": 1, "preco_unitario": 5}],
+        }, 1)
+        cancelada.estado = EstadoVenda.CANCELADO
+        db.session.commit()
+        with pytest.raises(ValueError, match="cancelada"):
+            service.add_pagamento(cancelada.id, {"valor": 5, "forma_pagamento_id": forma.id}, 1)
+
+
+def test_venda_do_pedido_guarda_snapshot_fiscal(test_app):
+    """Editar o pedido posteriormente não pode alterar valores já faturados."""
+    from app.models.pedido import Pedido, TipoPedido, OrigemPedido
+    from app.services.comercial_service import ComercialService
+
+    with test_app.app_context():
+        pedido = Pedido(
+            numero="PED-SNAPSHOT-1", tipo=TipoPedido.SIMPLES.value,
+            origem=OrigemPedido.BALCAO.value, valor_total=10, saldo=10,
+        )
+        db.session.add(pedido)
+        db.session.commit()
+        venda = ComercialService().create_venda({
+            "tipo_documento": "FT", "pedido_id": pedido.id,
+            "itens": [{"descricao": "Preço acordado", "quantidade": 1, "preco_unitario": 10}],
+        }, 1)
+        assert float(venda.total) == 10
+
+        pedido.valor_total = 999
+        db.session.commit()
+        db.session.expire(venda)
+        assert float(venda.total) == 10
+
+
+def test_evento_parcial_emite_ft_e_reutiliza_documento(test_app):
+    """Entrada de evento deve gerar FT e não duplicar a fatura ao liquidar."""
+    from datetime import date, time
+    from app.models.caixa import MovimentoCaixa
+    from app.models.comercial import Venda, TipoDocumento, EstadoVenda
+    from app.models.evento import Evento, EventoItem
+    from app.models.financeiro import FormaPagamento
+    from app.services.comercial_service import ComercialService
+    from app.services.financeiro_service import FinanceiroService
+
+    with test_app.app_context():
+        forma = FormaPagamento(nome="Numerário")
+        db.session.add(forma)
+        evento = Evento(
+            numero="EVT-TESTE-PARCIAL", cliente_id=1, tipo_evento="Festa",
+            titulo="Evento de teste", data_evento=date.today(),
+            hora_inicio=time(10), hora_fim=time(12), numero_convidados=1,
+            estado="Confirmado",
+        )
+        evento.itens.append(EventoItem(
+            tipo_item="Servico", descricao="Serviço do evento", quantidade=1,
+            preco_unitario=100, subtotal=100, taxa_iva=15, valor_iva=15, total=115,
+        ))
+        db.session.add(evento)
+        db.session.commit()
+        caixa, erro = FinanceiroService().abrir_caixa(0, 1)
+        assert erro is None
+
+        service = ComercialService()
+        venda, erro = service.converter_evento_em_venda(evento.id, {
+            "tipo_documento": "FT",
+            "pagamento": {"valor": 50, "forma_pagamento_id": forma.id},
+        }, 1)
+        assert erro is None
+        assert venda.tipo_documento == TipoDocumento.FT
+        assert float(venda.total) == 115
+        assert float(venda.valor_pago) == 50
+        assert float(venda.saldo) == 65
+        assert float(evento.valor_pago) == 50
+
+        mesma_venda, erro = service.converter_evento_em_venda(evento.id, {
+            "tipo_documento": "FT",
+            "pagamento": {"valor": 65, "forma_pagamento_id": forma.id},
+        }, 1)
+        assert erro is None
+        assert mesma_venda.id == venda.id
+        assert Venda.query.filter_by(evento_id=evento.id).count() == 1
+        assert mesma_venda.estado == EstadoVenda.PAGO
+        assert float(evento.valor_pago) == 115
+        assert MovimentoCaixa.query.filter_by(caixa_id=caixa.id).count() == 3
+
+
+def test_evento_nao_duplica_itens_no_pedido_tecnico(test_app):
+    """O pedido operacional de um evento não é uma segunda venda."""
+    from datetime import date, time
+    from app.models.evento import Evento, EventoItem
+    from app.models.item_pedido import ItemPedido
+    from app.models.pedido import Pedido, TipoPedido, OrigemPedido
+
+    with test_app.app_context():
+        pedido = Pedido(
+            numero="PED-EVT-NAO-DUPLICAR", tipo=TipoPedido.SIMPLES.value,
+            origem=OrigemPedido.BALCAO.value, valor_total=100, saldo=100,
+        )
+        pedido.itens.append(ItemPedido(
+            tipo_item="Produto", descricao="Produto do evento", quantidade=1,
+            preco_unitario=100, desconto=0, taxa_iva=0, valor_iva=0,
+            subtotal=100, total=100,
+        ))
+        db.session.add(pedido)
+        db.session.flush()
+        evento = Evento(
+            numero="EVT-NAO-DUPLICAR", cliente_id=1, pedido_id=pedido.id,
+            tipo_evento="Festa", titulo="Evento com pedido técnico",
+            data_evento=date.today(), hora_inicio=time(10), hora_fim=time(12),
+            numero_convidados=1,
+        )
+        evento.itens.append(EventoItem(
+            tipo_item="Produto", descricao="Produto do evento", quantidade=1,
+            preco_unitario=100, subtotal=100, taxa_iva=15, valor_iva=15, total=115,
+        ))
+        db.session.add(evento)
+        db.session.commit()
+
+        resumo = evento.calcular_resumo_financeiro()
+        assert resumo["subtotal_produtos"] == 100
+        assert resumo["total_iva_produtos"] == 0
+        assert resumo["total_geral"] == 100

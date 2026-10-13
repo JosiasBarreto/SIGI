@@ -133,6 +133,9 @@ class TipoItemRequisicao(str, Enum):
     INGREDIENTE = 'Ingrediente'
     MATERIAL = 'Material'
     CONSUMIVEL = 'Consumivel'
+    REVENDA = 'Revenda'
+    ACABADO = 'Acabado'
+    PRODUTO = 'Produto'
 
     @classmethod
     def normalize(cls, val):
@@ -277,8 +280,8 @@ class EntregaRequisicao(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     requisicao_id = db.Column(db.Integer, db.ForeignKey('requisicoes.id'), nullable=False)
     armazem_responsavel_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
-    data_entrega = db.Column(db.Date, default=datetime.utcnow)
-    hora_entrega = db.Column(db.Time, nullable=True)
+    data_entrega = db.Column(db.Date, default=lambda: datetime.utcnow().date(), nullable=False)
+    hora_entrega = db.Column(db.Time, default=lambda: datetime.utcnow().time(), nullable=False)
     observacao = db.Column(db.Text, nullable=True)
 
     armazem_responsavel = db.relationship('User')

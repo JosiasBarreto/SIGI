@@ -209,6 +209,12 @@ export function DataTable<TData>({
     onSortingChange: setSorting,
     onGlobalFilterChange: handleGlobalFilterChange,
     onPaginationChange: handlePaginationChange,
+    getRowId: (row: any, index: number) => {
+      if (row && row.id !== undefined && row.id !== null) return String(row.id);
+      if (row && row.uuid !== undefined && row.uuid !== null) return String(row.uuid);
+      if (row && row.codigo !== undefined && row.codigo !== null) return String(row.codigo);
+      return String(index);
+    },
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),

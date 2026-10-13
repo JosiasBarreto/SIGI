@@ -72,7 +72,7 @@ export function useCaixaCart(products: any[], descontoClientePercent: number) {
 
   const cartCalculations = useMemo(() => {
     const roundMoney = (value: number) => Math.round((value + Number.EPSILON) * 100) / 100;
-    const totalBrutoCarrinho = cart.reduce((sum, item) => sum + Number(item.preco_venda || item.salePrice || 0) * Number(item.qty || 1), 0);
+    const totalBrutoCarrinho = cart.reduce((sum, item) => sum + Number(item.preco_venda || item.salePrice || item.preco_venda_com_iva || 0) * Number(item.qty || 1), 0);
     let grossSubtotal = 0;
     let baseTributavel = 0;
     let totalItemDiscounts = 0;
@@ -80,8 +80,16 @@ export function useCaixaCart(products: any[], descontoClientePercent: number) {
 
     cart.forEach((item) => {
       const qty = Number(item.qty || 1);
-      const precoVenda = Number(item.preco_venda || item.salePrice || 0);
-      const taxaIva = Number(item.taxa_iva || 0);
+      const rawTaxa = item.taxa_iva ?? (item as any).iva_taxa ?? (item as any).iva;
+      const taxaIva = (rawTaxa !== null && rawTaxa !== undefined && !isNaN(Number(rawTaxa)))
+        ? Number(rawTaxa)
+        : 0;
+
+      let precoVenda = Number(item.preco_venda || item.salePrice || 0);
+      if (!precoVenda && item.preco_venda_com_iva) {
+        const pComIva = Number(item.preco_venda_com_iva);
+        precoVenda = taxaIva > 0 ? roundMoney(pComIva / (1 + taxaIva / 100)) : pComIva;
+      }
       const itemGrossSemIva = roundMoney(precoVenda * qty);
 
       const descValor = Number(item.desconto_valor || 0);

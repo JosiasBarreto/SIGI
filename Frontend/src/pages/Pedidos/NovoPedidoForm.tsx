@@ -155,6 +155,10 @@ export default function NovoPedidoForm({ onSuccessRedirect }: NovoPedidoFormProp
           qty: 1,
           discount: 0,
           tipo: product.tipo || product.type || "ACABADO",
+          preco_venda: product.preco_venda,
+          preco_venda_com_iva: product.preco_venda_com_iva,
+          taxa_iva: product.taxa_iva,
+          taxa_iva_id: product.taxa_iva_id,
         },
       ]);
     }
@@ -308,14 +312,25 @@ export default function NovoPedidoForm({ onSuccessRedirect }: NovoPedidoFormProp
         itens: cart.map((item) => {
           const cat = String(item.category || item.categoria || "").toLowerCase();
           const isServ = cat.includes("servi") || cat.includes("servic");
+
+          // Taxa de IVA real do backend. Se null/undefined ou não fornecida, o produto é ISENTO (0%). NUNCA inventar 15%!
+          const rawTaxa = item.taxa_iva ?? (item as any).iva_taxa ?? (item as any).iva;
+          const taxaIva = (rawTaxa !== null && rawTaxa !== undefined && !isNaN(Number(rawTaxa)))
+            ? Number(rawTaxa)
+            : 0;
+
+          const precoSemIva = Number(item.preco_venda || 0);
+          const precoComIva = Number(item.preco_venda_com_iva || item.price || 0);
+          const precoUnitario = taxaIva > 0 && precoSemIva > 0 ? precoSemIva : precoComIva;
+
           return {
             item_tipo: isServ ? "Servico" : "Produto",
             item_id: isNaN(Number(item.id)) ? null : Number(item.id),
             descricao: item.name || item.nome || "Item do Pedido",
             quantidade: Number(item.qty || 1),
-            preco_unitario: Number(item.price || 0),
+            preco_unitario: precoUnitario,
             desconto: Number(item.discount || 0),
-            taxa_iva: Number(item.taxa_iva ?? item.iva_taxa ?? item.iva ?? 15),
+            taxa_iva: taxaIva,
           };
         }),
       };
@@ -438,6 +453,9 @@ export default function NovoPedidoForm({ onSuccessRedirect }: NovoPedidoFormProp
       }
 
       queryClient.invalidateQueries({ queryKey: ["orders"] });
+      queryClient.invalidateQueries({ queryKey: ["pedidos"] });
+      queryClient.invalidateQueries({ queryKey: ["vendas"] });
+      queryClient.invalidateQueries({ queryKey: ["production-orders"] });
       queryClient.invalidateQueries({ queryKey: ["caixas"] });
       queryClient.invalidateQueries({ queryKey: ["minha-sessao-caixa"] });
 

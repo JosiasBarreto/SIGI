@@ -59,26 +59,17 @@ export default function AddItemModal({
   const [manualUnidade, setManualUnidade] = useState('Unidade');
   const [manualPreco, setManualPreco] = useState(0);
 
-  // Compute exact product price details: Preço Sem IVA, Taxa IVA, Preço Com IVA
+  // Compute exact product price details: Preço (sem IVA), Taxa IVA, Preço final (com IVA)
   const getProductPrices = (p: any) => {
-    const taxaIva = Number(p.taxa_iva ?? p.imposto ?? p.percentual_iva ?? 15);
+    const taxaIva = Number(p.taxa_iva ?? p.imposto ?? p.percentual_iva ?? 0);
     const precoVenda = Number(p.preco_venda || p.preco || 0);
     const precoComIva = Number(p.preco_venda_com_iva || 0);
 
-    let precoSemIva = 0;
-    let precoComIvaVal = 0;
+    const precoFinal = precoComIva > 0 ? precoComIva : precoVenda;
+    const precoSemIva = taxaIva > 0 ? precoFinal / (1 + taxaIva / 100) : precoFinal;
+    const valorIva = taxaIva > 0 ? precoFinal - precoSemIva : 0;
 
-    if (precoVenda > 0) {
-      precoSemIva = precoVenda;
-      precoComIvaVal = precoComIva > 0 ? precoComIva : (precoSemIva * (1 + taxaIva / 100));
-    } else if (precoComIva > 0) {
-      precoComIvaVal = precoComIva;
-      precoSemIva = precoComIvaVal / (1 + taxaIva / 100);
-    }
-
-    const valorIva = Math.max(0, precoComIvaVal - precoSemIva);
-
-    return { precoSemIva, taxaIva, precoComIvaVal, valorIva };
+    return { precoSemIva, taxaIva, precoComIvaVal: precoFinal, valorIva };
   };
 
   // Categorization logic for Acabados (Pastelaria & Cozinha) and Revenda
@@ -147,9 +138,12 @@ export default function AddItemModal({
       descricao: prod.nome || prod.name || 'Produto sem nome',
       quantidade: prod.unidade_medida === 'Pessoa' ? numeroConvidados : 1,
       unidade: prod.unidade_medida || 'Unidade',
-      preco_unitario: prices.precoSemIva, // Preço Base Sem IVA
-      taxa_iva: prices.taxaIva,
-    });
+      // O catálogo já contém o preço final com IVA embutido (ou isento).
+      preco_unitario: prices.precoComIvaVal,
+      preco_sem_iva: prices.precoSemIva,
+      taxa_iva: prices.taxaIva, // Taxa real do produto (ex: 15% ou 0% Isento)
+      valor_iva: prices.valorIva,
+    } as any);
 
     setAddedIds((prev) => ({ ...prev, [key]: (prev[key] || 0) + 1 }));
   };
@@ -163,8 +157,10 @@ export default function AddItemModal({
       quantidade: serv.unidade_padrao === 'Pessoa' ? numeroConvidados : 1,
       unidade: serv.unidade_padrao || 'Pessoa',
       preco_unitario: Number(serv.preco_sugerido || 0),
+      preco_sem_iva: Number(serv.preco_sugerido || 0),
       taxa_iva: 15,
-    });
+      valor_iva: Number(serv.preco_sugerido || 0) * 0.15,
+    } as any);
     setAddedIds((prev) => ({ ...prev, [key]: (prev[key] || 0) + 1 }));
   };
 
@@ -177,8 +173,10 @@ export default function AddItemModal({
       quantidade: 1,
       unidade: 'Serviço',
       preco_unitario: Number(eq.preco_sugerido || 0),
+      preco_sem_iva: Number(eq.preco_sugerido || 0),
       taxa_iva: 15,
-    });
+      valor_iva: Number(eq.preco_sugerido || 0) * 0.15,
+    } as any);
     setAddedIds((prev) => ({ ...prev, [key]: (prev[key] || 0) + 1 }));
   };
 
@@ -191,8 +189,10 @@ export default function AddItemModal({
       quantidade: 1,
       unidade: 'Dia',
       preco_unitario: Number(esp.preco_aluguer || 0),
+      preco_sem_iva: Number(esp.preco_aluguer || 0),
       taxa_iva: 15,
-    });
+      valor_iva: Number(esp.preco_aluguer || 0) * 0.15,
+    } as any);
     setAddedIds((prev) => ({ ...prev, [key]: (prev[key] || 0) + 1 }));
   };
 
@@ -205,22 +205,27 @@ export default function AddItemModal({
       quantidade: numeroConvidados,
       unidade: mat.unidade || 'Unidade',
       preco_unitario: Number(mat.preco_aluguer || mat.preco_custo || 0),
+      preco_sem_iva: Number(mat.preco_aluguer || mat.preco_custo || 0),
       taxa_iva: 15,
-    });
+      valor_iva: Number(mat.preco_aluguer || mat.preco_custo || 0) * 0.15,
+    } as any);
     setAddedIds((prev) => ({ ...prev, [key]: (prev[key] || 0) + 1 }));
   };
 
   const handleAddManualSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!manualDescricao.trim()) return;
+    const isProd = manualTipo === 'Produto';
     onAddItem({
       tipo_item: manualTipo,
       descricao: manualDescricao,
       quantidade: Number(manualQuantidade || 1),
       unidade: manualUnidade,
       preco_unitario: Number(manualPreco || 0),
-      taxa_iva: 15,
-    });
+      preco_sem_iva: Number(manualPreco || 0),
+      taxa_iva: isProd ? 0 : 15,
+      valor_iva: isProd ? 0 : Number(manualPreco || 0) * 0.15,
+    } as any);
     setManualDescricao('');
     setManualPreco(0);
   };
@@ -236,19 +241,35 @@ export default function AddItemModal({
     });
   };
 
-  // Total cart calculation inside modal
+  // Total cart calculation inside modal (Produtos não recebem IVA extra)
   const cartTotals = useMemo(() => {
-    let subtotalSemIva = 0;
-    let totalIva = 0;
+    let subtotalProdutos = 0;
+    let subtotalServicos = 0;
+    let totalIvaServicos = 0;
+
     itens.forEach((it) => {
-      const sub = Number(it.quantidade || 0) * Number(it.preco_unitario || 0);
+      const isProduto = String(it.tipo_item || '').toLowerCase().includes('produto');
+      const qty = Number(it.quantidade || 0);
+      const preco = Number(it.preco_unitario || 0);
+      const sub = qty * preco;
       const desc = Number(it.valor_desconto || 0) || (sub * (Number(it.percentual_desconto || 0) / 100));
       const liquid = Math.max(0, sub - desc);
-      const iva = liquid * (Number(it.taxa_iva || 15) / 100);
-      subtotalSemIva += liquid;
-      totalIva += iva;
+
+      if (isProduto) {
+        subtotalProdutos += liquid;
+      } else {
+        subtotalServicos += liquid;
+        const taxa = Number(it.taxa_iva ?? 0);
+        totalIvaServicos += liquid * (taxa / 100);
+      }
     });
-    return { subtotalSemIva, totalIva, totalGeral: subtotalSemIva + totalIva };
+
+    return {
+      subtotalProdutos,
+      subtotalServicos,
+      totalIvaServicos,
+      totalGeral: subtotalProdutos + subtotalServicos + totalIvaServicos
+    };
   }, [itens]);
 
   return (
@@ -316,14 +337,27 @@ export default function AddItemModal({
             ) : (
               <div className="space-y-2 max-h-[45vh] overflow-y-auto pr-1 scrollbar-thin">
                 {itens.map((it, idx) => {
-                  const subItem = Number(it.quantidade || 0) * Number(it.preco_unitario || 0);
-                  const ivaItem = subItem * (Number(it.taxa_iva || 15) / 100);
-                  const totalItem = subItem + ivaItem;
+                  const isProduto = String(it.tipo_item || '').toLowerCase().includes('produto');
+                  const qty = Number(it.quantidade || 1);
+                  const precoFinal = Number(it.preco_unitario || 0);
+                  const taxaIva = Number(it.taxa_iva ?? (isProduto ? 0 : 15));
+                  
+                  let precoSemIva = it.preco_sem_iva;
+                  if (precoSemIva === undefined || precoSemIva === null) {
+                    precoSemIva = isProduto && taxaIva > 0 ? precoFinal / (1 + taxaIva / 100) : precoFinal;
+                  }
+                  const valorIvaUnit = isProduto
+                    ? (taxaIva > 0 ? precoFinal - precoSemIva : 0)
+                    : precoFinal * (taxaIva / 100);
+
+                  const totalLinha = isProduto
+                    ? qty * precoFinal
+                    : qty * (precoFinal + valorIvaUnit);
 
                   return (
                     <div
                       key={idx}
-                      className="p-3 bg-gray-50 dark:bg-gray-800/80 rounded-xl border border-gray-200 dark:border-gray-700 flex flex-wrap items-center justify-between gap-3"
+                      className="p-3 bg-gray-50 dark:bg-gray-800/80 rounded-xl border border-gray-200 dark:border-gray-700 flex flex-wrap items-center justify-between gap-3 shadow-xs"
                     >
                       <div className="flex-1 min-w-[200px]">
                         <div className="flex items-center gap-2">
@@ -334,8 +368,26 @@ export default function AddItemModal({
                             {it.descricao}
                           </span>
                         </div>
-                        <p className="text-[11px] text-gray-400 mt-0.5">
-                          Sem IVA: {formatCurrency(it.preco_unitario)} | IVA ({it.taxa_iva || 15}%): {formatCurrency(ivaItem / (it.quantidade || 1))}
+                        <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1 flex flex-wrap items-center gap-1.5">
+                          <span>Sem IVA: <strong className="text-gray-700 dark:text-gray-300">{formatCurrency(precoSemIva)}</strong></span>
+                          <span className="text-gray-300 dark:text-gray-600">|</span>
+                          {taxaIva > 0 ? (
+                            <span className="text-amber-600 dark:text-amber-400 font-semibold">
+                              IVA ({taxaIva}%): {formatCurrency(valorIvaUnit)}
+                            </span>
+                          ) : (
+                            <span className="text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded text-[10px]">
+                              Isento de IVA
+                            </span>
+                          )}
+                          {isProduto && (
+                            <>
+                              <span className="text-gray-300 dark:text-gray-600">|</span>
+                              <span className="text-gray-700 dark:text-gray-300">
+                                Preço final: <strong>{formatCurrency(precoFinal)}</strong>
+                              </span>
+                            </>
+                          )}
                         </p>
                       </div>
 
@@ -344,17 +396,17 @@ export default function AddItemModal({
                         <button
                           type="button"
                           onClick={() => onUpdateItemQty && onUpdateItemQty(idx, -1)}
-                          className="p-1.5 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 rounded-lg"
+                          className="p-1.5 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 rounded-lg text-gray-800 dark:text-gray-200"
                         >
                           <Minus size={13} />
                         </button>
-                        <span className="w-10 text-center text-xs font-black text-gray-900 dark:text-white">
-                          {it.quantidade} {it.unidade || ''}
+                        <span className="w-12 text-center text-xs font-black text-gray-900 dark:text-white">
+                          {qty} {it.unidade || ''}
                         </span>
                         <button
                           type="button"
                           onClick={() => onUpdateItemQty && onUpdateItemQty(idx, 1)}
-                          className="p-1.5 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 rounded-lg"
+                          className="p-1.5 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 rounded-lg text-gray-800 dark:text-gray-200"
                         >
                           <Plus size={13} />
                         </button>
@@ -362,8 +414,10 @@ export default function AddItemModal({
 
                       {/* Line Total */}
                       <div className="text-right min-w-[110px]">
-                        <span className="text-[10px] text-gray-400 block uppercase">Total c/ IVA</span>
-                        <span className="text-xs font-black text-primary">{formatCurrency(totalItem)}</span>
+                        <span className="text-[10px] text-gray-400 block uppercase">
+                          {isProduto ? 'Total c/ IVA' : 'Total Linha'}
+                        </span>
+                        <span className="text-xs font-black text-primary">{formatCurrency(totalLinha)}</span>
                       </div>
 
                       {/* Delete */}
@@ -387,14 +441,22 @@ export default function AddItemModal({
             <div className="pt-3 border-t border-gray-200 dark:border-gray-700 flex flex-wrap items-center justify-between gap-3 bg-gray-50 dark:bg-gray-800 p-3 rounded-xl">
               <div className="flex items-center gap-4 text-xs font-bold">
                 <div>
-                  <span className="text-gray-400 block text-[10px] uppercase">Subtotal Sem IVA</span>
-                  <span className="text-gray-800 dark:text-gray-200">{formatCurrency(cartTotals.subtotalSemIva)}</span>
+                  <span className="text-gray-400 block text-[10px] uppercase">Produtos (c/ IVA incluído)</span>
+                  <span className="text-gray-800 dark:text-gray-200">{formatCurrency(cartTotals.subtotalProdutos)}</span>
                 </div>
-                <div>
-                  <span className="text-amber-600 block text-[10px] uppercase">Imposto IVA (15%)</span>
-                  <span className="text-amber-600 font-extrabold">{formatCurrency(cartTotals.totalIva)}</span>
-                </div>
-                <div>
+                {cartTotals.subtotalServicos > 0 && (
+                  <div>
+                    <span className="text-gray-400 block text-[10px] uppercase">Serviços</span>
+                    <span className="text-gray-800 dark:text-gray-200">{formatCurrency(cartTotals.subtotalServicos)}</span>
+                  </div>
+                )}
+                {cartTotals.totalIvaServicos > 0 && (
+                  <div>
+                    <span className="text-amber-600 block text-[10px] uppercase">IVA Serviços</span>
+                    <span className="text-amber-600 font-extrabold">{formatCurrency(cartTotals.totalIvaServicos)}</span>
+                  </div>
+                )}
+                <div className="pl-3 border-l border-gray-300 dark:border-gray-700">
                   <span className="text-primary block text-[10px] uppercase font-black">Total do Carrinho</span>
                   <span className="text-sm font-black text-primary">{formatCurrency(cartTotals.totalGeral)}</span>
                 </div>
@@ -485,16 +547,20 @@ export default function AddItemModal({
                               {/* Price breakdown card */}
                               <div className="space-y-1 my-2.5 bg-gray-50 dark:bg-gray-900/60 p-2.5 rounded-xl border border-gray-100 dark:border-gray-800 text-[11px]">
                                 <div className="flex justify-between text-gray-500">
-                                  <span>Preço sem IVA:</span>
+                                  <span>Preço (sem IVA):</span>
                                   <span className="font-bold text-gray-800 dark:text-gray-200">{formatCurrency(precoSemIva)}</span>
                                 </div>
-                                <div className="flex justify-between text-amber-600 dark:text-amber-400">
-                                  <span>IVA ({taxaIva}%):</span>
-                                  <span className="font-bold">{formatCurrency(valorIva)}</span>
+                                <div className="flex justify-between items-center">
+                                  <span className="text-gray-500">Taxa de IVA:</span>
+                                  {taxaIva > 0 ? (
+                                    <span className="font-extrabold text-amber-600 dark:text-amber-400">{taxaIva}% ({formatCurrency(valorIva)})</span>
+                                  ) : (
+                                    <span className="font-extrabold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-1.5 py-0.5 rounded text-[10px]">Isento de IVA</span>
+                                  )}
                                 </div>
                                 <div className="flex justify-between text-purple-700 dark:text-purple-300 font-black border-t pt-1 border-gray-200 dark:border-gray-700">
-                                  <span>Preço com IVA:</span>
-                                  <span className="text-xs">{formatCurrency(precoComIvaVal)}</span>
+                                  <span>Preço final (c/ IVA):</span>
+                                  <span className="text-xs font-black">{formatCurrency(precoComIvaVal)}</span>
                                 </div>
                               </div>
                             </div>
@@ -547,16 +613,20 @@ export default function AddItemModal({
                               {/* Price breakdown card */}
                               <div className="space-y-1 my-2.5 bg-gray-50 dark:bg-gray-900/60 p-2.5 rounded-xl border border-gray-100 dark:border-gray-800 text-[11px]">
                                 <div className="flex justify-between text-gray-500">
-                                  <span>Preço sem IVA:</span>
+                                  <span>Preço (sem IVA):</span>
                                   <span className="font-bold text-gray-800 dark:text-gray-200">{formatCurrency(precoSemIva)}</span>
                                 </div>
-                                <div className="flex justify-between text-amber-600 dark:text-amber-400">
-                                  <span>IVA ({taxaIva}%):</span>
-                                  <span className="font-bold">{formatCurrency(valorIva)}</span>
+                                <div className="flex justify-between items-center">
+                                  <span className="text-gray-500">Taxa de IVA:</span>
+                                  {taxaIva > 0 ? (
+                                    <span className="font-extrabold text-amber-600 dark:text-amber-400">{taxaIva}% ({formatCurrency(valorIva)})</span>
+                                  ) : (
+                                    <span className="font-extrabold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-1.5 py-0.5 rounded text-[10px]">Isento de IVA</span>
+                                  )}
                                 </div>
                                 <div className="flex justify-between text-amber-700 dark:text-amber-300 font-black border-t pt-1 border-gray-200 dark:border-gray-700">
-                                  <span>Preço com IVA:</span>
-                                  <span className="text-xs">{formatCurrency(precoComIvaVal)}</span>
+                                  <span>Preço final (c/ IVA):</span>
+                                  <span className="text-xs font-black">{formatCurrency(precoComIvaVal)}</span>
                                 </div>
                               </div>
                             </div>
@@ -609,16 +679,20 @@ export default function AddItemModal({
                               {/* Price breakdown card */}
                               <div className="space-y-1 my-2.5 bg-gray-50 dark:bg-gray-900/60 p-2.5 rounded-xl border border-gray-100 dark:border-gray-800 text-[11px]">
                                 <div className="flex justify-between text-gray-500">
-                                  <span>Preço sem IVA:</span>
+                                  <span>Preço (sem IVA):</span>
                                   <span className="font-bold text-gray-800 dark:text-gray-200">{formatCurrency(precoSemIva)}</span>
                                 </div>
-                                <div className="flex justify-between text-amber-600 dark:text-amber-400">
-                                  <span>IVA ({taxaIva}%):</span>
-                                  <span className="font-bold">{formatCurrency(valorIva)}</span>
+                                <div className="flex justify-between items-center">
+                                  <span className="text-gray-500">Taxa de IVA:</span>
+                                  {taxaIva > 0 ? (
+                                    <span className="font-extrabold text-amber-600 dark:text-amber-400">{taxaIva}% ({formatCurrency(valorIva)})</span>
+                                  ) : (
+                                    <span className="font-extrabold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-1.5 py-0.5 rounded text-[10px]">Isento de IVA</span>
+                                  )}
                                 </div>
                                 <div className="flex justify-between text-blue-700 dark:text-blue-300 font-black border-t pt-1 border-gray-200 dark:border-gray-700">
-                                  <span>Preço com IVA:</span>
-                                  <span className="text-xs">{formatCurrency(precoComIvaVal)}</span>
+                                  <span>Preço final (c/ IVA):</span>
+                                  <span className="text-xs font-black">{formatCurrency(precoComIvaVal)}</span>
                                 </div>
                               </div>
                             </div>

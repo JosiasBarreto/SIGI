@@ -1,11 +1,15 @@
 from flask import jsonify
 from werkzeug.exceptions import HTTPException
 from app.services.audit_service import AuditService
+from app.core.database import db
 from flask_jwt_extended import get_jwt_identity
 
 def register_error_handlers(app):
     @app.errorhandler(Exception)
     def handle_exception(e):
+        # Um flush falhado invalida a transação. Libere a sessão antes de
+        # persistir o log do próprio erro.
+        db.session.rollback()
         # We need to extract the user_id if available, though get_jwt_identity could fail if out of context
         user_id = None
         try:

@@ -50,6 +50,10 @@ export default function OrderDetailsModal({ order, isOpen, onClose, onUpdateStat
 
   const [showCheckoutForm, setShowCheckoutForm] = useState(false);
 
+  React.useEffect(() => {
+    setShowCheckoutForm(false);
+  }, [order?.id, isOpen]);
+
   const orderId = order?.id;
 
   // Consulta das Ordens de Produção vinculadas a este Pedido Comercial
@@ -217,7 +221,7 @@ export default function OrderDetailsModal({ order, isOpen, onClose, onUpdateStat
                   </span>
                 </div>
 
-                {orderBalance > 0 && !showCheckoutForm && (
+                {orderBalance > 0 && !isCanceled && !showCheckoutForm && (
                   <button
                     onClick={() => setShowCheckoutForm(true)}
                     className="w-full mt-4 bg-primary hover:bg-primary-hover text-white font-bold py-2 px-4 rounded-xl text-xs transition-colors flex justify-center items-center gap-2"
@@ -226,7 +230,7 @@ export default function OrderDetailsModal({ order, isOpen, onClose, onUpdateStat
                   </button>
                 )}
 
-                {showCheckoutForm && (
+                {showCheckoutForm && !isCanceled && (
                   <div className="mt-4">
                     <PedidoCheckoutForm
                       orderId={order?.id || order?.numero}
@@ -247,7 +251,7 @@ export default function OrderDetailsModal({ order, isOpen, onClose, onUpdateStat
               <div className="bg-white dark:bg-gray-800/20 p-5 rounded-xl border border-gray-200 dark:border-gray-800">
                 <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2"><Truck size={16} className="text-primary"/> Transporte / Logística</h4>
                 <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                  <p><span className="font-semibold text-gray-900 dark:text-gray-200">Viatura:</span> Viatura Principal (Matrícula LD-00-XX)</p>
+                  <p><span className="font-semibold text-gray-900 dark:text-gray-200">Viatura:</span> Viatura Principal (Matrícula ST-00-XX)</p>
                   <p><span className="font-semibold text-gray-900 dark:text-gray-200">Motorista:</span> João Silva</p>
                 </div>
               </div>
@@ -345,7 +349,7 @@ export default function OrderDetailsModal({ order, isOpen, onClose, onUpdateStat
                            </span>
 
                            {/* Botão rápido para avançar estado */}
-                           {isPendente && (
+                           {!isCanceled && isPendente && (
                              <button
                                type="button"
                                disabled={updateProdStatusMutation.isPending}
@@ -356,7 +360,7 @@ export default function OrderDetailsModal({ order, isOpen, onClose, onUpdateStat
                                Iniciar
                              </button>
                            )}
-                           {isEmProducao && (
+                           {!isCanceled && isEmProducao && (
                              <button
                                type="button"
                                disabled={updateProdStatusMutation.isPending}

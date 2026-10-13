@@ -1,0 +1,15 @@
+# Relatório de auditoria backend — implementação
+
+| ID | Causa raiz | Correção | Teste | Estado | Risco residual |
+| --- | --- | --- | --- | --- | --- |
+| FIN-001 | `add_pagamento` aceitava venda cancelada ou já liquidada. | Bloqueio explícito de estados e saldo nulo em `comercial_service.py`. | `test_pagamento_recusa_venda_cancelada_liquidada_e_excesso` | PASSOU | Requer validação concorrente em MySQL. |
+| FIN-002 | O valor entregue acima do saldo era persistido no pagamento, embora a caixa recebesse apenas a parcela aplicada. | Excesso é rejeitado até existir fluxo explícito de troco/estorno. Pagamento e caixa usam o mesmo valor aplicado. | `test_pagamento_recusa_venda_cancelada_liquidada_e_excesso` | PASSOU | Fluxo de troco deve ser modelado como movimento próprio antes de ser suportado. |
+| FIN-003 | Cancelamento de venda parcialmente paga deixava recebimentos históricos sem regularização. | Venda com qualquer pagamento exige regularização antes do cancelamento. | Inspeção de `cancel_venda` | PASSOU | Falta fluxo dedicado de estorno. |
+| PED-001 | Pedido cancelado podia chegar à emissão ou receção de pagamento por caminhos alternativos. | Validação no serviço de pedido e emissão do documento. | Cobertura de integração pendente | PENDENTE | Validar em MySQL com os fluxos completos. |
+| DOC-001 | Totais de vendas ligadas a pedidos podiam recorrer às propriedades atuais do pedido após faturação. | A venda passa a guardar totais e preço de linha como snapshot fiscal. | `test_venda_do_pedido_guarda_snapshot_fiscal` | PASSOU | Linhas históricas pré-existentes sem snapshot mantêm fallback de compatibilidade. |
+| EVT-001 | O formulário enviava `pagamento_inicial`, mas o serviço lia outro contrato e o frontend ocultava a falha. | Contrato canónico `pagamento`, compatibilidade com o nome anterior e propagação do erro ao utilizador. | `test_evento_parcial_emite_ft_e_reutiliza_documento` | PASSOU | Validar permissões e formas de pagamento em MySQL. |
+| EVT-002 | Faturação de evento chamava o helper de stock sem `user_id`; o fluxo terminava antes do commit. | Assinatura corrigida e `Venda.evento_id` mantido como ligação única, evitando ciclo de flush. | `test_evento_parcial_emite_ft_e_reutiliza_documento` | PASSOU | Registos antigos sem pagamento não são alterados automaticamente. |
+| EVT-003 | Pedido técnico de produção criado pelo evento enviava uma notificação comercial ao cliente. | A criação interna suprime só a notificação externa ao cliente. | Inspeção de fluxo | PASSOU | Notificações administrativas internas permanecem ativas. |
+| EVT-004 | O resumo somava `EventoItem` e as mesmas linhas do pedido técnico, duplicando o valor de eventos com produção. | O pedido passa a ser tratado apenas como registo operacional; o total comercial é calculado pelas linhas do evento. | `test_evento_nao_duplica_itens_no_pedido_tecnico` | PASSOU | Eventos legados sem linhas próprias devem ser verificados antes de uma eventual migração. |
+
+As alterações são incrementais e preservam os registos financeiros: nenhum pagamento ou movimento existente é alterado ou removido.

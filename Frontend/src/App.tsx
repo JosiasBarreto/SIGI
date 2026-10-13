@@ -134,6 +134,7 @@ export default function App() {
                     <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} newestOnTop closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover theme="colored" />
                     <Routes>
                       <Route path="/login" element={<Login />} />
+                      {/* nunca deixar utilizador entra no setup se ja estiver configurado o sistema, sempre presistir em login se tentar entrar no setup*/}
                       <Route path="/setup" element={<SetupWizard onComplete={() => window.location.href = '/login'} />} />
                       <Route path="/registo-inicial" element={<SetupWizard onComplete={() => window.location.href = '/login'} />} />
                       <Route path="/recuperar-senha" element={<RecuperarSenha />} />
@@ -181,7 +182,7 @@ export default function App() {
                         </Route>
 
                         {/* Requisitions */}
-                        <Route element={<RoleRoute roles={["Administrador", "Cozinha", "Pastelaria", "Armazém"]} />}>
+                        <Route element={<RoleRoute roles={["Administrador", "Cozinha", "Pastelaria", "Armazém", "Controlador de Materiais" ]} />}>
                           <Route path="requisicoes" element={<Requisicoes />} />
                         </Route>
 

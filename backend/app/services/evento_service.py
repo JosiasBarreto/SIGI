@@ -205,7 +205,10 @@ class EventoService:
             perc_desc = float(it.get('percentual_desconto', 0))
             v_desc = float(it.get('valor_desconto', (q * pu * (perc_desc / 100.0))))
             subtotal = max(0.0, (q * pu) - v_desc)
-            taxa_iva = float(it.get('taxa_iva', 0))
+            # Produtos já usam o preço final do catálogo.  Só serviços,
+            # espaços e alugueres recebem IVA separado no evento.
+            eh_produto = 'produto' in str(it.get('tipo_item', '')).lower()
+            taxa_iva = 0.0 if eh_produto else float(it.get('taxa_iva', 0))
             v_iva = subtotal * (taxa_iva / 100.0)
             total = subtotal + v_iva
 
@@ -298,7 +301,9 @@ class EventoService:
                 'observacoes': f"Pedido automatico gerado para o Evento {evento.numero}",
                 'itens': produtos_para_pedido
             }
-            pedido, p_err = p_service.create_pedido(ped_data, user_id)
+            # This is an internal production order; the customer must receive
+            # the event invoice, not a misleading order receipt.
+            pedido, p_err = p_service.create_pedido(ped_data, user_id, notificar_cliente=False)
             if pedido:
                 evento.pedido_id = pedido.id
 
@@ -332,7 +337,8 @@ class EventoService:
                 perc_desc = float(it.get('percentual_desconto', 0))
                 v_desc = float(it.get('valor_desconto', (q * pu * (perc_desc / 100.0))))
                 subtotal = max(0.0, (q * pu) - v_desc)
-                taxa_iva = float(it.get('taxa_iva', 0))
+                eh_produto = 'produto' in str(it.get('tipo_item', '')).lower()
+                taxa_iva = 0.0 if eh_produto else float(it.get('taxa_iva', 0))
                 v_iva = subtotal * (taxa_iva / 100.0)
                 total = subtotal + v_iva
 

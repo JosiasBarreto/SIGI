@@ -4,7 +4,7 @@ from app.core.database import db
 from app.models.user import User, RoleEnum
 from app.models.material import Material, TipoMaterial
 from app.models.ingrediente import Ingrediente
-from app.models.requisicao import EstadoRequisicao, OcorrenciaMaterial
+from app.models.requisicao import EstadoRequisicao, OcorrenciaMaterial, EntregaRequisicao
 from werkzeug.security import generate_password_hash, check_password_hash
 import json
 
@@ -84,6 +84,9 @@ def test_fluxo_requisicao(client, token):
     })
     assert res_entr.status_code == 200
     assert res_entr.get_json()["estado"] == EstadoRequisicao.EM_USO.value
+    entrega = EntregaRequisicao.query.filter_by(requisicao_id=req_id).one()
+    assert entrega.data_entrega is not None
+    assert entrega.hora_entrega is not None
     
     # 4. Devolução
     res_dev = client.post(f'/api/v1/requisicoes/{req_id}/devolver', headers=headers, json=[

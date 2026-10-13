@@ -9,10 +9,6 @@ import {
   MessageSquare,
   Smartphone,
   Copy,
-  ChefHat,
-  ShoppingBag,
-  CreditCard,
-  PackageCheck,
   Check,
   ExternalLink
 } from "lucide-react";
@@ -354,87 +350,7 @@ export default function PedidoSuccessModal({
             </div>
 
             {/* Componente Estruturado: Linha de Notificações do Sistema */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-              {/* Notificação 1: Registo Comercial */}
-              <div className="p-3 bg-gray-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-800 rounded-xl flex items-start gap-2.5">
-                <div className="p-1.5 rounded-lg bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 mt-0.5">
-                  <ShoppingBag size={14} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <strong className="text-gray-900 dark:text-white font-bold">
-                      Registo Comercial
-                    </strong>
-                    <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">
-                      ✓ Confirmado
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5 leading-snug">
-                    Gravado no sistema comercial com {order?.itens?.length || 1} itens.
-                  </p>
-                </div>
-              </div>
-
-              {/* Notificação 2: Ordem de Produção */}
-              <div className="p-3 bg-gray-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-800 rounded-xl flex items-start gap-2.5">
-                <div className="p-1.5 rounded-lg bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 mt-0.5">
-                  <ChefHat size={14} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <strong className="text-gray-900 dark:text-white font-bold">
-                      Ordem de Produção
-                    </strong>
-                    <span className="text-[10px] text-blue-600 dark:text-blue-400 font-bold">
-                      ✓ Despachada
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5 leading-snug">
-                    Encaminhada para a Cozinha / Linha de Fabrico.
-                  </p>
-                </div>
-              </div>
-
-              {/* Notificação 3: Financeiro & Caixa */}
-              <div className="p-3 bg-gray-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-800 rounded-xl flex items-start gap-2.5">
-                <div className="p-1.5 rounded-lg bg-purple-100 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 mt-0.5">
-                  <CreditCard size={14} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <strong className="text-gray-900 dark:text-white font-bold">
-                      Financeiro & Caixa
-                    </strong>
-                    <span className="text-[10px] text-purple-600 dark:text-purple-400 font-bold">
-                      ✓ Liquidado
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5 leading-snug">
-                    {order?.forma_pagamento ? `Pagamento em ${order.forma_pagamento}.` : "Documento de caixa emitido."}
-                  </p>
-                </div>
-              </div>
-
-              {/* Notificação 4: Reserva de Stock */}
-              <div className="p-3 bg-gray-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-800 rounded-xl flex items-start gap-2.5">
-                <div className="p-1.5 rounded-lg bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 mt-0.5">
-                  <PackageCheck size={14} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <strong className="text-gray-900 dark:text-white font-bold">
-                      Inventário & Stock
-                    </strong>
-                    <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold">
-                      ✓ Reservado
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5 leading-snug">
-                    Matérias-primas e artigos reservados com sucesso.
-                  </p>
-                </div>
-              </div>
-            </div>
+            
 
             {/* Eventos recebidos em tempo real (se algum foi emitido durante a finalização) */}
             {liveEvents.length > 0 && (

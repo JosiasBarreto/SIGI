@@ -97,14 +97,15 @@ class ComercialService:
                 preco_unit = produto.preco_venda if produto.preco_venda is not None else 0
                 if produto.taxa_iva:
                     taxa_iva = produto.taxa_iva
-                    
-            if 'preco_unitario' in item_data and not produto:
+            # A document generated from a pedido carries its agreed line price.
+            # Do not replace it with a price changed later in the catalogue.
+            if 'preco_unitario' in item_data:
                 preco_unit = item_data['preco_unitario']
                 
             if item_data.get('taxa_iva_id') and not taxa_iva:
                 taxa_iva = TaxaIVA.query.get(item_data['taxa_iva_id'])
             
-            iva_perc = taxa_iva.percentagem if taxa_iva else 0
+            iva_perc = taxa_iva.percentagem if taxa_iva else item_data.get('taxa_iva', 0)
             calculado = calcular_item_venda(
                 preco_unit, qtd, iva_perc,
                 desconto_percentual=item_data.get('desconto_percentual'),
@@ -130,23 +131,16 @@ class ComercialService:
             
             itens_calculados.append(calculado)
             
-        if venda.pedido_id:
-            venda._subtotal = None
-            venda._desconto_total = None
-            venda._base_tributavel = None
-            venda._total_iva = None
-            venda._total = None
-            venda._saldo = None
-            venda._cliente_id = None
-            venda._valor_pago = None
-        else:
-            totais = calcular_venda(itens_calculados)
-            venda.subtotal = totais['subtotal']
-            venda.desconto_total = totais['desconto']
-            venda.base_tributavel = totais['base_tributavel']
-            venda.total_iva = totais['valor_iva']
-            venda.total = totais['total']
-            venda.saldo = venda.total
+        # Persist the fiscal snapshot even when the sale originated from a
+        # pedido.  Falling back to Pedido properties made old invoices change
+        # whenever the linked pedido was edited later.
+        totais = calcular_venda(itens_calculados)
+        venda.subtotal = totais['subtotal']
+        venda.desconto_total = totais['desconto']
+        venda.base_tributavel = totais['base_tributavel']
+        venda.total_iva = totais['valor_iva']
+        venda.total = totais['total']
+        venda.saldo = venda.total
         
         # Process inline payments if provided
         pagamentos_data = data.get('pagamentos', [])
@@ -184,12 +178,31 @@ class ComercialService:
         from app.models.financeiro import Pagamento, FormaPagamento, EstadoPagamento
         from app.models.comercial import Venda, VendaItem, TipoDocumento, EstadoVenda
         
-        pagamento_info = data.get('pagamento', data) if isinstance(data, dict) else {}
-        tipo_documento = str(pagamento_info.get('tipo_documento', 'FR')).upper()
+        # Accept the older `pagamento_inicial` name while the frontend moves to
+        # the canonical `pagamento` envelope.
+        pagamento_info = (data.get('pagamento') or data.get('pagamento_inicial') or data) if isinstance(data, dict) else {}
+        # `tipo_documento` is the command envelope, whereas amount/method are
+        # nested in `pagamento`.  Reading it from the nested object made every
+        # partial event payment default incorrectly to FR.
+        tipo_documento = str(data.get('tipo_documento', 'FR')).upper() if isinstance(data, dict) else 'FR'
 
-        evento = Evento.query.get(evento_id)
+        evento = Evento.query.with_for_update().filter_by(id=evento_id).first()
         if not evento:
             return None, "Evento não encontrado."
+
+        # An event has one fiscal document.  Further settlements belong to the
+        # same FT instead of issuing a second document on a repeated request.
+        venda_existente = Venda.query.filter_by(evento_id=evento.id).filter(
+            Venda.tipo_documento.in_([TipoDocumento.FT, TipoDocumento.FR])
+        ).order_by(Venda.id.asc()).first()
+        if venda_existente:
+            valor_adicional = float(pagamento_info.get('valor', 0) or 0)
+            if valor_adicional > 0:
+                try:
+                    self.add_pagamento(venda_existente.id, pagamento_info, user_id)
+                except ValueError as exc:
+                    return None, str(exc)
+            return venda_existente, None
             
         resumo = evento.calcular_resumo_financeiro()
         subtotal_evento = float(resumo['subtotal_geral'])
@@ -298,9 +311,11 @@ class ComercialService:
         )
         db.session.add(venda)
         db.session.flush()
-        evento.venda_id = venda.id
+        # Venda.evento_id is the authoritative association.  Updating the
+        # reciprocal Evento.venda_id here creates a circular flush dependency
+        # and prevented later instalments from being committed.
 
-        self._adicionar_itens_venda_evento(venda, evento, resumo)
+        self._adicionar_itens_venda_evento(venda, evento, resumo, user_id)
 
         if valor_pagar > 0 and forma_db:
             pagamento = Pagamento(
@@ -349,7 +364,7 @@ class ComercialService:
             db.session.rollback()
             return None, f"Erro ao processar faturamento do evento: {str(exc)}"
 
-    def _adicionar_itens_venda_evento(self, venda, evento, resumo):
+    def _adicionar_itens_venda_evento(self, venda, evento, resumo, user_id):
         from app.models.comercial import VendaItem
         tem_item_deslocacao = False
         tem_item_outros = False
@@ -486,12 +501,21 @@ class ComercialService:
         return self.venda_repo.get_by_id(venda_id)
 
     def cancel_venda(self, venda_id: int, user_id: int, ip_address: str = ''):
-        venda = self.get_venda(venda_id)
+        # Serialise cancellation with incoming payments for this document.
+        venda = Venda.query.with_for_update().filter_by(id=venda_id).first()
         if not venda:
             raise ValueError("Venda não encontrada")
             
         if venda.estado in [EstadoVenda.PAGO, EstadoVenda.CANCELADO]:
             raise ValueError("Não é possível cancelar uma venda já paga ou cancelada")
+
+        # Cancellation has no reversal workflow.  Keep financial history and
+        # require regularisation instead of orphaning receipts/cash movements.
+        if float(venda.valor_pago or 0) > 0 or venda.pagamentos:
+            raise ValueError(
+                "Não é possível cancelar uma venda com pagamentos registados. "
+                "Regularize os recebimentos antes de cancelar o documento."
+            )
             
         venda.estado = EstadoVenda.CANCELADO
         
@@ -510,19 +534,26 @@ class ComercialService:
             raise e
 
     def add_pagamento(self, venda_id, data, user_id, auto_commit=True):
-        venda = self.get_venda(venda_id)
+        # A document lock makes repeated/concurrent requests observe the
+        # settled balance instead of creating a second payment.
+        venda = Venda.query.with_for_update().filter_by(id=venda_id).first()
         if venda and venda.tipo_documento == TipoDocumento.PROFORMA:
             raise ValueError('Fatura Pró-Forma não aceita pagamentos. Emita uma FT para faturar o pedido.')
         if not venda:
             raise ValueError("Venda não encontrada")
+        if venda.estado == EstadoVenda.CANCELADO:
+            raise ValueError('Não é possível registar pagamento numa venda cancelada.')
             
         valor_entregue = float(data.get('valor', 0))
         if valor_entregue <= 0:
             raise ValueError("Valor do pagamento deve ser positivo")
             
-        saldo_pendente = float(venda.saldo)
-        if venda.tipo_documento == TipoDocumento.FR and float(data.get('valor', 0)) < saldo_pendente:
+        saldo_pendente = float(venda.saldo or 0)
+        if saldo_pendente <= 0.005 or venda.estado == EstadoVenda.PAGO:
+            raise ValueError('Esta venda já se encontra totalmente liquidada.')
+        if venda.tipo_documento == TipoDocumento.FR and valor_entregue < (saldo_pendente - 0.01):
             raise ValueError('FR não aceita pagamento parcial. Registe pagamentos parciais numa FT.')
+            
         valor_pagar_real = min(valor_entregue, saldo_pendente)
         troco = max(0.0, valor_entregue - saldo_pendente)
             
@@ -537,7 +568,7 @@ class ComercialService:
         pagamento = Pagamento(
             venda_id=venda.id,
             evento_id=venda.evento_id,
-            valor=valor_entregue,
+            valor=valor_pagar_real,
             forma_pagamento_id=data.get('forma_pagamento_id'),
             codigo_transferencia=data.get('codigo_transferencia'),
             emissor=data.get('emissor'),
@@ -548,7 +579,7 @@ class ComercialService:
         )
         
         venda.valor_pago = float(venda.valor_pago) + valor_pagar_real
-        venda.saldo = float(venda.total) - float(venda.valor_pago)
+        venda.saldo = max(0.0, float(venda.total) - float(venda.valor_pago))
         
         if venda.saldo <= 0:
             venda.estado = EstadoVenda.PAGO
@@ -621,6 +652,9 @@ class ComercialService:
         pedido = Pedido.query.get(pedido_id)
         if not pedido:
             raise ValueError('Pedido não encontrado.')
+        estado_pedido = pedido.estado.value if hasattr(pedido.estado, 'value') else str(pedido.estado)
+        if estado_pedido.lower() == 'cancelado':
+            raise ValueError('Não é possível emitir documento para um pedido cancelado.')
 
         if tipo == TipoDocumento.PROFORMA:
             from app.services.proforma_service import ProformaService
@@ -657,8 +691,15 @@ class ComercialService:
             estado=EstadoVenda.PENDENTE,
             observacoes=f'Documento {tipo.value} emitido a partir do pedido {pedido.numero}.',
             criado_por=user_id,
-            _subtotal=None, _desconto_total=None, _base_tributavel=None,
-            _total_iva=None, _total=None, _valor_pago=0, _saldo=None,
+            # Store immutable fiscal values; Venda properties only fall back
+            # to Pedido for legacy rows that have no stored snapshot.
+            _subtotal=pedido.subtotal,
+            _desconto_total=pedido.desconto_total,
+            _base_tributavel=pedido.base_tributavel,
+            _total_iva=pedido.total_iva,
+            _total=pedido.valor_total,
+            _valor_pago=0,
+            _saldo=pedido.valor_total,
         )
         db.session.add(venda)
         db.session.flush()
@@ -687,9 +728,15 @@ class ComercialService:
         from app.models.pedido import EstadoPagamento
         pagamento_info = data.get('pagamento', data) if isinstance(data, dict) else {}
         valor = float(pagamento_info.get('valor', 0))
+        pedido = Pedido.query.with_for_update().filter_by(id=pedido.id).first()
         saldo = float(pedido.saldo or 0)
         if valor <= 0:
             return None, "O valor do pagamento deve ser positivo."
+        estado_pedido = pedido.estado.value if hasattr(pedido.estado, 'value') else str(pedido.estado)
+        if estado_pedido.lower() == 'cancelado':
+            return None, "Não é possível registar pagamento num pedido cancelado."
+        if saldo <= 0.005:
+            return None, "Este pedido já se encontra totalmente liquidado."
         if valor > saldo + 0.01:
             return None, "O valor do pagamento nao pode ser superior ao saldo do pedido."
         self.add_pagamento(venda.id, pagamento_info, user_id, auto_commit=False)

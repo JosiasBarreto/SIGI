@@ -1,4 +1,3 @@
-#backend/app/websocket/socket_manager.py
 import logging
 from typing import Dict, Set, Optional, List, Any
 from flask import request, current_app
@@ -237,6 +236,13 @@ def send_notification(
         return False
 
 
+def broadcast_production_update(op_numero, estado):
+    """
+    Utility to broadcast a production update internally
+    """
+    socketio.emit('production_update', {'numero': op_numero, 'estado': estado}, room="producao")
+
+
 def emit_sync_event(event_name: str, payload: dict, room: Optional[str] = None) -> bool:
     """
     Emite evento técnico de sincronização de dados (tabelas, KDS, React Query, cache).
@@ -401,6 +407,35 @@ def notify_production_orders(
     except Exception as e:
         logger.error(f"Erro ao notificar ordens de produção via WebSocket: {str(e)}")
         return False
+
+
+def notify_requisicao_users(requisicao_id, numero, estado, mensagem):
+    """
+    Notifica apenas os utilizadores com permissão no módulo de requisições:
+    Administrador, Armazém, Controlador de Materiais e o responsável da requisição.
+    Atualiza a mesma notificação (identificada por requisicao_id) em vez de duplicar.
+    """
+    try:
+        from app.models.user import User
+        from app.models.requisicao import Requisicao
+        target_roles = ['Administrador', 'Armazém', 'Armazem', 'Controlador de Materiais']
+        users = User.query.filter(User.role.in_(target_roles)).all()
+        user_ids = {u.id for u in users}
+        
+        req = Requisicao.query.get(requisicao_id)
+        if req and req.responsavel_id:
+            user_ids.add(req.responsavel_id)
+            
+        for uid in user_ids:
+            socketio.emit('requisicao_notificacao', {
+                'requisicao_id': requisicao_id,
+                'numero': numero,
+                'estado': estado,
+                'mensagem': mensagem,
+                'modulo': 'requisicoes'
+            }, room=f"user_{uid}")
+    except Exception as e:
+        print("Erro ao enviar notificação de requisição:", e)
 
 
 def notify_production_status_updated(
