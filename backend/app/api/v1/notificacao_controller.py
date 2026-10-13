@@ -82,7 +82,7 @@ def listar_notificacoes():
     """
     user = _get_current_authenticated_user()
     page = request.args.get("page", 1, type=int)
-    per_page = request.args.get("per_page", 20, type=int)
+    per_page = request.args.get("per_page", 100, type=int)
 
     def parse_bool(val):
         if val is None: return None
@@ -488,7 +488,7 @@ def listar_sms():
         description: Histórico de SMS
     """
     page = request.args.get("page", 1, type=int)
-    per_page = request.args.get("per_page", 20, type=int)
+    per_page = request.args.get("per_page", 100, type=int)
 
     def parse_bool(val):
         if val is None: return None

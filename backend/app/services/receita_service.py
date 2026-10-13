@@ -188,7 +188,7 @@ class ReceitaService:
         AuditService.log_action(user_id, "DUPLICATE", "receitas_producao", nova_receita.id, new_values={"original_receita_id": id})
         return nova_receita, None
 
-    def list_receitas(self, page=1, per_page=10, search=""):
+    def list_receitas(self, page=1, per_page=100, search=""):
         query = ReceitaProducao.query.filter_by(ativo=True)
         if search:
             from sqlalchemy import or_

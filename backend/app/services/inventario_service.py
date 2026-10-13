@@ -674,7 +674,7 @@ class InventarioService:
             query = query.filter(Inventario.numero.ilike(termo))
 
         page = int(filtros.get('page', 1))
-        per_page = int(filtros.get('per_page', 20))
+        per_page = int(filtros.get('per_page', 100))
 
         pagination = query.order_by(desc(Inventario.id)).paginate(page=page, per_page=per_page, error_out=False)
 
@@ -715,7 +715,7 @@ class InventarioService:
                          ))
 
         page = int(filtros.get('page', 1))
-        per_page = int(filtros.get('per_page', 50))
+        per_page = int(filtros.get('per_page', 100))
 
         pagination = query.order_by(InventarioItem.id).paginate(page=page, per_page=per_page, error_out=False)
 

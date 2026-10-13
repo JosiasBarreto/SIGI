@@ -111,7 +111,7 @@ def listar():
         "data_fim": request.args.get('data_fim'),
         "search": request.args.get('search'),
         "page": request.args.get('page', 1, type=int),
-        "per_page": request.args.get('per_page', 20, type=int)
+        "per_page": request.args.get('per_page', 100, type=int)
     }
     resultado = inventario_service.listar_inventarios(filtros)
     return jsonify({"success": True, "data": resultado})
@@ -199,7 +199,7 @@ def listar_itens(id):
         "motivo": request.args.get('motivo'),
         "search": request.args.get('search'),
         "page": request.args.get('page', 1, type=int),
-        "per_page": request.args.get('per_page', 50, type=int)
+        "per_page": request.args.get('per_page', 100, type=int)
     }
     resultado, error = inventario_service.listar_itens(id, filtros)
     if error:

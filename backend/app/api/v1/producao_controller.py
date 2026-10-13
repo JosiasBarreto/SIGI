@@ -11,7 +11,7 @@ producao_service = ProducaoService()
 
 def build_pagination(repo, schema, request):
     page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 10, type=int)
+    per_page = request.args.get('per_page', 100, type=int)
     search = request.args.get('search', '')
     
     filters = {}
@@ -67,7 +67,7 @@ def get_ordens():
             return jsonify({"msg": "Formato de data inválido. Use YYYY-MM-DD"}), 400
 
         page = request.args.get('page', 1, type=int)
-        per_page = request.args.get('per_page', 10, type=int)
+        per_page = request.args.get('per_page', 100, type=int)
         model = producao_service.ordem_repo.model_class
         query = model.query.filter_by(is_active=True, data_producao=data_producao_obj)
         sector = request.args.get('sector')

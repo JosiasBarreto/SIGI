@@ -14,7 +14,7 @@ req_service = RequisicaoService()
 
 def build_pagination(repo, schema, request):
     page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 10, type=int)
+    per_page = request.args.get('per_page', 100, type=int)
     search = request.args.get('search', '')
     
     filters = {}

@@ -14,7 +14,7 @@ def get_auditoria():
 
     tipo_log = request.args.get('tipo', 'auditoria') # 'auditoria', 'acesso', 'erro'
     page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 20, type=int)
+    per_page = request.args.get('per_page', 100, type=int)
 
     if tipo_log == 'acesso':
         query = LogAcesso.query.order_by(LogAcesso.data_login.desc())

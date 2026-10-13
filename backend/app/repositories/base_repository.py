@@ -22,7 +22,7 @@ class BaseRepository(Generic[T]):
         db.session.commit()
         return obj
 
-    def get_paginated(self, page=1, per_page=10, filters=None, search=None, search_fields=None, include_inactive=False):
+    def get_paginated(self, page=1, per_page=100, filters=None, search=None, search_fields=None, include_inactive=False):
         from sqlalchemy import or_
         query = db.session.query(self.model_class)
         if not include_inactive:

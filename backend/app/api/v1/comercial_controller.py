@@ -194,7 +194,7 @@ def create_venda():
 @jwt_required()
 def get_vendas():
     page = max(1, request.args.get('page', 1, type=int))
-    per_page = min(200, max(1, request.args.get('per_page', 10, type=int)))
+    per_page = min(200, max(1, request.args.get('per_page', 100, type=int)))
     query = Venda.query
     search = request.args.get('search', '').strip()
     if search:

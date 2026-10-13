@@ -8,7 +8,7 @@ receita_bp = Blueprint('receita', __name__)
 @jwt_required()
 def get_receitas():
     page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 10, type=int)
+    per_page = request.args.get('per_page', 100, type=int)
     search = request.args.get('search', '')
     data, error = receita_service.list_receitas(page, per_page, search)
     if error:

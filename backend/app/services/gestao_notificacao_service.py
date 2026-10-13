@@ -143,7 +143,7 @@ class GestaoNotificacaoService:
         current_user: Optional[User],
         filtros: Optional[Dict[str, Any]] = None,
         page: int = 1,
-        per_page: int = 20
+        per_page: int = 100
     ) -> Tuple[List[Dict[str, Any]], int, Dict[str, Any]]:
         """
         Lista notificações visíveis para o utilizador atual, aplicando filtros avançados:
@@ -501,7 +501,7 @@ class GestaoNotificacaoService:
     def listar_historico_sms(
         filtros: Optional[Dict[str, Any]] = None,
         page: int = 1,
-        per_page: int = 20
+        per_page: int = 100
     ) -> Tuple[List[Dict[str, Any]], int, Dict[str, Any]]:
         """
         Lista todas as mensagens SMS e WhatsApp enviadas pelo sistema.

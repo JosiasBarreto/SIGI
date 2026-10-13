@@ -127,7 +127,6 @@ export function createService<T>(endpoint: string, _fakeCollection?: string) {
       const response = await apiClient.put<any, any>(`${endpoint}/${id}`, item);
       return response as T;
     },
-
     async delete(id: string): Promise<boolean> {
       const response = await apiClient.delete<any, any>(`${endpoint}/${id}`);
       return response.success ?? true;

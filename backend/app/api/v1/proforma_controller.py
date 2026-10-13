@@ -10,7 +10,7 @@ proforma_service = ProformaService()
 
 def build_pagination(repo_or_query, schema_obj, request):
     page = request.args.get('page', 1, type=int) or 1
-    per_page = request.args.get('per_page', 10, type=int) or 10
+    per_page = request.args.get('per_page', 100, type=int) or 100
     
     if hasattr(repo_or_query, 'get_all'):
         raw = repo_or_query.get_all(request.args)
@@ -84,7 +84,7 @@ def handle_proforma_root():
 def listar_proformas():
     try:
         page = request.args.get('page', 1, type=int) or 1
-        per_page = request.args.get('per_page', 10, type=int) or 10
+        per_page = request.args.get('per_page', 100, type=int) or 100
         
         proformas = proforma_service.get_proformas(request.args)
         if not isinstance(proformas, list):

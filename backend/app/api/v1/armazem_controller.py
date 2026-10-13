@@ -216,7 +216,7 @@ def obter_dados_auxiliares():
 
 def build_pagination(repo, schema, request):
     page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 10, type=int)
+    per_page = request.args.get('per_page', 100, type=int)
     search = request.args.get('search', '')
     
     # filters logic... simplified
@@ -583,7 +583,7 @@ def create_ingrediente():
 @jwt_required()
 def get_produtos():
     page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 10, type=int)
+    per_page = request.args.get('per_page', 100, type=int)
     search = request.args.get('search', '')
     
     from app.models.produto import Produto
@@ -737,7 +737,7 @@ def get_produto_movimentos(id):
     from app.models.stock_movement import StockMovement
     from app.core.database import db
     page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 10, type=int)
+    per_page = request.args.get('per_page', 100, type=int)
     tipo = request.args.get('tipo', type=str)
     utilizador_id = request.args.get('utilizador_id', type=int)
     
@@ -800,7 +800,7 @@ def delete_produto(id):
 def get_materiais():
     from app.models.material import Material
     page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 10, type=int)
+    per_page = request.args.get('per_page', 100, type=int)
     search = request.args.get('search', '')
     
     query = Material.query.filter_by(is_active=True)
