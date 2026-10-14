@@ -58,8 +58,10 @@ export class NotificationDeduplicator {
   ): string {
     if (entityType && entityId) {
       const st = status ? `:${status}` : '';
-      const et = eventType ? `${eventType}:` : '';
-      return `${et}${entityType}:${entityId}${st}`;
+      // O backend pode publicar o mesmo facto por dois canais (por exemplo,
+      // ``novo_pedido`` e ``notificacao``). O tipo do transporte não deve
+      // criar dois toasts; entidade, id e estado identificam o facto.
+      return `${entityType}:${entityId}${st}`;
     }
 
     return `${eventType || 'notif'}:${title || ''}:${message || ''}`;

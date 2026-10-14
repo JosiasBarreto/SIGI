@@ -1,4 +1,4 @@
-from app import create_app
+from app import create_app, _ensure_notification_schema
 from app.core.database import db
 from sqlalchemy import text
 
@@ -186,6 +186,8 @@ def run_migrations():
                     db.session.rollback()
                     # Coluna já existe ou outro motivo benigno
                     pass
+
+    _ensure_notification_schema()
 
 if __name__ == "__main__":
     app = create_app()

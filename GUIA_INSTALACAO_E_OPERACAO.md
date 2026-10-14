@@ -37,7 +37,7 @@ py -3.11 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
 pip install -r requirements.txt
-python apply_migration.py
+python files/apply_migration.py
 python run.py
 ```
 
@@ -80,7 +80,7 @@ npm run build
 cd backend
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-python apply_migration.py
+python files/apply_migration.py
 
 cd ..\Frontend
 npm ci

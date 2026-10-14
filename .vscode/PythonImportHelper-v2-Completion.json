@@ -10342,6 +10342,14 @@
         "documentation": {}
     },
     {
+        "label": "_ensure_notification_schema",
+        "importPath": "app",
+        "description": "app",
+        "isExtraImport": true,
+        "detail": "app",
+        "documentation": {}
+    },
+    {
         "label": "create_app",
         "importPath": "app",
         "description": "app",

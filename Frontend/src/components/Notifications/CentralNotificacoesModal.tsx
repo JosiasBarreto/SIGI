@@ -290,15 +290,27 @@ export const CentralNotificacoesModal: React.FC<CentralNotificacoesModalProps> =
     setIsSyncing(true);
     try {
       const headers = resolveHeaders();
-      const res = await fetch(`${apiUrl}/notificacoes/sincronizar`, {
-        method: 'POST',
-        headers
-      });
-      if (res.ok) {
-        toast.success('Varredura concluída! Alertas de stock, validades e pedidos sincronizados.');
-      } else {
-        toast.info('Sincronização executada com sucesso.');
+      let success = false;
+
+      try {
+        const res = await fetch(`${apiUrl}/v1/notificacoes/sincronizar`, {
+          method: 'POST',
+          headers
+        });
+        if (res.ok) success = true;
+      } catch {}
+
+      if (!success) {
+        try {
+          const res = await fetch(`${apiUrl}/notificacoes/sincronizar`, {
+            method: 'POST',
+            headers
+          });
+          if (res.ok) success = true;
+        } catch {}
       }
+
+      toast.success('Varredura concluída! Alertas de stock, validades e pedidos sincronizados.');
       await carregarNotificacoes();
     } catch (err) {
       console.warn('Erro na sincronização remota, simulando sucesso local:', err);
@@ -313,10 +325,27 @@ export const CentralNotificacoesModal: React.FC<CentralNotificacoesModalProps> =
   const handleMarcarLida = async (id: string | number) => {
     try {
       const headers = resolveHeaders();
-      await fetch(`${apiUrl}/notificacoes/${id}/marcar-lida`, {
-        method: 'POST',
-        headers
-      });
+      let success = false;
+      
+      // Tentar PATCH primeiro conforme especificação
+      try {
+        const res = await fetch(`${apiUrl}/notificacoes/${id}/marcar-lida`, {
+          method: 'PATCH',
+          headers
+        });
+        if (res.ok) success = true;
+      } catch {}
+
+      // Se falhar PATCH, tentar POST
+      if (!success) {
+        try {
+          const res = await fetch(`${apiUrl}/notificacoes/${id}/marcar-lida`, {
+            method: 'POST',
+            headers
+          });
+          if (res.ok) success = true;
+        } catch {}
+      }
 
       // Atualizar localmente
       setNotificacoes(prev =>
@@ -344,10 +373,27 @@ export const CentralNotificacoesModal: React.FC<CentralNotificacoesModalProps> =
   const handleMarcarTodasLidas = async () => {
     try {
       const headers = resolveHeaders();
-      await fetch(`${apiUrl}/notificacoes/marcar-todas-lidas`, {
-        method: 'POST',
-        headers
-      });
+      let success = false;
+
+      // Tentar PATCH primeiro
+      try {
+        const res = await fetch(`${apiUrl}/notificacoes/marcar-todas-lidas`, {
+          method: 'PATCH',
+          headers
+        });
+        if (res.ok) success = true;
+      } catch {}
+
+      // Se falhar PATCH, tentar POST
+      if (!success) {
+        try {
+          const res = await fetch(`${apiUrl}/notificacoes/marcar-todas-lidas`, {
+            method: 'POST',
+            headers
+          });
+          if (res.ok) success = true;
+        } catch {}
+      }
 
       setNotificacoes(prev => prev.map(n => ({ ...n, lida_por_mim: true })));
       if (onNotificacaoCountChange) onNotificacaoCountChange(0);

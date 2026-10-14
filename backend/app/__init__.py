@@ -37,8 +37,13 @@ def _ensure_notification_schema():
         logger.warning('Não foi possível inspecionar a tabela notificacoes durante o arranque.', exc_info=True)
         return
     columns = {
+        # Colunas do modelo legado (instalações antigas podem ter apenas o
+        # núcleo título/mensagem/tipo).
+        'prioridade': "VARCHAR(20) NULL DEFAULT 'media'",
         'entidade_tipo': 'VARCHAR(50) NULL',
         'entidade_id': 'INTEGER NULL',
+        'dados_extra': 'JSON NULL',
+        'ativo': 'BOOLEAN NOT NULL DEFAULT TRUE',
         'event_id': 'VARCHAR(64) NULL',
         'event_type': 'VARCHAR(64) NULL',
         'entity_type': 'VARCHAR(64) NULL',
@@ -57,6 +62,14 @@ def _ensure_notification_schema():
         'target_sector': 'VARCHAR(50) NULL',
         'target_user_id': 'INTEGER NULL',
         'metadados': 'JSON NULL',
+        # Colunas herdadas de BaseModel quando a tabela foi criada por um
+        # script SQL reduzido.
+        'created_at': 'DATETIME NULL',
+        'updated_at': 'DATETIME NULL',
+        'created_by': 'INTEGER NULL',
+        'updated_by': 'INTEGER NULL',
+        'is_active': 'BOOLEAN NOT NULL DEFAULT TRUE',
+        'deleted_at': 'DATETIME NULL',
     }
 
     for name, definition in columns.items():

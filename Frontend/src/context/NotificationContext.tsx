@@ -94,6 +94,15 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode; userRol
   const [osPermission, setOsPermission] = useState<NotificationPermission>(() =>
     osNotificationManager.getPermission()
   );
+  const [authVersion, setAuthVersion] = useState(0);
+
+  // O provider monta antes do login. Sem este sinal, o primeiro efeito vê um
+  // token vazio e nunca instala os listeners do Socket.IO após autenticar.
+  useEffect(() => {
+    const handleAuthChanged = () => setAuthVersion((version) => version + 1);
+    window.addEventListener('sigi:auth-changed', handleAuthChanged);
+    return () => window.removeEventListener('sigi:auth-changed', handleAuthChanged);
+  }, []);
 
   // Guardar no localStorage sempre que o estado é alterado
   useEffect(() => {
@@ -106,9 +115,6 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode; userRol
 
   // Carregar histórico do backend para consolidar
   const refreshNotifications = useCallback(async () => {
-    const token = localStorage.getItem('access_token') || localStorage.getItem('token');
-    if (!token) return;
-
     setIsLoading(true);
     try {
       const backendItems = await notificationAuditService.getHistorico({ per_page: 50 });
@@ -148,6 +154,12 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode; userRol
     }
   }, []);
 
+  // Sincroniza o histórico logo após autenticar, para que o sino não dependa
+  // de abrir a página de notificações ou de recarregar manualmente.
+  useEffect(() => {
+    refreshNotifications();
+  }, [refreshNotifications]);
+
   // Escuta WebSocket do Socket.IO com token JWT no Handshake e canais oficiais do relatório
   useEffect(() => {
     const token = localStorage.getItem('access_token') || localStorage.getItem('token');
@@ -156,6 +168,13 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode; userRol
     // Conectar socket central ou criar instância compatível com a documentação
     const socketInstance = socketManager.connect();
     const recentProductionAlertKeys = new Set<string>();
+    const unsubscribeSocketStatus = socketManager.onStatusChange((status) => {
+      if (status === 'connected') {
+        console.info('[SIGI][notificacoes] Socket.IO ligado');
+      } else if (status === 'disconnected') {
+        console.warn('[SIGI][notificacoes] Socket.IO desligado; histórico continuará a sincronizar.');
+      }
+    });
 
     // 1. Escuta de Notificações de Requisição (Armazém, Admin, Controlador)
     const handleRequisicaoNotificacao = (data: any) => {
@@ -340,6 +359,18 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode; userRol
     const unsubRequisicao = socketManager.on('requisicao_notificacao', handleRequisicaoNotificacao);
     const unsubPedidoAtualizado = socketManager.on('pedido_atualizado', handlePedidoAtualizado);
     const unsubNovoPedido = socketManager.on('novo_pedido', handleNovoPedido);
+    // Alguns fluxos antigos publicam o evento técnico sem publicar o evento
+    // visual. Encaminhar pelo NotificationManager garante toast imediato e
+    // mantém a deduplicação quando ambos os eventos chegam.
+    const unsubNovoPedidoVisual = socketManager.on('novo_pedido', (data) => {
+      notificationManager.handleEvent('novo_pedido', data);
+    });
+    const unsubNovaOrdemVisual = socketManager.on('nova_ordem_producao', (data) => {
+      notificationManager.handleEvent('nova_ordem_producao', data);
+    });
+    const unsubAlertaProducaoVisual = socketManager.on('alerta_producao', (data) => {
+      notificationManager.handleEvent('alerta_producao', data);
+    });
     const unsubAlertaMaterial = socketManager.on('alerta_material', handleAlertaMaterial);
     const unsubAlertaCozinha = socketManager.on('alerta_cozinha', handleAlertaProducao);
     const unsubAlertaPastelaria = socketManager.on('alerta_pastelaria', handleAlertaProducao);
@@ -349,13 +380,17 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode; userRol
       unsubRequisicao();
       unsubPedidoAtualizado();
       unsubNovoPedido();
+      unsubNovoPedidoVisual();
+      unsubNovaOrdemVisual();
+      unsubAlertaProducaoVisual();
       unsubscribeNotificationManager();
       unsubAlertaMaterial();
       unsubAlertaCozinha();
       unsubAlertaPastelaria();
       unsubAlertaBar();
+      unsubscribeSocketStatus();
     };
-  }, [propUserRole]);
+  }, [propUserRole, authVersion]);
 
   // Ações sobre notificações
   const markAsRead = useCallback((id: string) => {
@@ -364,12 +399,18 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode; userRol
         n.id === id ? { ...n, lida: true, read: true } : n
       )
     );
+    void notificationAuditService.marcarComoLida(id).catch((err) => {
+      console.warn('[NotificationContext] Não foi possível marcar notificação como lida:', err);
+    });
   }, []);
 
   const markAllAsRead = useCallback(() => {
     setNotifications((prev) =>
       prev.map((n) => ({ ...n, lida: true, read: true }))
     );
+    void notificationAuditService.marcarTodasComoLidas().catch((err) => {
+      console.warn('[NotificationContext] Não foi possível marcar todas como lidas:', err);
+    });
   }, []);
 
   const clearNotification = useCallback((id: string) => {
