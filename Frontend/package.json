@@ -3,12 +3,18 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "packageManager": "npm@10",
+  "engines": {
+    "node": ">=20 <23",
+    "npm": ">=10"
+  },
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
     "build": "vite build",
     "preview": "vite preview",
-    "clean": "rm -rf dist server.js",
-    "lint": "tsc --noEmit"
+    "clean": "node -e \"const fs=require('fs'); for (const p of ['dist','server.js']) fs.rmSync(p,{recursive:true,force:true})\"",
+    "lint": "tsc --noEmit",
+    "check": "npm run lint && npm run build"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

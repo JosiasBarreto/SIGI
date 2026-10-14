@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Settings,
   Save,
@@ -22,6 +22,11 @@ import {
   Clock,
   Code2,
   Info,
+  Search,
+  Layers,
+  Ruler,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { toast } from "react-toastify";
 import { useTheme } from "../components/Layout/ThemeContext";
@@ -32,7 +37,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import PainelSobre from "./Configuracoes/PainerSobre";
 
 
-
 interface BackupItem {
   id: string;
   filename: string;
@@ -41,15 +45,130 @@ interface BackupItem {
   type: "Manual" | "Automático";
 }
 
+/**
+ * Componente Reutilizável de Paginação para Tabelas de Configuração
+ */
+function TablePagination({
+  currentPage,
+  totalPages,
+  totalItems,
+  perPage,
+  onPageChange,
+  onPerPageChange,
+  itemName = "itens",
+}: {
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+  perPage: number;
+  onPageChange: (page: number) => void;
+  onPerPageChange?: (perPage: number) => void;
+  itemName?: string;
+}) {
+  const startItem = totalItems === 0 ? 0 : (currentPage - 1) * perPage + 1;
+  const endItem = Math.min(currentPage * perPage, totalItems);
+
+  return (
+    <div className="flex flex-col sm:flex-row justify-between items-center gap-3 p-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/20 text-xs">
+      <div className="flex flex-wrap items-center gap-3 text-gray-500 dark:text-gray-400">
+        <span>
+          A mostrar <strong className="text-gray-800 dark:text-gray-200">{startItem}</strong> a{" "}
+          <strong className="text-gray-800 dark:text-gray-200">{endItem}</strong> de{" "}
+          <strong className="text-gray-800 dark:text-gray-200">{totalItems}</strong> {itemName}
+        </span>
+        {onPerPageChange && (
+          <div className="flex items-center gap-1.5 ml-1">
+            <span className="text-[11px] text-gray-400">Por pág:</span>
+            <select
+              value={perPage}
+              onChange={(e) => onPerPageChange(Number(e.target.value))}
+              className="px-2 py-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md font-semibold text-gray-700 dark:text-gray-200 outline-none text-xs cursor-pointer shadow-xs"
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+            </select>
+          </div>
+        )}
+      </div>
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          disabled={currentPage <= 1}
+          onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+          className="px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition shadow-xs cursor-pointer flex items-center gap-1"
+        >
+          <ChevronLeft size={13} />
+          <span>Anterior</span>
+        </button>
+        <span className="font-medium text-gray-600 dark:text-gray-300 px-1">
+          Página {currentPage} de {Math.max(1, totalPages)}
+        </span>
+        <button
+          type="button"
+          disabled={currentPage >= totalPages}
+          onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+          className="px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition shadow-xs cursor-pointer flex items-center gap-1"
+        >
+          <span>Próximo</span>
+          <ChevronRight size={13} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function IvaSettings() {
   const queryClient = useQueryClient();
-  const { palette, setPalette } = useTheme();
   const [editingRate, setEditingRate] = useState<any>(null);
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
+  const [search, setSearch] = useState("");
 
-  const { data: rates, isLoading } = useQuery({
-    queryKey: ["iva_rates"],
-    queryFn: () => fiscalService.getIvaRates(),
+  const { data: response, isLoading } = useQuery({
+    queryKey: ["iva_rates", page, perPage],
+    queryFn: () => fiscalService.getIvaRates({ page, per_page: perPage }),
   });
+
+  const rawRates: any[] = useMemo(() => {
+    if (Array.isArray(response)) return response;
+    if (Array.isArray(response?.items)) return response.items;
+    if (Array.isArray(response?.taxas_iva)) return response.taxas_iva;
+    if (Array.isArray(response?.taxas)) return response.taxas;
+    if (Array.isArray(response?.iva)) return response.iva;
+    if (Array.isArray(response?.data?.items)) return response.data.items;
+    if (Array.isArray(response?.data?.taxas_iva)) return response.data.taxas_iva;
+    if (Array.isArray(response?.data)) return response.data;
+    return [];
+  }, [response]);
+
+  const filteredRates = useMemo(() => {
+    if (!search.trim()) return rawRates;
+    const term = search.toLowerCase();
+    return rawRates.filter((r: any) => {
+      const desc = String(r.descricao || r.description || r.nome || "").toLowerCase();
+      const perc = String(r.percentagem ?? r.taxa ?? "");
+      const id = String(r.id || "");
+      return desc.includes(term) || perc.includes(term) || id.includes(term);
+    });
+  }, [rawRates, search]);
+
+  const total = response?.total !== undefined && !search.trim() ? response.total : filteredRates.length;
+  const totalPages = Math.max(1, Math.ceil(total / perPage));
+
+  const rates = useMemo(() => {
+    const resAny = response as any;
+    if (search.trim()) {
+      const start = (page - 1) * perPage;
+      return filteredRates.slice(start, start + perPage);
+    }
+    if (resAny?.items && resAny?.total !== undefined && resAny.items.length <= perPage) {
+      return resAny.items;
+    }
+    const start = (page - 1) * perPage;
+    return filteredRates.slice(start, start + perPage);
+  }, [search, filteredRates, response, page, perPage]);
 
   const createMutation = useMutation({
     mutationFn: (data: any) => fiscalService.createIvaRate(data),
@@ -86,6 +205,17 @@ function IvaSettings() {
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: (id: string | number) => fiscalService.deleteIvaRate(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["iva_rates"] });
+      toast.success("Taxa de IVA eliminada");
+    },
+    onError: (err: any) => {
+      toast.error(err?.message || "Erro ao eliminar taxa");
+    },
+  });
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -110,6 +240,13 @@ function IvaSettings() {
   const handleCancelEdit = () => {
     setEditingRate(null);
   };
+
+  const handleDelete = (rate: any) => {
+    const desc = rate.descricao || `ID ${rate.id}`;
+    if (window.confirm(`Tem a certeza que deseja eliminar a taxa de IVA "${desc}"?`)) {
+      deleteMutation.mutate(rate.id);
+    }
+  };
   
   return (
     <div className="bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-800 rounded-2xl shadow-sm overflow-hidden flex flex-col md:flex-row">
@@ -128,13 +265,13 @@ function IvaSettings() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-semibold text-gray-500 mb-1">
-              Descrição
+              Descrição Completa
             </label>
             <input
               type="text"
               name="descricao"
-              defaultValue={editingRate?.descricao || ""}
-              placeholder="Ex: IVA Normal 14%"
+              defaultValue={editingRate?.descricao || editingRate?.description || ""}
+              placeholder="Ex: IVA Normal 15%"
               required
               className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 outline-none focus:ring-2 focus:ring-primary/20"
             />
@@ -146,8 +283,8 @@ function IvaSettings() {
             <input
               type="number"
               name="percentagem"
-              defaultValue={editingRate?.percentagem || ""}
-              placeholder="Ex: 14"
+              defaultValue={editingRate?.percentagem ?? editingRate?.taxa ?? ""}
+              placeholder="Ex: 15"
               step="0.01"
               required
               className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 outline-none focus:ring-2 focus:ring-primary/20"
@@ -158,21 +295,21 @@ function IvaSettings() {
               type="checkbox"
               name="ativo"
               id="iva_ativo"
-              defaultChecked={editingRate ? editingRate.ativo : true}
+              defaultChecked={editingRate ? (editingRate.ativo ?? editingRate.is_active ?? true) : true}
               className="w-4 h-4 text-primary rounded focus:ring-primary/50"
             />
             <label
               htmlFor="iva_ativo"
-              className="text-xs font-semibold text-gray-600 dark:text-gray-400"
+              className="text-xs font-semibold text-gray-600 dark:text-gray-400 cursor-pointer"
             >
-              Ativa
+              Ativa no sistema
             </label>
           </div>
           <div className="flex gap-2">
             <button
               type="submit"
               disabled={createMutation.isPending || updateMutation.isPending}
-              className="flex-1 py-2 bg-primary hover:bg-primary/90 text-white text-xs font-bold rounded-lg shadow-sm"
+              className="flex-1 py-2 bg-primary hover:bg-primary/90 text-white text-xs font-bold rounded-lg shadow-sm cursor-pointer disabled:opacity-50"
             >
               {createMutation.isPending || updateMutation.isPending
                 ? "A guardar..."
@@ -182,7 +319,7 @@ function IvaSettings() {
               <button
                 type="button"
                 onClick={handleCancelEdit}
-                className="px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs font-bold rounded-lg"
+                className="px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs font-bold rounded-lg cursor-pointer"
               >
                 Cancelar
               </button>
@@ -190,82 +327,134 @@ function IvaSettings() {
           </div>
         </form>
       </div>
-      <div className="p-0 md:w-2/3">
-        <table className="w-full text-left text-sm whitespace-nowrap">
-          <thead className="bg-gray-50 dark:bg-gray-800 text-xs font-semibold text-gray-500 border-b border-gray-200 dark:border-gray-800 uppercase tracking-wider">
-            <tr>
-              <th className="p-4">ID</th>
-              <th className="p-4">Descrição</th>
-              <th className="p-4">Percentagem</th>
-              <th className="p-4">Estado</th>
-              <th className="p-4">Ações</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-            {isLoading ? (
-              <tr>
-                <td colSpan={5} className="p-4 text-center text-gray-500">
-                  A carregar...
-                </td>
-              </tr>
-            ) : rates && rates.length > 0 ? (
-              rates.map((rate) => (
-                <tr
-                  key={rate.id}
-                  className="hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors"
-                >
-                  <td className="p-4 text-xs font-mono text-gray-500">
-                    {rate.id}
-                  </td>
-                  <td className="p-4 font-semibold text-gray-900 dark:text-white">
-                    {rate.descricao}
-                  </td>
-                  <td className="p-4 text-gray-600 dark:text-gray-300">
-                    {Number(rate.percentagem)}%
-                  </td>
-                  <td className="p-4">
-                    <span
-                      className={`px-2 py-1 text-[10px] font-bold rounded-full ${
-                        rate.ativo
-                          ? "bg-success/10 text-success"
-                          : "bg-gray-100 text-gray-500 dark:bg-gray-800"
-                      }`}
-                    >
-                      {rate.ativo ? "Ativo" : "Inativo"}
-                    </span>
-                  </td>
-                  <td className="p-4">
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleEdit(rate)}
-                        className="text-xs font-bold text-primary hover:text-primary/80"
-                      >
-                        Editar
-                      </button>
-                      <button
-                        onClick={() => toggleMutation.mutate(rate.id)}
-                        disabled={toggleMutation.isPending}
-                        className={`text-xs font-bold ${
-                          rate.ativo
-                            ? "text-red-500 hover:text-red-600"
-                            : "text-green-500 hover:text-green-600"
-                        }`}
-                      >
-                        {rate.ativo ? "Desativar" : "Ativar"}
-                      </button>
-                    </div>
-                  </td>
+      <div className="p-0 md:w-2/3 flex flex-col justify-between">
+        <div>
+          {/* Barra de Pesquisa */}
+          <div className="p-3 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between gap-3 bg-gray-50/40 dark:bg-gray-800/20">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-3 top-2.5 text-gray-400" size={14} />
+              <input
+                type="text"
+                placeholder="Pesquisar taxas de IVA..."
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
+                className="w-full pl-8 pr-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-xs outline-none text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+            <span className="text-xs text-gray-500 dark:text-gray-400 font-medium whitespace-nowrap">
+              {total} {total === 1 ? "taxa" : "taxas"}
+            </span>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm whitespace-nowrap">
+              <thead className="bg-gray-50 dark:bg-gray-800 text-xs font-semibold text-gray-500 border-b border-gray-200 dark:border-gray-800 uppercase tracking-wider">
+                <tr>
+                  <th className="p-4">ID</th>
+                  <th className="p-4">Descrição Completa</th>
+                  <th className="p-4">Percentagem</th>
+                  <th className="p-4">Estado</th>
+                  <th className="p-4 text-right">Ações</th>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={5} className="p-4 text-center text-gray-500">
-                  Nenhuma taxa de IVA encontrada
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+              </thead>
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={5} className="p-6 text-center text-gray-500">
+                      <RefreshCw className="animate-spin inline-block mr-2" size={16} />
+                      A carregar taxas de IVA...
+                    </td>
+                  </tr>
+                ) : rates && rates.length > 0 ? (
+                  rates.map((rate: any) => {
+                    const isAtivo = rate.ativo ?? rate.is_active ?? true;
+                    const desc = rate.descricao || rate.description || rate.nome || "-";
+                    const perc = Number(rate.percentagem ?? rate.percentage ?? rate.taxa ?? 0);
+                    return (
+                      <tr
+                        key={rate.id}
+                        className="hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors"
+                      >
+                        <td className="p-4 text-xs font-mono text-gray-500">
+                          {rate.id}
+                        </td>
+                        <td className="p-4 font-semibold text-gray-900 dark:text-white max-w-xs break-words whitespace-normal">
+                          {desc}
+                        </td>
+                        <td className="p-4 text-gray-600 dark:text-gray-300 font-bold">
+                          {perc}%
+                        </td>
+                        <td className="p-4">
+                          <span
+                            className={`px-2 py-1 text-[10px] font-bold rounded-full ${
+                              isAtivo
+                                ? "bg-success/10 text-success"
+                                : "bg-gray-100 text-gray-500 dark:bg-gray-800"
+                            }`}
+                          >
+                            {isAtivo ? "Ativo" : "Inativo"}
+                          </span>
+                        </td>
+                        <td className="p-4 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => handleEdit(rate)}
+                              className="text-xs font-bold text-primary hover:text-primary/80 cursor-pointer"
+                            >
+                              Editar
+                            </button>
+                            <button
+                              onClick={() => toggleMutation.mutate(rate.id)}
+                              disabled={toggleMutation.isPending}
+                              className={`text-xs font-bold cursor-pointer ${
+                                isAtivo
+                                  ? "text-amber-500 hover:text-amber-600"
+                                  : "text-green-500 hover:text-green-600"
+                              }`}
+                            >
+                              {isAtivo ? "Desativar" : "Ativar"}
+                            </button>
+                            <button
+                              onClick={() => handleDelete(rate)}
+                              className="text-xs font-bold text-red-500 hover:text-red-700 cursor-pointer ml-1"
+                              title="Eliminar taxa"
+                            >
+                              <Trash2 size={13} className="inline" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan={5} className="p-6 text-center text-gray-500">
+                      Nenhuma taxa de IVA encontrada
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {total > 0 && (
+          <TablePagination
+            currentPage={page}
+            totalPages={totalPages}
+            totalItems={total}
+            perPage={perPage}
+            onPageChange={setPage}
+            onPerPageChange={(newPerPage) => {
+              setPerPage(newPerPage);
+              setPage(1);
+            }}
+            itemName="taxas de IVA"
+          />
+        )}
       </div>
     </div>
   );
@@ -274,11 +463,51 @@ function IvaSettings() {
 function CategoriasSettings() {
   const queryClient = useQueryClient();
   const [editingItem, setEditingItem] = useState<any>(null);
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
+  const [search, setSearch] = useState("");
 
-  const { data: items, isLoading } = useQuery({
-    queryKey: ["categorias"],
-    queryFn: () => productService.getCategorias(),
+  const { data: response, isLoading } = useQuery({
+    queryKey: ["categorias", page, perPage],
+    queryFn: () => productService.getCategorias({ page, per_page: perPage }),
   });
+
+  const rawItems: any[] = useMemo(() => {
+    if (Array.isArray(response)) return response;
+    if (Array.isArray(response?.items)) return response.items;
+    if (Array.isArray(response?.categorias)) return response.categorias;
+    if (Array.isArray(response?.data?.items)) return response.data.items;
+    if (Array.isArray(response?.data?.categorias)) return response.data.categorias;
+    if (Array.isArray(response?.data)) return response.data;
+    return [];
+  }, [response]);
+
+  const filteredItems = useMemo(() => {
+    if (!search.trim()) return rawItems;
+    const term = search.toLowerCase();
+    return rawItems.filter((item: any) => {
+      const nome = String(item.nome || item.name || "").toLowerCase();
+      const desc = String(item.descricao || item.description || "").toLowerCase();
+      const id = String(item.id || "");
+      return nome.includes(term) || desc.includes(term) || id.includes(term);
+    });
+  }, [rawItems, search]);
+
+  const total = response?.total !== undefined && !search.trim() ? response.total : filteredItems.length;
+  const totalPages = Math.max(1, Math.ceil(total / perPage));
+
+  const items = useMemo(() => {
+    const resAny = response as any;
+    if (search.trim()) {
+      const start = (page - 1) * perPage;
+      return filteredItems.slice(start, start + perPage);
+    }
+    if (resAny?.items && resAny?.total !== undefined && resAny.items.length <= perPage) {
+      return resAny.items;
+    }
+    const start = (page - 1) * perPage;
+    return filteredItems.slice(start, start + perPage);
+  }, [search, filteredItems, response, page, perPage]);
 
   const createMutation = useMutation({
     mutationFn: (data: any) => productService.createCategoria(data),
@@ -286,7 +515,7 @@ function CategoriasSettings() {
       queryClient.invalidateQueries({ queryKey: ["categorias"] });
       toast.success("Categoria criada com sucesso");
     },
-    onError: () => toast.error("Erro ao criar"),
+    onError: () => toast.error("Erro ao criar categoria"),
   });
 
   const updateMutation = useMutation({
@@ -294,10 +523,21 @@ function CategoriasSettings() {
       productService.updateCategoria(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["categorias"] });
-      toast.success("Categoria atualizada");
+      toast.success("Categoria atualizada com sucesso");
       setEditingItem(null);
     },
-    onError: () => toast.error("Erro ao atualizar"),
+    onError: () => toast.error("Erro ao atualizar categoria"),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string | number) => productService.deleteCategoria(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["categorias"] });
+      toast.success("Categoria eliminada com sucesso");
+    },
+    onError: (err: any) => {
+      toast.error(err?.message || "Erro ao eliminar categoria");
+    },
   });
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -314,6 +554,13 @@ function CategoriasSettings() {
       createMutation.mutate(data);
     }
     e.currentTarget.reset();
+  };
+
+  const handleDelete = (item: any) => {
+    const nome = item.nome || item.name || `ID ${item.id}`;
+    if (window.confirm(`Tem a certeza que deseja eliminar a categoria "${nome}"?`)) {
+      deleteMutation.mutate(item.id);
+    }
   };
 
   return (
@@ -338,19 +585,20 @@ function CategoriasSettings() {
             <input
               type="text"
               name="nome"
-              defaultValue={editingItem?.nome || ""}
+              defaultValue={editingItem?.nome || editingItem?.name || ""}
               required
               className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
           <div>
             <label className="block text-xs font-semibold text-gray-500 mb-1">
-              Descrição
+              Descrição Completa
             </label>
             <textarea
               name="descricao"
-              defaultValue={editingItem?.descricao || ""}
-              rows={3}
+              defaultValue={editingItem?.descricao || editingItem?.description || ""}
+              rows={4}
+              placeholder="Descreva detalhadamente a categoria..."
               className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
@@ -358,7 +606,7 @@ function CategoriasSettings() {
             <button
               type="submit"
               disabled={createMutation.isPending || updateMutation.isPending}
-              className="flex-1 py-2 bg-primary hover:bg-primary/90 text-white text-xs font-bold rounded-lg shadow-sm"
+              className="flex-1 py-2 bg-primary hover:bg-primary/90 text-white text-xs font-bold rounded-lg shadow-sm cursor-pointer disabled:opacity-50"
             >
               {createMutation.isPending || updateMutation.isPending
                 ? "A guardar..."
@@ -368,7 +616,7 @@ function CategoriasSettings() {
               <button
                 type="button"
                 onClick={() => setEditingItem(null)}
-                className="px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs font-bold rounded-lg"
+                className="px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs font-bold rounded-lg cursor-pointer"
               >
                 Cancelar
               </button>
@@ -376,57 +624,114 @@ function CategoriasSettings() {
           </div>
         </form>
       </div>
-      <div className="p-0 md:w-2/3">
-        <table className="w-full text-left text-sm whitespace-nowrap">
-          <thead className="bg-gray-50 dark:bg-gray-800 text-xs font-semibold text-gray-500 border-b border-gray-200 dark:border-gray-800 uppercase tracking-wider">
-            <tr>
-              <th className="p-4">ID</th>
-              <th className="p-4">Nome</th>
-              <th className="p-4">Descrição</th>
-              <th className="p-4">Ações</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-            {isLoading ? (
-              <tr>
-                <td colSpan={4} className="p-4 text-center text-gray-500">
-                  A carregar...
-                </td>
-              </tr>
-            ) : items && items.length > 0 ? (
-              items.map((item: any) => (
-                <tr
-                  key={item.id}
-                  className="hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors"
-                >
-                  <td className="p-4 text-xs font-mono text-gray-500">
-                    {item.id}
-                  </td>
-                  <td className="p-4 font-semibold text-gray-900 dark:text-white">
-                    {item.nome}
-                  </td>
-                  <td className="p-4 text-gray-500 truncate max-w-[200px]">
-                    {item.descricao}
-                  </td>
-                  <td className="p-4">
-                    <button
-                      onClick={() => setEditingItem(item)}
-                      className="text-xs font-bold text-primary hover:text-primary/80"
-                    >
-                      Editar
-                    </button>
-                  </td>
+      <div className="p-0 md:w-2/3 flex flex-col justify-between">
+        <div>
+          {/* Barra de Pesquisa */}
+          <div className="p-3 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between gap-3 bg-gray-50/40 dark:bg-gray-800/20">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-3 top-2.5 text-gray-400" size={14} />
+              <input
+                type="text"
+                placeholder="Pesquisar categorias por nome ou descrição..."
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
+                className="w-full pl-8 pr-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-xs outline-none text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+            <span className="text-xs text-gray-500 dark:text-gray-400 font-medium whitespace-nowrap">
+              {total} {total === 1 ? "categoria" : "categorias"}
+            </span>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm whitespace-nowrap">
+              <thead className="bg-gray-50 dark:bg-gray-800 text-xs font-semibold text-gray-500 border-b border-gray-200 dark:border-gray-800 uppercase tracking-wider">
+                <tr>
+                  <th className="p-4">ID</th>
+                  <th className="p-4">Nome</th>
+                  <th className="p-4">Descrição Completa</th>
+                  <th className="p-4 text-right">Ações</th>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={4} className="p-4 text-center text-gray-500">
-                  Nenhuma categoria
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+              </thead>
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={4} className="p-6 text-center text-gray-500">
+                      <RefreshCw className="animate-spin inline-block mr-2" size={16} />
+                      A carregar categorias...
+                    </td>
+                  </tr>
+                ) : items && items.length > 0 ? (
+                  items.map((item: any) => {
+                    const nome = item.nome || item.name || "-";
+                    const desc = item.descricao || item.description;
+                    return (
+                      <tr
+                        key={item.id}
+                        className="hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors"
+                      >
+                        <td className="p-4 text-xs font-mono text-gray-500">
+                          {item.id}
+                        </td>
+                        <td className="p-4 font-semibold text-gray-900 dark:text-white">
+                          {nome}
+                        </td>
+                        <td className="p-4 text-gray-600 dark:text-gray-300 max-w-md break-words whitespace-normal text-xs">
+                          {desc ? (
+                            <span>{desc}</span>
+                          ) : (
+                            <span className="text-gray-400 italic">Sem descrição</span>
+                          )}
+                        </td>
+                        <td className="p-4 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => setEditingItem(item)}
+                              className="text-xs font-bold text-primary hover:text-primary/80 cursor-pointer"
+                            >
+                              Editar
+                            </button>
+                            <button
+                              onClick={() => handleDelete(item)}
+                              className="text-xs font-bold text-red-500 hover:text-red-700 cursor-pointer ml-1"
+                              title="Eliminar categoria"
+                            >
+                              <Trash2 size={13} className="inline" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan={4} className="p-6 text-center text-gray-500">
+                      Nenhuma categoria encontrada
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {total > 0 && (
+          <TablePagination
+            currentPage={page}
+            totalPages={totalPages}
+            totalItems={total}
+            perPage={perPage}
+            onPageChange={setPage}
+            onPerPageChange={(newPerPage) => {
+              setPerPage(newPerPage);
+              setPage(1);
+            }}
+            itemName="categorias"
+          />
+        )}
       </div>
     </div>
   );
@@ -435,19 +740,61 @@ function CategoriasSettings() {
 function UnidadesSettings() {
   const queryClient = useQueryClient();
   const [editingItem, setEditingItem] = useState<any>(null);
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
+  const [search, setSearch] = useState("");
 
-  const { data: items, isLoading } = useQuery({
-    queryKey: ["unidades_medida"],
-    queryFn: () => productService.getUnidadesMedida(),
+  const { data: response, isLoading } = useQuery({
+    queryKey: ["unidades_medida", page, perPage],
+    queryFn: () => productService.getUnidadesMedida({ page, per_page: perPage }),
   });
+
+  const rawItems: any[] = useMemo(() => {
+    if (Array.isArray(response)) return response;
+    if (Array.isArray(response?.items)) return response.items;
+    if (Array.isArray(response?.unidades_medida)) return response.unidades_medida;
+    if (Array.isArray(response?.unidades)) return response.unidades;
+    if (Array.isArray(response?.data?.items)) return response.data.items;
+    if (Array.isArray(response?.data?.unidades_medida)) return response.data.unidades_medida;
+    if (Array.isArray(response?.data)) return response.data;
+    return [];
+  }, [response]);
+
+  const filteredItems = useMemo(() => {
+    if (!search.trim()) return rawItems;
+    const term = search.toLowerCase();
+    return rawItems.filter((item: any) => {
+      const nome = String(item.nome || item.name || "").toLowerCase();
+      const sigla = String(item.sigla || item.symbol || item.code || "").toLowerCase();
+      const desc = String(item.descricao || item.description || "").toLowerCase();
+      const id = String(item.id || "");
+      return nome.includes(term) || sigla.includes(term) || desc.includes(term) || id.includes(term);
+    });
+  }, [rawItems, search]);
+
+  const total = response?.total !== undefined && !search.trim() ? response.total : filteredItems.length;
+  const totalPages = Math.max(1, Math.ceil(total / perPage));
+
+  const items = useMemo(() => {
+    const resAny = response as any;
+    if (search.trim()) {
+      const start = (page - 1) * perPage;
+      return filteredItems.slice(start, start + perPage);
+    }
+    if (resAny?.items && resAny?.total !== undefined && resAny.items.length <= perPage) {
+      return resAny.items;
+    }
+    const start = (page - 1) * perPage;
+    return filteredItems.slice(start, start + perPage);
+  }, [search, filteredItems, response, page, perPage]);
 
   const createMutation = useMutation({
     mutationFn: (data: any) => productService.createUnidadeMedida(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["unidades_medida"] });
-      toast.success("Unidade criada com sucesso");
+      toast.success("Unidade de medida criada com sucesso");
     },
-    onError: () => toast.error("Erro ao criar"),
+    onError: () => toast.error("Erro ao criar unidade de medida"),
   });
 
   const updateMutation = useMutation({
@@ -455,10 +802,21 @@ function UnidadesSettings() {
       productService.updateUnidadeMedida(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["unidades_medida"] });
-      toast.success("Unidade atualizada");
+      toast.success("Unidade de medida atualizada com sucesso");
       setEditingItem(null);
     },
-    onError: () => toast.error("Erro ao atualizar"),
+    onError: () => toast.error("Erro ao atualizar unidade de medida"),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string | number) => productService.deleteUnidadeMedida(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["unidades_medida"] });
+      toast.success("Unidade de medida eliminada com sucesso");
+    },
+    onError: (err: any) => {
+      toast.error(err?.message || "Erro ao eliminar unidade de medida");
+    },
   });
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -478,6 +836,13 @@ function UnidadesSettings() {
     e.currentTarget.reset();
   };
 
+  const handleDelete = (item: any) => {
+    const nome = item.nome || item.name || `ID ${item.id}`;
+    if (window.confirm(`Tem a certeza que deseja eliminar a unidade de medida "${nome}"?`)) {
+      deleteMutation.mutate(item.id);
+    }
+  };
+
   return (
     <div className="bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-800 rounded-2xl shadow-sm overflow-hidden flex flex-col md:flex-row">
       <div className="p-6 md:w-1/3 border-r border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/20">
@@ -495,36 +860,39 @@ function UnidadesSettings() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-semibold text-gray-500 mb-1">
-              Nome
+              Nome da Unidade
             </label>
             <input
               type="text"
               name="nome"
-              defaultValue={editingItem?.nome || ""}
+              defaultValue={editingItem?.nome || editingItem?.name || ""}
+              placeholder="Ex: Quilograma"
               required
               className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
           <div>
             <label className="block text-xs font-semibold text-gray-500 mb-1">
-              Sigla
+              Sigla / Símbolo
             </label>
             <input
               type="text"
               name="sigla"
-              defaultValue={editingItem?.sigla || ""}
+              defaultValue={editingItem?.sigla || editingItem?.symbol || editingItem?.code || ""}
+              placeholder="Ex: Kg, Un, Lt"
               required
               className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
           <div>
             <label className="block text-xs font-semibold text-gray-500 mb-1">
-              Descrição
+              Descrição Completa
             </label>
             <textarea
               name="descricao"
-              defaultValue={editingItem?.descricao || ""}
+              defaultValue={editingItem?.descricao || editingItem?.description || ""}
               rows={3}
+              placeholder="Detalhes ou conversão da unidade..."
               className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
@@ -532,7 +900,7 @@ function UnidadesSettings() {
             <button
               type="submit"
               disabled={createMutation.isPending || updateMutation.isPending}
-              className="flex-1 py-2 bg-primary hover:bg-primary/90 text-white text-xs font-bold rounded-lg shadow-sm"
+              className="flex-1 py-2 bg-primary hover:bg-primary/90 text-white text-xs font-bold rounded-lg shadow-sm cursor-pointer disabled:opacity-50"
             >
               {createMutation.isPending || updateMutation.isPending
                 ? "A guardar..."
@@ -542,7 +910,7 @@ function UnidadesSettings() {
               <button
                 type="button"
                 onClick={() => setEditingItem(null)}
-                className="px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs font-bold rounded-lg"
+                className="px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs font-bold rounded-lg cursor-pointer"
               >
                 Cancelar
               </button>
@@ -550,61 +918,119 @@ function UnidadesSettings() {
           </div>
         </form>
       </div>
-      <div className="p-0 md:w-2/3">
-        <table className="w-full text-left text-sm whitespace-nowrap">
-          <thead className="bg-gray-50 dark:bg-gray-800 text-xs font-semibold text-gray-500 border-b border-gray-200 dark:border-gray-800 uppercase tracking-wider">
-            <tr>
-              <th className="p-4">ID</th>
-              <th className="p-4">Nome</th>
-              <th className="p-4">Sigla</th>
-              <th className="p-4">Descrição</th>
-              <th className="p-4">Ações</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-            {isLoading ? (
-              <tr>
-                <td colSpan={5} className="p-4 text-center text-gray-500">
-                  A carregar...
-                </td>
-              </tr>
-            ) : items && items.length > 0 ? (
-              items.map((item: any) => (
-                <tr
-                  key={item.id}
-                  className="hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors"
-                >
-                  <td className="p-4 text-xs font-mono text-gray-500">
-                    {item.id}
-                  </td>
-                  <td className="p-4 font-semibold text-gray-900 dark:text-white">
-                    {item.nome}
-                  </td>
-                  <td className="p-4 font-semibold text-gray-900 dark:text-white">
-                    {item.sigla}
-                  </td>
-                  <td className="p-4 text-gray-500 truncate max-w-[200px]">
-                    {item.descricao}
-                  </td>
-                  <td className="p-4">
-                    <button
-                      onClick={() => setEditingItem(item)}
-                      className="text-xs font-bold text-primary hover:text-primary/80"
-                    >
-                      Editar
-                    </button>
-                  </td>
+      <div className="p-0 md:w-2/3 flex flex-col justify-between">
+        <div>
+          {/* Barra de Pesquisa */}
+          <div className="p-3 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between gap-3 bg-gray-50/40 dark:bg-gray-800/20">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-3 top-2.5 text-gray-400" size={14} />
+              <input
+                type="text"
+                placeholder="Pesquisar unidades por nome ou sigla..."
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
+                className="w-full pl-8 pr-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-xs outline-none text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+            <span className="text-xs text-gray-500 dark:text-gray-400 font-medium whitespace-nowrap">
+              {total} {total === 1 ? "unidade" : "unidades"}
+            </span>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm whitespace-nowrap">
+              <thead className="bg-gray-50 dark:bg-gray-800 text-xs font-semibold text-gray-500 border-b border-gray-200 dark:border-gray-800 uppercase tracking-wider">
+                <tr>
+                  <th className="p-4">ID</th>
+                  <th className="p-4">Nome</th>
+                  <th className="p-4">Sigla</th>
+                  <th className="p-4">Descrição Completa</th>
+                  <th className="p-4 text-right">Ações</th>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={5} className="p-4 text-center text-gray-500">
-                  Nenhuma unidade
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+              </thead>
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={5} className="p-6 text-center text-gray-500">
+                      <RefreshCw className="animate-spin inline-block mr-2" size={16} />
+                      A carregar unidades...
+                    </td>
+                  </tr>
+                ) : items && items.length > 0 ? (
+                  items.map((item: any) => {
+                    const nome = item.nome || item.name || "-";
+                    const sigla = item.sigla || item.symbol || item.code || "-";
+                    const desc = item.descricao || item.description;
+                    return (
+                      <tr
+                        key={item.id}
+                        className="hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors"
+                      >
+                        <td className="p-4 text-xs font-mono text-gray-500">
+                          {item.id}
+                        </td>
+                        <td className="p-4 font-semibold text-gray-900 dark:text-white">
+                          {nome}
+                        </td>
+                        <td className="p-4 font-bold text-primary dark:text-primary-light">
+                          {sigla}
+                        </td>
+                        <td className="p-4 text-gray-600 dark:text-gray-300 max-w-md break-words whitespace-normal text-xs">
+                          {desc ? (
+                            <span>{desc}</span>
+                          ) : (
+                            <span className="text-gray-400 italic">Sem descrição</span>
+                          )}
+                        </td>
+                        <td className="p-4 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => setEditingItem(item)}
+                              className="text-xs font-bold text-primary hover:text-primary/80 cursor-pointer"
+                            >
+                              Editar
+                            </button>
+                            <button
+                              onClick={() => handleDelete(item)}
+                              className="text-xs font-bold text-red-500 hover:text-red-700 cursor-pointer ml-1"
+                              title="Eliminar unidade"
+                            >
+                              <Trash2 size={13} className="inline" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan={5} className="p-6 text-center text-gray-500">
+                      Nenhuma unidade encontrada
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {total > 0 && (
+          <TablePagination
+            currentPage={page}
+            totalPages={totalPages}
+            totalItems={total}
+            perPage={perPage}
+            onPageChange={setPage}
+            onPerPageChange={(newPerPage) => {
+              setPerPage(newPerPage);
+              setPage(1);
+            }}
+            itemName="unidades de medida"
+          />
+        )}
       </div>
     </div>
   );
@@ -642,23 +1068,52 @@ export default function Configuracoes() {
   });
 
   // Estados para Gestão do Módulo de Backup Real do Backend
-  const [backups, setBackups] = useState<BackupItemDTO[]>([]);
+  const [allBackups, setAllBackups] = useState<BackupItemDTO[]>([]);
   const [loadingBackups, setLoadingBackups] = useState<boolean>(false);
   const [creatingBackup, setCreatingBackup] = useState<boolean>(false);
   const [restoringFilename, setRestoringFilename] = useState<string | null>(null);
   const [uploadingRestore, setUploadingRestore] = useState<boolean>(false);
+  const [backupPage, setBackupPage] = useState(1);
+  const [backupPerPage, setBackupPerPage] = useState(10);
+  const [backupSearch, setBackupSearch] = useState("");
 
   const loadBackups = useCallback(async () => {
     setLoadingBackups(true);
     try {
-      const list = await backupService.getAll();
-      setBackups(list);
+      const response: any = await backupService.getAll();
+      const list: BackupItemDTO[] = Array.isArray(response)
+        ? response
+        : Array.isArray(response?.items)
+        ? response.items
+        : Array.isArray(response?.data?.items)
+        ? response.data.items
+        : Array.isArray(response?.data)
+        ? response.data
+        : [];
+      setAllBackups(list);
     } catch (error: any) {
       toast.error(error?.message || "Erro ao carregar ficheiros de backup do servidor.");
     } finally {
       setLoadingBackups(false);
     }
   }, []);
+
+  const filteredBackups = useMemo(() => {
+    if (!backupSearch.trim()) return allBackups;
+    const term = backupSearch.toLowerCase();
+    return allBackups.filter((b) => {
+      const fn = String(b.filename || "").toLowerCase();
+      const dt = String(b.date || b.created_at || "").toLowerCase();
+      const tp = String(b.type || "").toLowerCase();
+      return fn.includes(term) || dt.includes(term) || tp.includes(term);
+    });
+  }, [allBackups, backupSearch]);
+
+  const totalBackupPages = Math.max(1, Math.ceil(filteredBackups.length / backupPerPage));
+  const backups = useMemo(() => {
+    const startIndex = (backupPage - 1) * backupPerPage;
+    return filteredBackups.slice(startIndex, startIndex + backupPerPage);
+  }, [filteredBackups, backupPage, backupPerPage]);
 
   useEffect(() => {
     if (activeTab === "backup") {
@@ -812,7 +1267,7 @@ export default function Configuracoes() {
     try {
       await backupService.delete(filename);
       toast.success(`Ficheiro de backup "${filename}" eliminado do servidor.`);
-      setBackups((prev) => prev.filter((b) => b.filename !== filename));
+      setAllBackups((prev) => prev.filter((b) => b.filename !== filename));
     } catch (error: any) {
       toast.error(error?.message || "Erro ao eliminar o ficheiro de backup do servidor.");
     }
@@ -1308,14 +1763,31 @@ export default function Configuracoes() {
 
             {/* List backups */}
             <div className="bg-white dark:bg-surface-dark border border-gray-200 dark:border-border-dark p-6 rounded-2xl shadow-sm space-y-4">
-              <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
-                <h3 className="text-sm font-bold flex items-center gap-2 text-gray-900 dark:text-white">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-gray-100 dark:border-gray-800 pb-3">
+                <div className="flex items-center gap-2">
                   <FileText size={16} className="text-primary" />
-                  Histórico Real de Cópias de Segurança no Servidor
-                </h3>
-                <span className="text-xs font-semibold text-gray-500 bg-gray-100 dark:bg-gray-800 px-2.5 py-1 rounded-full">
-                  {backups.length} {backups.length === 1 ? "ficheiro" : "ficheiros"}
-                </span>
+                  <h3 className="text-sm font-bold text-gray-900 dark:text-white">
+                    Histórico Real de Cópias de Segurança no Servidor
+                  </h3>
+                </div>
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <div className="relative flex-1 sm:w-60">
+                    <Search className="absolute left-3 top-2 text-gray-400" size={13} />
+                    <input
+                      type="text"
+                      placeholder="Pesquisar ficheiro..."
+                      value={backupSearch}
+                      onChange={(e) => {
+                        setBackupSearch(e.target.value);
+                        setBackupPage(1);
+                      }}
+                      className="w-full pl-8 pr-3 py-1 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-xs outline-none text-gray-900 dark:text-gray-100 placeholder:text-gray-400"
+                    />
+                  </div>
+                  <span className="text-xs font-semibold text-gray-500 bg-gray-100 dark:bg-gray-800 px-2.5 py-1 rounded-full whitespace-nowrap">
+                    {filteredBackups.length} {filteredBackups.length === 1 ? "ficheiro" : "ficheiros"}
+                  </span>
+                </div>
               </div>
 
               {loadingBackups ? (
@@ -1323,84 +1795,103 @@ export default function Configuracoes() {
                   <RefreshCw size={24} className="animate-spin text-primary" />
                   <span className="text-xs">A carregar cópias de segurança do servidor...</span>
                 </div>
-              ) : backups.length === 0 ? (
+              ) : filteredBackups.length === 0 ? (
                 <div className="p-8 text-center text-gray-400 border border-dashed border-gray-200 dark:border-gray-800 rounded-xl space-y-2">
                   <HardDriveDownload size={32} className="mx-auto text-gray-300 dark:text-gray-600" />
-                  <p className="text-xs font-semibold">Nenhuma cópia de segurança encontrada no servidor.</p>
-                  <p className="text-[11px]">Clique em "Criar Novo Snapshot .SQL" para gerar a primeira cópia.</p>
+                  <p className="text-xs font-semibold">
+                    {backupSearch.trim() ? "Nenhum ficheiro corresponde à pesquisa." : "Nenhuma cópia de segurança encontrada no servidor."}
+                  </p>
+                  <p className="text-[11px]">Clique em "Criar Novo Snapshot .SQL" para gerar uma nova cópia.</p>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs text-gray-500">
-                    <thead className="bg-gray-50 dark:bg-gray-800/50 font-bold border-b border-gray-100 dark:border-gray-800 text-gray-700 dark:text-gray-300">
-                      <tr>
-                        <th className="px-4 py-2.5">FICHEIRO .SQL</th>
-                        <th className="px-4 py-2.5">DATA DO SNAPSHOT</th>
-                        <th className="px-4 py-2.5">TAMANHO</th>
-                        <th className="px-4 py-2.5 text-center">ORIGEM</th>
-                        <th className="px-4 py-2.5 text-right">AÇÕES</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100 dark:divide-gray-800 text-gray-800 dark:text-gray-200">
-                      {backups.map((bk: BackupItemDTO) => (
-                        <tr
-                          key={bk.id || bk.filename}
-                          className="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition"
-                        >
-                          <td className="px-4 py-3 font-mono font-bold text-[11px] text-gray-900 dark:text-white">
-                            {bk.filename}
-                          </td>
-                          <td className="px-4 py-3 text-gray-500 dark:text-gray-400">
-                            {bk.date || (bk.created_at ? new Date(bk.created_at).toLocaleString('pt-PT') : '-')}
-                          </td>
-                          <td className="px-4 py-3 font-semibold text-gray-700 dark:text-gray-300">
-                            {bk.formatted_size || bk.size}
-                          </td>
-                          <td className="px-4 py-3 text-center">
-                            <span
-                              className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${
-                                bk.type === "Automático"
-                                  ? "bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300"
-                                  : "bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300"
-                              }`}
-                            >
-                              {bk.type || "Manual"}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 text-right">
-                            <div className="flex items-center justify-end gap-1.5">
-                              <button
-                                onClick={() => handleDownloadBackup(bk.filename)}
-                                className="bg-primary/10 hover:bg-primary/20 text-primary font-bold px-2.5 py-1.5 rounded-lg text-[10px] flex items-center gap-1 transition cursor-pointer"
-                                title="Descarregar ficheiro .sql"
-                              >
-                                <Download size={12} />
-                                <span>Download</span>
-                              </button>
-
-                              <button
-                                onClick={() => handleRestoreServerBackup(bk.filename)}
-                                disabled={restoringFilename === bk.filename}
-                                className="bg-amber-100 dark:bg-amber-950/60 hover:bg-amber-200 text-amber-900 dark:text-amber-200 font-bold px-2.5 py-1.5 rounded-lg text-[10px] flex items-center gap-1 transition cursor-pointer"
-                                title="Restaurar a base de dados a partir desta cópia"
-                              >
-                                <RotateCcw size={12} className={restoringFilename === bk.filename ? "animate-spin" : ""} />
-                                <span>{restoringFilename === bk.filename ? "A restaurar..." : "Restaurar"}</span>
-                              </button>
-
-                              <button
-                                onClick={() => handleDeleteBackup(bk.filename)}
-                                className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition cursor-pointer"
-                                title="Eliminar este backup do servidor"
-                              >
-                                <Trash2 size={13} />
-                              </button>
-                            </div>
-                          </td>
+                <div className="space-y-4">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs text-gray-500">
+                      <thead className="bg-gray-50 dark:bg-gray-800/50 font-bold border-b border-gray-100 dark:border-gray-800 text-gray-700 dark:text-gray-300">
+                        <tr>
+                          <th className="px-4 py-2.5">FICHEIRO .SQL</th>
+                          <th className="px-4 py-2.5">DATA DO SNAPSHOT</th>
+                          <th className="px-4 py-2.5">TAMANHO</th>
+                          <th className="px-4 py-2.5 text-center">ORIGEM</th>
+                          <th className="px-4 py-2.5 text-right">AÇÕES</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100 dark:divide-gray-800 text-gray-800 dark:text-gray-200">
+                        {backups.map((bk: BackupItemDTO) => (
+                          <tr
+                            key={bk.id || bk.filename}
+                            className="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition"
+                          >
+                            <td className="px-4 py-3 font-mono font-bold text-[11px] text-gray-900 dark:text-white break-all">
+                              {bk.filename}
+                            </td>
+                            <td className="px-4 py-3 text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                              {bk.date || (bk.created_at ? new Date(bk.created_at).toLocaleString('pt-PT') : '-')}
+                            </td>
+                            <td className="px-4 py-3 font-semibold text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                              {bk.formatted_size || bk.size}
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <span
+                                className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${
+                                  bk.type === "Automático"
+                                    ? "bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300"
+                                    : "bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300"
+                                }`}
+                              >
+                                {bk.type || "Manual"}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              <div className="flex items-center justify-end gap-1.5">
+                                <button
+                                  onClick={() => handleDownloadBackup(bk.filename)}
+                                  className="bg-primary/10 hover:bg-primary/20 text-primary font-bold px-2.5 py-1.5 rounded-lg text-[10px] flex items-center gap-1 transition cursor-pointer"
+                                  title="Descarregar ficheiro .sql"
+                                >
+                                  <Download size={12} />
+                                  <span>Download</span>
+                                </button>
+
+                                <button
+                                  onClick={() => handleRestoreServerBackup(bk.filename)}
+                                  disabled={restoringFilename === bk.filename}
+                                  className="bg-amber-100 dark:bg-amber-950/60 hover:bg-amber-200 text-amber-900 dark:text-amber-200 font-bold px-2.5 py-1.5 rounded-lg text-[10px] flex items-center gap-1 transition cursor-pointer"
+                                  title="Restaurar a base de dados a partir desta cópia"
+                                >
+                                  <RotateCcw size={12} className={restoringFilename === bk.filename ? "animate-spin" : ""} />
+                                  <span>{restoringFilename === bk.filename ? "A restaurar..." : "Restaurar"}</span>
+                                </button>
+
+                                <button
+                                  onClick={() => handleDeleteBackup(bk.filename)}
+                                  className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition cursor-pointer"
+                                  title="Eliminar este backup do servidor"
+                                >
+                                  <Trash2 size={13} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {filteredBackups.length > 0 && (
+                    <TablePagination
+                      currentPage={backupPage}
+                      totalPages={totalBackupPages}
+                      totalItems={filteredBackups.length}
+                      perPage={backupPerPage}
+                      onPageChange={setBackupPage}
+                      onPerPageChange={(newPerPage) => {
+                        setBackupPerPage(newPerPage);
+                        setBackupPage(1);
+                      }}
+                      itemName="ficheiros .sql"
+                    />
+                  )}
                 </div>
               )}
             </div>

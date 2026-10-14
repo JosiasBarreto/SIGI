@@ -252,7 +252,7 @@ export const ControleStockLote: React.FC<ControleStockLoteProps> = ({
             stock_atual: catItem.stock_atual,
             preco_compra_atual: catItem.preco_compra,
             preco_compra: catItem.preco_compra || 0,
-            quantidade: 1,
+            quantidade: 0,
             observacao: ''
           });
         }
@@ -281,7 +281,7 @@ export const ControleStockLote: React.FC<ControleStockLoteProps> = ({
         stock_atual: catItem.stock_atual,
         preco_compra_atual: catItem.preco_compra,
         preco_compra: catItem.preco_compra || 0,
-        quantidade: 1,
+        quantidade: 0,
         observacao: ''
       };
       setBatchItems(prev => [...prev, newItem]);
@@ -308,7 +308,7 @@ export const ControleStockLote: React.FC<ControleStockLoteProps> = ({
           stock_atual: catItem.stock_atual,
           preco_compra_atual: catItem.preco_compra,
           preco_compra: catItem.preco_compra || 0,
-          quantidade: 1,
+          quantidade: 0,
           observacao: ''
         });
       }
@@ -389,26 +389,33 @@ export const ControleStockLote: React.FC<ControleStockLoteProps> = ({
       return;
     }
 
-    // Validate armazem_id on each item
-    const missingArmazem = batchItems.find(item => !item.armazem_id);
+    // Only items with quantity > 0 are considered for the stock movement
+    const activeItems = batchItems.filter(item => Number(item.quantidade) > 0);
+
+    if (activeItems.length === 0) {
+      toast.error('Defina a Quantidade de Movimento (maior que 0) para pelo menos um item da lista.');
+      return;
+    }
+
+    // Validate armazem_id on items being moved
+    const missingArmazem = activeItems.find(item => !item.armazem_id);
     if (missingArmazem) {
       toast.error(`O item "${missingArmazem.nome}" não tem armazém de destino/origem selecionado.`);
       return;
     }
 
-    // Validate quantities
-    const invalidQuantities = batchItems.filter(item => isNaN(item.quantidade) || item.quantidade <= 0);
-    if (invalidQuantities.length > 0) {
-      toast.error(`Existem ${invalidQuantities.length} item(ns) com quantidade inválida (deve ser maior que 0).`);
-      return;
+    // If some items were left with 0, inform the user
+    const zeroCount = batchItems.length - activeItems.length;
+    if (zeroCount > 0) {
+      toast.info(`A processar ${activeItems.length} item(ns). ${zeroCount} item(ns) com quantidade 0 foram ignorados.`);
     }
 
-    // Construct Payload according to API spec
+    // Construct Payload according to API spec using only activeItems
     const payload = {
       numero_fatura: numeroFatura.trim() || undefined,
       fornecedor_id: fornecedorId ? Number(fornecedorId) : undefined,
       observacao: observacaoGeral.trim() || undefined,
-      itens: batchItems.map(item => {
+      itens: activeItems.map(item => {
         const baseItem: any = {
           tipo_item: item.tipo_item,
           armazem_id: Number(item.armazem_id),
@@ -433,11 +440,12 @@ export const ControleStockLote: React.FC<ControleStockLoteProps> = ({
     movimentacaoLoteMutation.mutate(payload);
   };
 
-  // Calculated totals
+  // Calculated totals based on items with defined quantity
   const totalItemsCount = batchItems.length;
-  const totalEntradasCount = batchItems.filter(i => i.tipo === 'Entrada').length;
-  const totalSaidasCount = batchItems.filter(i => i.tipo === 'Saida').length;
-  const totalValueEntradas = batchItems
+  const itemsComQtd = batchItems.filter(i => Number(i.quantidade) > 0);
+  const totalEntradasCount = itemsComQtd.filter(i => i.tipo === 'Entrada').length;
+  const totalSaidasCount = itemsComQtd.filter(i => i.tipo === 'Saida').length;
+  const totalValueEntradas = itemsComQtd
     .filter(i => i.tipo === 'Entrada')
     .reduce((acc, curr) => acc + ((Number(curr.quantidade) || 0) * (Number(curr.preco_compra) || 0)), 0);
 
@@ -1059,8 +1067,10 @@ export const ControleStockLote: React.FC<ControleStockLoteProps> = ({
                 </div>
               )}
               <div>
-                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block">Total Itens no Lote</span>
-                <span className="font-mono font-black text-primary">{totalItemsCount} ({totalEntradasCount} Entradas, {totalSaidasCount} Saídas)</span>
+                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block">Itens com Quantidade</span>
+                <span className="font-mono font-black text-primary">
+                  {itemsComQtd.length} de {totalItemsCount} ({totalEntradasCount} Entradas, {totalSaidasCount} Saídas)
+                </span>
               </div>
             </div>
 
@@ -1190,13 +1200,23 @@ export const ControleStockLote: React.FC<ControleStockLoteProps> = ({
                         <td className="py-3 px-3 text-center">
                           <input
                             type="number"
-                            step="0.01"
-                            min="0.01"
+                            step="any"
+                            min="0"
+                            placeholder="0"
                             value={item.quantidade}
-                            onChange={e => handleUpdateItem(idx, 'quantidade', Number(e.target.value))}
+                            onFocus={e => e.target.select()}
+                            onChange={e => {
+                              const rawVal = e.target.value;
+                              const val = rawVal === '' ? 0 : Number(rawVal);
+                              handleUpdateItem(idx, 'quantidade', Math.max(0, isNaN(val) ? 0 : val));
+                            }}
                             className={cn(
-                              "w-24 text-center border-2 focus:border-primary px-2 py-1 rounded-lg font-mono font-black outline-none text-xs",
-                              item.tipo === 'Entrada' ? "bg-emerald-50/50 border-emerald-300 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-300" : "bg-rose-50/50 border-rose-300 text-rose-700 dark:bg-rose-950/20 dark:text-rose-300"
+                              "w-24 text-center border-2 focus:border-primary px-2 py-1 rounded-lg font-mono font-black outline-none text-xs transition-colors",
+                              Number(item.quantidade) > 0
+                                ? (item.tipo === 'Entrada' 
+                                    ? "bg-emerald-50/50 border-emerald-400 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300" 
+                                    : "bg-rose-50/50 border-rose-400 text-rose-700 dark:bg-rose-950/30 dark:text-rose-300")
+                                : "bg-gray-50 border-gray-300 text-gray-500 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400"
                             )}
                           />
                         </td>
@@ -1210,11 +1230,13 @@ export const ControleStockLote: React.FC<ControleStockLoteProps> = ({
                         <td className="py-3 px-3 text-center">
                           <span className={cn(
                             "inline-flex items-center gap-1 font-mono font-black text-xs px-2 py-1 rounded border",
-                            item.tipo === 'Entrada' 
-                              ? "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200/50" 
-                              : "text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 border-rose-200/50"
+                            qtd > 0
+                              ? (item.tipo === 'Entrada' 
+                                  ? "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200/50" 
+                                  : "text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 border-rose-200/50")
+                              : "text-gray-400 bg-gray-50 dark:bg-gray-800/60 border-gray-200 dark:border-gray-700"
                           )}>
-                            {item.tipo === 'Entrada' ? '+' : '-'}{qtd} ➔ {novoStock} {item.unidade_medida}
+                            {qtd > 0 ? (item.tipo === 'Entrada' ? '+' : '-') : ''}{qtd} ➔ {novoStock} {item.unidade_medida}
                           </span>
                         </td>
 

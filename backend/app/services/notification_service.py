@@ -1,4 +1,5 @@
 import threading
+import time
 import smtplib
 import logging
 from email.mime.text import MIMEText
@@ -14,6 +15,29 @@ class NotificationService:
     Serviço centralizado de envio de notificações e comunicações
     (Email SMTP, SMS e WhatsApp). Operações executadas de forma assíncrona.
     """
+    _dispatch_lock = threading.Lock()
+    _recent_dispatches = {}
+
+    @classmethod
+    def _reserve_dispatch(cls, key, window_seconds=60):
+        """Evita que o mesmo pedido/documento seja enviado duas vezes.
+
+        A proteção cobre cliques repetidos, eventos WebSocket duplicados e
+        chamadas concorrentes dentro do mesmo processo, sem bloquear novos
+        envios legítimos depois da janela de segurança.
+        """
+        now = time.monotonic()
+        with cls._dispatch_lock:
+            cls._recent_dispatches = {
+                saved_key: timestamp
+                for saved_key, timestamp in cls._recent_dispatches.items()
+                if now - timestamp < window_seconds
+            }
+            if key in cls._recent_dispatches:
+                logger.info('[NOTIFICACAO] Envio duplicado suprimido: %s', key)
+                return False
+            cls._recent_dispatches[key] = now
+            return True
 
     @staticmethod
     def _get_app():
@@ -264,6 +288,10 @@ class NotificationService:
         """
         Envia fatura/venda de forma assíncrona com PDF anexo.
         """
+        dispatch_key = ('invoice', str(venda_id), str(client_contact).strip().lower(), str(method).lower())
+        if not NotificationService._reserve_dispatch(dispatch_key):
+            return False
+
         app = NotificationService._get_app()
 
         def task():
@@ -275,6 +303,7 @@ class NotificationService:
 
         thread = threading.Thread(target=task)
         thread.start()
+        return True
 
     @staticmethod
     def _execute_send_invoice(venda_id, client_contact, method="email"):
@@ -460,6 +489,13 @@ class NotificationService:
         """
         Envia detalhes do pedido para o cliente (confirmação ou alteração de estado).
         """
+        dispatch_key = (
+            'pedido', str(pedido_id), str(client_contact).strip().lower(),
+            str(method).lower(), str(trigger).lower()
+        )
+        if not NotificationService._reserve_dispatch(dispatch_key):
+            return False
+
         app = NotificationService._get_app()
 
         def task():
@@ -471,6 +507,7 @@ class NotificationService:
 
         thread = threading.Thread(target=task)
         thread.start()
+        return True
 
     @staticmethod
     def _execute_send_pedido(pedido_id, client_contact, method="email", trigger="creation"):

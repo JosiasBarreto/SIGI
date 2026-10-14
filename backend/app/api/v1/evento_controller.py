@@ -20,7 +20,7 @@ evento_service = EventoService()
 
 def build_pagination(repo, schema, request):
     page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 100, type=int)
+    per_page = request.args.get('per_page', 10, type=int)
     search = request.args.get('search', '')
     
     filters = {}
@@ -310,8 +310,15 @@ def get_espacos():
 @jwt_required()
 @requires_roles('Administrador', 'Atendimento', 'Comercial')
 def create_espaco():
+    raw_data = request.get_json() or {}
+    if 'estado' in raw_data and raw_data['estado']:
+        v = str(raw_data['estado']).strip().upper()
+        if v in ('ATIVO', 'ATIVADA', 'ACTIVE', 'TRUE'):
+            raw_data['estado'] = 'Ativo'
+        elif v in ('INATIVO', 'INATIVADA', 'INACTIVE', 'FALSE'):
+            raw_data['estado'] = 'Inativo'
     try:
-        data = EspacoSchema().load(request.get_json())
+        data = EspacoSchema().load(raw_data)
     except ValidationError as err:
         return jsonify({"msg": "Validation error", "errors": err.messages}), 400
         
@@ -327,6 +334,12 @@ def update_espaco(id):
     esp = Espaco.query.get(id)
     if not esp: return jsonify({"msg": "Espaço não encontrado"}), 404
     data = request.get_json() or {}
+    if 'estado' in data and data['estado']:
+        v = str(data['estado']).strip().upper()
+        if v in ('ATIVO', 'ATIVADA', 'ACTIVE', 'TRUE'):
+            data['estado'] = 'Ativo'
+        elif v in ('INATIVO', 'INATIVADA', 'INACTIVE', 'FALSE'):
+            data['estado'] = 'Inativo'
     for k, v in data.items():
         if hasattr(esp, k) and k != 'id':
             setattr(esp, k, v)
@@ -375,7 +388,7 @@ def update_evento(id):
 
 @evento_bp.route('/<int:id>/faturar', methods=['POST'])
 @jwt_required()
-@requires_roles('Administrador', 'Comercial', 'Atendimento')
+@requires_roles('Administrador', 'Comercial')
 def faturar_evento(id):
     from app.services.comercial_service import ComercialService
     com_service = ComercialService()
@@ -394,7 +407,7 @@ def faturar_evento(id):
 def check_proximos():
     from datetime import datetime, timedelta
     from app.models.evento import Evento
-    from app.websocket.socket_manager import emit_sync_event
+    from app.websocket.socket_manager import socketio
     
     amanha = datetime.utcnow().date() + timedelta(days=1)
     hoje = datetime.utcnow().date()
@@ -404,7 +417,7 @@ def check_proximos():
     ).all()
     
     for ev in eventos:
-        emit_sync_event('alerta_evento_proximo', {'numero': ev.numero, 'titulo': ev.titulo, 'data': str(ev.data_evento)})
+        socketio.emit('alerta_evento_proximo', {'numero': ev.numero, 'titulo': ev.titulo, 'data': str(ev.data_evento)})
         
     return jsonify({"msg": f"Checked {len(eventos)} upcoming events."}), 200
 
@@ -453,22 +466,10 @@ def gerar_planeamento(id):
 @jwt_required()
 def gerar_documento(id, doc_type):
     from flask import send_file
-    from app.models.evento import Evento
-    from app.services.pdf_generator import generate_evento_pdf, generate_evento_receipt
-    
-    evento = Evento.query.get(id)
-    if not evento:
-        return jsonify({"msg": "Evento não encontrado"}), 404
-        
-    doc_type_lower = doc_type.lower()
-    if 'termico' in doc_type_lower or 'receipt' in doc_type_lower:
-        pdf_buffer = generate_evento_receipt(evento, doc_type_lower)
-    else:
-        pdf_buffer = generate_evento_pdf(evento, doc_type_lower)
-        
-    return send_file(
-        pdf_buffer,
-        as_attachment=True,
-        download_name=f"evento_{evento.numero}_{doc_type}.pdf",
-        mimetype='application/pdf'
-    )
+    buffer = io.BytesIO()
+    buffer.write(f"DOCUMENTO {doc_type.upper()} PARA EVENTO {id}".encode('utf-8'))
+    buffer.seek(0)
+    ext = 'pdf' if doc_type != 'word' else 'docx'
+    mimetype = 'application/pdf' if doc_type != 'word' else 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    return send_file(buffer, as_attachment=True, download_name=f"{doc_type}_{id}.{ext}", mimetype=mimetype)
+

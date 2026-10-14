@@ -3,14 +3,14 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { toast } from 'react-toastify';
 import { AppNotification, NotificationType, NotificationPriorityLevel } from '../types/notifications';
-import { upsertNotification, playNotificationSound } from '../utils/notificationUtils';
+import { upsertNotification } from '../utils/notificationUtils';
 import { socketManager } from '../services/socket/SocketManager';
 import {
   notificationSoundManager,
   osNotificationManager,
   notificationAuditService,
+  notificationManager,
   SoundSettings
 } from '../services/notifications';
 
@@ -155,6 +155,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode; userRol
 
     // Conectar socket central ou criar instância compatível com a documentação
     const socketInstance = socketManager.connect();
+    const recentProductionAlertKeys = new Set<string>();
 
     // 1. Escuta de Notificações de Requisição (Armazém, Admin, Controlador)
     const handleRequisicaoNotificacao = (data: any) => {
@@ -179,8 +180,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode; userRol
         })
       );
 
-      // Feedback sonoro e toast
-      toast.info(`Requisição ${ref}: ${estado}`);
+      // O toast/som é responsabilidade exclusiva do NotificationManager.
     };
 
     // 2. Escuta de Atualização de Pedido
@@ -208,13 +208,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode; userRol
         })
       );
 
-      // Se estiver pronto, emitir alerta sonoro discreto para sala de expedição/balcão e toast de destaque
-      if (isPronto) {
-        playNotificationSound('bell');
-        toast.success(`🎉 ${mensagem}`, { autoClose: 7000 });
-      } else {
-        toast.info(mensagem);
-      }
+      // O evento visual correspondente é tratado pelo NotificationManager.
     };
 
     // 3. Escuta de Novo Pedido Criado
@@ -239,35 +233,71 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode; userRol
         })
       );
 
-      playNotificationSound('chime');
-      toast.info(`🔔 ${mensagem}`);
+      // O evento visual correspondente é tratado pelo NotificationManager.
     };
 
-    // 4. Escuta de Alerta do Sistema Geral
+    // 4. Recebe o evento normalizado do único canal responsável por toast,
+    // som e notificação do sistema operativo. O contexto apenas atualiza o
+    // sino/histórico, evitando que o mesmo WebSocket gere dois toasts.
     const handleNotificacaoGeral = (data: any) => {
       if (!data) return;
       const titulo = data.titulo || data.title || 'Aviso do Sistema';
       const mensagem = data.mensagem || data.message || 'Notificação recebida';
       const tipo: NotificationType = data.tipo === 'error' || data.type === 'error' ? 'error' : data.tipo === 'success' || data.type === 'success' ? 'success' : 'info';
+      const rawEntityType = String(data.entity_type || data.entidade_tipo || 'sistema').toLowerCase();
+      const entityId = data.entity_id || data.entidade_id || data.data?.pedido_id || data.data?.ordem_id || data.id || Date.now();
+      const isPedido = rawEntityType.includes('pedido') || Boolean(data.data?.pedido_id);
+      const isProducao = rawEntityType.includes('ordem') || rawEntityType.includes('producao') || Boolean(data.data?.ordem_id);
+      const entityType = isPedido ? 'pedido' : isProducao ? 'producao' : rawEntityType.includes('requisicao') ? 'requisicao' : rawEntityType.includes('material') ? 'material' : 'sistema';
 
       setNotifications((prev) =>
         upsertNotification(prev, {
-          entityType: 'sistema',
-          entityId: data.id || Date.now(),
+          entityType,
+          entityId,
           referencia: titulo,
           novoEstado: 'Notificado',
           mensagem,
           tipo,
           prioridade: data.prioridade === 'alta' ? 'alta' : 'media',
+          actionUrl: isPedido ? '/pedidos' : isProducao ? '/producao' : '/notificacoes',
           data,
         })
       );
 
-      if (tipo === 'error') {
-        toast.error(`${titulo}: ${mensagem}`);
-      } else {
-        toast.info(`${titulo}: ${mensagem}`);
-      }
+    };
+
+    // Eventos de sector continuam a ser emitidos para os KDS legados. Também
+    // entram na central para que o sino notifique operadores que só usam a UI
+    // geral, mesmo quando não existe uma notificação global associada.
+    const handleAlertaProducao = (data: any) => {
+      if (!data) return;
+      const setor = data.setor || data.sector || 'Produção';
+      const numero = data.numero || data.pedido_numero || data.ordem_numero || `#${data.pedido_id || data.ordem_id || ''}`;
+      const mensagem = data.msg || data.mensagem || `Novo trabalho recebido em ${setor}.`;
+      const alertKey = `${setor}:${data.ordem_id || data.pedido_id || numero}`;
+
+      // O backend publica o mesmo alerta para a room global e para a room do
+      // sector. Um cliente pertencente às duas recebe ambas as cópias.
+      if (recentProductionAlertKeys.has(alertKey)) return;
+      recentProductionAlertKeys.add(alertKey);
+      window.setTimeout(() => recentProductionAlertKeys.delete(alertKey), 3000);
+
+      setNotifications((prev) =>
+        upsertNotification(prev, {
+          entityType: 'producao',
+          entityId: data.ordem_id || data.pedido_id || Date.now(),
+          referencia: `${setor}: ${numero}`,
+          novoEstado: 'Novo',
+          mensagem,
+          tipo: 'info',
+          prioridade: 'alta',
+          actionUrl: '/producao',
+          data,
+        })
+      );
+
+      // O alerta pode chegar em mais de uma room; não deve criar toast/som
+      // local. Quando houver notificação visual, o NotificationManager trata-a.
     };
 
     // 5. Escuta de Alerta de Material (Danos/Perdas de Materiais)
@@ -290,22 +320,40 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode; userRol
         })
       );
 
-      toast.warn(`⚠️ Alerta de Material: ${msg}`);
+      // Toast/som ficam centralizados no NotificationManager.
     };
+
+    const unsubscribeNotificationManager = notificationManager.subscribe((notification) => {
+      handleNotificacaoGeral({
+        ...notification,
+        entity_type: notification.entity_type,
+        entity_id: notification.entity_id,
+        titulo: notification.title,
+        mensagem: notification.message,
+        tipo: notification.type,
+        prioridade: notification.priority,
+        data: notification.data,
+      });
+    });
 
     // Registar no socket central
     const unsubRequisicao = socketManager.on('requisicao_notificacao', handleRequisicaoNotificacao);
     const unsubPedidoAtualizado = socketManager.on('pedido_atualizado', handlePedidoAtualizado);
     const unsubNovoPedido = socketManager.on('novo_pedido', handleNovoPedido);
-    const unsubNotificacao = socketManager.on('notificacao', handleNotificacaoGeral);
     const unsubAlertaMaterial = socketManager.on('alerta_material', handleAlertaMaterial);
+    const unsubAlertaCozinha = socketManager.on('alerta_cozinha', handleAlertaProducao);
+    const unsubAlertaPastelaria = socketManager.on('alerta_pastelaria', handleAlertaProducao);
+    const unsubAlertaBar = socketManager.on('alerta_bar', handleAlertaProducao);
 
     return () => {
       unsubRequisicao();
       unsubPedidoAtualizado();
       unsubNovoPedido();
-      unsubNotificacao();
+      unsubscribeNotificationManager();
       unsubAlertaMaterial();
+      unsubAlertaCozinha();
+      unsubAlertaPastelaria();
+      unsubAlertaBar();
     };
   }, [propUserRole]);
 

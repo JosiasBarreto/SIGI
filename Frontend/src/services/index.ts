@@ -127,6 +127,7 @@ export function createService<T>(endpoint: string, _fakeCollection?: string) {
       const response = await apiClient.put<any, any>(`${endpoint}/${id}`, item);
       return response as T;
     },
+
     async delete(id: string): Promise<boolean> {
       const response = await apiClient.delete<any, any>(`${endpoint}/${id}`);
       return response.success ?? true;
@@ -305,14 +306,54 @@ export const productService = {
     const action = ativar ? 'ativar' : 'desativar';
     return apiClient.put(`/v1/armazem/produtos/${id}/${action}`);
   },
-  getCategorias: async (): Promise<any[]> => {
+  getCategoriasArray: async (): Promise<any[]> => {
     const res = await apiClient.get<any, any>('/v1/armazem/categorias');
-    if (res?.items) return res.items;
-    if (res?.data?.items) return res.data.items;
-    if (res?.data?.data) return res.data.data;
-    if (Array.isArray(res?.data)) return res.data;
-    if (Array.isArray(res)) return res;
-    return [];
+    return res?.items || res?.data?.items || res?.data || res || [];
+  },
+  getCategorias: async (params?: BaseServiceParams): Promise<any> => {
+    const res = await apiClient.get<any, any>('/v1/armazem/categorias', { params });
+    const rawList: any[] = Array.isArray(res)
+      ? res
+      : Array.isArray(res?.items)
+      ? res.items
+      : Array.isArray(res?.categorias)
+      ? res.categorias
+      : Array.isArray(res?.data?.items)
+      ? res.data.items
+      : Array.isArray(res?.data?.categorias)
+      ? res.data.categorias
+      : Array.isArray(res?.data)
+      ? res.data
+      : [];
+
+    const serverTotal = res?.total ?? res?.data?.total ?? res?.count ?? res?.data?.count;
+    const serverPages = res?.pages ?? res?.data?.pages;
+
+    if (params?.page || params?.per_page) {
+      const page = Number(params?.page || 1);
+      const perPage = Number(params?.per_page || 10);
+      const total = serverTotal !== undefined ? Number(serverTotal) : rawList.length;
+      const pages = serverPages !== undefined ? Number(serverPages) : Math.max(1, Math.ceil(total / perPage));
+      const startIndex = (page - 1) * perPage;
+      const endIndex = startIndex + perPage;
+      const items = (serverTotal !== undefined && serverPages !== undefined && rawList.length <= perPage)
+        ? rawList
+        : (rawList.length > perPage ? rawList.slice(startIndex, endIndex) : rawList);
+
+      const result: any = [...items];
+      result.items = items;
+      result.total = total;
+      result.pages = pages;
+      result.page = page;
+      return result;
+    }
+
+    const result: any = [...rawList];
+    result.items = rawList;
+    result.total = rawList.length;
+    result.pages = 1;
+    result.page = 1;
+    return result;
   },
   createCategoria: async (data: any): Promise<any> => {
     return apiClient.post<any, any>('/v1/armazem/categorias', data);
@@ -323,14 +364,58 @@ export const productService = {
   deleteCategoria: async (id: string | number): Promise<void> => {
     return apiClient.delete(`/v1/armazem/categorias/${id}`);
   },
-  getUnidadesMedida: async (): Promise<any[]> => {
+  getUnidadesMedidaArray: async (): Promise<any[]> => {
     const res = await apiClient.get<any, any>('/v1/armazem/unidades-medida');
-    if (res?.items) return res.items;
-    if (res?.data?.items) return res.data.items;
-    if (res?.data?.data) return res.data.data;
-    if (Array.isArray(res?.data)) return res.data;
-    if (Array.isArray(res)) return res;
-    return [];
+    return res?.items || res?.data?.items || res?.data || res || [];
+  },
+  getUnidadesMedida: async (params?: BaseServiceParams): Promise<any> => {
+    const res = await apiClient.get<any, any>('/v1/armazem/unidades-medida', { params });
+    const rawList: any[] = Array.isArray(res)
+      ? res
+      : Array.isArray(res?.items)
+      ? res.items
+      : Array.isArray(res?.unidades_medida)
+      ? res.unidades_medida
+      : Array.isArray(res?.unidades)
+      ? res.unidades
+      : Array.isArray(res?.data?.items)
+      ? res.data.items
+      : Array.isArray(res?.data?.unidades_medida)
+      ? res.data.unidades_medida
+      : Array.isArray(res?.data?.unidades)
+      ? res.data.unidades
+      : Array.isArray(res?.data)
+      ? res.data
+      : [];
+
+    const serverTotal = res?.total ?? res?.data?.total ?? res?.count ?? res?.data?.count;
+    const serverPages = res?.pages ?? res?.data?.pages;
+
+    if (params?.page || params?.per_page) {
+      const page = Number(params?.page || 1);
+      const perPage = Number(params?.per_page || 10);
+      const total = serverTotal !== undefined ? Number(serverTotal) : rawList.length;
+      const pages = serverPages !== undefined ? Number(serverPages) : Math.max(1, Math.ceil(total / perPage));
+      const startIndex = (page - 1) * perPage;
+      const endIndex = startIndex + perPage;
+      const items = (serverTotal !== undefined && serverPages !== undefined && rawList.length <= perPage)
+        ? rawList
+        : (rawList.length > perPage ? rawList.slice(startIndex, endIndex) : rawList);
+
+      const result: any = [...items];
+      result.items = items;
+      result.total = total;
+      result.pages = pages;
+      result.page = page;
+      return result;
+    }
+
+    const result: any = [...rawList];
+    result.items = rawList;
+    result.total = rawList.length;
+    result.pages = 1;
+    result.page = 1;
+    return result;
   },
   createUnidadeMedida: async (data: any): Promise<any> => {
     return apiClient.post<any, any>('/v1/armazem/unidades-medida', data);
@@ -605,12 +690,12 @@ const getCompanyConfig = () => {
   } catch {
     return {
       empresa: 'Sabor Imbatível, S.A.',
-      nif: '500123456',
-      telefone: '+239 9956478',
-      email: 'comercial@saborimbativel.st',
+      nif: '9999999',
+      telefone: '+239 00000000',
+      email: 'suportesaborimbativel@gmail.com',
       endereco: 'São Tomé, São Tomé e Príncipe',
       licenca: '001/SIGI/2026',
-      moeda: ''
+      moeda: 'STN'
     };
   }
 };
@@ -1836,17 +1921,10 @@ export const setupService = {
     // 2. Endpoints dedicados de status de setup / autenticação
     // 3. Endpoints de configuração de empresa
     const endpoints = [
-      '/v1/users?per_page=1',
-      '/v1/utilizadores?per_page=1',
-      '/v1/setup/status',
-      '/setup/status',
-      '/v1/auth/setup-status',
-      '/v1/auth/status',
+      
       '/v1/setup/check',
       '/setup/check',
-      '/v1/setup/empresa',
-      '/setup/empresa',
-      '/v1/empresa'
+      
     ];
 
     for (const endpoint of endpoints) {
@@ -2042,9 +2120,58 @@ export const configService = {
 };
 
 export const fiscalService = {
-  getIvaRates: async (): Promise<any[]> => {
-    const res = await apiClient.get<any, any>('/v1/fiscal/iva');
-    return res?.data || res || [];
+  getIvaRates: async (params?: BaseServiceParams): Promise<any> => {
+    const res = await apiClient.get<any, any>('/v1/fiscal/iva', { params });
+    const rawList: any[] = Array.isArray(res)
+      ? res
+      : Array.isArray(res?.items)
+      ? res.items
+      : Array.isArray(res?.taxas_iva)
+      ? res.taxas_iva
+      : Array.isArray(res?.taxas)
+      ? res.taxas
+      : Array.isArray(res?.iva)
+      ? res.iva
+      : Array.isArray(res?.data?.items)
+      ? res.data.items
+      : Array.isArray(res?.data?.taxas_iva)
+      ? res.data.taxas_iva
+      : Array.isArray(res?.data?.taxas)
+      ? res.data.taxas
+      : Array.isArray(res?.data?.iva)
+      ? res.data.iva
+      : Array.isArray(res?.data)
+      ? res.data
+      : [];
+
+    const serverTotal = res?.total ?? res?.data?.total ?? res?.count ?? res?.data?.count;
+    const serverPages = res?.pages ?? res?.data?.pages;
+
+    if (params?.page || params?.per_page) {
+      const page = Number(params?.page || 1);
+      const perPage = Number(params?.per_page || 10);
+      const total = serverTotal !== undefined ? Number(serverTotal) : rawList.length;
+      const pages = serverPages !== undefined ? Number(serverPages) : Math.max(1, Math.ceil(total / perPage));
+      const startIndex = (page - 1) * perPage;
+      const endIndex = startIndex + perPage;
+      const items = (serverTotal !== undefined && serverPages !== undefined && rawList.length <= perPage)
+        ? rawList
+        : (rawList.length > perPage ? rawList.slice(startIndex, endIndex) : rawList);
+
+      const result: any = [...items];
+      result.items = items;
+      result.total = total;
+      result.pages = pages;
+      result.page = page;
+      return result;
+    }
+
+    const result: any = [...rawList];
+    result.items = rawList;
+    result.total = rawList.length;
+    result.pages = 1;
+    result.page = 1;
+    return result;
   },
   createIvaRate: async (data: any): Promise<any> => {
     const res = await apiClient.post<any, any>('/v1/fiscal/iva', data);
@@ -2062,6 +2189,8 @@ export const fiscalService = {
     await apiClient.delete(`/v1/fiscal/iva/${id}`);
   }
 };
+
+
 
 export const vendaService = {
   emitirDocumentoPedido: async (pedidoId: string | number, tipo_documento: 'FT' | 'PROFORMA'): Promise<any> => {

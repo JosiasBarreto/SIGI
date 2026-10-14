@@ -1,4 +1,4 @@
-from marshmallow import Schema, fields, validate
+from marshmallow import Schema, fields, validate, post_load
 from app.models.evento import (
     TipoEvento, EstadoEvento, TipoServicoEvento, EstadoEspaco,
     EstadoReservaEspaco, FuncaoEquipa, TipoItemEvento, TipoCalculoPolitica
@@ -83,6 +83,16 @@ class EspacoSchema(Schema):
     descricao = fields.Str(required=False, allow_none=True)
     preco_aluguer = fields.Decimal(required=False, allow_none=True)
     estado = fields.Str(required=False, allow_none=True, default='Ativo')
+
+    @post_load
+    def normalize_estado(self, data, **kwargs):
+        if 'estado' in data and data['estado']:
+            v = str(data['estado']).strip().upper()
+            if v in ('ATIVO', 'ATIVADA', 'ACTIVE', 'TRUE'):
+                data['estado'] = 'Ativo'
+            elif v in ('INATIVO', 'INATIVADA', 'INACTIVE', 'FALSE'):
+                data['estado'] = 'Inativo'
+        return data
 
 class EventoServicoSchema(Schema):
     id = fields.Int(dump_only=True)

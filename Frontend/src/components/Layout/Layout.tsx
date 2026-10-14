@@ -7,9 +7,7 @@ import { cn } from "../../lib/utils";
 
 export default function Layout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
-    if (typeof window !== "undefined") {
-      return window.innerWidth >= 768;
-    }
+    if (typeof window !== "undefined") return window.innerWidth >= 768;
     return false;
   });
 
@@ -27,7 +25,6 @@ export default function Layout() {
         toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
       />
 
-      {/* Mobile overlay */}
       {isSidebarOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-40 md:hidden"

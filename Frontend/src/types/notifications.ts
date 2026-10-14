@@ -2,7 +2,7 @@
 // Tipagem canónica conforme o Relatório de Arquitetura e Implementação de Notificações no Frontend (SIGI ERP)
 
 export type NotificationType = 'info' | 'success' | 'warning' | 'error';
-export type NotificationEntity = 'pedido' | 'requisicao' | 'material' | 'sistema';
+export type NotificationEntity = 'pedido' | 'producao' | 'requisicao' | 'material' | 'sistema';
 export type NotificationPriorityLevel = 'baixa' | 'media' | 'alta';
 
 export interface NotificationHistoryEntry {

@@ -21,3 +21,38 @@ class BaseModel(db.Model):
         self.is_active = False
         self.deleted_at = datetime.utcnow()
         db.session.commit()
+
+
+from sqlalchemy.types import TypeDecorator, String
+
+class FlexibleEnum(TypeDecorator):
+    impl = String
+    cache_ok = True
+
+    def __init__(self, enum_cls, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.enum_cls = enum_cls
+        self._name_to_value = {e.name.upper(): e.value for e in enum_cls}
+        for e in enum_cls:
+            self._name_to_value[str(e.value).upper()] = e.value
+        self._value_to_name = {str(e.value).lower(): e.name for e in enum_cls}
+
+    def process_bind_param(self, value, dialect):
+        if value is None:
+            return None
+        if isinstance(value, self.enum_cls):
+            return value.value
+        v_str = str(value).strip()
+        v_upper = v_str.upper()
+        if v_upper in self._name_to_value:
+            return self._name_to_value[v_upper]
+        return v_str
+
+    def process_result_value(self, value, dialect):
+        if value is None:
+            return None
+        v_str = str(value).strip()
+        v_upper = v_str.upper()
+        if v_upper in self._name_to_value:
+            return self._name_to_value[v_upper]
+        return value

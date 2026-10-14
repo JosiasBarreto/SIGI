@@ -312,31 +312,168 @@ def notify_order_created(
     actor_user_id: Optional[int] = None
 ) -> bool:
     """
-    Notifica a criação de um novo pedido comercial delegando ao NotificationService.
-    Garante emissão do evento de sincronização 'novo_pedido' e notificação visual desduplicada.
+    Notifica a criação de um novo pedido comercial, criando notificações no banco
+    específicas para Cozinha, Pastelaria e Bar, e emitindo eventos WebSocket em tempo real.
     """
+    itens_cozinha = []
+    itens_pastelaria = []
+    itens_bar = []
+
     try:
-        from app.notifications.service import NotificationService
-        res = NotificationService.publish_order_created(
-            pedido_id=pedido_id,
-            pedido_numero=pedido_numero,
-            total=total,
-            cliente_nome=cliente_nome,
-            produtos_resumo=produtos_resumo,
-            actor_user_id=actor_user_id
+        from app.core.database import db
+        from app.models.pedido import Pedido
+        from app.models.produto import Produto
+        from app.models.notificacao import Notificacao
+
+        pedido = Pedido.query.get(pedido_id)
+        if pedido and pedido.itens:
+            for it in pedido.itens:
+                prod = it.produto or (Produto.query.get(it.produto_id) if it.produto_id else None)
+                nome_it = it.descricao or (prod.nome if prod else 'Artigo')
+                qtd_it = float(it.quantidade or 1)
+                item_txt = f"{nome_it} ({qtd_it:g}x)"
+
+                setor = None
+                if prod and prod.servico:
+                    s_str = prod.servico.value if hasattr(prod.servico, 'value') else str(prod.servico)
+                    if s_str == 'COZINHA': setor = 'Cozinha'
+                    elif s_str == 'PASTELARIA': setor = 'Pastelaria'
+                    elif s_str == 'BAR': setor = 'Bar'
+
+                if not setor and prod:
+                    cat_nome = f"{prod.categoria or ''} {prod.nome or ''}".lower()
+                    if any(kw in cat_nome for kw in ['bebida', 'sumo', 'cerveja', 'água', 'agua', 'refrigerante', 'café', 'cafe', 'chá', 'cha', 'cocktail', 'licor', 'vinho']):
+                        setor = 'Bar'
+                    elif any(kw in cat_nome for kw in ['bolo', 'doce', 'pastel', 'pão', 'pao', 'tarte', 'croissant', 'queque', 'pastelaria', 'sobremesa', 'mousse', 'torta']):
+                        setor = 'Pastelaria'
+                    else:
+                        setor = 'Cozinha'
+                elif not setor:
+                    setor = 'Cozinha'
+
+                if setor == 'Cozinha':
+                    itens_cozinha.append(item_txt)
+                elif setor == 'Pastelaria':
+                    itens_pastelaria.append(item_txt)
+                elif setor == 'Bar':
+                    itens_bar.append(item_txt)
+
+        # Os sectores são necessários tanto para persistência como para os
+        # eventos de tempo real. Inicializá-los antes evita que uma exceção
+        # local impeça o registo da notificação.
+        setores = []
+        if itens_cozinha: setores.append("Cozinha")
+        if itens_pastelaria: setores.append("Pastelaria")
+        if itens_bar: setores.append("Bar")
+
+        # 1. Persistir notificação única e consolidada no sistema para evitar redundância
+        setores_str = ", ".join(setores) if setores else "Geral"
+        notif_g = Notificacao(
+            tipo='NOVO_PEDIDO',
+            titulo=f"Novo Pedido: #{pedido_numero}",
+            mensagem=f"Pedido #{pedido_numero} registado para {cliente_nome or 'Consumidor Final'} ({float(total or 0):.2f}€). Setores: {setores_str}. {produtos_resumo or ''}",
+            prioridade='alta',
+            entidade_tipo='pedido',
+            entidade_id=pedido_id,
+            dados_extra={"pedido_id": pedido_id, "numero": pedido_numero, "total": float(total or 0), "setores": setores}
         )
-        return res.get("status") in ["published", "synced_only", "deduplicated"]
-    except Exception as e:
-        logger.error(f"Erro ao notificar novo pedido: {str(e)}")
-        # Fallback de emergência para manter sincronização
+        db.session.add(notif_g)
+        db.session.commit()
+    except Exception as dberr:
+        logger.error(f"Erro ao persistir notificações de novo pedido: {dberr}")
         try:
-            socketio.emit("novo_pedido", {
-                "pedido_id": pedido_id,
-                "numero": pedido_numero,
-                "total": float(total or 0)
-            })
+            from app.core.database import db
+            db.session.rollback()
         except Exception:
             pass
+
+    # 2. Emissão de eventos WebSocket em tempo real
+    try:
+        payload_base = {
+            "pedido_id": pedido_id,
+            "numero": pedido_numero,
+            "total": float(total or 0),
+            "cliente": cliente_nome or "Consumidor Final",
+            "produtos": produtos_resumo or "Itens do Pedido",
+            "setores": setores
+        }
+
+        # Eventos globais de sincronização
+        socketio.emit("novo_pedido", payload_base)
+        socketio.emit("nova_ordem_producao", payload_base)
+
+        # Eventos dedicados por setor com mensagens claras
+        if itens_cozinha:
+            cozinha_msg = f"Novo pedido #{pedido_numero} na Cozinha! ({', '.join(itens_cozinha)})"
+            socketio.emit("alerta_cozinha", {
+                "pedido_id": pedido_id,
+                "numero": pedido_numero,
+                "setor": "Cozinha",
+                "msg": cozinha_msg,
+                "itens": itens_cozinha
+            })
+            socketio.emit("alerta_cozinha", {
+                "pedido_id": pedido_id,
+                "numero": pedido_numero,
+                "msg": cozinha_msg
+            }, room="role_cozinha")
+            socketio.emit("alerta_cozinha", {
+                "pedido_id": pedido_id,
+                "numero": pedido_numero,
+                "msg": cozinha_msg
+            }, room="sector_cozinha")
+
+        if itens_pastelaria:
+            pastelaria_msg = f"Novo pedido #{pedido_numero} na Pastelaria! ({', '.join(itens_pastelaria)})"
+            socketio.emit("alerta_pastelaria", {
+                "pedido_id": pedido_id,
+                "numero": pedido_numero,
+                "setor": "Pastelaria",
+                "msg": pastelaria_msg,
+                "itens": itens_pastelaria
+            })
+            socketio.emit("alerta_pastelaria", {
+                "pedido_id": pedido_id,
+                "numero": pedido_numero,
+                "msg": pastelaria_msg
+            }, room="role_pastelaria")
+            socketio.emit("alerta_pastelaria", {
+                "pedido_id": pedido_id,
+                "numero": pedido_numero,
+                "msg": pastelaria_msg
+            }, room="sector_pastelaria")
+
+        if itens_bar:
+            bar_msg = f"Novo pedido #{pedido_numero} no Bar! ({', '.join(itens_bar)})"
+            socketio.emit("alerta_bar", {
+                "pedido_id": pedido_id,
+                "numero": pedido_numero,
+                "setor": "Bar",
+                "msg": bar_msg,
+                "itens": itens_bar
+            })
+            socketio.emit("alerta_bar", {
+                "pedido_id": pedido_id,
+                "numero": pedido_numero,
+                "msg": bar_msg
+            }, room="role_bar")
+            socketio.emit("alerta_bar", {
+                "pedido_id": pedido_id,
+                "numero": pedido_numero,
+                "msg": bar_msg
+            }, room="sector_bar")
+
+        # Notificação geral
+        socketio.emit("notificacao", {
+            "titulo": f"Novo Pedido #{pedido_numero}",
+            "mensagem": f"Novo pedido recebido: {produtos_resumo or ''}",
+            "tipo": "NOVO_PEDIDO",
+            "setores": setores
+        })
+
+        return True
+    except Exception as ws_err:
+        logger.error(f"Erro ao emitir WebSockets para Cozinha/Pastelaria/Bar: {ws_err}")
         return False
 
 
@@ -351,32 +488,42 @@ def notify_order_status_updated(
     actor_user_id: Optional[int] = None
 ) -> bool:
     """
-    Notifica a alteração de estado do pedido delegando ao NotificationService.
+    Notifica a alteração de estado do pedido no banco de dados e via WebSocket.
     """
     try:
-        from app.notifications.service import NotificationService
-        res = NotificationService.publish_order_status_updated(
-            pedido_id=pedido_id,
-            pedido_numero=pedido_numero,
-            antigo_estado=antigo_estado,
-            novo_estado=novo_estado,
-            total=total,
-            cliente_nome=cliente_nome,
-            produtos_resumo=produtos_resumo,
-            actor_user_id=actor_user_id
+        from app.core.database import db
+        from app.models.notificacao import Notificacao
+        notif = Notificacao(
+            tipo='ESTADO_PEDIDO_ATUALIZADO',
+            titulo=f"Pedido #{pedido_numero}: {novo_estado}",
+            mensagem=f"O estado do pedido #{pedido_numero} foi alterado de '{antigo_estado}' para '{novo_estado}'.",
+            prioridade='media',
+            entidade_tipo='pedido',
+            entidade_id=pedido_id
         )
-        return res.get("status") in ["published", "synced_only", "deduplicated"]
-    except Exception as e:
-        logger.error(f"Erro ao notificar alteração de estado do pedido: {str(e)}")
+        db.session.add(notif)
+        db.session.commit()
+    except Exception:
         try:
-            socketio.emit("pedido_atualizado", {
-                "pedido_id": pedido_id,
-                "numero": pedido_numero,
-                "antigo_estado": antigo_estado,
-                "novo_estado": novo_estado
-            })
+            from app.core.database import db
+            db.session.rollback()
         except Exception:
             pass
+
+    try:
+        socketio.emit("pedido_atualizado", {
+            "pedido_id": pedido_id,
+            "numero": pedido_numero,
+            "antigo_estado": antigo_estado,
+            "novo_estado": novo_estado
+        })
+        socketio.emit("notificacao", {
+            "titulo": f"Pedido #{pedido_numero}: {novo_estado}",
+            "mensagem": f"Estado alterado para {novo_estado}",
+            "tipo": "ESTADO_PEDIDO_ATUALIZADO"
+        })
+        return True
+    except Exception:
         return False
 
 

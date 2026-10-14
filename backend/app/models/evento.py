@@ -1,8 +1,18 @@
 from enum import Enum
 from app.core.database import db
-from app.models.base import BaseModel
+from app.models.base import BaseModel, FlexibleEnum
 
-class TipoEvento(str, Enum):
+class SafeEnum(str, Enum):
+    @classmethod
+    def _missing_(cls, value):
+        if isinstance(value, str):
+            v_upper = value.upper().strip()
+            for member in cls:
+                if member.name == v_upper or member.value.upper() == v_upper:
+                    return member
+        return None
+
+class TipoEvento(SafeEnum):
     CASAMENTO = 'Casamento'
     ANIVERSARIO = 'Aniversario'
     BATIZADO = 'Batizado'
@@ -14,7 +24,7 @@ class TipoEvento(str, Enum):
     FUNERAL = 'Funeral'
     OUTRO = 'Outro'
 
-class EstadoEvento(str, Enum):
+class EstadoEvento(SafeEnum):
     RASCUNHO = 'Rascunho'
     ORCAMENTO = 'Orcamento'
     ORCAMENTADO = 'Orcamentado'
@@ -30,7 +40,7 @@ class EstadoEvento(str, Enum):
     CANCELADO = 'Cancelado'
     ARQUIVADO = 'Arquivado'
 
-class TipoItemEvento(str, Enum):
+class TipoItemEvento(SafeEnum):
     SERVICO = 'Servico'
     ESPACO = 'Espaco'
     MATERIAL = 'Material'
@@ -42,14 +52,14 @@ class TipoItemEvento(str, Enum):
     MAO_DE_OBRA = 'MaoDeObra'
     OUTRO = 'Outro'
 
-class TipoCalculoPolitica(str, Enum):
+class TipoCalculoPolitica(SafeEnum):
     FIXO = 'Fixo'
     POR_PARTICIPANTE = 'Por Participante'
     POR_HORA = 'Por Hora'
     POR_DIA = 'Por Dia'
     POR_UNIDADE = 'Por Unidade'
 
-class TipoServicoEvento(str, Enum):
+class TipoServicoEvento(SafeEnum):
     COZINHA = 'Cozinha'
     PASTELARIA = 'Pastelaria'
     BAR = 'Bar'
@@ -65,17 +75,17 @@ class TipoServicoEvento(str, Enum):
     MOTORISTAS = 'Motoristas'
     OUTRO = 'Outro'
 
-class EstadoEspaco(str, Enum):
+class EstadoEspaco(SafeEnum):
     ATIVO = 'Ativo'
     INATIVO = 'Inativo'
 
-class EstadoReservaEspaco(str, Enum):
+class EstadoReservaEspaco(SafeEnum):
     RESERVADO = 'Reservado'
     UTILIZADO = 'Utilizado'
     FINALIZADO = 'Finalizado'
     CANCELADO = 'Cancelado'
 
-class FuncaoEquipa(str, Enum):
+class FuncaoEquipa(SafeEnum):
     CHEFE_COZINHA = 'Chefe Cozinha'
     COZINHEIRO = 'Cozinheiro'
     PASTELEIRO = 'Pasteleiro'
@@ -132,7 +142,7 @@ class PoliticaComercialRegra(BaseModel):
     min_participantes = db.Column(db.Integer, default=1)
     max_participantes = db.Column(db.Integer, default=99999)
     valor_sugerido = db.Column(db.Numeric(10, 2), nullable=False)
-    tipo_calculo = db.Column(db.Enum(TipoCalculoPolitica, values_callable=lambda x: [e.value for e in x]), default=TipoCalculoPolitica.FIXO)
+    tipo_calculo = db.Column(FlexibleEnum(TipoCalculoPolitica), default=TipoCalculoPolitica.FIXO)
     prioridade = db.Column(db.Integer, default=1)
     mensagem_sugestao = db.Column(db.String(255), nullable=True)
 
@@ -143,7 +153,7 @@ class Espaco(BaseModel):
     localizacao = db.Column(db.String(255), nullable=True)
     descricao = db.Column(db.Text, nullable=True)
     preco_aluguer = db.Column(db.Numeric(10, 2), default=0.0)
-    estado = db.Column(db.Enum(EstadoEspaco, values_callable=lambda x: [e.value for e in x]), default=EstadoEspaco.ATIVO)
+    estado = db.Column(FlexibleEnum(EstadoEspaco), default=EstadoEspaco.ATIVO)
 
 class Evento(BaseModel):
     __tablename__ = 'eventos'
@@ -350,7 +360,7 @@ class EventoServico(db.Model):
     __tablename__ = 'eventos_servicos'
     id = db.Column(db.Integer, primary_key=True)
     evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=False)
-    tipo = db.Column(db.Enum(TipoServicoEvento, values_callable=lambda x: [e.value for e in x]), nullable=False)
+    tipo = db.Column(FlexibleEnum(TipoServicoEvento), nullable=False)
     descricao = db.Column(db.String(255), nullable=True)
     quantidade = db.Column(db.Numeric(10, 2), nullable=False)
     valor_unitario = db.Column(db.Numeric(10, 2), nullable=False)
@@ -366,7 +376,7 @@ class ReservaEspaco(db.Model):
     data_inicio = db.Column(db.DateTime, nullable=False)
     data_fim = db.Column(db.DateTime, nullable=False)
     valor_aluguer = db.Column(db.Numeric(10, 2), default=0.0)
-    estado = db.Column(db.Enum(EstadoReservaEspaco, values_callable=lambda x: [e.value for e in x]), default=EstadoReservaEspaco.RESERVADO)
+    estado = db.Column(FlexibleEnum(EstadoReservaEspaco), default=EstadoReservaEspaco.RESERVADO)
 
 class ReservaMaterial(db.Model):
     __tablename__ = 'reservas_materiais'
@@ -385,5 +395,5 @@ class EventoEquipa(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     evento_id = db.Column(db.Integer, db.ForeignKey('eventos.id'), nullable=False)
     utilizador_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    funcao = db.Column(db.Enum(FuncaoEquipa, values_callable=lambda x: [e.value for e in x]), nullable=False)
+    funcao = db.Column(FlexibleEnum(FuncaoEquipa), nullable=False)
     estado = db.Column(db.String(50), default='Alocado')

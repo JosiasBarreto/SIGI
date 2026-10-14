@@ -26,9 +26,11 @@ import {
   Package, 
   Truck, 
   ChefHat, 
-  FileSpreadsheet
+  FileSpreadsheet,
+  BarChart3
 } from "lucide-react";
 import { formatCurrency, cn } from "../lib/utils";
+import RelatorioGeralDashboard from "../components/Relatorios/RelatorioGeralDashboard";
 
 // Seeded local storage fallback for a unified experience
 const DUMMY_DELIVERIES = [
@@ -38,11 +40,19 @@ const DUMMY_DELIVERIES = [
 ];
 
 export default function Relatorios() {
-  const [activeTab, setActiveTab] = useState<"vendas" | "pedidos" | "producao" | "armazem" | "materiais" | "financeiro" | "logistica">("vendas");
+  const [activeTab, setActiveTab] = useState<"dashboard_geral" | "vendas" | "pedidos" | "producao" | "armazem" | "materiais" | "financeiro" | "logistica">("dashboard_geral");
   const [searchTerm, setSearchTerm] = useState("");
   const [startDate, setStartDate] = useState("2026-06-01");
   const [endDate, setEndDate] = useState("2026-06-30");
   const [filterStatus, setFilterStatus] = useState("Todos");
+
+  const getHeaders = () => {
+    const token = localStorage.getItem('access_token') || localStorage.getItem('token') || '';
+    return {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {})
+    };
+  };
 
   // Fetch query data
   const { data: ordersRes, isLoading: ordersLoading } = useQuery({
@@ -327,6 +337,13 @@ export default function Relatorios() {
       {/* Tabs list */}
       <div className="flex flex-wrap gap-1 bg-gray-100 dark:bg-gray-800/40 p-1 rounded-xl">
         <button 
+          onClick={() => { setActiveTab("dashboard_geral"); setFilterStatus("Todos"); }}
+          className={cn("px-4 py-2 text-xs font-bold rounded-lg transition-colors whitespace-nowrap flex items-center gap-1.5", activeTab === "dashboard_geral" ? "bg-white dark:bg-surface-dark text-primary shadow" : "text-gray-500 hover:text-gray-950 dark:hover:text-white")}
+        >
+          <BarChart3 size={14} />
+          Dashboard Geral
+        </button>
+        <button 
           onClick={() => { setActiveTab("vendas"); setFilterStatus("Todos"); }}
           className={cn("px-4 py-2 text-xs font-bold rounded-lg transition-colors whitespace-nowrap", activeTab === "vendas" ? "bg-white dark:bg-surface-dark text-primary shadow" : "text-gray-500 hover:text-gray-950")}
         >
@@ -370,8 +387,16 @@ export default function Relatorios() {
         </button>
       </div>
 
-      {/* Toolbar filters */}
-      <div className="bg-white dark:bg-surface-dark p-4 rounded-xl border border-gray-200 dark:border-gray-800 flex flex-wrap gap-4 items-center justify-between no-print">
+      {/* 0. Dashboard Geral de Gestão */}
+      {activeTab === "dashboard_geral" && (
+        <RelatorioGeralDashboard getHeaders={getHeaders} />
+      )}
+
+      {/* Detailed tabular reports & legacy toolbar */}
+      {activeTab !== "dashboard_geral" && (
+        <>
+          {/* Toolbar filters */}
+          <div className="bg-white dark:bg-surface-dark p-4 rounded-xl border border-gray-200 dark:border-gray-800 flex flex-wrap gap-4 items-center justify-between no-print">
         
         {/* Search */}
         <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-xs w-full sm:w-64">
@@ -851,6 +876,8 @@ export default function Relatorios() {
         )}
 
       </div>
+        </>
+      )}
 
     </div>
   );

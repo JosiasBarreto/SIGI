@@ -27,36 +27,71 @@ export const backupService = {
   /**
    * GET /api/v1/backups — Lista todos os ficheiros com tamanho formatado (KB/MB) e data.
    */
-  getAll: async (): Promise<BackupItemDTO[]> => {
+  getAll: async (params?: { page?: number; per_page?: number }): Promise<any> => {
     try {
-      const response: any = await apiClient.get('/v1/backups');
+      const response: any = await apiClient.get('/v1/backups', { params });
       const rawList = Array.isArray(response)
         ? response
-        : (response?.data?.items || response?.data || response?.items || []);
+        : (response?.data?.items || response?.data?.backups || response?.backups || response?.data || response?.items || []);
 
-      if (Array.isArray(rawList)) {
-        return rawList.map((item: any) => {
-          const rawSize = item.size ?? item.formatted_size;
-          const displaySize = item.formatted_size || formatBytes(rawSize);
-          const rawDate = item.created_at || item.date || item.created_date;
-          const displayDate = rawDate ? new Date(rawDate).toLocaleString('pt-PT') : 'Sem data';
+      const mappedList: BackupItemDTO[] = Array.isArray(rawList)
+        ? rawList.map((item: any) => {
+            const rawSize = item.size ?? item.formatted_size;
+            const displaySize = item.formatted_size || formatBytes(rawSize);
+            const rawDate = item.created_at || item.date || item.created_date;
+            const displayDate = rawDate ? new Date(rawDate).toLocaleString('pt-PT') : 'Sem data';
 
-          return {
-            id: item.id || item.filename,
-            filename: item.filename || item.name || 'backup.sql',
-            size: rawSize,
-            formatted_size: displaySize,
-            created_at: rawDate,
-            date: displayDate,
-            type: item.type || (item.filename?.includes('auto') ? 'Automático' : 'Manual')
-          };
-        });
+            return {
+              id: item.id || item.filename,
+              filename: item.filename || item.name || 'backup.sql',
+              size: rawSize,
+              formatted_size: displaySize,
+              created_at: rawDate,
+              date: displayDate,
+              type: item.type || (item.filename?.includes('auto') ? 'Automático' : 'Manual')
+            };
+          })
+        : [];
+
+      const serverTotal = response?.total ?? response?.data?.total;
+      const serverPages = response?.pages ?? response?.data?.pages;
+
+      if (params?.page || params?.per_page) {
+        const page = Number(params?.page || 1);
+        const perPage = Number(params?.per_page || 10);
+        const total = serverTotal !== undefined ? Number(serverTotal) : mappedList.length;
+        const pages = serverPages !== undefined ? Number(serverPages) : Math.max(1, Math.ceil(total / perPage));
+        const startIndex = (page - 1) * perPage;
+        const endIndex = startIndex + perPage;
+        const items = (serverTotal !== undefined && serverPages !== undefined && mappedList.length <= perPage)
+          ? mappedList
+          : (mappedList.length > perPage ? mappedList.slice(startIndex, endIndex) : mappedList);
+
+        const result: any = [...items];
+        result.items = items;
+        result.total = total;
+        result.pages = pages;
+        result.page = page;
+        return result;
       }
-      return [];
+
+      const result: any = [...mappedList];
+      result.items = mappedList;
+      result.total = mappedList.length;
+      result.pages = 1;
+      result.page = 1;
+      return result;
     } catch (error) {
       console.error('[backupService] Erro ao carregar backups do backend:', error);
       throw error;
     }
+  },
+
+  /**
+   * Alias de paginação para backups
+   */
+  getBackups: async (params?: { page?: number; per_page?: number }): Promise<any> => {
+    return backupService.getAll(params);
   },
 
   /**
