@@ -15,7 +15,7 @@ from app.models.ficha_tecnica import FichaTecnica
 from app.repositories.requisicao_repos import RequisicaoRepository, OcorrenciaMaterialRepository
 from app.services.audit_service import AuditService
 from app.core.database import db
-from app.websocket.socket_manager import emit_sync_event, notify_requisicao_users
+from app.websocket.socket_manager import notify_requisicao_users
 from sqlalchemy import func
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -36,8 +36,11 @@ class RequisicaoService:
             
         self.req_repo.create(req)
         AuditService.log_action(user_id, "CREATE", "requisicoes", req.id)
-        emit_sync_event('nova_requisicao', {'numero': req.numero, 'requisicao_id': req.id})
-        notify_requisicao_users(req.id, req.numero, req.estado, f"Nova Requisição #{req.numero} criada.")
+        notify_requisicao_users(
+            req.id, req.numero, req.estado,
+            f"Nova Requisição #{req.numero} criada.",
+            actor_user_id=user_id,
+        )
         return req, None
 
     def aprovar_requisicao(self, req_id, itens_aprovacao, user_id):
@@ -55,8 +58,11 @@ class RequisicaoService:
         db.session.commit()
         
         AuditService.log_action(user_id, "APROVAR_REQUISICAO", "requisicoes", req.id)
-        emit_sync_event('requisicao_aprovada', {'numero': req.numero, 'requisicao_id': req.id})
-        notify_requisicao_users(req.id, req.numero, req.estado, f"Requisição #{req.numero} foi Aprovada.")
+        notify_requisicao_users(
+            req.id, req.numero, req.estado,
+            f"Requisição #{req.numero} foi Aprovada.",
+            actor_user_id=user_id,
+        )
         return req, None
 
     def entregar_requisicao(self, req_id, data, user_id):
@@ -147,8 +153,11 @@ class RequisicaoService:
         db.session.commit()
         
         AuditService.log_action(user_id, "ENTREGAR_REQUISICAO", "requisicoes", req.id)
-        emit_sync_event('requisicao_entregue', {'numero': req.numero, 'requisicao_id': req.id})
-        notify_requisicao_users(req.id, req.numero, req.estado, f"Requisição #{req.numero} foi Entregue (Em Uso).")
+        notify_requisicao_users(
+            req.id, req.numero, req.estado,
+            f"Requisição #{req.numero} foi Entregue (Em Uso).",
+            actor_user_id=user_id,
+        )
         return req, None
 
     def devolver_material(self, req_id, devolucoes_data, user_id):
@@ -156,6 +165,8 @@ class RequisicaoService:
         if not req: return None, "Requisição não encontrada"
         if req.estado not in [EstadoRequisicao.EM_USO.value, EstadoRequisicao.DEVOLUCAO_PARCIAL.value]:
             return None, "Requisição não está em uso"
+
+        material_alerts = []
             
         for d_data in devolucoes_data:
             mat_id = d_data['material_id']
@@ -204,7 +215,7 @@ class RequisicaoService:
                 )
                 db.session.add(oc)
                 mat.quantidade_total = float(mat.quantidade_total) - qtd_dan # Perdeu total
-                emit_sync_event('alerta_material', {'msg': 'Material Danificado reportado!'})
+                material_alerts.append(f"Material '{mat.nome}' danificado na devolução da requisição #{req.numero}.")
                 
             if qtd_per > 0 and mat:
                 oc = OcorrenciaMaterial(
@@ -214,7 +225,7 @@ class RequisicaoService:
                 )
                 db.session.add(oc)
                 mat.quantidade_total = float(mat.quantidade_total) - qtd_per
-                emit_sync_event('alerta_material', {'msg': 'Material Perdido reportado!'})
+                material_alerts.append(f"Material '{mat.nome}' perdido na devolução da requisição #{req.numero}.")
                 
             if mat:
                 dev_log = DevolucaoMaterial(
@@ -239,6 +250,16 @@ class RequisicaoService:
         req.estado = EstadoRequisicao.DEVOLVIDA.value if todos_devolvidos else EstadoRequisicao.DEVOLUCAO_PARCIAL.value
         db.session.commit()
         AuditService.log_action(user_id, "DEVOLUCAO_MATERIAL", "requisicoes", req.id)
+        for message in material_alerts:
+            from app.notifications.service import NotificationService
+            NotificationService.publish_requisition_material_alert(
+                req.id, req.numero, message, req.responsavel_id, user_id
+            )
+        notify_requisicao_users(
+            req.id, req.numero, req.estado,
+            f"Requisição #{req.numero} atualizada para {req.estado}.",
+            actor_user_id=user_id,
+        )
         return req, None
 
     def encerrar_requisicao(self, req_id, user_id):
@@ -246,6 +267,8 @@ class RequisicaoService:
         if not req: return None, "Requisição não encontrada"
         if req.estado not in [EstadoRequisicao.DEVOLVIDA.value, EstadoRequisicao.EM_USO.value, EstadoRequisicao.DEVOLUCAO_PARCIAL.value]:
             return None, "Estado inválido para encerrar. A requisição deve estar em uso ou devolvida."
+
+        material_alerts = []
             
         # Conferência: Se ainda há material não devolvido -> Ocorrência de Não Devolvido
         for item in req.itens:
@@ -264,13 +287,21 @@ class RequisicaoService:
                         db.session.add(oc)
                         mat.quantidade_total = float(mat.quantidade_total) - pendente
                         item.quantidade_perdida = float(item.quantidade_perdida) + pendente # Marcamos como perdida contabilizada
-                        emit_sync_event('alerta_material', {'msg': 'Material Não Devolvido!'})
+                        material_alerts.append(f"Material '{mat.nome}' não devolvido na requisição #{req.numero}.")
                         
         req.estado = EstadoRequisicao.ENCERRADA.value
         db.session.commit()
         AuditService.log_action(user_id, "ENCERRAR_REQUISICAO", "requisicoes", req.id)
-        emit_sync_event('requisicao_encerrada', {'numero': req.numero, 'requisicao_id': req.id})
-        notify_requisicao_users(req.id, req.numero, req.estado, f"Requisição #{req.numero} foi Encerrada.")
+        for message in material_alerts:
+            from app.notifications.service import NotificationService
+            NotificationService.publish_requisition_material_alert(
+                req.id, req.numero, message, req.responsavel_id, user_id
+            )
+        notify_requisicao_users(
+            req.id, req.numero, req.estado,
+            f"Requisição #{req.numero} foi Encerrada.",
+            actor_user_id=user_id,
+        )
         return req, None
 
 class GeradorRequisicaoAutomatica:

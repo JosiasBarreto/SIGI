@@ -84,7 +84,7 @@ class NotificationRepository:
                     canal=canal,
                     prioridade=prioridade,
                     persistente=persistente,
-                    ativa=True,
+                    ativo=True,
                     target_type=target_type,
                     target_role=target_role or recipient_role,
                     target_sector=target_sector,

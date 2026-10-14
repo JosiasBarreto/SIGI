@@ -12,7 +12,6 @@ from app.models.pedido import Pedido, EstadoPedido
 from app.repositories.evento_repos import EventoRepository, EspacoRepository
 from app.services.audit_service import AuditService
 from app.core.database import db
-from app.websocket.socket_manager import emit_sync_event
 
 class EventoService:
     def __init__(self):
@@ -317,7 +316,16 @@ class EventoService:
 
         AuditService.log_action(user_id, "CREATE", "eventos", evento.id, new_values={"numero": evento.numero, "total": float(evento.valor_total)})
         
-        emit_sync_event('novo_evento', {'numero': evento.numero})
+        from app.notifications.service import NotificationService
+        NotificationService.publish_event_change(
+            event_id=evento.id,
+            event_number=evento.numero,
+            title=evento.titulo,
+            status=str(evento.estado.value if hasattr(evento.estado, "value") else evento.estado),
+            actor_user_id=user_id,
+            created=True,
+            modified_at=evento.updated_at.isoformat() if evento.updated_at else None,
+        )
         
         return evento, None
 
@@ -432,7 +440,15 @@ class EventoService:
             print(f"Erro ao re-processar planeamento do evento: {ex}")
 
         AuditService.log_action(user_id, "UPDATE", "eventos", evento.id, new_values={"total": float(evento.valor_total or 0)})
-        emit_sync_event('atualizacao_evento', {'id': evento.id, 'numero': evento.numero})
+        from app.notifications.service import NotificationService
+        NotificationService.publish_event_change(
+            event_id=evento.id,
+            event_number=evento.numero,
+            title=evento.titulo,
+            status=str(evento.estado.value if hasattr(evento.estado, "value") else evento.estado),
+            actor_user_id=user_id,
+            modified_at=evento.updated_at.isoformat() if evento.updated_at else None,
+        )
         return evento, None
 
     def alterar_estado(self, evento_id, estado, user_id):
@@ -449,9 +465,17 @@ class EventoService:
             PlanningEngine().processar_planeamento_evento(evento.id, user_id)
 
         AuditService.log_action(user_id, "UPDATE_ESTADO", "eventos", evento.id, new_values={"estado": estado})
+        from app.notifications.service import NotificationService
+        NotificationService.publish_event_change(
+            event_id=evento.id,
+            event_number=evento.numero,
+            title=evento.titulo,
+            status=str(evento.estado.value if hasattr(evento.estado, "value") else evento.estado),
+            actor_user_id=user_id,
+            modified_at=evento.updated_at.isoformat() if evento.updated_at else None,
+        )
         return evento, None
 
     def gerar_planeamento(self, evento_id, user_id):
         from app.services.planning_engine import PlanningEngine
         return PlanningEngine().processar_planeamento_evento(evento_id, user_id)
-

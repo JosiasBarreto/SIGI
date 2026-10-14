@@ -214,12 +214,17 @@ class PedidoService:
             
         AuditService.log_action(user_id, "CREATE", "pedidos", pedido.id, new_values={"numero": numero})
         
-        # Notificação estruturada e desduplicada de novo pedido com padrão de identificação
+        # Notificação estruturada, persistida e encaminhada segundo as permissões do módulo.
         try:
-            from app.websocket.socket_manager import notify_order_created, format_products_summary
+            from app.notifications.service import NotificationService
+
             cliente_nome = pedido.cliente.nome if pedido.cliente else "Consumidor Final"
-            produtos_resumo = format_products_summary(pedido.itens)
-            notify_order_created(
+            produtos_resumo = ", ".join(
+                f"{item.descricao or (item.produto.nome if item.produto else 'Artigo')} "
+                f"({float(item.quantidade or 1):g}x)"
+                for item in pedido.itens
+            )
+            NotificationService.publish_order_created(
                 pedido_id=pedido.id,
                 pedido_numero=pedido.numero,
                 total=float(pedido.valor_total or 0),

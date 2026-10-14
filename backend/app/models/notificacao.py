@@ -47,3 +47,47 @@ class NotificacaoLeitura(db.Model):
     data_leitura = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
     user = db.relationship('User', lazy='selectin')
+
+
+class HistoricoSMS(BaseModel):
+    __tablename__ = 'historico_sms'
+
+    telefone = db.Column(db.String(50), nullable=False, index=True)
+    destinatario_nome = db.Column(db.String(120), nullable=True)
+    cliente_id = db.Column(
+        db.Integer,
+        db.ForeignKey('clientes.id', ondelete='SET NULL'),
+        nullable=True,
+        index=True
+    )
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey('users.id', ondelete='SET NULL'),
+        nullable=True,
+        index=True
+    )
+    canal = db.Column(db.String(20), nullable=False)
+    tipo_mensagem = db.Column(db.String(50), nullable=False)
+    mensagem = db.Column(db.Text, nullable=False)
+    status = db.Column(db.String(30), nullable=False, index=True)
+    erro = db.Column(db.Text, nullable=True)
+    lido_em = db.Column(db.DateTime, nullable=True)
+    metadados = db.Column(db.JSON, nullable=True)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'telefone': self.telefone,
+            'destinatario_nome': self.destinatario_nome,
+            'cliente_id': self.cliente_id,
+            'user_id': self.user_id,
+            'canal': self.canal,
+            'tipo_mensagem': self.tipo_mensagem,
+            'mensagem': self.mensagem,
+            'status': self.status,
+            'erro': self.erro,
+            'lido_em': self.lido_em.isoformat() if self.lido_em else None,
+            'metadados': self.metadados,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }

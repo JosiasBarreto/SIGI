@@ -15,6 +15,7 @@ import {
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
+import { toast } from 'react-toastify';
 import { notificationAuditService, AuditoriaLeitura } from '../services/notifications';
 
 export interface NotificacaoItem {
@@ -67,6 +68,7 @@ export const CentralNotificacoesCompleta: React.FC<CentralNotificacoesCompletaPr
     canal: 'SISTEMA' as 'PEDIDO' | 'PRODUCAO' | 'STOCK' | 'FINANCEIRO' | 'SISTEMA' | 'REQUISICAO' | 'EVENTOS',
     prioridade: 'media' as 'baixa' | 'media' | 'alta' | 'urgente',
     target_type: 'GLOBAL' as 'GLOBAL' | 'SETOR' | 'ROLE',
+    target_role: 'Atendimento',
     target_sector: '',
     persistente: false
   });
@@ -230,20 +232,27 @@ export const CentralNotificacoesCompleta: React.FC<CentralNotificacoesCompletaPr
   // 6. Criar Notificação
   const handleCriar = async (e: React.FormEvent) => {
     e.preventDefault();
-    await notificationAuditService.criarNotificacao(formNotif);
-    setShowCriarModal(false);
-    setFormNotif({
-      titulo: '',
-      mensagem: '',
-      tipo: 'info',
-      canal: 'SISTEMA',
-      prioridade: 'media',
-      target_type: 'GLOBAL',
-      target_sector: '',
-      persistente: false
-    });
-    carregarNotificacoes();
-    carregarEstatisticas();
+    try {
+      await notificationAuditService.criarNotificacao(formNotif);
+      toast.success('Notificação enviada.');
+      setShowCriarModal(false);
+      setFormNotif({
+        titulo: '',
+        mensagem: '',
+        tipo: 'info',
+        canal: 'SISTEMA',
+        prioridade: 'media',
+        target_type: 'GLOBAL',
+        target_role: 'Atendimento',
+        target_sector: '',
+        persistente: false
+      });
+      carregarNotificacoes();
+      carregarEstatisticas();
+    } catch (err) {
+      console.error('Erro ao criar notificação:', err);
+      toast.error('Não foi possível enviar a notificação.');
+    }
   };
 
   return (
@@ -625,6 +634,54 @@ export const CentralNotificacoesCompleta: React.FC<CentralNotificacoesCompletaPr
                 </select>
               </div>
             </div>
+
+            <div>
+              <label className="text-xs text-slate-400 block mb-1">Destinatários</label>
+              <select
+                value={formNotif.target_type}
+                onChange={(e) => setFormNotif({ ...formNotif, target_type: e.target.value as 'GLOBAL' | 'ROLE' | 'SETOR' })}
+                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-sm text-white focus:outline-none cursor-pointer"
+              >
+                <option value="GLOBAL">Todos os utilizadores</option>
+                <option value="ROLE">Perfil específico</option>
+                <option value="SETOR">Setor específico</option>
+              </select>
+            </div>
+            {formNotif.target_type === 'ROLE' && (
+              <div>
+                <label className="text-xs text-slate-400 block mb-1">Perfil</label>
+                <select
+                  value={formNotif.target_role}
+                  onChange={(e) => setFormNotif({ ...formNotif, target_role: e.target.value })}
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-sm text-white focus:outline-none cursor-pointer"
+                >
+                  <option value="Administrador">Administrador</option>
+                  <option value="Atendimento">Atendimento</option>
+                  <option value="Cozinha">Cozinha</option>
+                  <option value="Pastelaria">Pastelaria</option>
+                  <option value="Armazém">Armazém</option>
+                  <option value="Controlador de Materiais">Controlador de Materiais</option>
+                  <option value="Motorista">Motorista</option>
+                  <option value="Financeiro">Financeiro</option>
+                </select>
+              </div>
+            )}
+            {formNotif.target_type === 'SETOR' && (
+              <div>
+                <label className="text-xs text-slate-400 block mb-1">Setor</label>
+                <select
+                  required
+                  value={formNotif.target_sector}
+                  onChange={(e) => setFormNotif({ ...formNotif, target_sector: e.target.value })}
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-sm text-white focus:outline-none cursor-pointer"
+                >
+                  <option value="">Selecione um setor</option>
+                  <option value="Cozinha">Cozinha</option>
+                  <option value="Pastelaria">Pastelaria</option>
+                  <option value="Armazém">Armazém</option>
+                </select>
+              </div>
+            )}
 
             <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer pt-2 select-none">
               <input

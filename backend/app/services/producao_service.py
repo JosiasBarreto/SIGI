@@ -178,22 +178,6 @@ class ProducaoService:
                 AuditService.log_action(user_id, "CREATE", "ordens_producao", ordem.id)
             sec_name = str(ordem.sector.value if hasattr(ordem.sector, 'value') else ordem.sector or 'Cozinha')
             sec_lower = sec_name.lower()
-            socketio.emit('nova_ordem_producao', {
-                'id': ordem.id,
-                'numero': ordem.numero,
-                'pedido_id': pedido.id,
-                'pedido_numero': pedido.numero,
-                'sector': sec_name,
-                'estado': str(ordem.estado.value if hasattr(ordem.estado, 'value') else ordem.estado or 'Pendente')
-            })
-            socketio.emit(f'alerta_{sec_lower}', {
-                'ordem_id': ordem.id,
-                'numero': ordem.numero,
-                'pedido_id': pedido.id,
-                'pedido_numero': pedido.numero,
-                'sector': sec_name,
-                'msg': f"Nova Ordem de Produção #{ordem.numero} ({sec_name})!"
-            })
             socketio.emit(f'alerta_{sec_lower}', {
                 'ordem_id': ordem.id,
                 'numero': ordem.numero,
@@ -222,6 +206,8 @@ class ProducaoService:
         ).all()
         
         processados = []
+        estados_pedido_anteriores = {}
+        ordens_iniciadas = []
         for pedido in pedidos_agendados:
             estado_str = pedido.estado.value if hasattr(pedido.estado, 'value') else str(pedido.estado)
             # Se estiver Pendente e sem data de entrega definida nem sinal pago, ignora
@@ -234,11 +220,13 @@ class ProducaoService:
                 ordens_existentes = db.session.query(OrdemProducao).filter_by(pedido_id=pedido.id).all()
 
             if estado_str in ['Agendado', 'AGENDADO', 'Confirmado', 'CONFIRMADO', 'Pendente', 'PENDENTE']:
+                estados_pedido_anteriores[pedido.id] = estado_str
                 pedido.estado = EstadoPedido.EM_PRODUCAO
             
             for ordem in ordens_existentes:
                 ordem_est = ordem.estado.value if hasattr(ordem.estado, 'value') else str(ordem.estado)
                 if ordem_est in ['Pendente', 'PENDENTE']:
+                    ordens_iniciadas.append((ordem, ordem_est, pedido))
                     ordem.estado = EstadoProducao.EM_PRODUCAO
                     if not ordem.hora_inicio:
                         ordem.hora_inicio = datetime.utcnow()
@@ -247,16 +235,27 @@ class ProducaoService:
 
         if processados:
             db.session.commit()
+            from app.notifications.service import NotificationService
+
             for p in processados:
-                socketio.emit('pedido_atualizado', {
-                    'numero': p.numero,
-                    'antigo_estado': 'Agendado',
-                    'novo_estado': EstadoPedido.EM_PRODUCAO.value
-                })
-                socketio.emit('nova_ordem_producao', {'pedido_id': p.id, 'numero': p.numero})
-                socketio.emit('alerta_producao', {
-                    'msg': f'O Pedido #{p.numero} agendado para hoje entrou automaticamente em produção!'
-                })
+                old_status = estados_pedido_anteriores.get(p.id)
+                if old_status:
+                    NotificationService.publish_order_status_updated(
+                        pedido_id=p.id,
+                        pedido_numero=p.numero,
+                        antigo_estado=old_status,
+                        novo_estado=EstadoPedido.EM_PRODUCAO.value,
+                        total=float(p.valor_total or 0),
+                    )
+            for ordem, old_status, pedido in ordens_iniciadas:
+                NotificationService.publish_production_status_updated(
+                    ordem_id=ordem.id,
+                    ordem_numero=ordem.numero,
+                    pedido_numero=pedido.numero,
+                    sector=str(ordem.sector.value if hasattr(ordem.sector, "value") else ordem.sector),
+                    antigo_estado=old_status,
+                    novo_estado=EstadoProducao.EM_PRODUCAO.value,
+                )
 
         return len(processados)
 
@@ -266,6 +265,8 @@ class ProducaoService:
         if not ordem: return None, "Ordem não encontrada"
         
         estado_antigo = ordem.estado
+        estado_antigo_str = estado_antigo.value if hasattr(estado_antigo, 'value') else str(estado_antigo)
+        pedido_estado_alterado = None
         ordem.estado = estado_novo
         
         estado_novo_str = estado_novo.value if hasattr(estado_novo, 'value') else str(estado_novo)
@@ -280,13 +281,7 @@ class ProducaoService:
                     ped_est = pedido.estado.value if hasattr(pedido.estado, 'value') else str(pedido.estado)
                     if ped_est in ['Pendente', 'PENDENTE', 'Agendado', 'AGENDADO', 'Confirmado', 'CONFIRMADO']:
                         pedido.estado = EstadoPedido.EM_PRODUCAO.value if hasattr(EstadoPedido.EM_PRODUCAO, 'value') else 'Em Producao'
-                        socketio.emit('pedido_atualizado', {
-                            'numero': pedido.numero,
-                            'antigo_estado': ped_est,
-                            'novo_estado': 'Em Producao'
-                        })
-
-            socketio.emit('producao_iniciada', {'ordem_numero': ordem.numero})
+                        pedido_estado_alterado = (pedido, ped_est, 'Em Producao')
             
         elif estado_novo_str in [EstadoProducao.PRONTO.value, 'Pronto', 'PRONTO']:
             ordem.hora_fim = datetime.utcnow()
@@ -330,27 +325,10 @@ class ProducaoService:
                         # Quando TODOS os itens e ordens estiverem prontos -> O pedido fica Pronto!
                         if ped_est != 'Pronto':
                             pedido.estado = EstadoPedido.PRONTO.value if hasattr(EstadoPedido.PRONTO, 'value') else 'Pronto'
+                            pedido_estado_alterado = (pedido, ped_est, 'Pronto')
                             for it_ped in (pedido.itens or []):
                                 it_ped.estado = 'Pronto'
                             db.session.flush()
-
-                            # Notificação interna persistida com histórico atualizado
-                            try:
-                                from app.websocket.socket_manager import notify_order_status_updated, format_products_summary
-                                cliente_nome = pedido.cliente.nome if pedido.cliente else "Consumidor Final"
-                                produtos_resumo = format_products_summary(pedido.itens)
-                                notify_order_status_updated(
-                                    pedido_id=pedido.id,
-                                    pedido_numero=pedido.numero,
-                                    antigo_estado=ped_est,
-                                    novo_estado='Pronto',
-                                    cliente_nome=cliente_nome,
-                                    produtos_resumo=produtos_resumo,
-                                    total=float(pedido.valor_total or 0),
-                                    actor_user_id=user_id
-                                )
-                            except Exception as notif_err:
-                                logger.error(f"Erro ao emitir atualização de estado do pedido na produção: {notif_err}")
 
                             # Notificação ao cliente (Email / WhatsApp) APENAS quando o pedido estiver 100% pronto!
                             try:
@@ -362,25 +340,46 @@ class ProducaoService:
                             except Exception as e:
                                 print("⚠ Erro ao notificar cliente que o pedido está pronto:", e)
 
-                            socketio.emit('pedido_atualizado', {
-                                'numero': pedido.numero,
-                                'antigo_estado': ped_est,
-                                'novo_estado': 'Pronto'
-                            })
                     else:
                         # Nem todos os itens/setores estão prontos: NÃO NOTIFICAR COMO PRONTO (não existe pedido meio pronto)
                         if ped_est in ['Pendente', 'Confirmado', 'Agendado']:
                             pedido.estado = EstadoPedido.EM_PRODUCAO.value if hasattr(EstadoPedido.EM_PRODUCAO, 'value') else 'Em Producao'
-                            socketio.emit('pedido_atualizado', {
-                                'numero': pedido.numero,
-                                'antigo_estado': ped_est,
-                                'novo_estado': 'Em Producao'
-                            })
-            
-            socketio.emit('producao_concluida', {'ordem_numero': ordem.numero})
+                            pedido_estado_alterado = (pedido, ped_est, 'Em Producao')
             
         db.session.commit()
         AuditService.log_action(user_id, "UPDATE_ESTADO_OP", "ordens_producao", ordem.id)
+        try:
+            from app.notifications.service import NotificationService
+            from app.websocket.socket_manager import format_products_summary
+
+            pedido_numero = ordem.pedido.numero if ordem.pedido else str(ordem.pedido_id or "")
+            NotificationService.publish_production_status_updated(
+                ordem_id=ordem.id,
+                ordem_numero=ordem.numero,
+                pedido_numero=pedido_numero,
+                sector=str(ordem.sector.value if hasattr(ordem.sector, "value") else ordem.sector),
+                antigo_estado=estado_antigo_str,
+                novo_estado=estado_novo_str,
+                cliente_nome=ordem.pedido.cliente.nome if ordem.pedido and ordem.pedido.cliente else None,
+                produtos_resumo=format_products_summary(ordem.pedido.itens) if ordem.pedido else None,
+                actor_user_id=user_id,
+            )
+            if pedido_estado_alterado:
+                pedido, old_status, new_status = pedido_estado_alterado
+                from app.websocket.socket_manager import notify_order_status_updated
+
+                notify_order_status_updated(
+                pedido_id=pedido.id,
+                pedido_numero=pedido.numero,
+                antigo_estado=old_status,
+                novo_estado=new_status,
+                cliente_nome=pedido.cliente.nome if pedido.cliente else None,
+                produtos_resumo=format_products_summary(pedido.itens),
+                total=float(pedido.valor_total or 0),
+                actor_user_id=user_id,
+            )
+        except Exception:
+            logger.exception("Falha ao publicar notificações da ordem de produção %s", ordem.id)
         return ordem, None
 
     def alterar_estado_item_ordem(self, ordem_id, item_id, estado_novo, user_id):
@@ -396,6 +395,8 @@ class ProducaoService:
         if not item:
             return None, "Item da ordem não encontrado"
         
+        ordem_estado_anterior = ordem.estado.value if hasattr(ordem.estado, 'value') else str(ordem.estado)
+        pedido_estado_alterado = None
         item.estado = estado_novo
         
         # Sincronizar item correspondente em itens_pedido se houver pedido
@@ -428,20 +429,42 @@ class ProducaoService:
                         p_est = pedido.estado.value if hasattr(pedido.estado, 'value') else str(pedido.estado)
                         if p_est in ['Pendente', 'PENDENTE', 'Confirmado', 'CONFIRMADO', 'Agendado', 'AGENDADO']:
                             pedido.estado = EstadoPedido.EM_PRODUCAO.value if hasattr(EstadoPedido.EM_PRODUCAO, 'value') else 'Em Producao'
-                            socketio.emit('pedido_atualizado', {
-                                'numero': pedido.numero,
-                                'antigo_estado': p_est,
-                                'novo_estado': 'Em Producao'
-                            })
+                            pedido_estado_alterado = (pedido, p_est, 'Em Producao')
             
             db.session.commit()
             socketio.emit('ordem_item_atualizado', {
                 'ordem_id': ordem.id,
                 'item_id': item.id,
                 'estado': item.estado
-            })
+            }, room=f"role_{str(ordem.sector.value if hasattr(ordem.sector, 'value') else ordem.sector).lower()}")
             AuditService.log_action(user_id, "UPDATE_ESTADO_ITEM_OP", "ordens_producao", ordem.id, 
                                     new_values={'item_id': item.id, 'estado': item.estado})
+            if ordem_estado_anterior in ['Pendente', 'PENDENTE']:
+                try:
+                    from app.notifications.service import NotificationService
+
+                    NotificationService.publish_production_status_updated(
+                        ordem_id=ordem.id,
+                        ordem_numero=ordem.numero,
+                        pedido_numero=ordem.pedido.numero if ordem.pedido else str(ordem.pedido_id or ""),
+                        sector=str(ordem.sector.value if hasattr(ordem.sector, "value") else ordem.sector),
+                        antigo_estado=ordem_estado_anterior,
+                        novo_estado=str(ordem.estado.value if hasattr(ordem.estado, "value") else ordem.estado),
+                        actor_user_id=user_id,
+                    )
+                    if pedido_estado_alterado:
+                        from app.websocket.socket_manager import notify_order_status_updated
+
+                        pedido, old_status, new_status = pedido_estado_alterado
+                        notify_order_status_updated(
+                            pedido_id=pedido.id,
+                            pedido_numero=pedido.numero,
+                            antigo_estado=old_status,
+                            novo_estado=new_status,
+                            actor_user_id=user_id,
+                        )
+                except Exception:
+                    logger.exception("Falha ao publicar atualização do item de produção %s", item.id)
             return ordem, None
 
     def update_ordem(self, ordem_id, data, user_id):

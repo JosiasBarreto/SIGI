@@ -138,6 +138,7 @@ export class SocketDispatcher {
 
     this.unsubscribers.push(socketManager.on(DOMAIN_SYNC_EVENTS.LOGISTICA_OCORRENCIA, handleSyncLogistica));
     this.unsubscribers.push(socketManager.on(DOMAIN_SYNC_EVENTS.NOVO_EVENTO, handleSyncLogistica));
+    this.unsubscribers.push(socketManager.on(DOMAIN_SYNC_EVENTS.ATUALIZACAO_EVENTO, handleSyncLogistica));
     this.unsubscribers.push(socketManager.on(DOMAIN_SYNC_EVENTS.ALERTA_EVENTO_PROXIMO, handleSyncLogistica));
   }
 }

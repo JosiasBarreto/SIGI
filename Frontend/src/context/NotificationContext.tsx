@@ -2,8 +2,7 @@
 // Implementação do Contexto de Notificações conforme a Secção 5 do Relatório de Arquitetura
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
-import { io, Socket } from 'socket.io-client';
-import { AppNotification, NotificationType, NotificationPriorityLevel } from '../types/notifications';
+import { AppNotification, NotificationType } from '../types/notifications';
 import { upsertNotification } from '../utils/notificationUtils';
 import { socketManager } from '../services/socket/SocketManager';
 import {
@@ -14,7 +13,6 @@ import {
   SoundSettings
 } from '../services/notifications';
 
-const STORAGE_KEY = 'sigi_notifications';
 const MAX_STORED = 100;
 
 export interface NotificationContextType {
@@ -42,50 +40,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode; userRol
   children,
   userRole: propUserRole,
 }) => {
-  // Estado persistido no localStorage (chave 'sigi_notifications')
-  const [notifications, setNotifications] = useState<AppNotification[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('sigi_notifications_history_v1');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
-          return parsed.map((item: any) => ({
-            id: item.id || `notif_${Date.now()}`,
-            entityType: item.entityType || 'sistema',
-            entityId: item.entityId || item.id,
-            referencia: item.referencia || item.title || 'SISTEMA',
-            titulo: item.titulo || item.title || 'Notificação',
-            mensagemAtual: item.mensagemAtual || item.message || '',
-            estadoAtual: item.estadoAtual || (item.read ? 'Lida' : 'Pendente'),
-            tipo: (item.tipo || (item.priority === 'critical' ? 'error' : item.priority === 'high' ? 'warning' : 'info')) as NotificationType,
-            prioridade: (item.prioridade || (item.priority === 'critical' || item.priority === 'high' ? 'alta' : 'media')) as NotificationPriorityLevel,
-            lida: item.lida !== undefined ? Boolean(item.lida) : Boolean(item.read),
-            criadaEm: item.criadaEm || item.timestamp || new Date().toISOString(),
-            atualizadaEm: item.atualizadaEm || item.timestamp || new Date().toISOString(),
-            historico: Array.isArray(item.historico) ? item.historico : [
-              {
-                estado: item.estadoAtual || 'Registo',
-                timestamp: item.timestamp || new Date().toISOString(),
-                mensagem: item.mensagemAtual || item.message,
-              }
-            ],
-            // Compatibilidade com código legados
-            title: item.titulo || item.title,
-            message: item.mensagemAtual || item.message,
-            read: item.lida !== undefined ? Boolean(item.lida) : Boolean(item.read),
-            priority: item.priority || 'normal',
-            type: item.type || 'notificacao',
-            timestamp: item.atualizadaEm || item.timestamp || new Date().toISOString(),
-            actionUrl: item.actionUrl,
-            data: item.data,
-          })).slice(0, MAX_STORED);
-        }
-      }
-    } catch (e) {
-      console.warn('[NotificationContext] Erro ao carregar localStorage:', e);
-    }
-    return [];
-  });
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [soundSettings, setSoundSettingsState] = useState<SoundSettings>(() =>
@@ -99,66 +54,91 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode; userRol
   // O provider monta antes do login. Sem este sinal, o primeiro efeito vê um
   // token vazio e nunca instala os listeners do Socket.IO após autenticar.
   useEffect(() => {
-    const handleAuthChanged = () => setAuthVersion((version) => version + 1);
+    const handleAuthChanged = () => {
+      setNotifications([]);
+      setAuthVersion((version) => version + 1);
+    };
     window.addEventListener('sigi:auth-changed', handleAuthChanged);
     return () => window.removeEventListener('sigi:auth-changed', handleAuthChanged);
   }, []);
 
-  // Guardar no localStorage sempre que o estado é alterado
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(notifications.slice(0, MAX_STORED)));
-    } catch (err) {
-      console.warn('[NotificationContext] Erro ao guardar no localStorage:', err);
-    }
-  }, [notifications]);
-
-  // Carregar histórico do backend para consolidar
+  // O histórico vem do backend autenticado; o estado do browser não é partilhado
+  // entre utilizadores da mesma máquina.
   const refreshNotifications = useCallback(async () => {
     setIsLoading(true);
     try {
       const backendItems = await notificationAuditService.getHistorico({ per_page: 50 });
-      if (backendItems && backendItems.length > 0) {
-        setNotifications((prev) => {
-          let updatedList = [...prev];
-          backendItems.forEach((item: any) => {
-            const entityType = item.type?.includes('pedido')
-              ? 'pedido'
-              : item.type?.includes('requisicao')
+      const mappedItems = backendItems.map((item: any): AppNotification => {
+        const canal = String(item.canal || item.entity_type || item.event_type || '').toLowerCase();
+        const entityType: AppNotification['entityType'] = canal.includes('pedido')
+          ? 'pedido'
+          : canal.includes('producao') || canal.includes('ordem')
+            ? 'producao'
+            : canal.includes('requisicao')
               ? 'requisicao'
-              : item.type?.includes('material')
-              ? 'material'
-              : 'sistema';
-            const entityId = item.entity_id || item.id;
-            const ref = item.data?.numero || item.data?.ordem_numero || `#${entityId}`;
-
-            updatedList = upsertNotification(updatedList, {
-              entityType,
-              entityId,
-              referencia: ref,
-              novoEstado: item.data?.novo_estado || 'Notificado',
-              mensagem: item.message || item.mensagemAtual || 'Atualização do sistema',
-              tipo: item.priority === 'critical' ? 'error' : item.priority === 'high' ? 'warning' : 'info',
-              prioridade: item.priority === 'critical' || item.priority === 'high' ? 'alta' : 'media',
-              actionUrl: item.actionUrl,
-              data: item.data,
-            });
-          });
-          return updatedList.slice(0, MAX_STORED);
-        });
-      }
+              : canal.includes('stock') || canal.includes('material')
+                ? 'material'
+                : 'sistema';
+        const entityId = item.entity_id || item.data?.requisicao_id || item.data?.pedido_id || item.data?.ordem_id || item.id;
+        const reference = item.data?.numero || item.data?.ordem_numero || `#${entityId}`;
+        const priority = String(item.priority || '').toLowerCase();
+        const tipo: NotificationType = priority === 'critical' || priority === 'error'
+          ? 'error'
+          : priority === 'high' || priority === 'warning'
+            ? 'warning'
+            : 'info';
+        const timestamp = item.timestamp || new Date().toISOString();
+        const read = Boolean(item.read || item.lida || item.lida_por_mim);
+        return {
+          id: String(item.id),
+          entityType,
+          entityId,
+          referencia: reference,
+          titulo: item.title || item.titulo || 'Notificação',
+          mensagemAtual: item.message || item.mensagem || '',
+          estadoAtual: item.data?.novo_estado || item.data?.estado || 'Notificado',
+          tipo,
+          prioridade: priority === 'critical' || priority === 'high' ? 'alta' : 'media',
+          lida: read,
+          criadaEm: timestamp,
+          atualizadaEm: timestamp,
+          historico: [],
+          type: item.type || item.event_type || 'notificacao',
+          title: item.title || item.titulo || 'Notificação',
+          message: item.message || item.mensagem || '',
+          read,
+          priority: item.priority || 'normal',
+          timestamp,
+          actionUrl: item.actionUrl,
+          canal: item.canal,
+          data: item.data,
+          event_id: item.event_id,
+          event_type: item.event_type,
+          entity_type: item.entity_type,
+          entity_id: item.entity_id,
+        };
+      });
+      setNotifications(mappedItems.slice(0, MAX_STORED));
     } catch (err) {
       console.warn('[NotificationContext] Falha ao sincronizar histórico backend:', err);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [authVersion]);
 
   // Sincroniza o histórico logo após autenticar, para que o sino não dependa
   // de abrir a página de notificações ou de recarregar manualmente.
   useEffect(() => {
     refreshNotifications();
   }, [refreshNotifications]);
+
+  useEffect(() => {
+    if (!localStorage.getItem('access_token') && !localStorage.getItem('token')) return;
+    const intervalId = window.setInterval(() => {
+      void refreshNotifications();
+    }, 30_000);
+    return () => window.clearInterval(intervalId);
+  }, [authVersion, refreshNotifications]);
 
   // Escuta WebSocket do Socket.IO com token JWT no Handshake e canais oficiais do relatório
   useEffect(() => {
@@ -167,7 +147,6 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode; userRol
 
     // Conectar socket central ou criar instância compatível com a documentação
     const socketInstance = socketManager.connect();
-    const recentProductionAlertKeys = new Set<string>();
     const unsubscribeSocketStatus = socketManager.onStatusChange((status) => {
       if (status === 'connected') {
         console.info('[SIGI][notificacoes] Socket.IO ligado');
@@ -176,86 +155,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode; userRol
       }
     });
 
-    // 1. Escuta de Notificações de Requisição (Armazém, Admin, Controlador)
-    const handleRequisicaoNotificacao = (data: any) => {
-      if (!data) return;
-      const estado = data.estado || 'Pendente';
-      const isAprovada = estado.toLowerCase() === 'aprovada';
-      const isEncerrada = estado.toLowerCase() === 'encerrada';
-      const tipo: NotificationType = isAprovada ? 'success' : isEncerrada ? 'info' : 'warning';
-      const ref = data.numero || `REQ-${data.requisicao_id}`;
-
-      setNotifications((prev) =>
-        upsertNotification(prev, {
-          entityType: 'requisicao',
-          entityId: data.requisicao_id || Date.now(),
-          referencia: ref,
-          novoEstado: estado,
-          mensagem: data.mensagem || `Requisição ${ref} atualizada para ${estado}.`,
-          tipo,
-          prioridade: 'media',
-          actionUrl: '/requisicoes',
-          data,
-        })
-      );
-
-      // O toast/som é responsabilidade exclusiva do NotificationManager.
-    };
-
-    // 2. Escuta de Atualização de Pedido
-    const handlePedidoAtualizado = (data: any) => {
-      if (!data) return;
-      const novoEstado = data.novo_estado || data.estado || 'Atualizado';
-      const isPronto = novoEstado.toLowerCase() === 'pronto';
-      const numero = data.numero || data.pedido_numero || `#${data.pedido_id}`;
-
-      const mensagem = isPronto
-        ? `Pedido #${numero} está PRONTO! (Cliente notificado via Email/WhatsApp)`
-        : `Pedido #${numero} mudou para: ${novoEstado}`;
-
-      setNotifications((prev) =>
-        upsertNotification(prev, {
-          entityType: 'pedido',
-          entityId: data.pedido_id || Date.now(),
-          referencia: `PED-${numero}`,
-          novoEstado,
-          mensagem,
-          tipo: isPronto ? 'success' : 'info',
-          prioridade: isPronto ? 'alta' : 'media',
-          actionUrl: '/pedidos',
-          data,
-        })
-      );
-
-      // O evento visual correspondente é tratado pelo NotificationManager.
-    };
-
-    // 3. Escuta de Novo Pedido Criado
-    const handleNovoPedido = (data: any) => {
-      if (!data) return;
-      const numero = data.numero || `#${data.pedido_id}`;
-      const cliente = data.cliente_nome || data.cliente || 'Consumidor Final';
-      const totalTxt = data.total ? ` - Total: ${data.total} STN` : '';
-      const mensagem = `Novo pedido #${numero} recebido (${cliente})${totalTxt}.`;
-
-      setNotifications((prev) =>
-        upsertNotification(prev, {
-          entityType: 'pedido',
-          entityId: data.pedido_id || Date.now(),
-          referencia: `PED-${numero}`,
-          novoEstado: 'Novo',
-          mensagem,
-          tipo: 'info',
-          prioridade: 'media',
-          actionUrl: '/pedidos',
-          data,
-        })
-      );
-
-      // O evento visual correspondente é tratado pelo NotificationManager.
-    };
-
-    // 4. Recebe o evento normalizado do único canal responsável por toast,
+    // Recebe o evento normalizado do único canal responsável por toast,
     // som e notificação do sistema operativo. O contexto apenas atualiza o
     // sino/histórico, evitando que o mesmo WebSocket gere dois toasts.
     const handleNotificacaoGeral = (data: any) => {
@@ -271,75 +171,21 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode; userRol
 
       setNotifications((prev) =>
         upsertNotification(prev, {
+          notificationId: data.id,
           entityType,
           entityId,
           referencia: titulo,
           novoEstado: 'Notificado',
           mensagem,
           tipo,
-          prioridade: data.prioridade === 'alta' ? 'alta' : 'media',
+          prioridade: ['alta', 'high', 'critical'].includes(String(data.prioridade || data.priority || '').toLowerCase())
+            ? 'alta'
+            : 'media',
           actionUrl: isPedido ? '/pedidos' : isProducao ? '/producao' : '/notificacoes',
           data,
         })
       );
 
-    };
-
-    // Eventos de sector continuam a ser emitidos para os KDS legados. Também
-    // entram na central para que o sino notifique operadores que só usam a UI
-    // geral, mesmo quando não existe uma notificação global associada.
-    const handleAlertaProducao = (data: any) => {
-      if (!data) return;
-      const setor = data.setor || data.sector || 'Produção';
-      const numero = data.numero || data.pedido_numero || data.ordem_numero || `#${data.pedido_id || data.ordem_id || ''}`;
-      const mensagem = data.msg || data.mensagem || `Novo trabalho recebido em ${setor}.`;
-      const alertKey = `${setor}:${data.ordem_id || data.pedido_id || numero}`;
-
-      // O backend publica o mesmo alerta para a room global e para a room do
-      // sector. Um cliente pertencente às duas recebe ambas as cópias.
-      if (recentProductionAlertKeys.has(alertKey)) return;
-      recentProductionAlertKeys.add(alertKey);
-      window.setTimeout(() => recentProductionAlertKeys.delete(alertKey), 3000);
-
-      setNotifications((prev) =>
-        upsertNotification(prev, {
-          entityType: 'producao',
-          entityId: data.ordem_id || data.pedido_id || Date.now(),
-          referencia: `${setor}: ${numero}`,
-          novoEstado: 'Novo',
-          mensagem,
-          tipo: 'info',
-          prioridade: 'alta',
-          actionUrl: '/producao',
-          data,
-        })
-      );
-
-      // O alerta pode chegar em mais de uma room; não deve criar toast/som
-      // local. Quando houver notificação visual, o NotificationManager trata-a.
-    };
-
-    // 5. Escuta de Alerta de Material (Danos/Perdas de Materiais)
-    const handleAlertaMaterial = (data: any) => {
-      if (!data) return;
-      const msg = data.msg || data.mensagem || 'Ocorrência registada no controlo de materiais';
-      const materialId = data.material_id || Date.now();
-
-      setNotifications((prev) =>
-        upsertNotification(prev, {
-          entityType: 'material',
-          entityId: materialId,
-          referencia: `MAT-${materialId}`,
-          novoEstado: 'Alerta',
-          mensagem: msg,
-          tipo: 'warning',
-          prioridade: 'alta',
-          actionUrl: '/controlo-materiais',
-          data,
-        })
-      );
-
-      // Toast/som ficam centralizados no NotificationManager.
     };
 
     const unsubscribeNotificationManager = notificationManager.subscribe((notification) => {
@@ -355,39 +201,8 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode; userRol
       });
     });
 
-    // Registar no socket central
-    const unsubRequisicao = socketManager.on('requisicao_notificacao', handleRequisicaoNotificacao);
-    const unsubPedidoAtualizado = socketManager.on('pedido_atualizado', handlePedidoAtualizado);
-    const unsubNovoPedido = socketManager.on('novo_pedido', handleNovoPedido);
-    // Alguns fluxos antigos publicam o evento técnico sem publicar o evento
-    // visual. Encaminhar pelo NotificationManager garante toast imediato e
-    // mantém a deduplicação quando ambos os eventos chegam.
-    const unsubNovoPedidoVisual = socketManager.on('novo_pedido', (data) => {
-      notificationManager.handleEvent('novo_pedido', data);
-    });
-    const unsubNovaOrdemVisual = socketManager.on('nova_ordem_producao', (data) => {
-      notificationManager.handleEvent('nova_ordem_producao', data);
-    });
-    const unsubAlertaProducaoVisual = socketManager.on('alerta_producao', (data) => {
-      notificationManager.handleEvent('alerta_producao', data);
-    });
-    const unsubAlertaMaterial = socketManager.on('alerta_material', handleAlertaMaterial);
-    const unsubAlertaCozinha = socketManager.on('alerta_cozinha', handleAlertaProducao);
-    const unsubAlertaPastelaria = socketManager.on('alerta_pastelaria', handleAlertaProducao);
-    const unsubAlertaBar = socketManager.on('alerta_bar', handleAlertaProducao);
-
     return () => {
-      unsubRequisicao();
-      unsubPedidoAtualizado();
-      unsubNovoPedido();
-      unsubNovoPedidoVisual();
-      unsubNovaOrdemVisual();
-      unsubAlertaProducaoVisual();
       unsubscribeNotificationManager();
-      unsubAlertaMaterial();
-      unsubAlertaCozinha();
-      unsubAlertaPastelaria();
-      unsubAlertaBar();
       unsubscribeSocketStatus();
     };
   }, [propUserRole, authVersion]);
@@ -420,9 +235,6 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode; userRol
 
   const clearNotifications = useCallback(() => {
     setNotifications([]);
-    try {
-      localStorage.removeItem(STORAGE_KEY);
-    } catch {}
   }, []);
 
   const addNotification = useCallback((payload: any): AppNotification => {

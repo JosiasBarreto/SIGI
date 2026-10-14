@@ -46,6 +46,7 @@ export interface AppNotification {
 }
 
 export interface UpsertNotificationPayload {
+  notificationId?: string | number;
   entityType: NotificationEntity;
   entityId: number | string;
   referencia: string;

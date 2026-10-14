@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import apiClient from '../../api/client';
+import { useNotifications } from '../../context/NotificationContext';
 import {
   Bell,
   CheckCircle2,
@@ -21,7 +23,6 @@ import {
   CircleDot
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { notificationAuditService, AuditoriaLeitura } from '../../services/notifications';
 import { cn } from '../../lib/utils';
 import { toast } from 'react-toastify';
 
@@ -61,7 +62,6 @@ export interface CentralNotificacoesModalProps {
   isOpen: boolean;
   onClose: () => void;
   getHeaders?: () => Record<string, string>;
-  onNotificacaoCountChange?: (count: number) => void;
   apiUrl?: string;
 }
 
@@ -69,10 +69,10 @@ export const CentralNotificacoesModal: React.FC<CentralNotificacoesModalProps> =
   isOpen,
   onClose,
   getHeaders,
-  onNotificacaoCountChange,
   apiUrl = '/api/v1'
 }) => {
   const navigate = useNavigate();
+  const { refreshNotifications } = useNotifications();
 
   // Estados principais
   const [notificacoes, setNotificacoes] = useState<NotificacaoAvancada[]>([]);
@@ -104,179 +104,28 @@ export const CentralNotificacoesModal: React.FC<CentralNotificacoesModalProps> =
   const carregarNotificacoes = useCallback(async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams();
-      params.append('per_page', '50');
-      params.append('page', '1');
-      if (selectedCategoria !== 'TODAS') {
-        params.append('tipo', selectedCategoria);
-      }
-
-      const headers = resolveHeaders();
-      let items: NotificacaoAvancada[] = [];
-      let naoLidasCount = 0;
-
-      try {
-        const res = await fetch(`${apiUrl}/notificacoes?${params.toString()}`, { headers });
-        if (res.ok) {
-          const data = await res.json();
-          const list = data.notificacoes || data.items || data.data?.items || data.data || [];
-          if (Array.isArray(list) && list.length > 0) {
-            items = list;
-            naoLidasCount = typeof data.nao_lidas === 'number' 
-              ? data.nao_lidas 
-              : list.filter((n: any) => !n.lida_por_mim && !n.lida).length;
-          }
+      const data = await apiClient.get<any, any>('/v1/notificacoes', {
+        params: {
+          per_page: 50,
+          page: 1,
+          ...(selectedCategoria !== 'TODAS' ? { tipo: selectedCategoria } : {})
         }
-      } catch (err) {
-        console.warn('API /notificacoes inacessível, utilizando fallback em memória:', err);
+      });
+      const list = data.notificacoes ?? data.items ?? data.data?.items ?? data.data ?? [];
+      if (!Array.isArray(list)) {
+        throw new Error('A resposta da API /notificacoes não contém uma lista válida.');
       }
 
-      // Fallback resiliente usando notificationAuditService
-      if (items.length === 0) {
-        const auditHistorico = await notificationAuditService.getHistorico();
-        if (auditHistorico && auditHistorico.length > 0) {
-          items = auditHistorico.map((h: any, idx: number) => {
-            const rawType = String(h.canal || h.type || 'SISTEMA').toUpperCase();
-            let mappedTipo = 'SISTEMA';
-            if (rawType.includes('STOCK')) mappedTipo = 'STOCK_BAIXO';
-            else if (rawType.includes('VALIDADE')) mappedTipo = 'VALIDADE_EXPIRADA';
-            else if (rawType.includes('PEDIDO')) mappedTipo = 'PEDIDO_NAO_ENTREGUE';
-            else if (rawType.includes('CAIXA') || rawType.includes('FINANCEIRO')) mappedTipo = 'CAIXA_DIVERGENCIA';
-            else if (rawType.includes('EVENTO')) mappedTipo = 'EVENTOS';
-
-            return {
-              id: h.id || idx + 100,
-              tipo: mappedTipo,
-              titulo: h.title || h.titulo || 'Alerta Operacional',
-              mensagem: h.message || h.mensagem || '',
-              prioridade: (h.priority || 'media').toLowerCase(),
-              entidade_tipo: h.entityType || 'produto',
-              entidade_id: h.entityId || 1,
-              created_at: h.timestamp || new Date().toISOString(),
-              lida_por_mim: Boolean(h.read || h.lida),
-              total_visto: 2,
-              total_nao_visto: 4,
-              quem_viu: [
-                { user_id: 1, user_name: 'Administrador', user_email: 'admin@sigi.com', user_role: 'Administrador', data_leitura: new Date(Date.now() - 3600000).toISOString() },
-                { user_id: 2, user_name: 'Chefe de Turno', user_email: 'turno@sigi.com', user_role: 'Atendimento', data_leitura: new Date(Date.now() - 1800000).toISOString() }
-              ],
-              quem_nao_viu: [
-                { id: 3, name: 'Cozinha 1', email: 'cozinha@sigi.com', role: 'Cozinha' },
-                { id: 4, name: 'Armazém Central', email: 'stock@sigi.com', role: 'Armazém' },
-                { id: 5, name: 'Operador de Caixa', email: 'caixa@sigi.com', role: 'Caixa' },
-                { id: 6, name: 'Pasteleira Chefe', email: 'pastelaria@sigi.com', role: 'Pastelaria' }
-              ]
-            };
-          });
-        } else {
-          // Itens demonstrativos automáticos enriquecidos se histórico vazio
-          items = [
-            {
-              id: 142,
-              tipo: 'STOCK_BAIXO',
-              titulo: 'Stock Crítico: Arroz Bom Sucesso 1kg',
-              mensagem: 'O artigo Arroz Bom Sucesso 1kg atingiu o stock de segurança (Atual: 4 pacotes, Mínimo Recomendado: 15 pacotes).',
-              prioridade: 'alta',
-              entidade_tipo: 'produto',
-              entidade_id: 29,
-              created_at: new Date(Date.now() - 1000 * 60 * 25).toISOString(),
-              lida_por_mim: false,
-              total_visto: 2,
-              total_nao_visto: 4,
-              quem_viu: [
-                { user_id: 1, user_name: 'Administrador Principal', user_email: 'admin@sigi.com', user_role: 'Administrador', data_leitura: new Date(Date.now() - 1000 * 60 * 15).toISOString() },
-                { user_id: 4, user_name: 'Gestor de Armazém', user_email: 'stock@sigi.com', user_role: 'Armazém', data_leitura: new Date(Date.now() - 1000 * 60 * 5).toISOString() }
-              ],
-              quem_nao_viu: [
-                { id: 2, name: 'Chefe de Cozinha', email: 'cozinha@sigi.com', role: 'Cozinha' },
-                { id: 3, name: 'Operador de Caixa', email: 'caixa@sigi.com', role: 'Caixa' },
-                { id: 5, name: 'Responsável de Compras', email: 'compras@sigi.com', role: 'Comercial' },
-                { id: 6, name: 'Pasteleira', email: 'pastelaria@sigi.com', role: 'Pastelaria' }
-              ]
-            },
-            {
-              id: 143,
-              tipo: 'VALIDADE_EXPIRADA',
-              titulo: 'Lote com Validade Próxima: Iogurte Natural 500ml',
-              mensagem: 'O lote LT-2026-B9 expira dentro de 48 horas no Armazém Principal. Necessário consumir ou baixar do inventário.',
-              prioridade: 'urgente',
-              entidade_tipo: 'produto',
-              entidade_id: 34,
-              created_at: new Date(Date.now() - 1000 * 60 * 75).toISOString(),
-              lida_por_mim: false,
-              total_visto: 1,
-              total_nao_visto: 5,
-              quem_viu: [
-                { user_id: 1, user_name: 'Administrador Principal', user_email: 'admin@sigi.com', user_role: 'Administrador', data_leitura: new Date(Date.now() - 1000 * 60 * 50).toISOString() }
-              ],
-              quem_nao_viu: [
-                { id: 2, name: 'Chefe de Cozinha', email: 'cozinha@sigi.com', role: 'Cozinha' },
-                { id: 4, name: 'Gestor de Armazém', email: 'stock@sigi.com', role: 'Armazém' },
-                { id: 5, name: 'Controlo de Qualidade', email: 'qualidade@sigi.com', role: 'Atendimento' },
-                { id: 6, name: 'Pasteleira Chefe', email: 'pastelaria@sigi.com', role: 'Pastelaria' },
-                { id: 7, name: 'Operador de Bar', email: 'bar@sigi.com', role: 'Atendimento' }
-              ]
-            },
-            {
-              id: 144,
-              tipo: 'PEDIDO_NAO_ENTREGUE',
-              titulo: 'Pedido com Atraso de Entrega: PED-2026/048',
-              mensagem: 'O pedido PED-2026/048 do cliente Dr. Fernando Sousa ultrapassou o horário previsto em 35 minutos.',
-              prioridade: 'alta',
-              entidade_tipo: 'pedido',
-              entidade_id: 48,
-              created_at: new Date(Date.now() - 1000 * 60 * 110).toISOString(),
-              lida_por_mim: true,
-              total_visto: 3,
-              total_nao_visto: 3,
-              quem_viu: [
-                { user_id: 1, user_name: 'Administrador Principal', user_email: 'admin@sigi.com', user_role: 'Administrador', data_leitura: new Date(Date.now() - 1000 * 60 * 90).toISOString() },
-                { user_id: 3, user_name: 'Atendimento / Mesas', user_email: 'mesas@sigi.com', user_role: 'Atendimento', data_leitura: new Date(Date.now() - 1000 * 60 * 80).toISOString() },
-                { user_id: 8, user_name: 'Motorista Logística', user_email: 'motorista@sigi.com', user_role: 'Logística', data_leitura: new Date(Date.now() - 1000 * 60 * 60).toISOString() }
-              ],
-              quem_nao_viu: [
-                { id: 2, name: 'Chefe de Cozinha', email: 'cozinha@sigi.com', role: 'Cozinha' },
-                { id: 9, name: 'Supervisora de Salão', email: 'salao@sigi.com', role: 'Atendimento' },
-                { id: 10, name: 'Expedição', email: 'expedicao@sigi.com', role: 'Logística' }
-              ]
-            },
-            {
-              id: 145,
-              tipo: 'CAIXA_DIVERGENCIA',
-              titulo: 'Reconciliação de Caixa: Fecho Turno da Tarde',
-              mensagem: 'Caixa POS 1 fechado com balanço quadrado sem discrepâncias (+0.00 STN). Montante em cofre: 8.450,00 STN.',
-              prioridade: 'media',
-              entidade_tipo: 'caixa',
-              entidade_id: 12,
-              created_at: new Date(Date.now() - 1000 * 60 * 240).toISOString(),
-              lida_por_mim: true,
-              total_visto: 2,
-              total_nao_visto: 2,
-              quem_viu: [
-                { user_id: 1, user_name: 'Administrador Principal', user_email: 'admin@sigi.com', user_role: 'Administrador', data_leitura: new Date(Date.now() - 1000 * 60 * 200).toISOString() },
-                { user_id: 5, user_name: 'Diretor Financeiro', user_email: 'financeiro@sigi.com', user_role: 'Financeiro', data_leitura: new Date(Date.now() - 1000 * 60 * 180).toISOString() }
-              ],
-              quem_nao_viu: [
-                { id: 11, name: 'Auditoria Externa', email: 'auditor@sigi.com', role: 'Auditoria' },
-                { id: 12, name: 'Gerente Geral', email: 'gerente@sigi.com', role: 'Gerente' }
-              ]
-            }
-          ];
-          naoLidasCount = 2;
-        }
-      }
-
+      const items: NotificacaoAvancada[] = list;
       setNotificacoes(items);
-      const unreadTotal = items.filter(n => !n.lida_por_mim).length;
-      if (onNotificacaoCountChange) {
-        onNotificacaoCountChange(unreadTotal);
-      }
     } catch (err) {
       console.error('Erro ao carregar notificações:', err);
+      setNotificacoes([]);
+      toast.error('Não foi possível carregar as notificações.');
     } finally {
       setLoading(false);
     }
-  }, [apiUrl, resolveHeaders, selectedCategoria, onNotificacaoCountChange]);
+  }, [apiUrl, resolveHeaders, selectedCategoria]);
 
   // Carregar ao abrir o modal
   useEffect(() => {
@@ -289,33 +138,16 @@ export const CentralNotificacoesModal: React.FC<CentralNotificacoesModalProps> =
   const handleSincronizarAlertas = async () => {
     setIsSyncing(true);
     try {
-      const headers = resolveHeaders();
-      let success = false;
-
-      try {
-        const res = await fetch(`${apiUrl}/v1/notificacoes/sincronizar`, {
-          method: 'POST',
-          headers
-        });
-        if (res.ok) success = true;
-      } catch {}
-
-      if (!success) {
-        try {
-          const res = await fetch(`${apiUrl}/notificacoes/sincronizar`, {
-            method: 'POST',
-            headers
-          });
-          if (res.ok) success = true;
-        } catch {}
+      const response = await apiClient.post<any, any>('/v1/notificacoes/sincronizar', {});
+      if (!response?.success) {
+        throw new Error('A sincronização remota não foi concluída.');
       }
-
       toast.success('Varredura concluída! Alertas de stock, validades e pedidos sincronizados.');
       await carregarNotificacoes();
+      await refreshNotifications();
     } catch (err) {
-      console.warn('Erro na sincronização remota, simulando sucesso local:', err);
-      toast.success('Alertas sincronizados com sucesso!');
-      await carregarNotificacoes();
+      console.error('Erro na sincronização remota de notificações:', err);
+      toast.error('Não foi possível sincronizar os alertas.');
     } finally {
       setIsSyncing(false);
     }
@@ -324,27 +156,12 @@ export const CentralNotificacoesModal: React.FC<CentralNotificacoesModalProps> =
   // Marcar Notificação Como Lida
   const handleMarcarLida = async (id: string | number) => {
     try {
-      const headers = resolveHeaders();
-      let success = false;
-      
-      // Tentar PATCH primeiro conforme especificação
-      try {
-        const res = await fetch(`${apiUrl}/notificacoes/${id}/marcar-lida`, {
-          method: 'PATCH',
-          headers
-        });
-        if (res.ok) success = true;
-      } catch {}
-
-      // Se falhar PATCH, tentar POST
-      if (!success) {
-        try {
-          const res = await fetch(`${apiUrl}/notificacoes/${id}/marcar-lida`, {
-            method: 'POST',
-            headers
-          });
-          if (res.ok) success = true;
-        } catch {}
+      const response = await apiClient.post<any, any>(
+        `/v1/notificacoes/${encodeURIComponent(String(id))}/marcar-lida`,
+        {}
+      );
+      if (!response?.success) {
+        throw new Error('A API não confirmou a leitura da notificação.');
       }
 
       // Atualizar localmente
@@ -352,57 +169,29 @@ export const CentralNotificacoesModal: React.FC<CentralNotificacoesModalProps> =
         prev.map(n => (n.id === id ? { ...n, lida_por_mim: true } : n))
       );
 
-      // Atualizar contador global
-      const updated = notificacoes.map(n => (n.id === id ? { ...n, lida_por_mim: true } : n));
-      const unreadTotal = updated.filter(n => !n.lida_por_mim).length;
-      if (onNotificacaoCountChange) onNotificacaoCountChange(unreadTotal);
+      await refreshNotifications();
 
       toast.success('Notificação marcada como lida.');
     } catch (err) {
-      console.warn('Erro ao marcar notificação como lida no servidor, aplicando localmente:', err);
-      setNotificacoes(prev =>
-        prev.map(n => (n.id === id ? { ...n, lida_por_mim: true } : n))
-      );
-      const updated = notificacoes.map(n => (n.id === id ? { ...n, lida_por_mim: true } : n));
-      const unreadTotal = updated.filter(n => !n.lida_por_mim).length;
-      if (onNotificacaoCountChange) onNotificacaoCountChange(unreadTotal);
+      console.error('Erro ao marcar notificação como lida:', err);
+      toast.error('Não foi possível marcar a notificação como lida.');
     }
   };
 
   // Marcar Todas Como Lidas
   const handleMarcarTodasLidas = async () => {
     try {
-      const headers = resolveHeaders();
-      let success = false;
-
-      // Tentar PATCH primeiro
-      try {
-        const res = await fetch(`${apiUrl}/notificacoes/marcar-todas-lidas`, {
-          method: 'PATCH',
-          headers
-        });
-        if (res.ok) success = true;
-      } catch {}
-
-      // Se falhar PATCH, tentar POST
-      if (!success) {
-        try {
-          const res = await fetch(`${apiUrl}/notificacoes/marcar-todas-lidas`, {
-            method: 'POST',
-            headers
-          });
-          if (res.ok) success = true;
-        } catch {}
+      const response = await apiClient.post<any, any>('/v1/notificacoes/marcar-todas-lidas', {});
+      if (!response?.success) {
+        throw new Error('A API não confirmou a leitura das notificações.');
       }
 
       setNotificacoes(prev => prev.map(n => ({ ...n, lida_por_mim: true })));
-      if (onNotificacaoCountChange) onNotificacaoCountChange(0);
+      await refreshNotifications();
       toast.success('Todas as notificações foram marcadas como lidas.');
     } catch (err) {
-      console.warn('Erro ao marcar todas como lidas no servidor, aplicando localmente:', err);
-      setNotificacoes(prev => prev.map(n => ({ ...n, lida_por_mim: true })));
-      if (onNotificacaoCountChange) onNotificacaoCountChange(0);
-      toast.success('Todas as notificações marcadas como lidas.');
+      console.error('Erro ao marcar todas as notificações como lidas:', err);
+      toast.error('Não foi possível marcar todas as notificações como lidas.');
     }
   };
 

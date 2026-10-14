@@ -407,7 +407,7 @@ def faturar_evento(id):
 def check_proximos():
     from datetime import datetime, timedelta
     from app.models.evento import Evento
-    from app.websocket.socket_manager import socketio
+    from app.notifications.service import NotificationService
     
     amanha = datetime.utcnow().date() + timedelta(days=1)
     hoje = datetime.utcnow().date()
@@ -417,7 +417,12 @@ def check_proximos():
     ).all()
     
     for ev in eventos:
-        socketio.emit('alerta_evento_proximo', {'numero': ev.numero, 'titulo': ev.titulo, 'data': str(ev.data_evento)})
+        NotificationService.publish_upcoming_event(
+            event_id=ev.id,
+            event_number=ev.numero,
+            title=ev.titulo,
+            event_date=str(ev.data_evento),
+        )
         
     return jsonify({"msg": f"Checked {len(eventos)} upcoming events."}), 200
 
@@ -472,4 +477,3 @@ def gerar_documento(id, doc_type):
     ext = 'pdf' if doc_type != 'word' else 'docx'
     mimetype = 'application/pdf' if doc_type != 'word' else 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     return send_file(buffer, as_attachment=True, download_name=f"{doc_type}_{id}.{ext}", mimetype=mimetype)
-

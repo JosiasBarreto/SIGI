@@ -16,6 +16,7 @@ export class NotificationAdapter {
     // 1. Extrair data ou metadados incorporados
     const metadata: NotificationMetadata = {
       ...(typeof raw.data === 'object' ? raw.data : {}),
+      ...(typeof raw.dados_extra === 'object' ? raw.dados_extra : {}),
       ...(typeof raw.metadados === 'object' ? raw.metadados : {}),
       ...(raw.pedido_id !== undefined ? { pedido_id: raw.pedido_id } : {}),
       ...(raw.ordem_id !== undefined ? { ordem_id: raw.ordem_id } : {}),
@@ -35,8 +36,8 @@ export class NotificationAdapter {
     const eventId = raw.event_id || raw.eventId || primaryDbId;
     const id = primaryDbId || eventId || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const eventType = raw.event_type || raw.eventType || raw.tipo || normalizedType;
-    const entityType = raw.entity_type || raw.entityType || raw.canal || this.resolveCanal(raw, eventName, normalizedType);
-    const entityId = raw.entity_id || raw.entityId || metadata.pedido_id || metadata.ordem_id || raw.id;
+    const entityType = raw.entity_type || raw.entityType || raw.entidade_tipo || raw.canal || this.resolveCanal(raw, eventName, normalizedType);
+    const entityId = raw.entity_id || raw.entityId || raw.entidade_id || metadata.pedido_id || metadata.ordem_id || metadata.requisicao_id || raw.id;
     const aggregateId = raw.aggregate_id || raw.aggregateId || (entityType && entityId ? `${entityType}:${entityId}` : undefined);
     const actorUserId = raw.actor_user_id || raw.actorUserId || raw.actor_id || raw.actorId;
     const excludeActor = raw.exclude_actor !== undefined ? Boolean(raw.exclude_actor) : Boolean(raw.excludeActor);
@@ -80,7 +81,7 @@ export class NotificationAdapter {
       channels,
       timestamp,
       canal,
-      read: Boolean(raw.read || raw.lida || false),
+      read: Boolean(raw.read || raw.lida || raw.lida_por_mim || false),
       sound: raw.sound !== false && raw.notification?.sound !== false,
       persistent: priority === 'CRITICAL' || Boolean(raw.persistent || raw.persistente),
       source: raw.source || raw.origem || metadata.origem || eventName,
@@ -107,12 +108,26 @@ export class NotificationAdapter {
     if (raw.tipo && NOTIFICATION_TYPES[raw.tipo]) return raw.tipo;
     if (NOTIFICATION_TYPES[eventName]) return eventName;
 
-    const lower = eventName.toLowerCase().replace(/[\s-]/g, '_');
+    const sourceType = String(raw.event_type || raw.eventType || eventName);
+    const lower = sourceType.toLowerCase().replace(/[\s-]/g, '_');
     if (NOTIFICATION_TYPES[lower]) return lower;
+    if (lower === 'order_created') return 'novo_pedido';
+    if (lower === 'order_updated') return 'pedido_atualizado';
+    if (lower === 'order_ready') return 'pedido_pronto';
+    if (lower === 'order_cancelled') return 'pedido_cancelado';
+    if (lower === 'production_order_created') return 'nova_ordem_producao';
+    if (lower === 'production_order_updated') return 'ordem_producao_atualizada';
+    if (lower === 'production_order_completed') return 'producao_concluida';
     if (lower === 'pedido_actualizado') return 'pedido_atualizado';
     if (lower === 'ordem_producao_actualizada') return 'ordem_producao_atualizada';
     if (lower === 'alerta_material') return 'alerta_stock';
     if (lower === 'nova_requisicao') return 'requisicao_criada';
+    if (lower === 'stock_baixo' || lower === 'stock_critical' || lower === 'stock_low' || lower === 'validade_expirada' || lower === 'validade_proxima') return 'alerta_stock';
+    if (lower === 'requisition_created') return 'requisicao_criada';
+    if (lower === 'requisition_approved') return 'requisicao_aprovada';
+    if (lower === 'requisition_rejected') return 'requisicao_rejeitada';
+    if (lower === 'requisition_updated') return 'notificacao';
+    if (lower === 'event_created' || lower === 'event_updated' || lower === 'event_upcoming') return 'alerta_evento_proximo';
 
     return 'notificacao';
   }

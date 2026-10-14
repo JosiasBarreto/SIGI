@@ -18,7 +18,7 @@ export function upsertNotification(
   listaAtual: AppNotification[],
   novaOuAtualizada: UpsertNotificationPayload
 ): AppNotification[] {
-  const chave = `${novaOuAtualizada.entityType}_${novaOuAtualizada.entityId}`;
+  const chave = String(novaOuAtualizada.notificationId || `${novaOuAtualizada.entityType}_${novaOuAtualizada.entityId}`);
   const agora = new Date().toISOString();
   const index = listaAtual.findIndex((n) => n.id === chave);
 

@@ -30,6 +30,10 @@ class FlexibleEnum(TypeDecorator):
     cache_ok = True
 
     def __init__(self, enum_cls, *args, **kwargs):
+        kwargs.setdefault(
+            "length",
+            max((len(str(member.value)) for member in enum_cls), default=1)
+        )
         super().__init__(*args, **kwargs)
         self.enum_cls = enum_cls
         self._name_to_value = {e.name.upper(): e.value for e in enum_cls}

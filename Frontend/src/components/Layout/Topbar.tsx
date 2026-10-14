@@ -4,13 +4,13 @@ import { Link } from "react-router-dom";
 import { useTheme } from "./ThemeContext";
 import { useAuth } from "../AuthContext";
 import { CentralNotificacoesModal } from "../Notifications/CentralNotificacoesModal";
+import { useNotifications } from "../../context/NotificationContext";
 
 export function Topbar({ toggleSidebar }: { toggleSidebar: () => void }) {
   const { theme, toggleTheme } = useTheme();
   const { user } = useAuth();
+  const { unreadCount } = useNotifications();
   const [showNotifications, setShowNotifications] = useState(false);
-  const [unreadNotifCount, setUnreadNotifCount] = useState(0);
-
   const getHeaders = () => {
     const token = localStorage.getItem('access_token') || localStorage.getItem('token') || '';
     return {
@@ -60,9 +60,9 @@ export function Topbar({ toggleSidebar }: { toggleSidebar: () => void }) {
           aria-label="Abrir Notificações Inteligentes"
         >
           <Bell className="w-5 h-5" />
-          {unreadNotifCount > 0 && (
+          {unreadCount > 0 && (
             <span className="absolute -top-1 -right-1 min-w-[20px] h-5 bg-rose-500 text-white rounded-full text-[10px] font-bold flex items-center justify-center px-1 shadow animate-pulse">
-              {unreadNotifCount > 9 ? '9+' : unreadNotifCount}
+              {unreadCount > 9 ? '9+' : unreadCount}
             </span>
           )}
         </button>
@@ -71,8 +71,6 @@ export function Topbar({ toggleSidebar }: { toggleSidebar: () => void }) {
         <CentralNotificacoesModal 
           isOpen={showNotifications}
           onClose={() => setShowNotifications(false)}
-          getHeaders={getHeaders}
-          onNotificacaoCountChange={setUnreadNotifCount}
         />
 
         <div className="h-8 border-l border-gray-200 dark:border-gray-700 mx-1"></div>

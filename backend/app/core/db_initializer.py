@@ -61,8 +61,8 @@ def import_all_models():
         from app.models.token_blocklist import TokenBlocklist
         from app.models.notificacao import Notificacao, NotificacaoLeitura, HistoricoSMS
         return True
-    except Exception as e:
-        logger.error(f"[SIGI DB] Erro ao importar modelos: {e}")
+    except Exception:
+        logger.exception("[SIGI DB] Erro ao importar modelos; a criação das tabelas foi cancelada.")
         return False
 
 
@@ -186,7 +186,9 @@ def ensure_database_ready(app, force=False):
 
     with app.app_context():
         # 1. Carregar todos os modelos para registro de metadados no SQLAlchemy
-        import_all_models()
+        if not import_all_models():
+            logger.error("[SIGI DB] Não foi possível carregar todos os modelos. A base de dados não foi alterada.")
+            return False
 
         try:
             inspector = inspect(db.engine)
@@ -214,8 +216,9 @@ def ensure_database_ready(app, force=False):
         else:
             try:
                 db.create_all()
-            except Exception as e:
-                logger.warning(f"db.create_all warning: {e}")
+            except Exception:
+                logger.exception("[SIGI DB] Erro ao criar tabelas em falta.")
+                return False
 
         # Executar ajustes seguros de colunas
         try:

@@ -41,6 +41,26 @@ class NotificationService:
         ev_type_str = event.event_type.value if hasattr(event.event_type, 'value') else str(event.event_type)
         ent_type_str = event.entity_type.value if hasattr(event.entity_type, 'value') else str(event.entity_type)
         priority_str = event.priority.value if hasattr(event.priority, 'value') else str(event.priority)
+        targets = NotificationPolicy.get_targets_for_event(event)
+        actor_id_str = str(event.actor_user_id) if event.actor_user_id else None
+
+        if event.notification and event.notification.enabled and not targets:
+            logger.warning(
+                "[NOTIFICATION SKIPPED] No recipients configured for event type %s",
+                ev_type_str
+            )
+            return {"status": "no_recipients", "event_id": event.event_id}
+
+        def room_for_target(target):
+            if target.target_type == "USER" and target.target_id:
+                return f"user_{target.target_id}"
+            if target.target_type == "ROLE" and target.target_id:
+                return f"role_{target.target_id.lower().replace(' ', '_')}"
+            if target.target_type == "SECTOR" and target.target_id:
+                return f"sector_{target.target_id.lower().replace(' ', '_')}"
+            if target.target_type == "GLOBAL":
+                return "global_notifications"
+            return None
 
         # ---------------------------------------------------------
         # 1. EMISSÃO DE EVENTO TÉCNICO DE SINCRONIZAÇÃO (Se configurado)
@@ -61,8 +81,27 @@ class NotificationService:
             if event.data:
                 sync_payload.update(event.data)
 
-            emit_sync_event(event.sync_event_name, sync_payload)
-            logger.debug(f"[SYNC EVENT EMITTED] {event.sync_event_name} - {event.aggregate_id}")
+            sync_rooms = {
+                room_for_target(target)
+                for target in targets
+                if room_for_target(target)
+            }
+            for room_name in sync_rooms:
+                emit_sync_event(
+                    event.sync_event_name,
+                    sync_payload,
+                    room=room_name,
+                    exclude_user_id=actor_id_str if any(
+                        target.exclude_actor and room_for_target(target) == room_name
+                        for target in targets
+                    ) else None
+                )
+            logger.debug(
+                "[SYNC EVENT EMITTED] %s - %s - rooms: %s",
+                event.sync_event_name,
+                event.aggregate_id,
+                sorted(sync_rooms),
+            )
 
         # Se notificações visuais estiverem desativadas para este evento, termina aqui
         if not event.notification or not event.notification.enabled:
@@ -90,19 +129,24 @@ class NotificationService:
         # ---------------------------------------------------------
         # 3. DETERMINAÇÃO DE DESTINATÁRIOS (POLÍTICA RBAC)
         # ---------------------------------------------------------
-        targets = NotificationPolicy.get_targets_for_event(event)
         published_targets = []
 
         notif_cfg = event.notification
-        canal = ent_type_str if ent_type_str in ["PEDIDO", "PRODUCAO", "STOCK", "FINANCEIRO"] else "SISTEMA"
+        canal = {
+            "PEDIDO": "PEDIDO",
+            "PRODUCAO": "PRODUCAO",
+            "ORDEM_PRODUCAO": "PRODUCAO",
+            "STOCK": "STOCK",
+            "FINANCEIRO": "FINANCEIRO",
+            "REQUISICAO": "REQUISICAO",
+            "EVENTO": "EVENTOS",
+        }.get(ent_type_str, "SISTEMA")
 
         # ---------------------------------------------------------
         # 4. PERSISTÊNCIA E EMISSÃO SELETIVA POR DESTINATÁRIO
         # ---------------------------------------------------------
         # Para evitar spam, cria um registo persistido consolidado e emite apenas
         # para as rooms apropriadas, excluindo a room do próprio utilizador que executou a ação.
-        actor_id_str = str(event.actor_user_id) if event.actor_user_id else None
-
         # Determinar tipo de alvo para persistência:
         # Eventos operacionais do sistema devem ser GLOBAL para que fiquem no histórico do ERP
         # acessível a todos os operadores autorizados. Apenas notificações privadas de utilizador são USER.
@@ -132,9 +176,25 @@ class NotificationService:
                 **event.data,
                 "event_id": event.event_id,
                 "event_type": ev_type_str,
-                "actor_user_id": event.actor_user_id
+                "actor_user_id": event.actor_user_id,
+                "notification_recipients": [
+                    {
+                        "target_type": target.target_type,
+                        "target_id": target.target_id,
+                        "exclude_actor": target.exclude_actor,
+                    }
+                    for target in targets
+                ],
             }
         )
+
+        if created_notif is None:
+            logger.error(
+                "[NOTIFICATION FAILED] Persistence failed for event %s (%s)",
+                ev_type_str,
+                event.event_id,
+            )
+            return {"status": "persistence_failed", "event_id": event.event_id}
 
         notif_db_id = created_notif.id if created_notif else None
 
@@ -165,17 +225,7 @@ class NotificationService:
                 logger.debug(f"[ACTOR EXCLUDED] Não enviando notificação para o próprio actor: {actor_id_str}")
                 continue
 
-            room_name = None
-            if target.target_type == "USER" and target.target_id:
-                room_name = f"user_{target.target_id}"
-            elif target.target_type == "ROLE" and target.target_id:
-                role_slug = target.target_id.lower().replace(" ", "_")
-                room_name = f"role_{role_slug}"
-            elif target.target_type == "SECTOR" and target.target_id:
-                sec_slug = target.target_id.lower().replace(" ", "_")
-                room_name = f"sector_{sec_slug}"
-            elif target.target_type == "GLOBAL":
-                room_name = "global_notifications"
+            room_name = room_for_target(target)
 
             if room_name and room_name not in rooms_emitted:
                 emit_user_notification(visual_payload, room=room_name, exclude_user_id=actor_id_str if target.exclude_actor else None)
@@ -331,6 +381,162 @@ class NotificationService:
         return cls.publish(event)
 
     @classmethod
+    def publish_requisition_status(
+        cls,
+        requisition_id: int,
+        requisition_number: str,
+        status: str,
+        message: str,
+        responsible_user_id: Optional[int] = None,
+        actor_user_id: Optional[int] = None,
+    ) -> Dict[str, Any]:
+        normalized_status = str(status or "").strip().casefold()
+        if normalized_status in {"pendente", "criada", "criado"}:
+            event_type = EventType.REQUISITION_CREATED
+            notification_type = "info"
+        elif normalized_status in {"aprovada", "aprovado"}:
+            event_type = EventType.REQUISITION_APPROVED
+            notification_type = "success"
+        elif normalized_status in {"rejeitada", "rejeitado"}:
+            event_type = EventType.REQUISITION_REJECTED
+            notification_type = "error"
+        else:
+            event_type = EventType.REQUISITION_UPDATED
+            notification_type = "info"
+
+        data = {
+            "requisicao_id": requisition_id,
+            "numero": requisition_number,
+            "estado": status,
+            "novo_estado": status,
+            "mensagem": message,
+            "target_user_id": responsible_user_id,
+        }
+        event = DomainEvent(
+            event_type=event_type,
+            entity_type=EntityType.REQUISICAO,
+            entity_id=requisition_id,
+            aggregate_id=f"REQUISICAO:{requisition_id}",
+            actor_user_id=actor_user_id,
+            priority=EventPriority.NORMAL,
+            sync_event_name="requisicao_atualizada",
+            notification=NotificationConfig(
+                title=f"Requisição #{requisition_number}: {status}",
+                message=message,
+                tipo=notification_type,
+                persistent=False,
+            ),
+            data=data,
+        )
+        return cls.publish(event)
+
+    @classmethod
+    def publish_requisition_material_alert(
+        cls,
+        requisition_id: int,
+        requisition_number: str,
+        message: str,
+        responsible_user_id: Optional[int] = None,
+        actor_user_id: Optional[int] = None,
+    ) -> Dict[str, Any]:
+        event = DomainEvent(
+            event_type=EventType.REQUISITION_MATERIAL_ALERT,
+            entity_type=EntityType.REQUISICAO,
+            entity_id=requisition_id,
+            aggregate_id=f"REQUISICAO:{requisition_id}:MATERIAL:{generate_event_id()}",
+            actor_user_id=actor_user_id,
+            priority=EventPriority.ALTA,
+            sync_event_name="alerta_material",
+            notification=NotificationConfig(
+                title=f"Ocorrência de material — Requisição #{requisition_number}",
+                message=message,
+                tipo="warning",
+                persistent=True,
+            ),
+            data={
+                "requisicao_id": requisition_id,
+                "numero": requisition_number,
+                "mensagem": message,
+                "modulo": "requisicoes",
+                "target_user_id": responsible_user_id,
+            },
+        )
+        return cls.publish(event)
+
+    @classmethod
+    def publish_event_change(
+        cls,
+        event_id: int,
+        event_number: str,
+        title: str,
+        status: str,
+        actor_user_id: Optional[int] = None,
+        created: bool = False,
+        modified_at: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        event_type = EventType.EVENT_CREATED if created else EventType.EVENT_UPDATED
+        description = (
+            f"Evento #{event_number} — {title} — estado: {status}."
+            if not created
+            else f"Evento #{event_number} — {title} foi criado."
+        )
+        data = {
+            "evento_id": event_id,
+            "numero": event_number,
+            "titulo": title,
+            "novo_estado": modified_at or status,
+            "estado": status,
+        }
+        domain_event = DomainEvent(
+            event_type=event_type,
+            entity_type=EntityType.EVENTO,
+            entity_id=event_id,
+            aggregate_id=f"EVENTO:{event_id}",
+            actor_user_id=actor_user_id,
+            priority=EventPriority.NORMAL,
+            sync_event_name="novo_evento" if created else "atualizacao_evento",
+            notification=NotificationConfig(
+                title=f"{'Novo evento' if created else 'Evento atualizado'}: #{event_number}",
+                message=description,
+                tipo="info",
+                persistent=False,
+            ),
+            data=data,
+        )
+        return cls.publish(domain_event)
+
+    @classmethod
+    def publish_upcoming_event(
+        cls,
+        event_id: int,
+        event_number: str,
+        title: str,
+        event_date: str,
+    ) -> Dict[str, Any]:
+        domain_event = DomainEvent(
+            event_type=EventType.EVENT_UPCOMING,
+            entity_type=EntityType.EVENTO,
+            entity_id=event_id,
+            aggregate_id=f"EVENTO:{event_id}",
+            priority=EventPriority.ALTA,
+            sync_event_name="alerta_evento_proximo",
+            notification=NotificationConfig(
+                title=f"Evento próximo: #{event_number}",
+                message=f"O evento '{title}' está agendado para {event_date}.",
+                tipo="warning",
+                persistent=True,
+            ),
+            data={
+                "evento_id": event_id,
+                "numero": event_number,
+                "titulo": title,
+                "data_evento": event_date,
+                "novo_estado": event_date,
+            },
+        )
+        return cls.publish(domain_event)
+
+    @classmethod
     def publish_production_orders(
         cls,
         pedido_id: int,
@@ -445,6 +651,7 @@ class NotificationService:
             "ordem_numero": ordem_numero,
             "pedido_numero": pedido_numero,
             "sector": sector,
+            "sectores": [sector],
             "cliente": cli_str,
             "produtos": prod_str,
             "antigo_estado": antigo_estado,

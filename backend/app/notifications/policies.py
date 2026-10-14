@@ -3,6 +3,13 @@ from dataclasses import dataclass, field
 from app.notifications.events import EventType, DomainEvent
 
 
+ROLE_ALIASES = {
+    "admin": "administrador",
+    "gerente": "administrador",
+    "balcao": "atendimento",
+}
+
+
 @dataclass
 class RecipientTarget:
     target_type: str  # "GLOBAL", "ROLE", "SECTOR", "USER"
@@ -57,6 +64,9 @@ class NotificationPolicy:
             RecipientTarget(target_type="ROLE", target_id="gerente", exclude_actor=False),
             RecipientTarget(target_type="ROLE", target_id="administrador", exclude_actor=False),
         ],
+        EventType.PRODUCTION_ORDER_UPDATED.value: [
+            RecipientTarget(target_type="ROLE", target_id="administrador", exclude_actor=False),
+        ],
         EventType.PRODUCTION_ORDER_COMPLETED.value: [
             RecipientTarget(target_type="ROLE", target_id="atendimento", exclude_actor=False),
             RecipientTarget(target_type="ROLE", target_id="balcao", exclude_actor=False),
@@ -75,14 +85,27 @@ class NotificationPolicy:
         ],
         EventType.REQUISITION_CREATED.value: [
             RecipientTarget(target_type="ROLE", target_id="armazem", exclude_actor=True),
+            RecipientTarget(target_type="ROLE", target_id="controlador_de_materiais", exclude_actor=True),
             RecipientTarget(target_type="ROLE", target_id="gerente", exclude_actor=True),
             RecipientTarget(target_type="ROLE", target_id="administrador", exclude_actor=True),
         ],
         EventType.REQUISITION_APPROVED.value: [
             RecipientTarget(target_type="ROLE", target_id="armazem", exclude_actor=False),
+            RecipientTarget(target_type="ROLE", target_id="controlador_de_materiais", exclude_actor=False),
+        ],
+        EventType.REQUISITION_REJECTED.value: [
+            RecipientTarget(target_type="ROLE", target_id="armazem", exclude_actor=False),
+            RecipientTarget(target_type="ROLE", target_id="controlador_de_materiais", exclude_actor=False),
+            RecipientTarget(target_type="ROLE", target_id="administrador", exclude_actor=False),
+        ],
+        EventType.REQUISITION_UPDATED.value: [
+            RecipientTarget(target_type="ROLE", target_id="armazem", exclude_actor=False),
+            RecipientTarget(target_type="ROLE", target_id="controlador_de_materiais", exclude_actor=False),
+            RecipientTarget(target_type="ROLE", target_id="administrador", exclude_actor=False),
         ],
         EventType.REQUISITION_MATERIAL_ALERT.value: [
             RecipientTarget(target_type="ROLE", target_id="armazem", exclude_actor=False),
+            RecipientTarget(target_type="ROLE", target_id="controlador_de_materiais", exclude_actor=False),
             RecipientTarget(target_type="ROLE", target_id="gerente", exclude_actor=False),
             RecipientTarget(target_type="ROLE", target_id="administrador", exclude_actor=False),
         ],
@@ -103,6 +126,14 @@ class NotificationPolicy:
             RecipientTarget(target_type="ROLE", target_id="balcao", exclude_actor=False),
             RecipientTarget(target_type="ROLE", target_id="cozinha", exclude_actor=False),
         ],
+        EventType.EVENT_CREATED.value: [
+            RecipientTarget(target_type="ROLE", target_id="atendimento", exclude_actor=True),
+            RecipientTarget(target_type="ROLE", target_id="administrador", exclude_actor=True),
+        ],
+        EventType.EVENT_UPDATED.value: [
+            RecipientTarget(target_type="ROLE", target_id="atendimento", exclude_actor=True),
+            RecipientTarget(target_type="ROLE", target_id="administrador", exclude_actor=True),
+        ],
     }
 
     @classmethod
@@ -113,9 +144,31 @@ class NotificationPolicy:
         adiciona-os com prioridade.
         """
         ev_type = event.event_type.value if hasattr(event.event_type, 'value') else str(event.event_type)
-        targets = list(cls.DEFAULT_POLICIES.get(ev_type, [
-            RecipientTarget(target_type="GLOBAL", target_id=None, exclude_actor=True)
-        ]))
+        targets = list(cls.DEFAULT_POLICIES.get(ev_type, []))
+
+        # Canonicalize legacy policy names to roles that exist in RoleEnum.
+        normalized_targets: List[RecipientTarget] = []
+        target_indexes: Dict[tuple, int] = {}
+        for target in targets:
+            if target.target_type != "ROLE" or not target.target_id:
+                normalized_targets.append(target)
+                continue
+            role_id = target.target_id.lower().strip().replace(" ", "_")
+            role_id = ROLE_ALIASES.get(role_id, role_id)
+            if role_id in {"bar"}:
+                continue
+            key = (target.target_type, role_id)
+            if key in target_indexes:
+                index = target_indexes[key]
+                normalized_targets[index].exclude_actor &= target.exclude_actor
+                continue
+            target_indexes[key] = len(normalized_targets)
+            normalized_targets.append(RecipientTarget(
+                target_type="ROLE",
+                target_id=role_id,
+                exclude_actor=target.exclude_actor,
+            ))
+        targets = normalized_targets
 
         # Adicionar alvo de utilizador específico se fornecido
         if "target_user_id" in event.data and event.data["target_user_id"]:

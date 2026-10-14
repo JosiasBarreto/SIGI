@@ -29,6 +29,7 @@ export type DomainEventType =
   | 'pagamento_recebido'
   | 'logistica_ocorrencia'
   | 'novo_evento'
+  | 'atualizacao_evento'
   | 'alerta_evento_proximo'
   | 'alerta_sistema'
   | 'erro_sistema'

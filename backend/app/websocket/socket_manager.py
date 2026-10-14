@@ -2,9 +2,9 @@ import logging
 from typing import Dict, Set, Optional, List, Any
 from flask import request, current_app
 from flask_socketio import SocketIO, emit, join_room, leave_room, disconnect
-import jwt
-import os
 from datetime import datetime
+from flask_jwt_extended import decode_token
+from app.models.user import User
 
 logger = logging.getLogger(__name__)
 
@@ -53,10 +53,6 @@ class WebSocketUpgradeMiddleware:
         return app_iter
 
 
-def _get_jwt_secret() -> str:
-    return os.getenv("JWT_SECRET_KEY", "sigi_erp_secret_key_change_in_production")
-
-
 def is_redis_available(redis_url: str) -> bool:
     """
     Checks if Redis server is reachable within a strict short timeout.
@@ -103,8 +99,7 @@ def authenticate_socket_token(auth_data: Optional[dict] = None) -> Optional[dict
         token = token.split(" ")[1]
 
     try:
-        payload = jwt.decode(token, _get_jwt_secret(), algorithms=["HS256"])
-        return payload
+        return decode_token(token)
     except Exception as e:
         logger.debug(f"WebSocket authentication check: {str(e)}")
         return None
@@ -118,46 +113,48 @@ def handle_connect(auth=None):
     """
     sid = request.sid
     payload = authenticate_socket_token(auth)
-    
-    user_id = None
-    role = None
+    if not payload:
+        logger.warning("Rejected unauthenticated WebSocket connection - SID: %s", sid)
+        return False
 
-    if payload:
-        user_id = str(payload.get("sub") or payload.get("user_id") or payload.get("id"))
-        role = str(payload.get("role") or "").strip()
+    try:
+        user_id = int(payload.get("sub") or payload.get("user_id") or payload.get("id"))
+    except (TypeError, ValueError):
+        logger.warning("Rejected WebSocket connection with invalid user identity - SID: %s", sid)
+        return False
 
-    if user_id:
-        if user_id not in _active_user_connections:
-            _active_user_connections[user_id] = set()
-        _active_user_connections[user_id].add(sid)
-        _sid_to_user[sid] = user_id
+    user = User.query.filter_by(id=user_id, is_active=True).first()
+    if not user:
+        logger.warning("Rejected WebSocket connection for inactive or unknown user - SID: %s", sid)
+        return False
 
-        # Personal user room
-        join_room(f"user_{user_id}")
+    role_value = user.role.value if hasattr(user.role, "value") else str(user.role or "")
+    role = role_value.strip()
+    if not role:
+        logger.warning("Rejected WebSocket connection without a user role - SID: %s", sid)
+        return False
 
-        # Role room (e.g. role_cozinha, role_pastelaria, role_administrador)
-        if role:
-            _sid_to_role[sid] = role
-            role_slug = role.lower().replace(" ", "_")
-            join_room(f"role_{role_slug}")
-            
-            # Normalizar acentos para garantir entrega de notificações (ex: armazém -> armazem)
-            normalized_slug = role.lower().replace(" ", "_").replace("á", "a").replace("ã", "a").replace("é", "e").replace("í", "i").replace("ó", "o").replace("ú", "u").replace("ç", "c")
-            if normalized_slug != role_slug:
-                join_room(f"role_{normalized_slug}")
+    user_id_str = str(user.id)
+    _active_user_connections.setdefault(user_id_str, set()).add(sid)
+    _sid_to_user[sid] = user_id_str
+    _sid_to_role[sid] = role
 
-            # Entrar também na room de setor correspondente para ecrãs de produção
-            if normalized_slug in ["cozinha", "pastelaria", "bar", "armazem"]:
-                join_room(f"sector_{normalized_slug}")
+    join_room(f"user_{user_id_str}")
 
-            logger.info(f"WebSocket authenticated - User: {user_id}, Role: {role}, SID: {sid}")
-        else:
-            logger.info(f"WebSocket authenticated - User: {user_id}, SID: {sid}")
-    else:
-        logger.debug(f"WebSocket anonymous client connected - SID: {sid}")
+    role_slug = role.lower().replace(" ", "_")
+    join_room(f"role_{role_slug}")
 
-    # Always join global notifications room
+    normalized_slug = role.lower().replace(" ", "_").replace("á", "a").replace("ã", "a").replace("é", "e").replace("í", "i").replace("ó", "o").replace("ú", "u").replace("ç", "c")
+    if normalized_slug != role_slug:
+        join_room(f"role_{normalized_slug}")
+
+    if normalized_slug in ["cozinha", "pastelaria", "bar", "armazem"]:
+        join_room(f"sector_{normalized_slug}")
+
+    # Authenticated operators may receive system-wide notifications. Individual
+    # and role-scoped notifications still use their dedicated rooms.
     join_room("global_notifications")
+    logger.info("WebSocket authenticated - User: %s, Role: %s, SID: %s", user_id_str, role, sid)
 
 
 @socketio.on("disconnect")
@@ -243,14 +240,20 @@ def broadcast_production_update(op_numero, estado):
     socketio.emit('production_update', {'numero': op_numero, 'estado': estado}, room="producao")
 
 
-def emit_sync_event(event_name: str, payload: dict, room: Optional[str] = None) -> bool:
+def emit_sync_event(
+    event_name: str,
+    payload: dict,
+    room: Optional[str] = None,
+    exclude_user_id: Optional[str] = None
+) -> bool:
     """
     Emite evento técnico de sincronização de dados (tabelas, KDS, React Query, cache).
     NÃO se destina a gerar toasts visuais na interface.
     """
     try:
         if room:
-            socketio.emit(event_name, payload, room=room)
+            skipped_sids = list(_active_user_connections.get(str(exclude_user_id), set())) if exclude_user_id else []
+            socketio.emit(event_name, payload, room=room, skip_sid=skipped_sids or None)
         else:
             socketio.emit(event_name, payload)
         return True
@@ -265,7 +268,13 @@ def emit_user_notification(payload: dict, room: Optional[str] = None, exclude_us
     """
     try:
         target_room = room or "global_notifications"
-        socketio.emit("notificacao", payload, room=target_room)
+        skipped_sids = list(_active_user_connections.get(str(exclude_user_id), set())) if exclude_user_id else []
+        socketio.emit(
+            "notificacao",
+            payload,
+            room=target_room,
+            skip_sid=skipped_sids or None
+        )
         return True
     except Exception as e:
         logger.error(f"Erro ao emitir notificação visual WebSocket: {e}")
@@ -488,42 +497,24 @@ def notify_order_status_updated(
     actor_user_id: Optional[int] = None
 ) -> bool:
     """
-    Notifica a alteração de estado do pedido no banco de dados e via WebSocket.
+    Publica a alteração de estado do pedido pelas políticas de destinatários.
     """
     try:
-        from app.core.database import db
-        from app.models.notificacao import Notificacao
-        notif = Notificacao(
-            tipo='ESTADO_PEDIDO_ATUALIZADO',
-            titulo=f"Pedido #{pedido_numero}: {novo_estado}",
-            mensagem=f"O estado do pedido #{pedido_numero} foi alterado de '{antigo_estado}' para '{novo_estado}'.",
-            prioridade='media',
-            entidade_tipo='pedido',
-            entidade_id=pedido_id
-        )
-        db.session.add(notif)
-        db.session.commit()
-    except Exception:
-        try:
-            from app.core.database import db
-            db.session.rollback()
-        except Exception:
-            pass
+        from app.notifications.service import NotificationService
 
-    try:
-        socketio.emit("pedido_atualizado", {
-            "pedido_id": pedido_id,
-            "numero": pedido_numero,
-            "antigo_estado": antigo_estado,
-            "novo_estado": novo_estado
-        })
-        socketio.emit("notificacao", {
-            "titulo": f"Pedido #{pedido_numero}: {novo_estado}",
-            "mensagem": f"Estado alterado para {novo_estado}",
-            "tipo": "ESTADO_PEDIDO_ATUALIZADO"
-        })
-        return True
+        result = NotificationService.publish_order_status_updated(
+            pedido_id=pedido_id,
+            pedido_numero=pedido_numero,
+            antigo_estado=antigo_estado,
+            novo_estado=novo_estado,
+            cliente_nome=cliente_nome,
+            produtos_resumo=produtos_resumo,
+            total=total,
+            actor_user_id=actor_user_id,
+        )
+        return result.get("status") in {"published", "synced_only", "deduplicated"}
     except Exception:
+        logger.exception("Erro ao publicar atualização do pedido %s", pedido_id)
         return False
 
 
@@ -556,33 +547,27 @@ def notify_production_orders(
         return False
 
 
-def notify_requisicao_users(requisicao_id, numero, estado, mensagem):
+def notify_requisicao_users(requisicao_id, numero, estado, mensagem, actor_user_id=None):
     """
     Notifica apenas os utilizadores com permissão no módulo de requisições:
     Administrador, Armazém, Controlador de Materiais e o responsável da requisição.
     Atualiza a mesma notificação (identificada por requisicao_id) em vez de duplicar.
     """
     try:
-        from app.models.user import User
         from app.models.requisicao import Requisicao
-        target_roles = ['Administrador', 'Armazém', 'Armazem', 'Controlador de Materiais']
-        users = User.query.filter(User.role.in_(target_roles)).all()
-        user_ids = {u.id for u in users}
-        
+        from app.notifications.service import NotificationService
+
         req = Requisicao.query.get(requisicao_id)
-        if req and req.responsavel_id:
-            user_ids.add(req.responsavel_id)
-            
-        for uid in user_ids:
-            socketio.emit('requisicao_notificacao', {
-                'requisicao_id': requisicao_id,
-                'numero': numero,
-                'estado': estado,
-                'mensagem': mensagem,
-                'modulo': 'requisicoes'
-            }, room=f"user_{uid}")
-    except Exception as e:
-        print("Erro ao enviar notificação de requisição:", e)
+        NotificationService.publish_requisition_status(
+            requisition_id=requisicao_id,
+            requisition_number=numero,
+            status=estado,
+            message=mensagem,
+            responsible_user_id=req.responsavel_id if req else None,
+            actor_user_id=actor_user_id,
+        )
+    except Exception:
+        logger.exception("Erro ao publicar notificação de requisição %s", requisicao_id)
 
 
 def notify_production_status_updated(

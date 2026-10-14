@@ -43,6 +43,7 @@ export const DOMAIN_SYNC_EVENTS = {
   // Logística e Eventos
   LOGISTICA_OCORRENCIA: 'logistica_ocorrencia',
   NOVO_EVENTO: 'novo_evento',
+  ATUALIZACAO_EVENTO: 'atualizacao_evento',
   ALERTA_EVENTO_PROXIMO: 'alerta_evento_proximo',
 
   // Sistema

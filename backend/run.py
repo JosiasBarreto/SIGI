@@ -46,6 +46,7 @@ except Exception:
 from app import create_app
 from app.websocket.socket_manager import socketio
 from app.core.database import db
+from app.core.db_initializer import ensure_database_ready
 from sqlalchemy import text
 
 app = create_app()
@@ -64,6 +65,10 @@ if __name__ == '__main__':
     host = os.environ.get('HOST', '0.0.0.0')
     port = int(os.environ.get('PORT', '8000'))
     debug = os.environ.get('FLASK_DEBUG', '').lower() in ('1', 'true', 'yes')
+
+    if not ensure_database_ready(app):
+        logger.error("Não foi possível preparar a estrutura da base de dados. O servidor não será iniciado.")
+        sys.exit(1)
 
     verify_database_connection(app)
     

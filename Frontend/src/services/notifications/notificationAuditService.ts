@@ -1,8 +1,6 @@
 import apiClient from '../../api/client';
-import { notificationManager } from './notificationManager';
 import { NotificationAdapter } from './notificationAdapter';
 import { AppNotification } from './notificationTypes';
-import { userService } from '../index';
 
 export interface EstatisticasNotificacoes {
   notificacoes: {
@@ -47,12 +45,11 @@ export interface CriarNotificacaoPayload {
   canal?: 'PEDIDO' | 'PRODUCAO' | 'STOCK' | 'FINANCEIRO' | 'SISTEMA' | 'REQUISICAO' | 'EVENTOS';
   prioridade?: 'baixa' | 'media' | 'alta' | 'urgente';
   target_type?: 'GLOBAL' | 'SETOR' | 'ROLE';
+  target_role?: string;
   target_sector?: string;
   persistente?: boolean;
   actionUrl?: string;
 }
-
-const LEITURAS_STORAGE_KEY = 'sigi_notificacoes_leituras_v1';
 
 class NotificationAuditService {
   /**
@@ -97,12 +94,12 @@ class NotificationAuditService {
       smsLogs = JSON.parse(storedLogsStr);
     } catch {}
 
-    const totalSms = smsLogs.length > 0 ? smsLogs.length : 87;
-    const confirmadasSms = smsLogs.length > 0 ? smsLogs.filter((l) => l.status === 'sent' || l.status === 'delivered').length : 79;
-    const falhasSms = smsLogs.length > 0 ? smsLogs.filter((l) => l.status === 'failed').length : 2;
+    const totalSms = smsLogs.length;
+    const confirmadasSms = smsLogs.filter((l) => l.status === 'sent' || l.status === 'delivered').length;
+    const falhasSms = smsLogs.filter((l) => l.status === 'failed').length;
     const hojeIso = new Date().toISOString().split('T')[0];
-    const enviadasHoje = smsLogs.length > 0 ? smsLogs.filter((l) => (l.timestamp || '').startsWith(hojeIso)).length : 12;
-    const taxaLeitura = totalSms > 0 ? Number(((confirmadasSms / totalSms) * 100).toFixed(1)) : 90.8;
+    const enviadasHoje = smsLogs.filter((l) => (l.timestamp || '').startsWith(hojeIso)).length;
+    const taxaLeitura = totalSms > 0 ? Number(((confirmadasSms / totalSms) * 100).toFixed(1)) : 0;
 
     return {
       notificacoes: {
@@ -131,44 +128,26 @@ class NotificationAuditService {
     page?: number;
     per_page?: number;
   }): Promise<AppNotification[]> {
+    let response: any;
     try {
-      const response = await apiClient.get<any, any>('/v1/notificacoes', { params: { per_page: 100, ...params } });
-      const rawList = Array.isArray(response)
-        ? response
-        : (response?.data?.items || response?.data || response?.items || []);
-
-      if (Array.isArray(rawList) && rawList.length > 0) {
-        return rawList.map((item: any) => NotificationAdapter.fromBackendEvent(item.tipo || item.event_type || 'notificacao', item));
-      }
+      response = await apiClient.get<any, any>('/v1/notificacoes', { params: { per_page: 100, ...params } });
     } catch (err) {
       try {
-        const response2 = await apiClient.get<any, any>('/notificacoes', { params: { per_page: 100, ...params } });
-        const rawList2 = Array.isArray(response2)
-          ? response2
-          : (response2?.data?.items || response2?.data || response2?.items || []);
-
-        if (Array.isArray(rawList2) && rawList2.length > 0) {
-          return rawList2.map((item: any) => NotificationAdapter.fromBackendEvent(item.tipo || item.event_type || 'notificacao', item));
-        }
-      } catch (err2) {
-        // Fallback
+        response = await apiClient.get<any, any>('/notificacoes', { params: { per_page: 100, ...params } });
+      } catch {
+        throw err;
       }
     }
 
-    // Fallback: carregar do localStorage
-    try {
-      const stored = localStorage.getItem(LEITURAS_STORAGE_KEY.replace('leituras', 'history'));
-      const storedMain = localStorage.getItem('sigi_notifications_history_v1');
-      const target = storedMain || stored;
-      if (target) {
-        const parsed = JSON.parse(target);
-        if (Array.isArray(parsed)) {
-          return parsed;
-        }
-      }
-    } catch {}
-
-    return [];
+    const rawList = Array.isArray(response)
+      ? response
+      : (response?.notificacoes || response?.data?.notificacoes || response?.data?.items || response?.items || []);
+    if (!Array.isArray(rawList)) {
+      throw new Error('A API de notificações devolveu uma resposta inválida.');
+    }
+    return rawList.map((item: any) =>
+      NotificationAdapter.fromBackendEvent(item.tipo || item.event_type || 'notificacao', item)
+    );
   }
 
   /**
@@ -191,100 +170,9 @@ class NotificationAuditService {
         };
       }
     } catch (err) {
-      try {
-        const response2 = await apiClient.get<any, any>(`/notificacoes/${encodedId}/leituras`);
-        const payload2 = response2?.data || response2;
-        if (payload2 && (Array.isArray(payload2.lidos) || Array.isArray(payload2.nao_lidos))) {
-          return {
-            lidos: Array.isArray(payload2.lidos) ? payload2.lidos : [],
-            nao_lidos: Array.isArray(payload2.nao_lidos) ? payload2.nao_lidos : [],
-          };
-        }
-      } catch (err2) {
-        // Fallback para ambiente offline ou em memória
-      }
+      console.warn('[NotificationAuditService] Não foi possível obter a auditoria de leituras:', err);
     }
-
-    // Carregar lista de utilizadores da empresa
-    let allUsers: any[] = [];
-    try {
-      const usersData = await userService.getAll({ per_page: 100 });
-      allUsers = usersData?.items || [];
-    } catch {
-      allUsers = [
-        { id: 1, name: 'Administrador Geral', role: 'Administrador' },
-        { id: 2, name: 'Carlos Chefe de Cozinha', role: 'Cozinha' },
-        { id: 3, name: 'Marta Pasteleira', role: 'Pastelaria' },
-        { id: 4, name: 'João Operador de Caixa', role: 'Atendimento' },
-        { id: 5, name: 'Ana Gestora de Stock', role: 'Armazém' },
-      ];
-    }
-
-    if (allUsers.length === 0) {
-      allUsers = [
-        { id: 1, name: 'Administrador Geral', role: 'Administrador' },
-        { id: 2, name: 'Carlos Chefe de Cozinha', role: 'Cozinha' },
-        { id: 3, name: 'Marta Pasteleira', role: 'Pastelaria' },
-        { id: 4, name: 'João Operador de Caixa', role: 'Atendimento' },
-        { id: 5, name: 'Ana Gestora de Stock', role: 'Armazém' },
-      ];
-    }
-
-    // Obter registos locais de leitura
-    let leiturasMap: Record<string, Record<string, string>> = {};
-    try {
-      const stored = localStorage.getItem(LEITURAS_STORAGE_KEY);
-      if (stored) leiturasMap = JSON.parse(stored);
-    } catch {}
-
-    const notifLeituras = leiturasMap[targetId] || leiturasMap[String(notificacaoId)] || {};
-
-    // Identificar o utilizador atual
-    const currentUserStr = localStorage.getItem('user');
-    let currentUserId: string | number = 1;
-    if (currentUserStr) {
-      try {
-        const u = JSON.parse(currentUserStr);
-        currentUserId = u.id || 1;
-      } catch {}
-    }
-
-    // Se a notificação foi marcada como lida pelo utilizador atual, assegurar registo
-    if (notificacao?.read && !notifLeituras[String(currentUserId)]) {
-      notifLeituras[String(currentUserId)] = new Date().toISOString();
-      leiturasMap[targetId] = notifLeituras;
-      try {
-        localStorage.setItem(LEITURAS_STORAGE_KEY, JSON.stringify(leiturasMap));
-      } catch {}
-    }
-
-    const lidos: UsuarioLeitura[] = [];
-    const nao_lidos: UsuarioLeitura[] = [];
-
-    allUsers.forEach((u) => {
-      const userIdStr = String(u.id);
-      const lidoEm = notifLeituras[userIdStr];
-
-      if (lidoEm) {
-        lidos.push({
-          user_id: u.id,
-          nome: u.name || u.nome || `Utilizador #${u.id}`,
-          role: u.role || 'Operador',
-          lido_em: lidoEm,
-        });
-      } else {
-        nao_lidos.push({
-          user_id: u.id,
-          nome: u.name || u.nome || `Utilizador #${u.id}`,
-          role: u.role || 'Operador',
-        });
-      }
-    });
-
-    return {
-      lidos,
-      nao_lidos,
-    };
+    return { lidos: [], nao_lidos: [] };
   }
 
   /**
@@ -294,39 +182,7 @@ class NotificationAuditService {
     const targetId = String(notificacaoId);
     const encodedId = encodeURIComponent(targetId);
 
-    try {
-      await apiClient.post(`/v1/notificacoes/${encodedId}/ler`, {});
-    } catch {
-      try {
-        await apiClient.patch(`/v1/notificacoes/${encodedId}/ler`, {});
-      } catch {
-        try {
-          await apiClient.post(`/notificacoes/${encodedId}/ler`, {});
-        } catch {
-          // Ignora erro se backend indisponível
-        }
-      }
-    }
-
-    // Registar na auditoria local
-    const currentUserStr = localStorage.getItem('user');
-    let currentUserId: string | number = 1;
-    if (currentUserStr) {
-      try {
-        const u = JSON.parse(currentUserStr);
-        currentUserId = u.id || 1;
-      } catch {}
-    }
-
-    try {
-      const stored = localStorage.getItem(LEITURAS_STORAGE_KEY);
-      const map = stored ? JSON.parse(stored) : {};
-      if (!map[targetId]) {
-        map[targetId] = {};
-      }
-      map[targetId][String(currentUserId)] = new Date().toISOString();
-      localStorage.setItem(LEITURAS_STORAGE_KEY, JSON.stringify(map));
-    } catch {}
+    await apiClient.post(`/v1/notificacoes/${encodedId}/marcar-lida`, {});
   }
 
   /**
@@ -388,49 +244,12 @@ class NotificationAuditService {
    * Cria uma nova notificação / comunicado corporativo manual
    */
   public async criarNotificacao(payload: CriarNotificacaoPayload): Promise<AppNotification> {
-    let apiSuccess = false;
-    let createdNotif: any = null;
-
-    try {
-      const response = await apiClient.post<any, any>('/v1/notificacoes', payload);
-      if (response && (response.data || response.id)) {
-        createdNotif = response.data || response;
-        apiSuccess = true;
-      }
-    } catch (err) {
-      console.warn('[NotificationAuditService] Erro ao enviar notificação para API:', err);
+    const response = await apiClient.post<any, any>('/v1/notificacoes', payload);
+    const createdNotification = response?.data || response;
+    if (!createdNotification?.id) {
+      throw new Error('A API não confirmou a criação da notificação.');
     }
-
-    // Normalizar prioridade para o padrão da aplicação
-    const priorityMap: Record<string, any> = {
-      baixa: 'LOW',
-      media: 'NORMAL',
-      alta: 'HIGH',
-      urgente: 'CRITICAL',
-    };
-
-    const mappedPriority = priorityMap[payload.prioridade || 'media'] || 'NORMAL';
-
-    const localPayload = {
-      id: createdNotif?.id || `COM-${Date.now().toString(36).toUpperCase()}`,
-      titulo: payload.titulo,
-      mensagem: payload.mensagem,
-      tipo: payload.tipo || 'info',
-      canal: (payload.canal || 'SISTEMA').toUpperCase(),
-      prioridade: mappedPriority,
-      priority: mappedPriority.toLowerCase(),
-      persistente: Boolean(payload.persistente),
-      target_type: payload.target_type || 'GLOBAL',
-      target_sector: payload.target_sector,
-      data_criacao: new Date().toISOString(),
-      timestamp: new Date().toISOString(),
-      read: false,
-    };
-
-    // Publicar pelo motor do NotificationManager para disparar em tempo real no frontend
-    const handled = notificationManager.handleEvent('notificacao', localPayload);
-
-    return handled || (localPayload as any);
+    return NotificationAdapter.fromBackendEvent('notificacao', createdNotification);
   }
 }
 
