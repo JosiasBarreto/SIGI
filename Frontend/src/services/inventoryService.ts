@@ -5,6 +5,7 @@ import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { formatCurrency, getCurrencySymbol } from '../lib/utils';
+import { INVENTORY_API_BASE } from './inventoryAuditService';
 
 const STORAGE_KEY_QUARENTENA = 'sigi_inventario_quarentena_v1';
 
@@ -13,23 +14,17 @@ export const inventoryService = {
    * Obtém todo o stock consolidado do ERP (Produtos Acabados, Revenda, Consumíveis e Materiais)
    */
   async fetchConsolidatedStock(): Promise<{ items: InventoryItem[]; armazens: any[] }> {
-    const [productsRes, materialsRes, warehousesRes] = await Promise.allSettled([
+    const [productsRes, materialsRes, warehousesRes] = await Promise.all([
       productService.getAll({ per_page: 5000 }),
       materialService.getAll({ per_page: 5000 }),
       warehouseService.getAll({ per_page: 100 }),
     ]);
 
-    const rawProducts: any[] = productsRes.status === 'fulfilled' 
-      ? (productsRes.value?.items || (Array.isArray(productsRes.value) ? productsRes.value : [])) 
-      : [];
+    const rawProducts: any[] = productsRes?.items || (Array.isArray(productsRes) ? productsRes : []);
 
-    const rawMaterials: any[] = materialsRes.status === 'fulfilled'
-      ? (materialsRes.value?.items || (Array.isArray(materialsRes.value) ? materialsRes.value : []))
-      : [];
+    const rawMaterials: any[] = materialsRes?.items || (Array.isArray(materialsRes) ? materialsRes : []);
 
-    const armazens: any[] = warehousesRes.status === 'fulfilled'
-      ? (warehousesRes.value?.items || (Array.isArray(warehousesRes.value) ? warehousesRes.value : []))
-      : [];
+    const armazens: any[] = warehousesRes?.items || (Array.isArray(warehousesRes) ? warehousesRes : []);
 
     const armazensMap = new Map<string | number, string>();
     armazens.forEach(a => {
@@ -270,7 +265,7 @@ export const inventoryService = {
    * Gestão da Zona de Quarentena & Avarias (Secção 4 do Manual do Armazém)
    */
   async getQuarentenaItems(): Promise<QuarentenaItem[]> {
-    const response: any = await apiClient.get('/v1/armazem/inventarios/quarentena');
+    const response: any = await apiClient.get(`${INVENTORY_API_BASE}/quarentena`);
     if (response?.success === false) throw new Error(response.msg || 'Falha ao carregar a quarentena.');
     return response?.data?.items ?? [];
   },
@@ -286,7 +281,7 @@ export const inventoryService = {
   }): Promise<QuarentenaItem> {
     const { item, quantidade, motivo, lote, validade, observacao, responsavel } = dados;
 
-    const response: any = await apiClient.post('/v1/armazem/inventarios/quarentena', {
+    const response: any = await apiClient.post(`${INVENTORY_API_BASE}/quarentena`, {
       armazem_id: Number(item.armazem_id), quantidade, motivo, lote: lote || item.lote,
       validade: validade || item.validade, observacao, responsavel,
       produto_id: item.tipo_item === 'Produto' ? Number(item.original_id) : undefined,
@@ -297,13 +292,13 @@ export const inventoryService = {
   },
 
   async descartarQuebraQuarentena(quarentenaId: string, justificativa: string): Promise<boolean> {
-    const response: any = await apiClient.post(`/v1/armazem/inventarios/quarentena/${quarentenaId}/descartar`, { justificativa });
+    const response: any = await apiClient.post(`${INVENTORY_API_BASE}/quarentena/${quarentenaId}/descartar`, { justificativa });
     if (response?.success === false) throw new Error(response.msg || 'Falha ao descartar o artigo.');
     return true;
   },
 
   async reintegrarStockQuarentena(quarentenaId: string, observacao?: string): Promise<boolean> {
-    const response: any = await apiClient.post(`/v1/armazem/inventarios/quarentena/${quarentenaId}/reintegrar`, { observacao });
+    const response: any = await apiClient.post(`${INVENTORY_API_BASE}/quarentena/${quarentenaId}/reintegrar`, { observacao });
     if (response?.success === false) throw new Error(response.msg || 'Falha ao reintegrar o artigo.');
     return true;
   },

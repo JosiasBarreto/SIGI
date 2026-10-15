@@ -1,7 +1,8 @@
 import apiClient from '../api/client';
 import { InventarioAuditoriaItem, InventarioConferenciaResumo, InventarioEstado, InventarioItemBackend, InventarioSessao, InventarioTipo, ItemSituacao } from '../pages/Inventario/types';
 
-const BASE_URL = '/v1/armazem/inventarios';
+export const INVENTORY_API_BASE = '/v1/inventario';
+const BASE_URL = INVENTORY_API_BASE;
 const payloadOf = (response: any): any => response?.data ?? response;
 const failure = (response: any) => new Error(response?.msg || response?.message || 'Não foi possível concluir a operação de inventário.');
 
@@ -15,9 +16,9 @@ function normalizeSession(response: any): InventarioSessao {
   const valorFaltas = Number(summary.valor_estimado_falta ?? value.valor_faltas ?? 0);
   const valorSobras = Number(summary.valor_estimado_sobra ?? value.valor_sobras ?? 0);
   return {
-    id: Number(value.id), numero: value.numero, armazem_id: Number(value.armazem_id), armazem_nome: value.armazem_nome,
+    id: Number(value.id), numero: value.numero, armazem_id: Number(value.armazem_id), armazem_nome: value.armazem_nome ?? value.armazem,
     tipo: value.tipo as InventarioTipo, estado: value.estado as InventarioEstado, data_inventario: value.data_inventario,
-    observacao: value.observacao, responsavel_nome: value.responsavel_nome, total_itens: total, itens_contados: counted,
+    observacao: value.observacao, responsavel_nome: value.responsavel_nome ?? value.responsavel, total_itens: total, itens_contados: counted,
     percentagem_concluida: Number(summary.percentagem_concluida ?? value.percentagem_concluida ?? (total ? counted * 100 / total : 0)),
     total_divergencias: Number(summary.total_divergencias ?? (faltas + sobras)), total_faltas: faltas, total_sobras: sobras,
     valor_faltas: valorFaltas, valor_sobras: valorSobras, impacto_financeiro_liquido: Number(summary.saldo_financeiro ?? (valorSobras - valorFaltas)),
@@ -29,10 +30,11 @@ function normalizeItem(response: any, inventarioId: number): InventarioItemBacke
   const value = payloadOf(response);
   const system = Number(value.quantidade_sistema ?? 0);
   const counted = value.quantidade_contada == null ? null : Number(value.quantidade_contada);
+  const rawItemType = String(value.tipo_item ?? (value.material_id ? 'MATERIAL' : 'PRODUTO')).toUpperCase();
   return {
     id: Number(value.id), inventario_id: Number(value.inventario_id ?? inventarioId), item_id: Number(value.item_id ?? value.produto_id ?? value.material_id),
-    tipo_item: value.tipo_item ?? (value.material_id ? 'MATERIAL' : 'PRODUTO'), codigo: value.codigo, nome: value.nome,
-    unidade_medida: value.unidade_medida, preco_custo: Number(value.preco_custo ?? value.preco_unitario ?? 0), quantidade_sistema: system,
+    tipo_item: rawItemType.includes('MATERIAL') ? 'MATERIAL' : 'PRODUTO', codigo: value.codigo, nome: value.nome,
+    unidade_medida: value.unidade_medida ?? value.unidade, preco_custo: Number(value.preco_custo ?? value.preco_unitario ?? 0), quantidade_sistema: system,
     quantidade_contada: counted, diferenca: value.diferenca == null ? (counted == null ? null : counted - system) : Number(value.diferenca),
     situacao: value.situacao as ItemSituacao, motivo_ajuste: value.motivo_ajuste, observacao: value.observacao,
     valor_impacto: Number(value.valor_impacto ?? value.valor_diferenca ?? 0), categoria: value.categoria, lote: value.lote,
@@ -40,10 +42,10 @@ function normalizeItem(response: any, inventarioId: number): InventarioItemBacke
 }
 
 async function download(id: number, format: 'excel' | 'pdf') {
-  const token = localStorage.getItem('access_token') || localStorage.getItem('token');
-  const response = await fetch(`${apiClient.defaults.baseURL}${BASE_URL}/${id}/exportar/${format}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
-  if (!response.ok) throw new Error('Falha ao gerar o ficheiro de inventário.');
-  const url = URL.createObjectURL(await response.blob());
+  const blob = await apiClient.get<Blob, Blob>(`${BASE_URL}/${id}/exportar/${format}`, {
+    responseType: 'blob',
+  });
+  const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url; link.download = `inventario-${id}.${format === 'excel' ? 'xlsx' : 'pdf'}`; link.click(); URL.revokeObjectURL(url);
 }

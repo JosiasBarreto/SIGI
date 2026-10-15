@@ -68,6 +68,8 @@ export const OfficialInventoryList: React.FC<OfficialInventoryListProps> = ({
   const {
     data: listData,
     isLoading,
+    isError,
+    error,
     refetch,
     isRefetching
   } = useQuery({
@@ -294,6 +296,23 @@ export const OfficialInventoryList: React.FC<OfficialInventoryListProps> = ({
           <div className="p-12 text-center text-gray-500 space-y-3">
             <div className="w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
             <p className="text-xs font-semibold">A carregar sessões de inventário...</p>
+          </div>
+        ) : isError ? (
+          <div className="p-12 text-center space-y-3">
+            <AlertCircle size={36} className="mx-auto text-red-500" />
+            <h3 className="text-sm font-bold text-red-700 dark:text-red-300">
+              Falha ao comunicar com a API de inventário
+            </h3>
+            <p className="text-xs text-gray-500 max-w-xl mx-auto">
+              {error instanceof Error ? error.message : 'Não foi possível carregar as sessões.'}
+            </p>
+            <button
+              type="button"
+              onClick={() => void refetch()}
+              className="mt-2 px-4 py-2 bg-primary text-white text-xs font-bold rounded-xl shadow transition-all hover:bg-primary/90"
+            >
+              Tentar novamente
+            </button>
           </div>
         ) : filteredSessions.length === 0 ? (
           <div className="p-12 text-center space-y-3">

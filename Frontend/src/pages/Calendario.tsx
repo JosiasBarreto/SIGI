@@ -74,13 +74,30 @@ function getClientDisplayName(clientVal: any): string {
   return String(clientVal);
 }
 
+function parseValidDate(value: unknown): Date | null {
+  if (value == null || value === '') return null;
+  const parsed = value instanceof Date ? value : new Date(String(value));
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function setTimeOnDate(date: Date, value: unknown): Date {
+  const match = String(value ?? '').match(/^([01]\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$/);
+  if (!match) return date;
+  const result = new Date(date);
+  result.setHours(Number(match[1]), Number(match[2]), Number(match[3] || 0), 0);
+  return result;
+}
+
 // Helper to parse Pedido delivery date & time
 function parsePedidoDateTime(o: any) {
   const rawDate = o.data_entrega || o.dueDate || o.data_pedido || o.created_at;
-  if (!rawDate) return { start: new Date(), timeStr: "12:00", dateStr: format(new Date(), "yyyy-MM-dd") };
+  if (!rawDate) {
+    const now = new Date();
+    return { start: now, timeStr: "12:00", dateStr: format(now, "yyyy-MM-dd") };
+  }
 
   let onlyDate = "";
-  let timeStr = o.hora_entrega || o.hora || "12:00";
+  let timeStr = String(o.hora_entrega || o.hora || "12:00");
 
   if (String(rawDate).includes("T")) {
     const parts = String(rawDate).split("T");
@@ -94,19 +111,15 @@ function parsePedidoDateTime(o: any) {
 
   const cleanTime = timeStr.length === 5 ? `${timeStr}:00` : timeStr;
   const isoCandidate = `${onlyDate}T${cleanTime}`;
-  const startDate = new Date(isoCandidate);
+  const startDate = parseValidDate(isoCandidate);
 
-  if (!isNaN(startDate.getTime())) {
+  if (startDate) {
     return { start: startDate, timeStr, dateStr: onlyDate };
   }
 
-  const fallback = new Date(rawDate);
-  const validFallback = !isNaN(fallback.getTime()) ? fallback : new Date();
-  return {
-    start: validFallback,
-    timeStr: timeStr || "12:00",
-    dateStr: format(validFallback, "yyyy-MM-dd")
-  };
+  const fallback = parseValidDate(rawDate);
+  if (!fallback) return null;
+  return { start: fallback, timeStr: timeStr || "12:00", dateStr: format(fallback, "yyyy-MM-dd") };
 }
 
 // Helper to parse Evento start & end date & time
@@ -124,8 +137,8 @@ function parseEventoDateTime(e: any) {
   }
 
   let onlyDate = "";
-  let startTimeStr = e.hora_inicio || e.startTime || "09:00";
-  let endTimeStr = e.hora_fim || e.endTime || "13:00";
+  let startTimeStr = String(e.hora_inicio || e.startTime || "09:00");
+  let endTimeStr = String(e.hora_fim || e.endTime || "13:00");
 
   if (String(rawDate).includes("T")) {
     const parts = String(rawDate).split("T");
@@ -138,17 +151,18 @@ function parseEventoDateTime(e: any) {
   }
 
   const cleanStartTime = startTimeStr.length === 5 ? `${startTimeStr}:00` : startTimeStr;
-  const startDate = new Date(`${onlyDate}T${cleanStartTime}`);
+  const startDate = parseValidDate(`${onlyDate}T${cleanStartTime}`);
 
   const cleanEndTime = endTimeStr.length === 5 ? `${endTimeStr}:00` : endTimeStr;
-  const endDateCandidate = new Date(`${onlyDate}T${cleanEndTime}`);
+  const endDateCandidate = parseValidDate(`${onlyDate}T${cleanEndTime}`);
 
-  const start = !isNaN(startDate.getTime()) ? startDate : new Date(rawDate);
-  const end = !isNaN(endDateCandidate.getTime()) && endDateCandidate > start 
+  const start = startDate || parseValidDate(rawDate);
+  if (!start) return null;
+  const end = endDateCandidate && endDateCandidate > start
     ? endDateCandidate 
     : new Date(start.getTime() + 4 * 3600000);
 
-  return { start, end, startTimeStr, endTimeStr, dateStr: onlyDate };
+  return { start, end, startTimeStr, endTimeStr, dateStr: format(start, "yyyy-MM-dd") };
 }
 
 // Color palette mapping consistent with the restaurant theme
@@ -293,7 +307,9 @@ export default function Calendario() {
       const total = Number(o.valor_total || o.total || 0);
       const pago = Number(o.valor_pago || 0);
       const diff = Math.max(0, total - pago);
-      const { dateStr, timeStr } = parsePedidoDateTime(o);
+      const parsedDate = parsePedidoDateTime(o);
+      if (!parsedDate) return;
+      const { dateStr, timeStr } = parsedDate;
 
       if (diff > 0) {
         alerts.push({
@@ -327,7 +343,9 @@ export default function Calendario() {
 
     // 2. Check events scheduled for today or this week
     events.forEach((e: any) => {
-      const { dateStr, startTimeStr, endTimeStr } = parseEventoDateTime(e);
+      const parsedDate = parseEventoDateTime(e);
+      if (!parsedDate) return;
+      const { dateStr, startTimeStr, endTimeStr } = parsedDate;
       if (dateStr === todayStr) {
         alerts.push({
           id: `alert-event-today-${e.id}`,
@@ -346,13 +364,15 @@ export default function Calendario() {
     // 3. Add system notifications from notificationAuditService
     rawNotificacoes.slice(0, 15).forEach((n: AppNotification) => {
       const isUrgent = n.priority === 'CRITICAL' || n.priority === 'critical' || n.priority === 'HIGH' || n.priority === 'high';
+      const parsedNotificationDate = parseValidDate(n.timestamp);
+      const notificationDate = parsedNotificationDate || new Date();
       alerts.push({
         id: `alert-notif-${n.id}`,
         title: n.title || 'Notificação Operativa',
         description: n.message || '',
         type: isUrgent ? 'URGENTE' : 'SISTEMA',
-        dateStr: n.timestamp ? format(new Date(n.timestamp), "yyyy-MM-dd") : todayStr,
-        timeStr: n.timestamp ? format(new Date(n.timestamp), "HH:mm") : undefined,
+        dateStr: format(notificationDate, "yyyy-MM-dd"),
+        timeStr: parsedNotificationDate ? format(notificationDate, "HH:mm") : undefined,
         actionLink: n.actionUrl || '/notificacoes',
         actionText: 'Ver Detalhe',
         raw: n
@@ -366,8 +386,8 @@ export default function Calendario() {
   const selectedDayOrders = useMemo(() => {
     const fromApi = dayDetails?.pedidos || [];
     const fromList = orders.filter((o: any) => {
-      const { dateStr } = parsePedidoDateTime(o);
-      return dateStr === selectedDayStr;
+      const parsedDate = parsePedidoDateTime(o);
+      return parsedDate?.dateStr === selectedDayStr;
     });
 
     const map = new Map<string | number, any>();
@@ -380,8 +400,8 @@ export default function Calendario() {
   const selectedDayEventos = useMemo(() => {
     const fromApi = dayDetails?.eventos || [];
     const fromList = events.filter((e: any) => {
-      const { dateStr } = parseEventoDateTime(e);
-      return dateStr === selectedDayStr;
+      const parsedDate = parseEventoDateTime(e);
+      return parsedDate?.dateStr === selectedDayStr;
     });
 
     const map = new Map<string | number, any>();
@@ -394,8 +414,10 @@ export default function Calendario() {
   // Total monthly revenue estimate in STN
   const totalFaturadoMes = useMemo(() => {
     const ordersThisMonth = orders.filter((o: any) => {
-      const { start } = parsePedidoDateTime(o);
-      return start.getFullYear() === currentYear && (start.getMonth() + 1) === currentMonth;
+      const parsedDate = parsePedidoDateTime(o);
+      return parsedDate !== null &&
+        parsedDate.start.getFullYear() === currentYear &&
+        (parsedDate.start.getMonth() + 1) === currentMonth;
     });
     return ordersThisMonth.reduce((acc: number, curr: any) => acc + Number(curr.valor_total || curr.total || 0), 0);
   }, [orders, currentYear, currentMonth]);
@@ -407,7 +429,9 @@ export default function Calendario() {
     // 1. Events
     if (filterType === "ALL" || filterType === "EVENTO") {
       events.forEach((e: any) => {
-        const { start, end, startTimeStr, endTimeStr } = parseEventoDateTime(e);
+        const parsedDate = parseEventoDateTime(e);
+        if (!parsedDate) return;
+        const { start, end, startTimeStr, endTimeStr } = parsedDate;
         const eventName = e.name || e.nome || e.titulo || `Evento #${e.id}`;
         const localStr = e.location || e.local || "";
         const client = getClientDisplayName(e.cliente_nome) || getClientDisplayName(e.cliente) || "";
@@ -433,7 +457,9 @@ export default function Calendario() {
     // 2. Orders
     if (filterType === "ALL" || filterType === "PEDIDO") {
       orders.forEach((o: any) => {
-        const { start, timeStr } = parsePedidoDateTime(o);
+        const parsedDate = parsePedidoDateTime(o);
+        if (!parsedDate) return;
+        const { start, timeStr } = parsedDate;
         const end = new Date(start.getTime() + 3600000); // 1h duration
         const clientName = getClientDisplayName(o.cliente) || getClientDisplayName(o.cliente_nome) || getClientDisplayName(o.client?.nome) || "";
         const total = Number(o.valor_total || o.total || 0);
@@ -470,11 +496,13 @@ export default function Calendario() {
           if (!match) return;
         }
 
+        const start = parseValidDate(p.data_producao || p.dueDate || p.data_entrega) || (!p.data_producao && !p.dueDate && !p.data_entrega ? new Date() : null);
+        if (!start) return;
         list.push({
           id: `p-${p.id}`,
           title: `PROD: ${p.numero || `#${p.id}`} — ${p.estado || p.status || 'Pendente'}`,
-          start: new Date(p.data_producao || p.dueDate || p.data_entrega || new Date()),
-          end: new Date(new Date(p.data_producao || p.dueDate || p.data_entrega || new Date()).getTime() + 7200000),
+          start,
+          end: new Date(start.getTime() + 7200000),
           color: THEME_COLORS.PRODUCAO.bg,
           type: 'PRODUÇÃO',
           resource: p
@@ -491,11 +519,13 @@ export default function Calendario() {
           if (!match) return;
         }
 
+        const start = parseValidDate(d.scheduledDate || d.data_entrega);
+        if (!start) return;
         list.push({
           id: `d-${d.id}`,
           title: `ENTREGA: #${d.orderId || d.pedido_id}`,
-          start: new Date(d.scheduledDate || d.data_entrega || new Date()),
-          end: new Date(new Date(d.scheduledDate || d.data_entrega || new Date()).getTime() + 3600000),
+          start,
+          end: new Date(start.getTime() + 3600000),
           color: THEME_COLORS.ENTREGA.bg,
           type: 'ENTREGA',
           resource: d
@@ -513,19 +543,17 @@ export default function Calendario() {
             
             let startDate = new Date(shiftDate);
             if (s.startTime) {
-              startDate = new Date(s.startTime);
+              startDate = parseValidDate(s.startTime) || startDate;
             } else if (s.hora_inicio) {
-              const parts = s.hora_inicio.split(":");
-              startDate.setHours(Number(parts[0] || 0), Number(parts[1] || 0), Number(parts[2] || 0), 0);
+              startDate = setTimeOnDate(startDate, s.hora_inicio);
             }
 
             let endDate = new Date(startDate.getTime() + 28800000); // 8h default
             if (s.endTime) {
-              endDate = new Date(s.endTime);
+              endDate = parseValidDate(s.endTime) || endDate;
             } else if (s.hora_fim) {
-              const parts = s.hora_fim.split(":");
               endDate = new Date(startDate);
-              endDate.setHours(Number(parts[0] || 0), Number(parts[1] || 0), Number(parts[2] || 0), 0);
+              endDate = setTimeOnDate(endDate, s.hora_fim);
               if (endDate < startDate) {
                 endDate.setDate(endDate.getDate() + 1);
               }
@@ -1319,7 +1347,9 @@ export default function Calendario() {
                     ) : (
                       <div className="space-y-2">
                         {selectedDayEventos.map((e: any) => {
-                          const { startTimeStr, endTimeStr } = parseEventoDateTime(e);
+                          const parsedDate = parseEventoDateTime(e);
+                          if (!parsedDate) return null;
+                          const { startTimeStr, endTimeStr } = parsedDate;
                           return (
                             <div 
                               key={e.id} 

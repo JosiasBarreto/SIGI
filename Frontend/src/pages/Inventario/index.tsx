@@ -49,6 +49,8 @@ export const InventarioModule: React.FC = () => {
   const { 
     data: stockData, 
     isLoading, 
+    isError: isStockError,
+    error: stockError,
     refetch 
   } = useQuery({
     queryKey: ['consolidated-stock-inventory'],
@@ -121,6 +123,21 @@ export const InventarioModule: React.FC = () => {
           </p>
         </div>
       </div>
+
+      {isStockError && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-200">
+          <span>
+            Não foi possível carregar os dados de stock do servidor: {stockError instanceof Error ? stockError.message : 'erro de comunicação.'}
+          </span>
+          <button
+            type="button"
+            onClick={() => void refetch()}
+            className="shrink-0 rounded-lg bg-red-700 px-3 py-2 font-bold text-white hover:bg-red-800"
+          >
+            Tentar novamente
+          </button>
+        </div>
+      )}
 
       {/* Navigation Tabs */}
       <div className="flex border-b border-gray-200 dark:border-gray-800 overflow-x-auto space-x-1 sm:space-x-2">
