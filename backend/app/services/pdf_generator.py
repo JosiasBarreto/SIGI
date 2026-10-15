@@ -420,7 +420,7 @@ def get_proforma_receipt_data(proforma):
             "total_iva": iva_p,
             "total_geral": tot_p,
             "valor_pago": 0.0,
-            "saldo": tot_p,
+            "saldo": 0.0,
             "troco": 0.0,
             "moeda": moeda
         },
@@ -635,6 +635,8 @@ def _build_a4_pdf(rec_data):
     cliente = rec_data["cliente"]
     totais = rec_data["totais"]
     moeda = totais["moeda"]
+    tipo_documento_normalizado = str(doc.get('tipo', '')).upper().replace('Ó', 'O').replace('-', ' ')
+    is_proforma = 'PROFORMA' in tipo_documento_normalizado or 'PRO FORMA' in tipo_documento_normalizado
     
     # Header Empresa (Left)
     c.setFont("Helvetica-Bold", 16)
@@ -701,8 +703,7 @@ def _build_a4_pdf(rec_data):
     table_y = box_top - box_height - 15
     
     col_widths = [145, 45, 65, 45, 40, 60, 60, 55]
-    t = Table(table_data, colWidths=col_widths)
-    t.setStyle(TableStyle([
+    table_style = [
         ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#1e293b")),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
@@ -712,7 +713,13 @@ def _build_a4_pdf(rec_data):
         ('BOTTOMPADDING', (0, 0), (-1, 0), 6),
         ('TOPPADDING', (0, 0), (-1, 0), 6),
         ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1"))
-    ]))
+    ]
+    discount_blue = colors.HexColor('#2563eb')
+    for row_index, item in enumerate(rec_data['itens'], start=1):
+        if float(item.get('desconto') or 0) > 0:
+            table_style.append(('TEXTCOLOR', (3, row_index), (3, row_index), discount_blue))
+    t = Table(table_data, colWidths=col_widths)
+    t.setStyle(TableStyle(table_style))
     
     w, h = t.wrap(width - 80, height)
     table_y -= h
@@ -736,16 +743,17 @@ def _build_a4_pdf(rec_data):
     c.drawRightString(width - 40, footer_y - 26, f"{totais['total_iva']:.2f} {moeda}")
     
     c.setFont("Helvetica-Bold", 10)
-    c.drawString(footer_x, footer_y - 42, "TOTAL A PAGAR:")
+    c.drawString(footer_x, footer_y - 42, "TOTAL PRÓ-FORMA:" if is_proforma else "TOTAL A PAGAR:")
     c.drawRightString(width - 40, footer_y - 42, f"{totais['total_geral']:.2f} {moeda}")
     
-    c.setFont("Helvetica", 9)
-    c.setFillColor(colors.HexColor('#15803d'))
-    c.drawString(footer_x, footer_y - 57, "Valor Pago:")
-    c.drawRightString(width - 40, footer_y - 57, f"{totais['valor_pago']:.2f} {moeda}")
-    c.setFillColor(colors.black)
+    if not is_proforma:
+        c.setFont("Helvetica", 9)
+        c.setFillColor(colors.HexColor('#15803d'))
+        c.drawString(footer_x, footer_y - 57, "Valor Pago:")
+        c.drawRightString(width - 40, footer_y - 57, f"{totais['valor_pago']:.2f} {moeda}")
+        c.setFillColor(colors.black)
 
-    if rec_data.get('pagamento'):
+    if not is_proforma and rec_data.get('pagamento'):
         pagamento = rec_data['pagamento']
         c.setFont("Helvetica-Bold", 9)
         c.setFillColor(colors.HexColor('#15803d'))
@@ -759,7 +767,7 @@ def _build_a4_pdf(rec_data):
             detalhe += f" | Emissor: {pagamento['emissor']}"
         c.drawString(40, footer_y - 70, detalhe)
 
-    if rec_data.get('pagamentos'):
+    if not is_proforma and rec_data.get('pagamentos'):
         # Leave vertical room for the balance and the settlement heading.
         y_pagamentos = footer_y - 95
         c.setFont("Helvetica-Bold", 8)
@@ -774,12 +782,12 @@ def _build_a4_pdf(rec_data):
                 detalhe += f" | Emissor: {pagamento['emissor']}"
             c.drawString(40, y_pagamentos, detalhe[:120])
     
-    if totais["saldo"] > 0:
+    if not is_proforma and totais["saldo"] > 0:
         c.setFillColor(colors.HexColor('#dc2626'))
         c.drawString(footer_x, footer_y - 70, "Saldo Pendente:")
         c.drawRightString(width - 40, footer_y - 70, f"{totais['saldo']:.2f} {moeda}")
         c.setFillColor(colors.black)
-    elif totais["troco"] > 0:
+    elif not is_proforma and totais["troco"] > 0:
         c.drawString(footer_x, footer_y - 70, "Troco:")
         c.drawRightString(width - 40, footer_y - 70, f"{totais['troco']:.2f} {moeda}")
 
@@ -803,6 +811,8 @@ def _build_thermal_receipt_pdf(rec_data):
     totais = rec_data["totais"]
     itens = rec_data["itens"]
     moeda = totais["moeda"]
+    tipo_documento_normalizado = str(doc.get('tipo', '')).upper().replace('Ó', 'O').replace('-', ' ')
+    is_proforma = 'PROFORMA' in tipo_documento_normalizado or 'PRO FORMA' in tipo_documento_normalizado
 
     # Calculate dynamic height so nothing is cut off
     base_height = 360
@@ -824,7 +834,7 @@ def _build_thermal_receipt_pdf(rec_data):
         c.drawCentredString(width / 2, y, empresa["localizacao"])
         y -= 10
 
-    if rec_data.get('pagamento'):
+    if not is_proforma and rec_data.get('pagamento'):
         pagamento = rec_data['pagamento']
         c.setFont("Helvetica-Bold", 8)
         c.drawString(10, y, f"Recebido agora: {pagamento['valor']:.2f} {moeda}")
@@ -945,17 +955,22 @@ def _build_thermal_receipt_pdf(rec_data):
     c.drawRightString(width - 10, y, f"{totais['total_geral']:.2f} {moeda}")
     y -= 12
 
-    c.setFont("Helvetica", 8)
-    c.drawString(10, y, "Valor Pago:")
-    c.drawRightString(width - 10, y, f"{totais['valor_pago']:.2f} {moeda}")
-    y -= 10
+    if not is_proforma:
+        c.setFont("Helvetica", 8)
+        c.setFillColor(colors.HexColor('#15803d'))
+        c.drawString(10, y, "Valor Pago:")
+        c.drawRightString(width - 10, y, f"{totais['valor_pago']:.2f} {moeda}")
+        c.setFillColor(colors.black)
+        y -= 10
 
-    if totais["saldo"] > 0:
+    if not is_proforma and totais["saldo"] > 0:
+        c.setFillColor(colors.HexColor('#dc2626'))
         c.setFont("Helvetica-Bold", 8)
         c.drawString(10, y, "Saldo Restante:")
         c.drawRightString(width - 10, y, f"{totais['saldo']:.2f} {moeda}")
+        c.setFillColor(colors.black)
         y -= 10
-    elif totais["troco"] > 0:
+    elif not is_proforma and totais["troco"] > 0:
         c.drawString(10, y, "Troco:")
         c.drawRightString(width - 10, y, f"{totais['troco']:.2f} {moeda}")
         y -= 10
