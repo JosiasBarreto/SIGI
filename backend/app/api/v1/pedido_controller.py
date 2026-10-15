@@ -51,13 +51,14 @@ def get_clientes():
     }), 200
 @pedido_bp.route('/clientes', methods=['POST'])
 @jwt_required()
-@requires_roles('Administrador', 'Atendimento')
+@requires_roles('Administrador', 'Atendimento', 'Comercial', 'Financeiro')
 def create_cliente():
     try:
         data = ClienteSchema().load(request.get_json())
     except ValidationError as err:
         return jsonify({"msg": "Validation error", "errors": err.messages}), 400
         
+    data['nif'] = str(data.get('nif') or '').strip() or '999999999'
     user_id = get_jwt_identity()
     result, error = pedido_service.create_cliente(data, user_id)
     if error:
@@ -138,6 +139,25 @@ def gerar_recibo(id):
     buffer = generate_pedido_receipt(pedido)
     
     return send_file(buffer, as_attachment=False, download_name=f"recibo_{pedido.numero}.pdf", mimetype='application/pdf')
+
+@pedido_bp.route('/<int:id>/documento/pdf', methods=['GET'])
+@jwt_required()
+def gerar_documento_comercial_pdf(id):
+    from app.models.comercial import TipoDocumento, Venda
+    from app.services.pdf_generator import generate_venda_pdf
+
+    pedido = pedido_service.pedido_repo.get_by_id(id)
+    if not pedido:
+        return jsonify({"msg": "Pedido não encontrado."}), 404
+
+    venda = Venda.query.filter_by(pedido_id=pedido.id).filter(
+        Venda.tipo_documento.in_([TipoDocumento.FT, TipoDocumento.FR])
+    ).order_by(Venda.id.asc()).first()
+    if not venda:
+        return jsonify({"msg": "Ainda não existe fatura. Registe o pagamento do pedido para emitir a FT/FR."}), 409
+
+    filename = f"{venda.numero_documento.replace('/', '_')}.pdf"
+    return send_file(generate_venda_pdf(venda), as_attachment=True, download_name=filename, mimetype='application/pdf')
 
 @pedido_bp.route('/<int:id>/recibo-data', methods=['GET'])
 @jwt_required()

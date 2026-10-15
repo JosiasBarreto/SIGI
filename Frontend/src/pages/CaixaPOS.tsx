@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   productService,
   clientService,
@@ -37,7 +37,8 @@ import {
   ChefHat,
   ShoppingBag,
   PackageCheck,
-  Send
+  Send,
+  UserPlus
 } from "lucide-react";
 import { formatCurrency, cn } from "../lib/utils";
 import { toast } from "react-toastify";
@@ -55,8 +56,10 @@ import CaixaDraftsModal, { CaixaDraft } from "./CaixaPOS/CaixaDraftsModal";
 import CaixaPOSPaymentModal from "./CaixaPOS/CaixaPOSPaymentModal";
 import CaixaCartModal from "./CaixaPOS/CaixaCartModal";
 import PedidoSuccessModal from "./Pedidos/PedidoSuccessModal";
+import QuickClientModal from "../components/Common/QuickClientModal";
 
 export default function CaixaPOS() {
+  const queryClient = useQueryClient();
   const { createVenda, checkoutPedido, enviarFatura } = useComercial();
   const config = JSON.parse(localStorage.getItem("sigi_config") || "{}");
 
@@ -87,6 +90,7 @@ export default function CaixaPOS() {
 
   // Sales & POS States
   const [selectedClient, setSelectedClient] = useState("");
+  const [isQuickClientModalOpen, setIsQuickClientModalOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("Dinheiro");
   const [tipoDocumento, setTipoDocumento] = useState<"FR" | "PROFORMA">("FR");
   const isProforma = tipoDocumento === "PROFORMA";
@@ -140,6 +144,14 @@ export default function CaixaPOS() {
   const selectedClientObj = clients.find(
     (c: any) => String(c.id) === String(selectedClient)
   );
+  const handleQuickClientCreated = (client: any) => {
+    queryClient.setQueryData(["clients"], (current: any) => {
+      const currentItems = Array.isArray(current?.items) ? current.items : [];
+      return { ...(current || {}), items: [client, ...currentItems.filter((item: any) => item.id !== client.id)] };
+    });
+    queryClient.invalidateQueries({ queryKey: ["clients"] });
+    setSelectedClient(String(client.id));
+  };
   const descontoClientePercent = Number(
     selectedClientObj?.percentagem_desconto_padrao || 0
   );
@@ -625,7 +637,7 @@ export default function CaixaPOS() {
 
       const buildVendaPayload = (valorPagamento = valorPagoNum) => ({
         tipo_documento: tipoDocumento,
-        cliente_id: selectedClient ? Number(selectedClient) : null,
+        cliente_id: selectedClient ? Number(selectedClient) : undefined,
         evento_id: null,
         observacoes: "Venda direta via POS",
         itens: mapCartToVendaItens(),
@@ -754,10 +766,6 @@ export default function CaixaPOS() {
           setCreatedVenda(vendaRes || orderObj);
           setCompletedOrderData(orderObj);
         } else {
-          const vendaRes = await vendaService.emitirDocumentoPedido(
-            createdOrder.id,
-            isProforma ? "PROFORMA" : "FT"
-          );
           const orderObj = {
             ...createdOrder,
             cliente: selectedClientObj,
@@ -765,7 +773,7 @@ export default function CaixaPOS() {
             itens: cart,
             forma_pagamento: paymentMethod,
           };
-          setCreatedVenda(vendaRes || orderObj);
+          setCreatedVenda(null);
           setCompletedOrderData(orderObj);
         }
       }
@@ -1000,6 +1008,13 @@ export default function CaixaPOS() {
                     selectedClientId={selectedClient}
                     onSelectClient={(id) => setSelectedClient(id)}
                   />
+                  <button
+                    type="button"
+                    onClick={() => setIsQuickClientModalOpen(true)}
+                    className="inline-flex items-center gap-1 text-[11px] font-bold text-primary hover:underline"
+                  >
+                    <UserPlus size={13} /> Criar cliente
+                  </button>
                 </div>
 
                 <button
@@ -1430,6 +1445,12 @@ export default function CaixaPOS() {
         currentTipoPedido={tipoPedido}
         currentDataEntrega={dataEntrega}
         onLoadDraft={handleLoadDraft}
+      />
+
+      <QuickClientModal
+        isOpen={isQuickClientModalOpen}
+        onClose={() => setIsQuickClientModalOpen(false)}
+        onCreated={handleQuickClientCreated}
       />
 
       {/* Payment / Checkout Modal */}

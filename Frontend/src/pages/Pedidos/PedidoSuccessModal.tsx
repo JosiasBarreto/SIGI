@@ -35,6 +35,7 @@ export default function PedidoSuccessModal({
   if (!order) return null;
 
   const isProforma = Boolean(order?.isProforma || createdVenda?.isProforma);
+  const hasCommercialDocument = isProforma || Boolean(createdVenda?.id);
   const targetId = createdVenda?.id || order?.id;
   const orderNumber = order?.numero || createdVenda?.numero_documento || createdVenda?.numero || `#${order?.id || "NOVO"}`;
   
@@ -368,8 +369,8 @@ export default function PedidoSuccessModal({
             )}
           </div>
 
-          {/* Action buttons (Impressão e Documentos) */}
-          <div className="pt-2">
+          {/* Fiscal documents are only offered after payment/issuance. */}
+          {hasCommercialDocument ? <div className="pt-2">
             <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">
               Documentos do Pedido
             </h4>
@@ -409,17 +410,7 @@ export default function PedidoSuccessModal({
                   } else if (createdVenda?.id) {
                     documentService
                       .vendaPdf(createdVenda.id)
-                      .catch(() => {
-                        if (order?.id) {
-                          documentService
-                            .pedidoPdf(order.id)
-                            .catch((err) => toast.error(err?.message || "Erro ao abrir PDF."));
-                        }
-                      });
-                  } else if (order?.id) {
-                    documentService
-                      .pedidoPdf(order.id)
-                      .catch((err) => toast.error(err?.message || "Erro ao abrir PDF."));
+                      .catch((err) => toast.error(err?.message || "Erro ao abrir fatura A4."));
                   }
                 }}
                 className="p-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all flex flex-col items-center justify-center gap-1.5 shadow-sm cursor-pointer"
@@ -455,7 +446,11 @@ export default function PedidoSuccessModal({
                 <span>Descarregar Recibo</span>
               </button>
             </div>
-          </div>
+          </div> : (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs font-medium text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200">
+              Documento comercial e recibo serão disponibilizados após o registo do pagamento.
+            </div>
+          )}
         </div>
 
         {/* Footer actions */}

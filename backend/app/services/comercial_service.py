@@ -63,6 +63,9 @@ class ComercialService:
             p = Pedido.query.get(data.get('pedido_id'))
             if p and p.cliente_id:
                 cliente_id = p.cliente_id
+        if not cliente_id:
+            from app.services.cliente_service import get_or_create_consumidor_final
+            cliente_id = get_or_create_consumidor_final().id
 
         venda = Venda(
             numero_documento=numero_documento,
@@ -244,15 +247,18 @@ class ComercialService:
         if tipo_documento not in [TipoDocumento.FR.value, TipoDocumento.FT.value, 'FATURA', 'FATURA-RECIBO']:
             return None, 'Tipo de documento de evento inválido. Utilize FT (Fatura) ou FR (Fatura-Recibo).'
 
-        tipo_doc_enum = TipoDocumento.FR if tipo_documento in [TipoDocumento.FR.value, 'FATURA-RECIBO'] else TipoDocumento.FT
-
-        valor_pagar = float(pagamento_info.get('valor', saldo_evento if tipo_doc_enum == TipoDocumento.FR else 0.0))
-
-        if tipo_doc_enum == TipoDocumento.FR and valor_pagar < (saldo_evento - 0.01):
-            return None, 'Fatura-Recibo (FR) exige a liquidação total do valor. Para pagamentos fasedos/prestação, emita Fatura (FT).'
+        valor_pagar = float(pagamento_info.get('valor', 0) or 0)
+        if valor_pagar <= 0:
+            return None, 'Registe um pagamento para emitir o documento comercial do evento.'
 
         if valor_pagar > (saldo_evento + 0.01):
             return None, "O valor do pagamento não pode ser superior ao saldo do evento."
+
+        tipo_doc_enum = (
+            TipoDocumento.FR
+            if abs(valor_pagar - saldo_evento) <= 0.01
+            else TipoDocumento.FT
+        )
 
         forma_db = None
         codigo_transf = None
@@ -636,18 +642,14 @@ class ComercialService:
             raise e
 
     def emitir_documento_pedido(self, pedido_id: int, tipo_documento: str, user_id: int):
-        """Issue an unpaid FT or a non-fiscal Proforma for an existing pedido.
-
-        This deliberately does not move cash or stock: the pedido remains the
-        operational instruction and the new Venda is the commercial document.
-        """
+        """Issue a non-fiscal Proforma; paid orders get FT/FR through checkout."""
         from app.models.pedido import Pedido
         try:
             tipo = TipoDocumento(tipo_documento)
         except ValueError as exc:
             raise ValueError('Tipo de documento inválido.') from exc
-        if tipo not in (TipoDocumento.FT, TipoDocumento.PROFORMA):
-            raise ValueError('Para pedido, emita FT ou PROFORMA. FR é reservado para venda direta paga.')
+        if tipo not in (TipoDocumento.FT, TipoDocumento.FR, TipoDocumento.PROFORMA):
+            raise ValueError('Tipo de documento inválido.')
 
         pedido = Pedido.query.get(pedido_id)
         if not pedido:
@@ -678,54 +680,17 @@ class ComercialService:
                 })
             
             return proforma_service.create_proforma(data, user_id)
-            
-        existente = Venda.query.filter_by(pedido_id=pedido.id, tipo_documento=tipo).first()
-        if existente:
-            return existente
 
-        venda = Venda(
-            numero_documento=self.generate_numero_documento(tipo.value),
-            tipo_documento=tipo,
-            cliente_id=pedido.cliente_id,
-            pedido_id=pedido.id,
-            estado=EstadoVenda.PENDENTE,
-            observacoes=f'Documento {tipo.value} emitido a partir do pedido {pedido.numero}.',
-            criado_por=user_id,
-            # Store immutable fiscal values; Venda properties only fall back
-            # to Pedido for legacy rows that have no stored snapshot.
-            _subtotal=pedido.subtotal,
-            _desconto_total=pedido.desconto_total,
-            _base_tributavel=pedido.base_tributavel,
-            _total_iva=pedido.total_iva,
-            _total=pedido.valor_total,
-            _valor_pago=0,
-            _saldo=pedido.valor_total,
-        )
-        db.session.add(venda)
-        db.session.flush()
-        for item in pedido.itens:
-            db.session.add(VendaItem(
-                venda_id=venda.id,
-                item_tipo=item.tipo_item.value if hasattr(item.tipo_item, 'value') else item.tipo_item,
-                item_id=item.produto_id,
-                descricao=item.descricao or (item.produto.nome if item.produto else 'Item'),
-                quantidade=item.quantidade,
-                preco_unitario=item.preco_unitario,
-                desconto=item.desconto or 0,
-                taxa_iva_id=item.taxa_iva_id,
-                taxa_iva=item.taxa_iva or 0,
-                valor_iva=item.valor_iva or 0,
-                subtotal=item.subtotal,
-                total=item.total,
-            ))
-        db.session.commit()
-        self.audit_service.log_action(user_id, 'EMITIR_DOCUMENTO', 'vendas', venda.id,
-                                      new_values={'tipo': tipo.value, 'pedido_id': pedido.id})
-        return venda
+        documento = Venda.query.filter_by(pedido_id=pedido.id).filter(
+            Venda.tipo_documento.in_([TipoDocumento.FT, TipoDocumento.FR])
+        ).order_by(Venda.id.asc()).first()
+        if documento:
+            return documento
+        raise ValueError('Registe o pagamento no checkout do pedido para emitir automaticamente a FT ou FR.')
 
     def liquidar_pedido_faturado(self, pedido, venda, data, user_id):
         """Regista parcela na fatura já emitida e mantém pedido/fatura sincronizados."""
-        from app.models.pedido import EstadoPagamento
+        from app.models.pedido import EstadoPagamento, Pedido
         pagamento_info = data.get('pagamento', data) if isinstance(data, dict) else {}
         valor = float(pagamento_info.get('valor', 0))
         pedido = Pedido.query.with_for_update().filter_by(id=pedido.id).first()
@@ -811,11 +776,15 @@ class ComercialService:
         
         pagamento_info = data.get('pagamento', data) if isinstance(data, dict) else {}
 
-        pedido = Pedido.query.get(pedido_id)
+        pedido = Pedido.query.with_for_update().filter_by(id=pedido_id).first()
         if not pedido:
             return None, "Pedido não encontrado."
             
-        venda_existente = Venda.query.filter_by(pedido_id=pedido.id).first()
+        venda_existente = Venda.query.filter_by(pedido_id=pedido.id).filter(
+            Venda.tipo_documento.in_([TipoDocumento.FT, TipoDocumento.FR])
+        ).order_by(Venda.id.asc()).first()
+        if venda_existente:
+            return self.liquidar_pedido_faturado(pedido, venda_existente, data, user_id)
 
         # Compatibilidade com pedidos criados por versões anteriores do POS:
         # elas gravavam valor_pago no cabeçalho, mas não criavam Pagamento,
@@ -853,7 +822,8 @@ class ComercialService:
                 return None, "Emissor/Remetente da operação de pagamento é obrigatório."
                 
         # A pedido is billed as FT. FR remains exclusive to direct, fully paid POS sales.
-        is_fully_paid = abs(valor_pagar - float(pedido.saldo or 0)) < 0.01
+        valor_total_checkout = float(pagamento_info.get('valor_documento_checkout', valor_pagar) or 0)
+        is_fully_paid = abs(valor_total_checkout - float(pedido.saldo or 0)) < 0.01
         tipo_doc = 'FR' if is_fully_paid else 'FT'
         numero_doc = self.generate_numero_documento(tipo_doc)
         

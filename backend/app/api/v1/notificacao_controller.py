@@ -3,7 +3,8 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.services.system_notification_service import SystemNotificationService
 from app.core.database import db
 from app.middleware.auth_middleware import requires_roles
-from app.models.notificacao import Notificacao
+from app.models.notificacao import Notificacao, NotificacaoLeitura
+from app.models.user import User
 from app.models.user import RoleEnum
 import unicodedata
 
@@ -154,6 +155,47 @@ def get_resumo_notificacoes():
         "success": True,
         "resumo": resumo
     }), 200
+
+@notificacao_bp.route('/<int:id>/leituras', methods=['GET'])
+@jwt_required()
+def auditoria_leituras(id):
+    user_id = get_jwt_identity()
+    user = SystemNotificationService._get_active_user(user_id)
+    if not user:
+        return jsonify({"success": False, "msg": "Utilizador não identificado."}), 401
+
+    notification = Notificacao.query.get(id)
+    if not notification:
+        return jsonify({"success": False, "msg": "Notificação não encontrada."}), 404
+    if not SystemNotificationService._user_can_access(notification, user):
+        return jsonify({"success": False, "msg": "Sem permissão para consultar esta notificação."}), 403
+
+    audience = [
+        recipient for recipient in User.query.filter_by(is_active=True).all()
+        if SystemNotificationService._user_can_access(notification, recipient)
+    ]
+    reads = {
+        read.user_id: read
+        for read in NotificacaoLeitura.query.filter_by(notificacao_id=id).all()
+    }
+
+    lidos = []
+    nao_lidos = []
+    for recipient in audience:
+        recipient_role = recipient.role.value if hasattr(recipient.role, 'value') else str(recipient.role)
+        read = reads.get(recipient.id)
+        entry = {
+            "user_id": recipient.id,
+            "nome": recipient.name,
+            "role": recipient_role,
+        }
+        if read:
+            entry["lido_em"] = read.data_leitura.isoformat() if read.data_leitura else None
+            lidos.append(entry)
+        else:
+            nao_lidos.append(entry)
+
+    return jsonify({"success": True, "lidos": lidos, "nao_lidos": nao_lidos}), 200
 
 @notificacao_bp.route('/<int:id>/marcar-lida', methods=['POST', 'PATCH'])
 @jwt_required()

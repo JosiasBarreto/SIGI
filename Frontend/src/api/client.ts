@@ -104,7 +104,7 @@ export function extractBackendErrorMessage(errOrData: any): string {
 }
 
 const apiClient: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://192.168.88.236:8000/api',
+  baseURL: import.meta.env.VITE_API_URL || 'http://192.168.100.141:8000/api',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',

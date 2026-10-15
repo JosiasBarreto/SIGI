@@ -3,7 +3,7 @@ import unicodedata
 from app.core.currency import get_system_currency_code
 from app.core.database import db
 from app.models.notificacao import Notificacao, NotificacaoLeitura
-from app.models.produto import Produto
+from app.models.produto import Produto, TipoProduto
 from app.models.pedido import Pedido, EstadoPedido
 from app.models.caixa import Caixa, EstadoCaixa
 from app.models.user import User
@@ -161,6 +161,7 @@ class SystemNotificationService:
         # 3. STOCK BAIXO
         produtos_stock_baixo = Produto.query.filter(
             Produto.ativo == True,
+            Produto.tipo.in_([TipoProduto.CONSUMIVEL, TipoProduto.REVENDA]),
             Produto.stock_atual <= Produto.stock_minimo
         ).all()
         stock_baixo_ids = {produto.id for produto in produtos_stock_baixo}
@@ -288,7 +289,7 @@ class SystemNotificationService:
                 for recipient in recipients:
                     if str(recipient.get("target_type", "")).upper() != "ROLE":
                         continue
-                    role_slug = cls._normalize_role(recipient.get("target_id"))
+                    role_slug = SystemNotificationService._normalize_role(recipient.get("target_id"))
                     if role_slug:
                         emit_user_notification(payload, room=f"role_{role_slug}")
 

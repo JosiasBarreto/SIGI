@@ -6,7 +6,7 @@ class Cliente(BaseModel):
 
     nome = db.Column(db.String(100), nullable=False)
     empresa = db.Column(db.String(100), nullable=True)
-    nif = db.Column(db.String(20), unique=True, nullable=True)
+    nif = db.Column(db.String(20), nullable=True, index=True)
     telefone = db.Column(db.String(20), nullable=True)
     whatsapp = db.Column(db.String(20), nullable=True)
     email = db.Column(db.String(100), nullable=True)

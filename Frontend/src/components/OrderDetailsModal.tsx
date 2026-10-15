@@ -103,18 +103,29 @@ export default function OrderDetailsModal({ order, isOpen, onClose, onUpdateStat
     { status: 'Concluído', value: 'Concluido', icon: CheckCircle },
   ];
 
-  // If status is Cancelado, handle it separately.
-  const isCanceled = orderStatus === 'Cancelado';
-  let currentIndex = isCanceled
-    ? -1
-    : orderSteps.findIndex((s) => s.status === orderStatus || s.value === orderStatus);
-  
-  // Map older statuses to new ones if necessary
-  if (!isCanceled && currentIndex === -1) {
-      if(orderStatus === 'Pendente') currentIndex = 0;
-      else if(orderStatus === 'Pago') currentIndex = 1;
-      else currentIndex = orderSteps.length - 1; 
-  }
+  const normalizeStatusKey = (value: unknown) => String(value || '')
+    .split('.')
+    .pop()!
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[\s_-]+/g, '');
+  const statusKey = normalizeStatusKey(orderStatus);
+  const isCanceled = statusKey === 'cancelado';
+  const progressByStatus: Record<string, number> = {
+    pendente: 0,
+    agendado: 0,
+    confirmado: 1,
+    pago: 1,
+    emproducao: 2,
+    empreparacao: 2,
+    emexecucao: 2,
+    pronto: 3,
+    ementrega: 4,
+    entregue: 4,
+    concluido: 5,
+  };
+  const currentIndex = isCanceled ? -1 : (progressByStatus[statusKey] ?? -1);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-sm animate-fade-in">
@@ -420,7 +431,7 @@ export default function OrderDetailsModal({ order, isOpen, onClose, onUpdateStat
                onClick={() => documentService.pedidoPdf(orderId).catch((err) => toast.error(err?.message || 'Erro ao gerar PDF do pedido.'))}
                className="w-full sm:w-auto px-4 py-2.5 text-xs font-bold text-primary bg-primary/10 hover:bg-primary/20 rounded-xl transition-colors flex justify-center items-center gap-1.5"
              >
-               <FileText size={16} /> Fatura/PDF Pedido
+               <FileText size={16} /> Pedido PDF (não fiscal)
              </button>
              <button
                type="button"
@@ -431,10 +442,12 @@ export default function OrderDetailsModal({ order, isOpen, onClose, onUpdateStat
              </button>
              <button
                type="button"
-               onClick={() => documentService.pedidoRecibo(orderId).catch((err) => toast.error(err?.message || 'Erro ao gerar recibo do pedido.'))}
+               disabled={Number(order.valor_pago || 0) <= 0}
+               onClick={() => documentService.pedidoDocumentoPdf(orderId).catch((err) => toast.error(err?.response?.data?.msg || err?.message || 'Erro ao gerar fatura A4 do pedido.'))}
                className="w-full sm:w-auto px-4 py-2.5 text-xs font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700 rounded-xl transition-colors flex justify-center items-center gap-1.5"
+               title={Number(order.valor_pago || 0) <= 0 ? 'Registe um pagamento para emitir o documento comercial.' : 'Descarregar fatura/recibo comercial A4'}
              >
-               <CreditCard size={16} /> Baixar Recibo PDF
+               <CreditCard size={16} /> Fatura/Recibo A4 (PDF)
              </button>
              {!isCanceled && (
                  <button 

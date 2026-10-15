@@ -76,12 +76,21 @@ def run_safe_migrations(db):
         "ALTER TABLE itens_pedido ADD COLUMN IF NOT EXISTS taxa_iva_id INTEGER NULL;",
         "ALTER TABLE itens_pedido ADD COLUMN IF NOT EXISTS taxa_iva NUMERIC(5,2) DEFAULT 0;",
         "ALTER TABLE itens_pedido ADD COLUMN IF NOT EXISTS valor_iva NUMERIC(10,2) DEFAULT 0;",
+        "ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS subtotal NUMERIC(10,2) DEFAULT 0;",
+        "ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS desconto_total NUMERIC(10,2) DEFAULT 0;",
+        "ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS base_tributavel NUMERIC(10,2) DEFAULT 0;",
+        "ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS total_iva NUMERIC(10,2) DEFAULT 0;",
         "ALTER TABLE vendas ADD COLUMN IF NOT EXISTS pedido_id INTEGER NULL;",
         "ALTER TABLE vendas ADD COLUMN IF NOT EXISTS evento_id INTEGER NULL;",
         "ALTER TABLE eventos ADD COLUMN IF NOT EXISTS pedido_id INTEGER NULL;",
         "ALTER TABLE eventos ADD COLUMN IF NOT EXISTS venda_id INTEGER NULL;",
         "ALTER TABLE movimentos_caixa ADD COLUMN IF NOT EXISTS forma_pagamento VARCHAR(100) NULL;",
         "ALTER TABLE produtos ADD COLUMN IF NOT EXISTS servico ENUM('ABASTECIMENTO', 'COZINHA', 'PASTELARIA', 'BAR') NULL;",
+        "ALTER TABLE produtos ADD COLUMN IF NOT EXISTS taxa_iva_id INT NULL;",
+        "ALTER TABLE produtos ADD COLUMN IF NOT EXISTS unidade_medida_id INT NULL;",
+        "ALTER TABLE movimentacoes_armazem MODIFY COLUMN origem VARCHAR(50);",
+        "ALTER TABLE movimentacoes_armazem MODIFY COLUMN tipo VARCHAR(50);",
+        "ALTER TABLE movimentacoes_armazem MODIFY COLUMN entidade_tipo VARCHAR(50);",
         # Migração e compatibilidade para tabela inventarios (Módulo Inventário de Stock SIGI)
         "ALTER TABLE inventarios ADD COLUMN IF NOT EXISTS numero VARCHAR(50) NULL;",
         "ALTER TABLE inventarios ADD COLUMN IF NOT EXISTS armazem_id INT NULL;",
@@ -159,6 +168,10 @@ def run_safe_migrations(db):
         "ALTER TABLE requisicoes_itens ADD COLUMN IF NOT EXISTS quantidade_danificada DECIMAL(10,3) DEFAULT 0.000;",
         "ALTER TABLE requisicoes_itens ADD COLUMN IF NOT EXISTS quantidade_perdida DECIMAL(10,3) DEFAULT 0.000;",
         "ALTER TABLE requisicoes_itens ADD COLUMN IF NOT EXISTS observacao TEXT NULL;",
+        # ...existing code...
+        "ALTER TABLE notificacoes ADD COLUMN IF NOT EXISTS ativa BOOLEAN DEFAULT TRUE;",
+        "UPDATE notificacoes SET ativa = 1 WHERE ativa IS NULL;",  # Garantir que registros antigos sejam atualizados
+# ...existing code...      
     ]
     for q in queries:
         try:
@@ -173,6 +186,31 @@ def run_safe_migrations(db):
                     db.session.commit()
                 except Exception:
                     db.session.rollback()
+                    logger.warning("Migração ignorada após falha (coluna/tabela já existente ou incompatível): %s", q)
+            else:
+                logger.warning("Migração ignorada por incompatibilidade com o schema atual: %s", q, exc_info=True)
+
+
+def ensure_client_nif_index(db):
+    """Allow repeated placeholder NIFs while retaining an index for real NIF lookup."""
+    if db.engine.dialect.name not in ('mysql', 'mariadb'):
+        return True
+    try:
+        indexes = inspect(db.engine).get_indexes('clientes')
+        for index in indexes:
+            if index.get('unique') and index.get('column_names') == ['nif']:
+                name = db.engine.dialect.identifier_preparer.quote(index['name'])
+                db.session.execute(text(f'ALTER TABLE clientes DROP INDEX {name}'))
+                db.session.commit()
+        indexes = inspect(db.engine).get_indexes('clientes')
+        if not any(index.get('column_names') == ['nif'] for index in indexes):
+            db.session.execute(text('CREATE INDEX ix_clientes_nif ON clientes (nif)'))
+            db.session.commit()
+        return True
+    except Exception:
+        db.session.rollback()
+        logger.exception('[SIGI DB] Não foi possível ajustar o índice de NIF dos clientes.')
+        return False
 
 
 def ensure_database_ready(app, force=False):
@@ -202,29 +240,43 @@ def ensure_database_ready(app, force=False):
             return False
 
         first_time = force or ("users" not in existing_tables) or ("log_erros" not in existing_tables)
-
         if first_time:
             print("\n" + "=" * 65)
             print("🚀 [SIGI ERP] Primeira inicialização: criando todas as tabelas...")
             print("=" * 65)
-            try:
-                db.create_all()
+        try:
+            # create_all is intentionally run on every start: it creates any
+            # newly registered model tables without dropping existing data.
+            db.create_all()
+            expected_tables = set(db.metadata.tables)
+            actual_tables = set(inspect(db.engine).get_table_names())
+            if missing_tables := sorted(expected_tables - actual_tables):
+                logger.error("[SIGI DB] Tabelas não criadas: %s", ", ".join(missing_tables))
+                return False
+            logger.info("[SIGI DB] Estrutura verificada: %d tabelas registadas.", len(expected_tables))
+            if first_time:
                 print("   ✅ Estrutura de tabelas criada com sucesso no MySQL.")
-            except Exception as e:
-                print(f"   ❌ Erro ao criar tabelas com db.create_all(): {e}")
-                return False
-        else:
-            try:
-                db.create_all()
-            except Exception:
-                logger.exception("[SIGI DB] Erro ao criar tabelas em falta.")
-                return False
+        except Exception as e:
+            logger.exception("[SIGI DB] Erro ao criar/verificar todas as tabelas: %s", e)
+            return False
+
+        if not ensure_client_nif_index(db):
+            return False
 
         # Executar ajustes seguros de colunas
         try:
             run_safe_migrations(db)
         except Exception as e:
             logger.warning(f"Migrações de compatibilidade: {e}")
+
+        try:
+            from app.services.cliente_service import get_or_create_consumidor_final
+            get_or_create_consumidor_final()
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            logger.exception('[SIGI DB] Não foi possível garantir o cliente Consumidor Final.')
+            return False
 
         # Verifica se já existe admin e empresa configurados
         try:

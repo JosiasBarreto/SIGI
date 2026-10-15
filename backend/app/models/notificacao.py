@@ -13,6 +13,7 @@ class Notificacao(BaseModel):
     entidade_id = db.Column(db.Integer, nullable=True)
     dados_extra = db.Column(db.JSON, nullable=True)
     ativo = db.Column(db.Boolean, default=True)
+    ativa = db.Column(db.Boolean, nullable=False, default=True, server_default=db.true())
 
     # Campos do barramento de notificações.  Os campos ``entidade_*`` acima
     # permanecem para compatibilidade com os alertas legados; estes campos são

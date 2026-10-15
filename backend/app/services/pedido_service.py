@@ -16,7 +16,10 @@ class PedidoService:
         self.item_repo = ItemPedidoRepository()
 
     def create_cliente(self, data, user_id):
-        if data.get('nif') and db.session.query(Cliente).filter_by(nif=data['nif'], is_active=True).first():
+        data = dict(data)
+        data['nif'] = str(data.get('nif') or '').strip() or '999999999'
+        data['email'] = str(data.get('email') or '').strip() or None
+        if data['nif'] != '999999999' and db.session.query(Cliente).filter_by(nif=data['nif']).first():
             return None, "NIF já cadastrado."
             
         cliente = Cliente(**data, created_by=user_id)
@@ -44,8 +47,8 @@ class PedidoService:
         if not cliente:
             return None, "Cliente não encontrado."
             
-        if data.get('nif') and data['nif'] != cliente.nif:
-            existing = self.cliente_repo.model_class.query.filter_by(nif=data['nif'], is_active=True).first()
+        if data.get('nif') and data['nif'] != '999999999' and data['nif'] != cliente.nif:
+            existing = self.cliente_repo.model_class.query.filter_by(nif=data['nif']).first()
             if existing and existing.id != cliente_id:
                 return None, "NIF já cadastrado por outro cliente."
                 
@@ -81,6 +84,10 @@ class PedidoService:
 
     def create_pedido(self, data, user_id, notificar_cliente=True):
         itens_data = data.pop('itens', [])
+
+        if not data.get('cliente_id'):
+            from app.services.cliente_service import get_or_create_consumidor_final
+            data['cliente_id'] = get_or_create_consumidor_final().id
         
         # Validar itens para proibir ingredientes
         for item in itens_data:
@@ -96,7 +103,10 @@ class PedidoService:
         data['numero'] = numero
         
         # Pagamento
-        valor_pago = float(data.get('valor_pago', 0))
+        # A payment is only registered through checkout, which also creates
+        # the fiscal document, payment row and cash movement.
+        valor_pago = 0.0
+        data['valor_pago'] = 0.0
         
         pedido = Pedido(**data, created_by=user_id)
 
@@ -168,6 +178,11 @@ class PedidoService:
 
         pedido.valor_total = total
         pedido.saldo = total - valor_pago
+
+        estado_inicial = pedido.estado.value if hasattr(pedido.estado, 'value') else str(pedido.estado)
+        if estado_inicial.strip().casefold() in {'entregue', 'concluido', 'concluído'} and pedido.saldo > 0.005:
+            db.session.rollback()
+            return None, "Não é possível entregar/concluir o pedido enquanto existir saldo pendente. Registe o pagamento para emitir a fatura."
 
 
         
@@ -241,64 +256,33 @@ class PedidoService:
         return pedido, None
 
     def add_pagamento(self, pedido_id, data, user_id):
-        pedido = db.session.query(Pedido).filter_by(id=pedido_id).with_for_update().first()
-        if not pedido: return None, "Pedido não encontrado"
-        estado_pedido = pedido.estado.value if hasattr(pedido.estado, 'value') else str(pedido.estado)
-        if estado_pedido.lower() == 'cancelado':
-            return None, "Não é possível registar pagamento num pedido cancelado."
-        
-        valor_entregue = float(data.get('valor', 0))
-        if valor_entregue <= 0: return None, "Valor do pagamento deve ser positivo"
-        
-        saldo_pendente = float(pedido.saldo or 0)
-        if saldo_pendente <= 0.005:
-            return None, "Este pedido já se encontra totalmente liquidado."
-        if valor_entregue > saldo_pendente + 0.005:
-            return None, "O valor do pagamento não pode ser superior ao saldo do pedido."
-        valor_pagar_real = valor_entregue
-        
-        from app.models.caixa import Caixa, MovimentoCaixa, TipoMovimentoCaixa
-        from app.models.financeiro import Pagamento, EstadoPagamento
-        
-        caixa = Caixa.query.with_for_update().filter_by(estado='Aberto', utilizador_abertura_id=user_id).first()
-        if not caixa: return None, "Não possui nenhuma sessão de caixa aberta no momento. Abra a sua caixa primeiro para receber pagamentos."
-        
-        pagamento = Pagamento(
-            pedido_id=pedido.id,
-            valor=valor_pagar_real,
-            forma_pagamento_id=data.get('forma_pagamento_id'),
-            referencia=data.get('referencia'),
-            observacoes=data.get('observacoes', ''),
-            estado=EstadoPagamento.PAGO,
-            data_pagamento=datetime.utcnow()
-        )
-        db.session.add(pagamento)
-        
-        pedido.valor_pago = float(pedido.valor_pago) + valor_pagar_real
-        pedido.saldo = max(0.0, float(pedido.valor_total) - float(pedido.valor_pago))
-        
-        if pedido.saldo <= 0:
-            pedido.estado_pagamento = EstadoPagamento.PAGO
+        pedido = self.pedido_repo.get_by_id(pedido_id)
+        if not pedido:
+            return None, "Pedido não encontrado."
+
+        from app.models.comercial import TipoDocumento, Venda
+        from app.models.financeiro import Pagamento
+        from app.services.comercial_service import ComercialService
+
+        comercial = ComercialService()
+        venda = Venda.query.filter_by(pedido_id=pedido.id).filter(
+            Venda.tipo_documento.in_([TipoDocumento.FT, TipoDocumento.FR])
+        ).order_by(Venda.id.asc()).first()
+
+        if venda:
+            venda, error = comercial.liquidar_pedido_faturado(
+                pedido, venda, {'pagamento': data}, user_id
+            )
         else:
-            pedido.estado_pagamento = EstadoPagamento.PARCIAL
-            
-        mov = MovimentoCaixa(
-            caixa_id=caixa.id,
-            utilizador_id=user_id,
-            tipo=TipoMovimentoCaixa.RECEBIMENTO,
-            valor=valor_pagar_real,
-            descricao=f"Pagamento Pedido #{pedido.numero}",
-            forma_pagamento=str(data.get('forma_pagamento_id'))
-        )
-        db.session.add(mov)
-        
-        
-        
-        # Auditoria Pagamento
-        from app.services.audit_service import AuditService
-        AuditService.log_action(user_id, "ADD_PAGAMENTO", "pedidos", pedido.id, new_values={'valor': valor_pagar_real})
-        
-        db.session.commit()
+            venda, error = comercial.converter_pedido_em_venda(
+                pedido.id, {'pagamento': data}, user_id
+            )
+        if error:
+            return None, error
+
+        pagamento = Pagamento.query.filter_by(
+            venda_id=venda.id,
+        ).order_by(Pagamento.id.desc()).first()
         return pagamento, None
 
     def alterar_estado(self, pedido_id, data, user_id):
@@ -330,6 +314,9 @@ class PedidoService:
             return None, "Estado inválido."
 
         novo_estado = novo_estado_enum.value
+
+        if novo_estado_enum in (EstadoPedido.ENTREGUE, EstadoPedido.CONCLUIDO) and float(pedido.saldo or 0) > 0.005:
+            return None, "Não é possível entregar/concluir o pedido enquanto existir saldo pendente. Registe o pagamento e emita a fatura."
 
         if novo_estado_enum == EstadoPedido.CANCELADO:
             if not data.get('justificativa_cancelamento'):

@@ -7,10 +7,11 @@ import {
   ArrowLeft, Save, Plus, Trash2, Sparkles, PartyPopper, Calendar, Clock, MapPin, 
   Users, DollarSign, Calculator, CheckCircle2, ShieldAlert, FileText, ChevronRight, 
   Cake, UtensilsCrossed, Wine, Briefcase, Tent, PlusCircle, Minus, ListFilter, AlertCircle,
-  CreditCard, Wallet, Landmark, ShoppingCart, Lock, X
+  CreditCard, Wallet, Landmark, ShoppingCart, Lock, X, UserPlus
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import SearchableClientSelect from '../components/Common/SearchableClientSelect';
+import QuickClientModal from '../components/Common/QuickClientModal';
 import AddItemModal from '../components/Eventos/AddItemModal';
 import Modal from '../components/Common/Modal';
 
@@ -68,6 +69,7 @@ export default function EventoFormPage() {
   // Items State & Modal
   const [itens, setItens] = useState<EventoItemForm[]>([]);
   const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
+  const [isQuickClientModalOpen, setIsQuickClientModalOpen] = useState(false);
   const [itemFilterTab, setItemFilterTab] = useState<'TODOS' | 'PASTELARIA' | 'COZINHA' | 'REVENDA' | 'SERVICOS'>('TODOS');
   const [isProformaSubmitting, setIsProformaSubmitting] = useState(false);
 
@@ -323,6 +325,15 @@ export default function EventoFormPage() {
     return clientes.find((c: any) => String(c.id) === String(clienteId)) || consumidorFinalClient;
   }, [clienteId, clientes, consumidorFinalClient]);
 
+  const handleQuickClientCreated = (client: any) => {
+    queryClient.setQueryData(['clientes-select'], (current: any) => {
+      const currentClients = Array.isArray(current) ? current : [];
+      return [client, ...currentClients.filter((item: any) => item.id !== client.id)];
+    });
+    queryClient.invalidateQueries({ queryKey: ['clientes-select'] });
+    setClienteId(Number(client.id));
+  };
+
   // Save Mutation
   const saveMutation = useMutation({
     mutationFn: async ({ payload, paymentInfo }: { payload: any; paymentInfo?: any }) => {
@@ -467,32 +478,31 @@ export default function EventoFormPage() {
 
   // Confirm Payment & Submit Event
   const handleFinalizeWithPayment = () => {
-    if (metodoPagamento === 'Transferência Bancária' || metodoPagamento === 'TPA / Multicaixa') {
-      if (!codigoComprovativo.trim()) {
-        toast.error('Informe o N.º de Comprovativo / Operação para o pagamento.');
+    const valorPagoNum = parseFloat(valorPagoInput) || 0;
+    if (valorPagoNum < 0) {
+      toast.error('O valor do pagamento não pode ser negativo.');
+      return;
+    }
+
+    if (valorPagoNum > 0 && (metodoPagamento === 'Transferência Bancária' || metodoPagamento === 'TPA / Multicaixa')) {
+      if (!codigoComprovativo.trim() || !bancoEmissor.trim()) {
+        toast.error('Informe o comprovativo e o emissor para este pagamento.');
         return;
       }
     }
 
-    const valorPagoNum = parseFloat(valorPagoInput) || 0;
-
-    if (valorPagoNum <= 0) {
-      toast.error('Informe um valor de pagamento superior a zero.');
-      return;
-    }
-
-    const paymentInfo = {
+    const paymentInfo = valorPagoNum > 0 ? {
       metodo_pagamento: metodoPagamento,
       condicao_pagamento: condicaoPagamento,
       valor_total: calculatedResumo.totalGeral,
-      valor_pago: valorPagoNum,
+      valor_pago: Math.min(valorPagoNum, calculatedResumo.totalGeral),
       troco: Math.max(0, valorPagoNum - calculatedResumo.totalGeral),
       codigo_comprovativo: codigoComprovativo,
       banco_emissor: bancoEmissor,
       observacoes: observacoesPagamento
-    };
+    } : undefined;
 
-    saveMutation.mutate({ payload: buildPayload('CONFIRMADO'), paymentInfo });
+    saveMutation.mutate({ payload: buildPayload('CONFIRMADO'), ...(paymentInfo ? { paymentInfo } : {}) });
   };
 
   // Pro-Forma Emission Logic
@@ -681,6 +691,13 @@ export default function EventoFormPage() {
                     selectedClientId={String(clienteId)}
                     onSelectClient={(idStr) => setClienteId(idStr ? Number(idStr) : '')}
                   />
+                  <button
+                    type="button"
+                    onClick={() => setIsQuickClientModalOpen(true)}
+                    className="mt-2 inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:underline"
+                  >
+                    <UserPlus size={14} /> Criar cliente rápido
+                  </button>
                 </div>
               </div>
 
@@ -1239,6 +1256,12 @@ export default function EventoFormPage() {
         onRemoveItem={handleRemoveItem}
         onUpdateItemQty={handleUpdateItemQty}
         numeroConvidados={numeroConvidados}
+      />
+
+      <QuickClientModal
+        isOpen={isQuickClientModalOpen}
+        onClose={() => setIsQuickClientModalOpen(false)}
+        onCreated={handleQuickClientCreated}
       />
 
       {/* PAYMENT CONFIRMATION MODAL (MESMA LÓGICA CAIXAPOS) */}

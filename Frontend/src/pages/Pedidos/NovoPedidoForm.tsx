@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   productService,
   clientService,
@@ -28,6 +28,7 @@ import PedidoPaymentModal from "./PedidoPaymentModal";
 import PedidoDraftsModal, { PedidoDraft } from "./PedidoDraftsModal";
 import PedidoSuccessModal from "./PedidoSuccessModal";
 import { notificationManager } from "../../services/notifications";
+import QuickClientModal from "../../components/Common/QuickClientModal";
 
 interface NovoPedidoFormProps {
   onSuccessRedirect?: () => void;
@@ -63,11 +64,7 @@ export default function NovoPedidoForm({ onSuccessRedirect }: NovoPedidoFormProp
 
   // Client states
   const [selectedClientId, setSelectedClientId] = useState("");
-  const [isQuickClient, setIsQuickClient] = useState(false);
-  const [newClientName, setNewClientName] = useState("");
-  const [newClientPhone, setNewClientPhone] = useState("");
-  const [newClientNif, setNewClientNif] = useState("");
-  const [newClientAddress, setNewClientAddress] = useState("");
+  const [isQuickClientModalOpen, setIsQuickClientModalOpen] = useState(false);
 
   // Order Details
   const [orderType, setOrderType] = useState<"Simples" | "Composto">("Simples");
@@ -107,16 +104,21 @@ export default function NovoPedidoForm({ onSuccessRedirect }: NovoPedidoFormProp
   const [completedOrder, setCompletedOrder] = useState<any>(null);
   const [createdVenda, setCreatedVenda] = useState<any>(null);
 
-  const clientCreateMutation = useMutation({
-    mutationFn: (client: any) => clientService.create(client),
-  });
-
   const selectedClientObj = clients.find(
     (c: any) => String(c.id) === String(selectedClientId)
   );
   const clientDiscountPercent = Number(
     selectedClientObj?.percentagem_desconto_padrao || 0
   );
+
+  const handleQuickClientCreated = (client: any) => {
+    queryClient.setQueryData(["clients"], (current: any) => {
+      const currentItems = Array.isArray(current?.items) ? current.items : [];
+      return { ...(current || {}), items: [client, ...currentItems.filter((item: any) => item.id !== client.id)] };
+    });
+    queryClient.invalidateQueries({ queryKey: ["clients"] });
+    setSelectedClientId(String(client.id));
+  };
 
   // Sync draft count on mount
   useEffect(() => {
@@ -215,22 +217,6 @@ export default function NovoPedidoForm({ onSuccessRedirect }: NovoPedidoFormProp
 
   // Build Payload Helper
   const prepareOrderPayload = async () => {
-    let finalClientId = selectedClientId;
-
-    if (isQuickClient) {
-      if (!newClientName.trim()) {
-        toast.error("Por favor, introduza o nome do novo cliente.");
-        return null;
-      }
-      const createdClient: any = await clientCreateMutation.mutateAsync({
-        nome: newClientName.trim(),
-        telefone: newClientPhone.trim(),
-        morada: newClientAddress.trim(),
-      });
-      finalClientId = String(createdClient.id);
-      toast.success(`Cliente ${newClientName} registado com sucesso.`);
-    }
-
     const cartTotalGross = cart.reduce(
       (acc, it) => acc + Number(it.price || 0) * Number(it.qty || 1),
       0
@@ -240,7 +226,7 @@ export default function NovoPedidoForm({ onSuccessRedirect }: NovoPedidoFormProp
     const isEntregaHoje = !orderDueDate || orderDueDate <= todayDateStr;
 
     const orderPayload: any = {
-      cliente_id: finalClientId ? Number(finalClientId) : undefined,
+      cliente_id: selectedClientId ? Number(selectedClientId) : undefined,
       tipo: orderType,
       origem: "Balcao",
       data_entrega: orderDueDate || todayDateStr,
@@ -287,21 +273,7 @@ export default function NovoPedidoForm({ onSuccessRedirect }: NovoPedidoFormProp
 
     setIsSubmitting(true);
     try {
-      let finalClientId: number | null = null;
-      if (isQuickClient && newClientName.trim()) {
-        try {
-          const createdClient = await clientService.create({
-            nome: newClientName.trim(),
-            telefone: newClientPhone.trim() || undefined,
-            nif: newClientNif.trim() || undefined,
-          });
-          finalClientId = Number(createdClient.id);
-        } catch {
-          // Proceed if client creation fails
-        }
-      } else if (selectedClientId) {
-        finalClientId = Number(selectedClientId);
-      }
+      const finalClientId = selectedClientId ? Number(selectedClientId) : null;
 
       const proformaPayload: ProformaCreatePayload = {
         cliente_id: finalClientId,
@@ -346,7 +318,7 @@ export default function NovoPedidoForm({ onSuccessRedirect }: NovoPedidoFormProp
         id: proformaRes.id,
         numero: proformaRes.numero_documento || `PROFORMA 2026/${proformaRes.id}`,
         isProforma: true,
-        cliente: selectedClientObj || (isQuickClient ? { nome: newClientName, telefone: newClientPhone } : null),
+        cliente: selectedClientObj || null,
         total: proformaRes.total || totalFinal,
       });
       setCreatedVenda({ ...proformaRes, isProforma: true });
@@ -466,7 +438,7 @@ export default function NovoPedidoForm({ onSuccessRedirect }: NovoPedidoFormProp
       }, 8000);
       setCompletedOrder({
         ...createdOrder,
-        cliente: selectedClientObj || (isQuickClient ? { nome: newClientName } : null),
+        cliente: selectedClientObj || null,
       });
       setCreatedVenda(vendaRes);
       setIsPaymentModalOpen(false);
@@ -489,10 +461,6 @@ export default function NovoPedidoForm({ onSuccessRedirect }: NovoPedidoFormProp
     setCreatedVenda(null);
     setCart([]);
     setSelectedClientId("");
-    setIsQuickClient(false);
-    setNewClientName("");
-    setNewClientPhone("");
-    setNewClientAddress("");
     setOrderType("Simples");
     setOrderNotes("");
     setPaymentOption("Sem Pagamento");
@@ -516,74 +484,33 @@ export default function NovoPedidoForm({ onSuccessRedirect }: NovoPedidoFormProp
           </h3>
           <button
             type="button"
-            onClick={() => setIsQuickClient(!isQuickClient)}
+            onClick={() => setIsQuickClientModalOpen(true)}
             className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
           >
-            {isQuickClient ? "Selecionar Existente" : "+ Registar Novo Cliente"}
+            <UserPlus size={14} /> Criar Cliente
           </button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Left: Client picker or creation */}
+          {/* Client picker */}
           <div className="space-y-3">
-            {!isQuickClient ? (
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300 block">
-                  Selecione o Cliente (Opcional)
-                </label>
-                <select
-                  value={selectedClientId}
-                  onChange={(e) => setSelectedClientId(e.target.value)}
-                  className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm font-semibold text-gray-900 dark:text-white outline-none focus:border-primary"
-                >
-                  <option value="">-- Cliente ao Balcão --</option>
-                  {clients.map((c: any) => (
-                    <option key={c.id} value={c.id}>
-                      {c.nome || c.name} {c.telefone ? `(${c.telefone})` : ""}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 bg-gray-50 dark:bg-gray-800/40 rounded-xl border border-gray-100 dark:border-gray-800">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase">
-                    Nome do Cliente *
-                  </label>
-                  <input
-                    type="text"
-                    value={newClientName}
-                    onChange={(e) => setNewClientName(e.target.value)}
-                    placeholder="Ex: Ana Silva"
-                    className="w-full bg-white dark:bg-gray-800 border rounded-lg p-2 text-xs font-semibold"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase">
-                    Telefone / Whats
-                  </label>
-                  <input
-                    type="text"
-                    value={newClientPhone}
-                    onChange={(e) => setNewClientPhone(e.target.value)}
-                    placeholder="Ex: 923 000 000"
-                    className="w-full bg-white dark:bg-gray-800 border rounded-lg p-2 text-xs"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase">
-                    Endereço
-                  </label>
-                  <input
-                    type="text"
-                    value={newClientAddress}
-                    onChange={(e) => setNewClientAddress(e.target.value)}
-                    placeholder="Ex: Talatona"
-                    className="w-full bg-white dark:bg-gray-800 border rounded-lg p-2 text-xs"
-                  />
-                </div>
-              </div>
-            )}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300 block">
+                Selecione o Cliente (Opcional)
+              </label>
+              <select
+                value={selectedClientId}
+                onChange={(e) => setSelectedClientId(e.target.value)}
+                className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm font-semibold text-gray-900 dark:text-white outline-none focus:border-primary"
+              >
+                <option value="">Consumidor Final</option>
+                {clients.map((c: any) => (
+                  <option key={c.id} value={c.id}>
+                    {c.nome || c.name} {c.telefone ? `(${c.telefone})` : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
 
             {/* Order Type Buttons */}
             <div className="space-y-1.5 pt-1">
@@ -808,12 +735,18 @@ export default function NovoPedidoForm({ onSuccessRedirect }: NovoPedidoFormProp
         isOpen={isDraftsModalOpen}
         onClose={() => setIsDraftsModalOpen(false)}
         currentCart={cart}
-        currentClientName={selectedClientObj?.nome || newClientName}
+        currentClientName={selectedClientObj?.nome}
         currentClientId={selectedClientId}
         currentTotal={totalFinal}
         currentOrderType={orderType}
         currentOrderNotes={orderNotes}
         onLoadDraft={handleLoadDraft}
+      />
+
+      <QuickClientModal
+        isOpen={isQuickClientModalOpen}
+        onClose={() => setIsQuickClientModalOpen(false)}
+        onCreated={handleQuickClientCreated}
       />
 
       {/* Completion & Document PDF Modal */}

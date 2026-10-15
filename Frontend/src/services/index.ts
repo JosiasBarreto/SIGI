@@ -1038,9 +1038,7 @@ export const documentService = {
       const blob = await fetchBlobWithFallbacks([
         `/v1/vendas/${id}/pdf`,
         `/v1/comercial/vendas/${id}/pdf`,
-        `/v1/comercial/${id}/pdf`,
-        `/v1/vendas/${id}/recibo`,
-        `/v1/comercial/${id}/recibo`
+        `/v1/comercial/${id}/pdf`
       ]);
       downloadBlob(blob, filename);
     } catch {
@@ -1055,9 +1053,7 @@ export const documentService = {
       const blob = await fetchBlobWithFallbacks([
         `/v1/vendas/${id}/recibo`,
         `/v1/comercial/vendas/${id}/recibo`,
-        `/v1/comercial/${id}/recibo`,
-        `/v1/vendas/${id}/pdf`,
-        `/v1/comercial/${id}/pdf`
+        `/v1/comercial/${id}/recibo`
       ]);
       downloadBlob(blob, filename);
     } catch {
@@ -1109,9 +1105,7 @@ export const documentService = {
     const filename = `pedido_${id}.pdf`;
     try {
       const blob = await fetchBlobWithFallbacks([
-        `/v1/pedidos/${id}/pdf`,
-        `/v1/comercial/pedidos/${id}/pdf`,
-        `/v1/pedidos/${id}/recibo`
+        `/v1/pedidos/${id}/pdf`
       ]);
       downloadBlob(blob, filename);
     } catch {
@@ -1120,13 +1114,16 @@ export const documentService = {
     }
   },
 
+  async pedidoDocumentoPdf(id: string | number) {
+    const blob = await fetchBlobWithFallbacks([`/v1/pedidos/${id}/documento/pdf`]);
+    downloadBlob(blob, `documento_pedido_${id}.pdf`);
+  },
+
   async pedidoRecibo(id: string | number) {
     const filename = `recibo_pedido_${id}.pdf`;
     try {
       const blob = await fetchBlobWithFallbacks([
-        `/v1/pedidos/${id}/recibo`,
-        `/v1/comercial/pedidos/${id}/recibo`,
-        `/v1/pedidos/${id}/pdf`
+        `/v1/pedidos/${id}/recibo`
       ]);
       downloadBlob(blob, filename);
     } catch {

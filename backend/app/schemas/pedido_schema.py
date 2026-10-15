@@ -4,15 +4,24 @@ from app.models.item_pedido import TipoItem
 
 class ClienteSchema(Schema):
     id = fields.Int(dump_only=True)
-    nome = fields.Str(required=True, validate=validate.Length(min=2))
-    empresa = fields.Str(required=False)
-    nif = fields.Str(required=False)
-    telefone = fields.Str(required=False)
-    whatsapp = fields.Str(required=False)
-    email = fields.Email(required=False)
-    morada = fields.Str(required=False)
-    observacoes = fields.Str(required=False)
+    nome = fields.Str(required=True, validate=validate.Length(min=1))
+    empresa = fields.Str(required=False, allow_none=True)
+    nif = fields.Str(required=False, allow_none=True)
+    telefone = fields.Str(required=False, allow_none=True)
+    whatsapp = fields.Str(required=False, allow_none=True)
+    email = fields.Email(required=False, allow_none=True)
+    morada = fields.Str(required=False, allow_none=True)
+    observacoes = fields.Str(required=False, allow_none=True)
     is_active = fields.Bool(dump_only=True)
+
+    @pre_load
+    def normalizar_campos_opcionais(self, data, **kwargs):
+        data = dict(data or {})
+        for name in ('nome', 'empresa', 'nif', 'telefone', 'whatsapp', 'email', 'morada', 'observacoes'):
+            value = data.get(name)
+            if isinstance(value, str):
+                data[name] = value.strip() or None
+        return data
 
 class ItemPedidoSchema(Schema):
     id = fields.Int(dump_only=True)

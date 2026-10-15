@@ -183,6 +183,10 @@ class EventoService:
     def create_evento(self, data, user_id):
         error = self._validar_conflitos(data)
         if error: return None, error
+
+        if not data.get('cliente_id'):
+            from app.services.cliente_service import get_or_create_consumidor_final
+            data['cliente_id'] = get_or_create_consumidor_final().id
         
         itens_data = data.pop('itens', [])
         servicos_data = data.pop('servicos', [])
@@ -285,6 +289,14 @@ class EventoService:
         for eq in equipas_data:
             eeq = EventoEquipa(**eq)
             evento.equipas.append(eeq)
+
+        resumo_evento = evento.calcular_resumo_financeiro()
+        evento.valor_total = float(resumo_evento['total_geral'])
+        evento.saldo = max(0.0, evento.valor_total - float(evento.valor_pago or 0))
+        estado_inicial = evento.estado.value if hasattr(evento.estado, 'value') else str(evento.estado)
+        if estado_inicial.strip().casefold() in {'concluido', 'concluído', 'faturado', 'encerrado'} and evento.saldo > 0.005:
+            db.session.rollback()
+            return None, "Não é possível concluir/encerrar o evento enquanto existir saldo pendente. Registe o pagamento para emitir o documento comercial."
 
         # 3. Se houver produtos de qualquer tipo (Acabado, Revenda, Consumível), vincular/gerar Pedido
         if produtos_para_pedido and not evento.pedido_id:
@@ -430,6 +442,14 @@ class EventoService:
             if hasattr(evento, key) and key not in ['id', 'numero', 'servicos', 'reservas_espaco', 'reservas_material', 'equipas', 'itens']:
                 setattr(evento, key, val)
 
+        resumo_evento = evento.calcular_resumo_financeiro()
+        evento.valor_total = float(resumo_evento['total_geral'])
+        evento.saldo = max(0.0, evento.valor_total - float(evento.valor_pago or 0))
+        estado_atualizado = evento.estado.value if hasattr(evento.estado, 'value') else str(evento.estado)
+        if estado_atualizado.strip().casefold() in {'concluido', 'concluído', 'faturado', 'encerrado'} and evento.saldo > 0.005:
+            db.session.rollback()
+            return None, "Não é possível concluir/encerrar o evento enquanto existir saldo pendente. Registe o pagamento para emitir o documento comercial."
+
         db.session.commit()
 
         # Executar Motor de Planeamento para manter orquestração sincronizada
@@ -454,6 +474,13 @@ class EventoService:
     def alterar_estado(self, evento_id, estado, user_id):
         evento = self.evento_repo.get_by_id(evento_id)
         if not evento: return None, "Evento não encontrado"
+
+        resumo_evento = evento.calcular_resumo_financeiro()
+        evento.valor_total = float(resumo_evento['total_geral'])
+        evento.saldo = max(0.0, evento.valor_total - float(evento.valor_pago or 0))
+        estado_texto = estado.value if hasattr(estado, 'value') else str(estado)
+        if estado_texto.strip().casefold() in {'concluido', 'concluído', 'faturado', 'encerrado'} and evento.saldo > 0.005:
+            return None, "Não é possível concluir/encerrar o evento enquanto existir saldo pendente. Registe o pagamento para emitir o documento comercial."
         
         evento.estado = estado
         db.session.commit()

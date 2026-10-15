@@ -44,6 +44,7 @@ def _ensure_notification_schema():
         'entidade_id': 'INTEGER NULL',
         'dados_extra': 'JSON NULL',
         'ativo': 'BOOLEAN NOT NULL DEFAULT TRUE',
+        'ativa': 'BOOLEAN NOT NULL DEFAULT TRUE',
         'event_id': 'VARCHAR(64) NULL',
         'event_type': 'VARCHAR(64) NULL',
         'entity_type': 'VARCHAR(64) NULL',
@@ -82,6 +83,16 @@ def _ensure_notification_schema():
         except Exception:
             db.session.rollback()
             logger.exception('Não foi possível criar a coluna notificacoes.%s.', name)
+
+    if 'ativa' in existing and db.engine.dialect.name in ('mysql', 'mariadb'):
+        try:
+            db.session.execute(text(
+                'ALTER TABLE notificacoes MODIFY COLUMN ativa BOOLEAN NOT NULL DEFAULT TRUE'
+            ))
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            logger.exception('Não foi possível definir o valor padrão de notificacoes.ativa.')
 
 def create_app(config_class=Config):
     app = Flask(__name__)

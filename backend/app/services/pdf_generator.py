@@ -726,8 +726,11 @@ def _build_a4_pdf(rec_data):
     c.drawString(footer_x, footer_y, "Subtotal:")
     c.drawRightString(width - 40, footer_y, f"{totais['subtotal']:.2f} {moeda}")
     
-    c.drawString(footer_x, footer_y - 13, "Descontos Totais:")
-    c.drawRightString(width - 40, footer_y - 13, f"{totais['desconto_total']:.2f} {moeda}")
+    if float(totais['desconto_total'] or 0) > 0:
+        c.setFillColor(colors.HexColor('#2563eb'))
+        c.drawString(footer_x, footer_y - 13, "Descontos Totais:")
+        c.drawRightString(width - 40, footer_y - 13, f"{totais['desconto_total']:.2f} {moeda}")
+        c.setFillColor(colors.black)
     
     c.drawString(footer_x, footer_y - 26, "Total IVA:")
     c.drawRightString(width - 40, footer_y - 26, f"{totais['total_iva']:.2f} {moeda}")
@@ -737,13 +740,17 @@ def _build_a4_pdf(rec_data):
     c.drawRightString(width - 40, footer_y - 42, f"{totais['total_geral']:.2f} {moeda}")
     
     c.setFont("Helvetica", 9)
+    c.setFillColor(colors.HexColor('#15803d'))
     c.drawString(footer_x, footer_y - 57, "Valor Pago:")
     c.drawRightString(width - 40, footer_y - 57, f"{totais['valor_pago']:.2f} {moeda}")
+    c.setFillColor(colors.black)
 
     if rec_data.get('pagamento'):
         pagamento = rec_data['pagamento']
         c.setFont("Helvetica-Bold", 9)
+        c.setFillColor(colors.HexColor('#15803d'))
         c.drawString(40, footer_y - 57, f"Recebido nesta liquidação: {pagamento['valor']:.2f} {moeda}")
+        c.setFillColor(colors.black)
         c.setFont("Helvetica", 8)
         detalhe = f"{pagamento['forma_pagamento']}"
         if pagamento.get('referencia'):
@@ -768,8 +775,10 @@ def _build_a4_pdf(rec_data):
             c.drawString(40, y_pagamentos, detalhe[:120])
     
     if totais["saldo"] > 0:
+        c.setFillColor(colors.HexColor('#dc2626'))
         c.drawString(footer_x, footer_y - 70, "Saldo Pendente:")
         c.drawRightString(width - 40, footer_y - 70, f"{totais['saldo']:.2f} {moeda}")
+        c.setFillColor(colors.black)
     elif totais["troco"] > 0:
         c.drawString(footer_x, footer_y - 70, "Troco:")
         c.drawRightString(width - 40, footer_y - 70, f"{totais['troco']:.2f} {moeda}")

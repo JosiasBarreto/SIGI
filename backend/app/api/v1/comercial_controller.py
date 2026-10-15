@@ -367,13 +367,18 @@ def checkout_pedido(pedido_id):
     if pagamentos:
         if not isinstance(pagamentos, list) or not pagamentos:
             return jsonify({'error': 'Lista de pagamentos inválida.'}), 400
-        data = {'pagamento': {**pagamento_payload, **pagamentos[0]}}
+        valor_total_checkout = sum(float(item.get('valor', 0) or 0) for item in pagamentos)
+        data = {'pagamento': {
+            **pagamento_payload,
+            **pagamentos[0],
+            'valor_documento_checkout': valor_total_checkout,
+        }}
     from app.models.pedido import Pedido
     from app.models.comercial import Venda
     pedido = Pedido.query.get(pedido_id)
     # Proformas are not payable; checkout must reuse only the FT of this pedido.
-    venda_existente = Venda.query.filter_by(
-        pedido_id=pedido_id, tipo_documento=TipoDocumento.FT
+    venda_existente = Venda.query.filter_by(pedido_id=pedido_id).filter(
+        Venda.tipo_documento.in_([TipoDocumento.FT, TipoDocumento.FR])
     ).order_by(Venda.id.asc()).first()
     if pedido and venda_existente:
         venda, error = comercial_service.liquidar_pedido_faturado(pedido, venda_existente, data, user_id)

@@ -85,6 +85,7 @@ class NotificationRepository:
                     prioridade=prioridade,
                     persistente=persistente,
                     ativo=True,
+                    ativa=True,
                     target_type=target_type,
                     target_role=target_role or recipient_role,
                     target_sector=target_sector,
@@ -102,10 +103,11 @@ class NotificationRepository:
             except Exception as e:
                 db.session.rollback()
                 err_str = str(e)
-                if ("1054" in err_str or "Unknown column" in err_str or "event_id" in err_str) and attempt == 0:
+                if ("1054" in err_str or "Unknown column" in err_str) and attempt == 0:
                     logger.warning("Coluna em falta detetada na tabela notificacoes. A aplicar migração automática...")
                     from sqlalchemy import text
                     migration_queries = [
+                        "ALTER TABLE notificacoes ADD COLUMN IF NOT EXISTS ativa BOOLEAN NOT NULL DEFAULT TRUE;",
                         "ALTER TABLE notificacoes ADD COLUMN IF NOT EXISTS event_id VARCHAR(64) NULL;",
                         "ALTER TABLE notificacoes ADD COLUMN IF NOT EXISTS event_type VARCHAR(64) NULL;",
                         "ALTER TABLE notificacoes ADD COLUMN IF NOT EXISTS entity_type VARCHAR(64) NULL;",
