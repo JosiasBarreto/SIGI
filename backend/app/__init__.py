@@ -165,6 +165,7 @@ def create_app(config_class=Config):
     from app.api.v1.auditoria_controller import auditoria_bp
     
     from app.api.v1.comercial_controller import comercial_bp, fiscal_bp
+    from app.api.v1.proforma_controller import proforma_bp
     from app.api.v1.producao_nova_controller import producao_lote_bp
     from app.api.v1.turno_controller import turno_bp
     from app.api.v1.receita_controller import receita_bp
@@ -176,6 +177,7 @@ def create_app(config_class=Config):
     app.register_blueprint(user_bp, url_prefix='/api/v1/users')
     app.register_blueprint(comercial_bp, url_prefix='/api/v1/vendas')
     app.register_blueprint(comercial_bp, url_prefix='/api/v1/comercial', name='comercial_alt')
+    app.register_blueprint(proforma_bp, url_prefix='/api/v1/proformas')
     app.register_blueprint(fiscal_bp, url_prefix='/api/v1/fiscal')
     app.register_blueprint(armazem_bp, url_prefix='/api/v1/armazem')
     app.register_blueprint(pedido_bp, url_prefix='/api/v1/pedidos')

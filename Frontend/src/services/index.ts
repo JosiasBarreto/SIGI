@@ -2383,15 +2383,7 @@ export interface ProformaResponse {
 
 export const proformaService = {
   getAll: async (params?: any) => {
-    try {
-      return await apiClient.get<any, any>('/v1/proformas/', { params });
-    } catch {
-      try {
-        return await apiClient.get<any, any>('/v1/proformas', { params });
-      } catch {
-        return await apiClient.get<any, any>('/proformas/', { params });
-      }
-    }
+    return apiClient.get<any, any>('/v1/proformas', { params });
   },
 
   getById: async (id: string | number) => {
@@ -2403,15 +2395,7 @@ export const proformaService = {
   },
 
   create: async (payload: ProformaCreatePayload): Promise<ProformaResponse> => {
-    try {
-      return await apiClient.post<any, ProformaResponse>('/v1/proformas/', payload);
-    } catch {
-      try {
-        return await apiClient.post<any, ProformaResponse>('/v1/proformas', payload);
-      } catch {
-        return await apiClient.post<any, ProformaResponse>('/proformas/', payload);
-      }
-    }
+    return apiClient.post<any, ProformaResponse>('/v1/proformas', payload);
   },
 
   delete: async (id: string | number) => {
