@@ -231,13 +231,7 @@ class NotificationAuditService {
    * Marca todas as notificações como lidas
    */
   public async marcarTodasComoLidas(): Promise<void> {
-    try {
-      await apiClient.post('/v1/notificacoes/marcar-todas-lidas', {});
-    } catch {
-      try {
-        await apiClient.post('/notificacoes/marcar-todas-lidas', {});
-      } catch {}
-    }
+    await apiClient.post('/v1/notificacoes/marcar-todas-lidas', {});
   }
 
   /**

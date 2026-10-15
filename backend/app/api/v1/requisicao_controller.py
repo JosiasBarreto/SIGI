@@ -22,7 +22,10 @@ def build_pagination(repo, schema, request):
         if key not in ['page', 'per_page', 'search'] and hasattr(repo.model_class, key):
             filters[key] = value
 
-    search_fields = ['numero'] if hasattr(repo.model_class, 'numero') else []
+    search_fields = [
+        field for field in ('numero', 'observacoes', 'motivo', 'justificacao')
+        if hasattr(repo.model_class, field)
+    ]
         
     pagination = repo.get_paginated(page=page, per_page=per_page, filters=filters, search=search, search_fields=search_fields)
     

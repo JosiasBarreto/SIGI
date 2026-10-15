@@ -2,12 +2,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Command, ShoppingCart, UserPlus, PackagePlus, CalendarPlus } from 'lucide-react';
 import Swal from 'sweetalert2';
+import { useAuth } from './AuthContext';
 
 export default function CommandPalette() {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -32,22 +34,23 @@ export default function CommandPalette() {
   if (!isOpen) return null;
 
   const quickActions = [
-    { id: '1', title: 'Novo Pedido de Catering', icon: ShoppingCart, action: () => { setIsOpen(false); navigate('/pedidos'); Swal.fire('Novo Pedido', 'Modal abriria aqui.', 'info'); } },
-    { id: '2', title: 'Registar Cliente Empresarial', icon: UserPlus, action: () => { setIsOpen(false); navigate('/clientes'); } },
-    { id: '3', title: 'Novo Registo de Receita/Despesa', icon: PackagePlus, action: () => { setIsOpen(false); navigate('/financeiro'); } },
-    { id: '4', title: 'Agendar Evento VIP', icon: CalendarPlus, action: () => { setIsOpen(false); navigate('/eventos'); } },
+    { id: '1', title: 'Novo Pedido de Catering', icon: ShoppingCart, roles: ['Administrador', 'Atendimento'], action: () => { setIsOpen(false); navigate('/pedidos'); Swal.fire('Novo Pedido', 'Modal abriria aqui.', 'info'); } },
+    { id: '2', title: 'Registar Cliente Empresarial', icon: UserPlus, roles: ['Administrador', 'Atendimento'], action: () => { setIsOpen(false); navigate('/clientes'); } },
+    { id: '3', title: 'Novo Registo de Receita/Despesa', icon: PackagePlus, roles: ['Administrador', 'Financeiro'], action: () => { setIsOpen(false); navigate('/financeiro'); } },
+    { id: '4', title: 'Agendar Evento VIP', icon: CalendarPlus, roles: ['Administrador', 'Atendimento'], action: () => { setIsOpen(false); navigate('/eventos'); } },
   ];
 
   const modules = [
-    { id: 'm1', title: 'Ir para Dashboard', path: '/' },
-    { id: 'm2', title: 'Ir para Vendas & Pedidos', path: '/pedidos' },
-    { id: 'm3', title: 'Ir para Produção (Cozinha)', path: '/producao' },
-    { id: 'm4', title: 'Ir para Calendário Global', path: '/calendario' },
-    { id: 'm5', title: 'Ir para Controlo de Stock', path: '/produtos' },
-    { id: 'm6', title: 'Ir para Gestão de Frota', path: '/logistica' },
+    { id: 'm1', title: 'Ir para Dashboard', path: '/', roles: ['Administrador', 'Atendimento'] },
+    { id: 'm2', title: 'Ir para Vendas & Pedidos', path: '/pedidos', roles: ['Administrador', 'Atendimento'] },
+    { id: 'm3', title: 'Ir para Produção (Cozinha)', path: '/producao', roles: ['Administrador', 'Cozinha', 'Pastelaria'] },
+    { id: 'm4', title: 'Ir para Calendário Global', path: '/calendario', roles: ['Administrador', 'Atendimento'] },
+    { id: 'm5', title: 'Ir para Controlo de Stock', path: '/produtos', roles: ['Administrador', 'Armazém'] },
+    { id: 'm6', title: 'Ir para Gestão de Frota', path: '/logistica', roles: ['Administrador', 'Motorista'] },
   ];
 
-  const results = [...quickActions, ...modules].filter(i => 
+  const results = [...quickActions, ...modules].filter(i =>
+    i.roles.includes(user?.role || '') &&
     i.title.toLowerCase().includes(query.toLowerCase())
   );
 

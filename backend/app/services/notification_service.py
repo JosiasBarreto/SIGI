@@ -7,6 +7,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
 from flask import current_app
 from app.config.settings import Config
+from app.core.currency import get_system_currency_code
 
 logger = logging.getLogger(__name__)
 
@@ -326,7 +327,7 @@ class NotificationService:
                 if c: cliente_nome = c.nome
 
             doc_numero = venda.numero_documento or f"FAT-{venda.id}"
-            total_formatted = f"{float(venda.total or 0):.2f} STN"
+            total_formatted = f"{float(venda.total or 0):.2f} {get_system_currency_code()}"
 
             if method == "email":
                 pdf_buffer = generate_venda_pdf(venda)
@@ -424,7 +425,7 @@ class NotificationService:
                 if c: cliente_nome = c.nome
 
             doc_numero = proforma.numero_documento or f"PRO-{proforma.id}"
-            total_formatted = f"{float(proforma.total or 0):.2f} STN"
+            total_formatted = f"{float(proforma.total or 0):.2f} {get_system_currency_code()}"
 
             if method == "email":
                 pdf_buffer = generate_proforma_pdf(proforma)
@@ -523,11 +524,12 @@ class NotificationService:
             cliente_nome = pedido.cliente.nome if pedido.cliente else "Estimado Cliente"
             estado_str = pedido.estado.value if hasattr(pedido.estado, 'value') else str(pedido.estado)
             numero_pedido = pedido.numero
-            total_formatted = f"{float(pedido.valor_total or 0):.2f} STN"
+            currency_code = get_system_currency_code()
+            total_formatted = f"{float(pedido.valor_total or 0):.2f} {currency_code}"
 
             itens_rows = ""
             for item in (pedido.itens or []):
-                itens_rows += f"<tr><td style='padding:8px;border-bottom:1px solid #eee;'>{item.descricao}</td><td style='padding:8px;border-bottom:1px solid #eee;text-align:center;'>{item.quantidade}</td><td style='padding:8px;border-bottom:1px solid #eee;text-align:right;'>{float(item.total or 0):.2f} STN</td></tr>"
+                itens_rows += f"<tr><td style='padding:8px;border-bottom:1px solid #eee;'>{item.descricao}</td><td style='padding:8px;border-bottom:1px solid #eee;text-align:center;'>{item.quantidade}</td><td style='padding:8px;border-bottom:1px solid #eee;text-align:right;'>{float(item.total or 0):.2f} {currency_code}</td></tr>"
 
             if method == "email":
                 pdf_buffer = generate_pedido_pdf(pedido)

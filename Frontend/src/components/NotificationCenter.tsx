@@ -30,7 +30,9 @@ export const NotificationCenter: React.FC = () => {
   }, [isOpen]);
 
   const handleItemClick = (item: AppNotification) => {
-    markAsRead(item.id);
+    void markAsRead(item.id).catch((err) => {
+      console.error('[NotificationCenter] Não foi possível marcar como lida:', err);
+    });
     if (item.actionUrl) {
       setIsOpen(false);
       navigate(item.actionUrl);

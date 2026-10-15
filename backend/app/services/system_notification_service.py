@@ -1,5 +1,6 @@
 from datetime import datetime, date, timedelta
 import unicodedata
+from app.core.currency import get_system_currency_code
 from app.core.database import db
 from app.models.notificacao import Notificacao, NotificacaoLeitura
 from app.models.produto import Produto
@@ -211,7 +212,7 @@ class SystemNotificationService:
                 ativo=True
             ).first()
             data_str = ped.data_entrega.strftime('%d/%m/%Y') if ped.data_entrega else 'S/D'
-            msg = f"O pedido #{ped.numero} com entrega prevista para {data_str} ainda não foi entregue (Estado: '{ped.estado}'). Valor: {float(ped.valor_total or 0):.2f}€."
+            msg = f"O pedido #{ped.numero} com entrega prevista para {data_str} ainda não foi entregue (Estado: '{ped.estado}'). Valor: {float(ped.valor_total or 0):.2f} {get_system_currency_code()}."
             if not notif:
                 notif = Notificacao(
                     tipo='PEDIDO_NAO_ENTREGUE',
@@ -245,7 +246,7 @@ class SystemNotificationService:
                 ativo=True
             ).first()
             dif_tot = float(cx.diferenca_dinheiro or 0) + float(cx.diferenca_transferencia or 0) + float(cx.diferenca_pos or 0)
-            msg = f"Fecho do Caixa #{cx.numero} registou divergência total de {dif_tot:.2f}€. Motivo: {cx.explicacao_divergencia or 'Não detalhado'}."
+            msg = f"Fecho do Caixa #{cx.numero} registou divergência total de {dif_tot:.2f} {get_system_currency_code()}. Motivo: {cx.explicacao_divergencia or 'Não detalhado'}."
             if not notif:
                 notif = Notificacao(
                     tipo='CAIXA_DIVERGENCIA',

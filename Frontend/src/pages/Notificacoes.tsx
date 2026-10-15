@@ -137,16 +137,22 @@ export default function Notificacoes() {
 
   // Marcar como lida e atualizar estatísticas
   const handleMarkAsRead = async (id: string) => {
-    markAsRead(id);
-    await notificationAuditService.marcarComoLida(id);
-    carregarDadosCompletos();
+    try {
+      await markAsRead(id);
+      await carregarDadosCompletos();
+    } catch (err) {
+      console.error('[Notificacoes] Não foi possível marcar a notificação como lida:', err);
+    }
   };
 
   // Marcar todas como lidas
   const handleMarkAllAsRead = async () => {
-    markAllAsRead();
-    await notificationAuditService.marcarTodasComoLidas();
-    carregarDadosCompletos();
+    try {
+      await markAllAsRead();
+      await carregarDadosCompletos();
+    } catch (err) {
+      console.error('[Notificacoes] Não foi possível marcar todas as notificações como lidas:', err);
+    }
   };
 
   // Submeter Criação de Nova Notificação / Comunicado

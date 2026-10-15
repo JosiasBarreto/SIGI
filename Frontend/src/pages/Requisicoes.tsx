@@ -9,24 +9,26 @@ import { useAuth } from "../components/AuthContext";
 import { CreateRequisitionForm } from "./Requisicoes/CreateRequisitionForm";
 import { DetailedRequisitionView } from "./Requisicoes/DetailedRequisitionView";
 import { DataTable } from "../components/Common/DataTable";
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef, PaginationState } from "@tanstack/react-table";
 
 export default function Requisicoes() {
   const [activeTab, setActiveTab] = useState<string>("Pendente");
   const [searchTerm, setSearchTerm] = useState("");
+  const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 10 });
   const [selectedReq, setSelectedReq] = useState<any>(null);
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
   // Queries for requisitions
   const { data: requisitionsResponse, isLoading } = useQuery({
-    queryKey: ["requests", searchTerm, activeTab],
+    queryKey: ["requests", searchTerm, activeTab, pagination.pageIndex, pagination.pageSize],
     queryFn: () => {
       if (activeTab === "Ocorrências" || activeTab === "Nova") return null;
       return requestService.getAll({
         estado: activeTab,
         search: searchTerm,
-        per_page: 100
+        page: pagination.pageIndex + 1,
+        per_page: pagination.pageSize,
       });
     },
     enabled: activeTab !== "Ocorrências" && activeTab !== "Nova"
@@ -34,10 +36,18 @@ export default function Requisicoes() {
 
   // Query for occurrences
   const { data: occurrencesResponse, isLoading: isLoadingOccurrences } = useQuery({
-    queryKey: ["occurrences", activeTab],
-    queryFn: () => requestService.getOcorrencias({ per_page: 100 }),
+    queryKey: ["occurrences", searchTerm, pagination.pageIndex, pagination.pageSize],
+    queryFn: () => requestService.getOcorrencias({
+      page: pagination.pageIndex + 1,
+      per_page: pagination.pageSize,
+      search: searchTerm,
+    }),
     enabled: activeTab === "Ocorrências"
   });
+
+  React.useEffect(() => {
+    setPagination((current) => current.pageIndex === 0 ? current : { ...current, pageIndex: 0 });
+  }, [activeTab, searchTerm]);
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, action, payload }: { id: string | number; action: "aprovar" | "entregar" | "devolver" | "encerrar"; payload?: any; }) => {
@@ -342,6 +352,15 @@ export default function Requisicoes() {
                 data={occurrences}
                 columns={occurrenceColumns}
                 isLoading={isLoadingOccurrences}
+                manualPagination
+                pageCount={occurrencesResponse?.pages || 0}
+                totalCount={occurrencesResponse?.total || 0}
+                paginationState={pagination}
+                onPaginationChange={setPagination}
+                searchValue={searchTerm}
+                onSearchChange={(value) => setSearchTerm(String(value))}
+                statusFilter="all"
+                showStatusFilter={false}
                 searchPlaceholder="Pesquisar ocorrências..."
               />
             </div>
@@ -362,6 +381,16 @@ export default function Requisicoes() {
               data={requisitions}
               columns={requisitionColumns}
               isLoading={isLoading}
+              manualPagination
+              pageCount={requisitionsResponse?.pages || 0}
+              totalCount={requisitionsResponse?.total || 0}
+              paginationState={pagination}
+              onPaginationChange={setPagination}
+              searchValue={searchTerm}
+              onSearchChange={(value) => setSearchTerm(String(value))}
+              showSearch={false}
+              statusFilter="all"
+              showStatusFilter={false}
               searchPlaceholder="Pesquisar requisições..."
             />
           )}

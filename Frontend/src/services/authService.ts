@@ -21,6 +21,7 @@ export const authService = {
     localStorage.removeItem('user');
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
+    localStorage.removeItem('token');
     localStorage.removeItem('isCaixaAberta');
     return { success: true };
   },
@@ -39,4 +40,3 @@ export const authService = {
     return apiClient.post<any>('/v1/auth/recover-password', { email });
   }
 };
-

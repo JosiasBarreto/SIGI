@@ -1,5 +1,5 @@
 import os
-from flask import Flask, redirect
+from flask import Flask, redirect, request
 from flask_cors import CORS
 from flasgger import Swagger
 
@@ -88,7 +88,12 @@ def create_app(config_class=Config):
     app.config.from_object(config_class)
 
     # Initialize extensions
-    CORS(app)
+    CORS(
+        app,
+        resources={r"/api/*": {"origins": "*"}},
+        allow_headers=["Authorization", "Content-Type", "ngrok-skip-browser-warning"],
+        methods=["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    )
     db.init_app(app)
     jwt.init_app(app)
     socketio.init_app(app, cors_allowed_origins="*")
@@ -110,6 +115,11 @@ def create_app(config_class=Config):
     }
 
     register_error_handlers(app)
+
+    @app.before_request
+    def handle_api_preflight():
+        if request.method == "OPTIONS" and request.path.startswith("/api/"):
+            return "", 204
 
     @app.route('/api/health', methods=['GET'])
     def health():

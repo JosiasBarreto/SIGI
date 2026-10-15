@@ -1,6 +1,7 @@
 import logging
 from typing import Optional, Dict, Any, List
 from datetime import datetime
+from app.core.currency import get_system_currency_code
 
 from app.notifications.events import (
     DomainEvent,
@@ -267,7 +268,7 @@ class NotificationService:
             f"Pedido #{pedido_numero} registado com sucesso.\n"
             f"• Cliente: {cli_str}\n"
             f"• Produtos: {prod_str}\n"
-            f"• Total: {float(total or 0):.2f} €"
+            f"• Total: {float(total or 0):.2f} {get_system_currency_code()}"
         )
 
         data = {

@@ -19,8 +19,8 @@ export interface NotificationContextType {
   notifications: AppNotification[];
   unreadCount: number;
   isLoading: boolean;
-  markAsRead: (id: string) => void;
-  markAllAsRead: () => void;
+  markAsRead: (id: string) => Promise<void>;
+  markAllAsRead: () => Promise<void>;
   clearNotification: (id: string) => void;
   deleteNotification: (id: string) => void; // alias para clearNotification
   clearNotifications: () => void;
@@ -65,6 +65,13 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode; userRol
   // O histórico vem do backend autenticado; o estado do browser não é partilhado
   // entre utilizadores da mesma máquina.
   const refreshNotifications = useCallback(async () => {
+    const token = localStorage.getItem('access_token') || localStorage.getItem('token');
+    if (!token) {
+      setNotifications([]);
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
     try {
       const backendItems = await notificationAuditService.getHistorico({ per_page: 50 });
@@ -208,24 +215,30 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode; userRol
   }, [propUserRole, authVersion]);
 
   // Ações sobre notificações
-  const markAsRead = useCallback((id: string) => {
-    setNotifications((prev) =>
-      prev.map((n) =>
-        n.id === id ? { ...n, lida: true, read: true } : n
-      )
-    );
-    void notificationAuditService.marcarComoLida(id).catch((err) => {
-      console.warn('[NotificationContext] Não foi possível marcar notificação como lida:', err);
-    });
+  const markAsRead = useCallback(async (id: string) => {
+    try {
+      await notificationAuditService.marcarComoLida(id);
+      setNotifications((prev) =>
+        prev.map((n) =>
+          n.id === id ? { ...n, lida: true, read: true } : n
+        )
+      );
+    } catch (err) {
+      console.error('[NotificationContext] Não foi possível persistir a leitura da notificação:', err);
+      throw err;
+    }
   }, []);
 
-  const markAllAsRead = useCallback(() => {
-    setNotifications((prev) =>
-      prev.map((n) => ({ ...n, lida: true, read: true }))
-    );
-    void notificationAuditService.marcarTodasComoLidas().catch((err) => {
-      console.warn('[NotificationContext] Não foi possível marcar todas como lidas:', err);
-    });
+  const markAllAsRead = useCallback(async () => {
+    try {
+      await notificationAuditService.marcarTodasComoLidas();
+      setNotifications((prev) =>
+        prev.map((n) => ({ ...n, lida: true, read: true }))
+      );
+    } catch (err) {
+      console.error('[NotificationContext] Não foi possível persistir as leituras das notificações:', err);
+      throw err;
+    }
   }, []);
 
   const clearNotification = useCallback((id: string) => {

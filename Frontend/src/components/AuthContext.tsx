@@ -21,7 +21,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         // Real initialization
         const storedUser = localStorage.getItem("user");
-        const token = localStorage.getItem("access_token");
+        const token = localStorage.getItem("access_token") || localStorage.getItem("token");
         // If token exists, we can optionally fetch /me, but since /me is 404, we rely on stored user object
         if (storedUser && token) {
           setUser(JSON.parse(storedUser));
@@ -86,6 +86,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem("sigi_auth_user");
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
+    localStorage.removeItem("token");
     localStorage.removeItem("sigi_config");
     localStorage.removeItem("user");
     delete apiClient.defaults.headers.common["Authorization"];

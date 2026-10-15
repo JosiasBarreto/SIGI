@@ -1773,7 +1773,7 @@ export const requestService = {
     const res = await apiClient.get<any, any>(`/v1/requisicoes/sugestao`, { params });
     return res?.data || res;
   },
-  async getOcorrencias(params?: { page?: number; per_page?: number }): Promise<any> {
+  async getOcorrencias(params?: { page?: number; per_page?: number; search?: string }): Promise<any> {
     const res = await apiClient.get<any, any>(`/v1/requisicoes/ocorrencias`, { params });
     return res?.data || res;
   }

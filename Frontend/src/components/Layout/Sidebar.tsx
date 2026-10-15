@@ -94,7 +94,7 @@ export function Sidebar({
       name: "Calendário",
       icon: CalendarDays,
       path: "/calendario",
-      roles: ["Administrador", "Atendimento", "Cozinha", "Pastelaria"],
+      roles: ["Administrador", "Atendimento"],
     },
     {
       name: "Eventos",
@@ -119,7 +119,7 @@ export function Sidebar({
       name: "Requisições",
       icon: ClipboardList,
       path: "/requisicoes",
-      roles: ["Administrador", "Cozinha", "Pastelaria", "Armazém"],
+      roles: ["Administrador", "Cozinha", "Pastelaria", "Armazém", "Controlador de Materiais"],
     },
     {
       name: "Armazéns",

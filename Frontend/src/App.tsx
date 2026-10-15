@@ -149,7 +149,7 @@ export default function App() {
                         </Route>
 
                         {/* Calendar */}
-                        <Route element={<RoleRoute roles={["Administrador", "Atendimento", "Cozinha", "Pastelaria"]} />}>
+                        <Route element={<RoleRoute roles={["Administrador", "Atendimento"]} />}>
                           <Route path="calendario" element={<Calendario />} />
                         </Route>
 

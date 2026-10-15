@@ -43,10 +43,12 @@ interface DataTableProps<TData> {
   // Manual Pagination & Search Props
   manualPagination?: boolean;
   pageCount?: number;
+  totalCount?: number;
   paginationState?: PaginationState;
   onPaginationChange?: (updater: any) => void;
   onSearchChange?: (value: string) => void;
   searchValue?: string;
+  showSearch?: boolean;
   storageKey?: string;
   addFunction?: () => void;
 }
@@ -98,10 +100,12 @@ export function DataTable<TData>({
   showStatusFilter,
   manualPagination,
   pageCount,
+  totalCount,
   paginationState,
   onPaginationChange,
   onSearchChange,
   searchValue,
+  showSearch = true,
   storageKey,
   addFunction,
 }: DataTableProps<TData>) {
@@ -138,22 +142,11 @@ export function DataTable<TData>({
   });
 
   // Status Filter State Integration
-  const [internalStatusFilter, setInternalStatusFilter] = useState<'all' | 'active' | 'inactive'>('active');
+  const [internalStatusFilter, setInternalStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const activeStatusFilter = statusFilter !== undefined ? statusFilter : internalStatusFilter;
   const handleStatusFilterChange = onStatusFilterChange !== undefined ? onStatusFilterChange : setInternalStatusFilter;
 
-  const hasStatusField = React.useMemo(() => {
-    if (showStatusFilter !== undefined) return showStatusFilter;
-    if (statusFilter !== undefined) return true;
-    if (!safeData || safeData.length === 0) return false;
-    return safeData.slice(0, 10).some((item: any) => 
-      item && (
-        item.ativo !== undefined || 
-        item.is_active !== undefined || 
-        item.status !== undefined
-      )
-    );
-  }, [safeData, showStatusFilter, statusFilter]);
+  const hasStatusField = showStatusFilter ?? (statusFilter !== undefined);
 
   const filteredData = React.useMemo(() => {
     if (activeStatusFilter === 'all') return safeData;
@@ -222,6 +215,9 @@ export function DataTable<TData>({
     manualPagination,
     autoResetPageIndex: !manualPagination,
   });
+  const totalRows = manualPagination && totalCount !== undefined
+    ? totalCount
+    : table.getFilteredRowModel().rows.length;
 
   const getExportData = () => {
     const headers = table
@@ -308,16 +304,17 @@ export function DataTable<TData>({
   return (
     <div className="bg-surface dark:bg-surface-dark rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden flex flex-col">
       <div className="p-4 border-b border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/20 flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
-        <div className="relative flex-1 max-w-md w-full">
-          <DebouncedInput
-            value={globalFilter ?? ""}
-            onChange={(value) => handleGlobalFilterChange(String(value))}
-            className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg outline-none focus:ring-2 focus:ring-primary/50 text-sm text-gray-900 dark:text-gray-100 transition-all"
-            placeholder={searchPlaceholder}
-          />
-          <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
-          
-        </div>
+        {showSearch && (
+          <div className="relative flex-1 max-w-md w-full">
+            <DebouncedInput
+              value={globalFilter ?? ""}
+              onChange={(value) => handleGlobalFilterChange(String(value))}
+              className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg outline-none focus:ring-2 focus:ring-primary/50 text-sm text-gray-900 dark:text-gray-100 transition-all"
+              placeholder={searchPlaceholder}
+            />
+            <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
+          </div>
+        )}
         
         <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
           {addFunction && (
@@ -536,30 +533,28 @@ export function DataTable<TData>({
           <div>
             Mostrando{" "}
             <span className="font-medium text-gray-900 dark:text-gray-100">
-              {table.getState().pagination.pageIndex *
-                table.getState().pagination.pageSize +
-                1}
+              {totalRows === 0
+                ? 0
+                : table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1}
             </span>{" "}
             –{" "}
             <span className="font-medium text-gray-900 dark:text-gray-100">
-              {manualPagination && pageCount !== undefined
+              {manualPagination && totalCount !== undefined
                 ? Math.min(
                     (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
-                    table.getState().pagination.pageSize * pageCount
+                    totalCount
                   )
                 : Math.min(
                     (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
-                    table.getFilteredRowModel().rows.length
+                    totalRows
                   )}
             </span>{" "}
-            {manualPagination ? "" : (
-              <>
-                de{" "}
-                <span className="font-medium text-gray-900 dark:text-gray-100">
-                  {table.getFilteredRowModel().rows.length}
-                </span>{" "}
-              </>
-            )}
+            de{" "}
+            <span className="font-medium text-gray-900 dark:text-gray-100">
+              {manualPagination && totalCount !== undefined
+                ? totalCount
+                : totalRows}
+            </span>{" "}
             registos
           </div>
 

@@ -4,6 +4,7 @@ from flask import request, current_app
 from flask_socketio import SocketIO, emit, join_room, leave_room, disconnect
 from datetime import datetime
 from flask_jwt_extended import decode_token
+from app.core.currency import get_system_currency_code
 from app.models.user import User
 
 logger = logging.getLogger(__name__)
@@ -380,7 +381,7 @@ def notify_order_created(
         notif_g = Notificacao(
             tipo='NOVO_PEDIDO',
             titulo=f"Novo Pedido: #{pedido_numero}",
-            mensagem=f"Pedido #{pedido_numero} registado para {cliente_nome or 'Consumidor Final'} ({float(total or 0):.2f}€). Setores: {setores_str}. {produtos_resumo or ''}",
+            mensagem=f"Pedido #{pedido_numero} registado para {cliente_nome or 'Consumidor Final'} ({float(total or 0):.2f} {get_system_currency_code()}). Setores: {setores_str}. {produtos_resumo or ''}",
             prioridade='alta',
             entidade_tipo='pedido',
             entidade_id=pedido_id,
