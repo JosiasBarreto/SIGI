@@ -68,6 +68,11 @@ export default function Materiais() {
   });
   const unidadesMedida = unidadesResponse || [];
 
+  const { data: categoriasMaterial = [] } = useQuery({
+    queryKey: ['categorias', 'Material'],
+    queryFn: () => allServices.productService.getCategorias({ contexto: 'Material' }),
+  });
+
   const createMutation = useMutation({
     mutationFn: (newRecord: any) => apiAccessor.create(newRecord),
 
@@ -198,6 +203,11 @@ export default function Materiais() {
       dataObj.unidade_medida_id = null;
     } else if (dataObj.unidade_medida_id) {
       dataObj.unidade_medida_id = Number(dataObj.unidade_medida_id);
+    }
+    if (dataObj.categoria_id === '') {
+      dataObj.categoria_id = null;
+    } else if (dataObj.categoria_id) {
+      dataObj.categoria_id = Number(dataObj.categoria_id);
     }
 
     // Guard against backend "Unknown field" errors on creation
@@ -451,7 +461,7 @@ export default function Materiais() {
         {schema && (
           <form id="crud-form" onSubmit={handleFormSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {schema.fields.map(field => {
-              if (['quantidade_disponivel', 'quantidade_reservada', 'estado'].includes(field.name)) {
+              if (['quantidade_disponivel', 'quantidade_reservada', 'estado', 'categoria'].includes(field.name)) {
                 return null;
               }
               if (field.name === 'codigo' && !currentRecord) {
@@ -518,6 +528,13 @@ export default function Materiais() {
                 )}
               </div>
             )})}
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">Categoria de Material</label>
+              <select name="categoria_id" defaultValue={currentRecord?.categoria_id || ''} className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/50">
+                <option value="">Selecione uma categoria...</option>
+                {categoriasMaterial.map((categoria: any) => <option key={categoria.id} value={categoria.id}>{categoria.nome}{categoria.grupo_nome ? ` — ${categoria.grupo_nome}` : ''}</option>)}
+              </select>
+            </div>
             <div className="space-y-1">
               <label className="text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">
                 Armazém de Destino

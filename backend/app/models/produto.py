@@ -33,7 +33,7 @@ class Produto(BaseModel):
     ativo = db.Column(db.Boolean, default=True)
     data_validade = db.Column(db.Date, nullable=True)
     
-    categoria_rel = db.relationship('CategoriaProduto', backref='produtos')
+    categoria_rel = db.relationship('CategoriaProduto', back_populates='produtos')
     unidade_medida = db.relationship('UnidadeMedida', backref='produtos')
     taxa_iva = db.relationship('TaxaIVA', backref='produtos')
     stocks_armazem = db.relationship(

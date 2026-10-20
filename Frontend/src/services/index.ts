@@ -364,6 +364,14 @@ export const productService = {
   deleteCategoria: async (id: string | number): Promise<void> => {
     return apiClient.delete(`/v1/armazem/categorias/${id}`);
   },
+  getGruposCategoria: async (params?: BaseServiceParams): Promise<any[]> => {
+    const res = await apiClient.get<any, any>('/v1/armazem/grupos-categoria', { params });
+    return Array.isArray(res) ? res : (res?.items || res?.data?.items || res?.data || []);
+  },
+  createGrupoCategoria: async (data: any): Promise<any> =>
+    apiClient.post<any, any>('/v1/armazem/grupos-categoria', data),
+  updateGrupoCategoria: async (id: string | number, data: any): Promise<any> =>
+    apiClient.put<any, any>(`/v1/armazem/grupos-categoria/${id}`, data),
   getUnidadesMedidaArray: async (): Promise<any[]> => {
     const res = await apiClient.get<any, any>('/v1/armazem/unidades-medida');
     return res?.items || res?.data?.items || res?.data || res || [];

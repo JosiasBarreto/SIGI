@@ -268,6 +268,19 @@ class ImportacaoValidator:
 
         # Ramo específico: MATERIAL
         if tipo == 'Material':
+            cat_raw = bruta.get('categoria') or bruta.get('categoria_nome')
+            cat_id_raw = bruta.get('categoria_id')
+            if cat_raw or cat_id_raw:
+                categoria_id = self.resolver.resolver_categoria(cat_raw, cat_id_raw, contexto='Material')
+                if not categoria_id:
+                    erros.append({
+                        "code": ImportacaoErrorCode.CATEGORY_NOT_FOUND,
+                        "field": "categoria",
+                        "message": f"Categoria de material não encontrada ou incompatível: '{cat_raw or cat_id_raw}'."
+                    })
+                dados_resolvidos['categoria_id'] = categoria_id
+            else:
+                dados_resolvidos['categoria_id'] = None
             tipo_mat_raw = bruta.get('tipo_material') or 'Reutilizavel'
             tipo_material = normalizar_tipo_material(tipo_mat_raw)
             if not tipo_material:
@@ -327,7 +340,7 @@ class ImportacaoValidator:
                 })
                 categoria_id = None
             else:
-                categoria_id = self.resolver.resolver_categoria(cat_raw, cat_id_raw)
+                categoria_id = self.resolver.resolver_categoria(cat_raw, cat_id_raw, contexto=tipo)
                 if not categoria_id:
                     erros.append({
                         "code": ImportacaoErrorCode.CATEGORY_NOT_FOUND,

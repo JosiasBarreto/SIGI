@@ -89,6 +89,17 @@ class Material(BaseModel):
     codigo = db.Column(db.String(50), unique=True, nullable=True)
     nome = db.Column(db.String(100), nullable=False)
     categoria = db.Column(db.String(100), nullable=True)
+    categoria_id = db.Column(
+    db.Integer,
+    db.ForeignKey("categorias_produto.id"),
+    nullable=True,
+    index=True
+    )
+
+    categoria_rel = db.relationship(
+        "CategoriaProduto",
+        back_populates="materiais"
+    )
     tipo = db.Column(TipoMaterialType, nullable=False, default=TipoMaterial.REUTILIZAVEL.value)
     
     quantidade_total = db.Column(db.Numeric(10, 2), default=0)

@@ -104,6 +104,7 @@ class ImportacaoCatalogoService:
                     material = Material(
                         nome=dados.get("nome"),
                         codigo=codigo_mat,
+                        categoria_id=dados.get("categoria_id"),
                         tipo=subtipo,
                         quantidade_total=quantidade_inicial,
                         quantidade_disponivel=quantidade_inicial,

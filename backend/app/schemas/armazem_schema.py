@@ -7,6 +7,16 @@ class CategoriaProdutoSchema(Schema):
     id = fields.Int(dump_only=True)
     nome = fields.Str(required=True)
     descricao = fields.Str(required=False)
+    grupo_id = fields.Int(required=True)
+    grupo_nome = fields.Function(lambda obj: obj.grupo.nome if obj.grupo else None)
+    contexto = fields.Function(lambda obj: obj.grupo.contexto if obj.grupo else None)
+    is_active = fields.Bool(dump_only=True)
+
+class GrupoCategoriaSchema(Schema):
+    id = fields.Int(dump_only=True)
+    nome = fields.Str(required=True)
+    contexto = fields.Str(required=True, validate=validate.OneOf(['Consumivel', 'Acabado', 'Revenda', 'Material']))
+    descricao = fields.Str(required=False, allow_none=True)
     is_active = fields.Bool(dump_only=True)
 
 class UnidadeMedidaSchema(Schema):
@@ -96,6 +106,8 @@ class MaterialSchema(Schema):
     codigo = fields.Str(required=False)
     nome = fields.Str(required=True)
     categoria = fields.Str(required=False)
+    categoria_id = fields.Int(required=False, allow_none=True)
+    categoria_nome = fields.Function(lambda obj: obj.categoria_rel.nome if obj.categoria_rel else None)
     tipo = fields.Str(required=False, allow_none=True, load_default='Material')
     quantidade_total = fields.Decimal(dump_only=True)
     quantidade_disponivel = fields.Decimal(dump_only=True)

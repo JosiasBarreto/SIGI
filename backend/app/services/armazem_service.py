@@ -14,6 +14,21 @@ from app.repositories.armazem_repos import (
 from app.services.audit_service import AuditService
 from app.core.database import db
 
+
+def _categoria_compativel(categoria_id, contexto, permitir_inativa=False):
+    """Return a clear error when a category is outside its owning context."""
+    from app.models.categoria_produto import CategoriaProduto
+    from app.models.grupos_categoria import GrupoCategoria
+    categoria = db.session.get(CategoriaProduto, categoria_id) if categoria_id else None
+    if not categoria:
+        return None, "Categoria não encontrada."
+    grupo = categoria.grupo
+    if not grupo or grupo.contexto != contexto:
+        return None, f"A categoria selecionada não pertence ao contexto {contexto}."
+    if not permitir_inativa and (not categoria.is_active or not grupo.is_active):
+        return None, "A categoria selecionada está inativa e não pode ser usada em novos registos."
+    return categoria, None
+
 class ArmazemService:
     def __init__(self):
         self.fornecedor_repo = FornecedorRepository()
@@ -110,6 +125,11 @@ class ArmazemService:
         armazem_id = data.pop('armazem_id', None)
         
         tipo = data.get('tipo')
+        if tipo not in [item.value for item in TipoProduto]:
+            return None, "Tipo de produto inválido."
+        _, category_error = _categoria_compativel(data.get('categoria_id'), tipo)
+        if category_error:
+            return None, category_error
         servico = data.get('servico')
         servico_str = servico.value if hasattr(servico, 'value') else (str(servico) if servico is not None else None)
 
@@ -178,6 +198,11 @@ class ArmazemService:
             
         # Validation by type
         tipo = produto.tipo
+        tipo = tipo.value if hasattr(tipo, 'value') else str(tipo)
+        if 'categoria_id' in data and data['categoria_id'] != produto.categoria_id:
+            _, category_error = _categoria_compativel(data['categoria_id'], tipo)
+            if category_error:
+                return None, category_error
         servico = data.get('servico')
         servico_str = servico.value if hasattr(servico, 'value') else (str(servico) if servico is not None else None)
 
@@ -515,6 +540,10 @@ class ArmazemService:
     # --- Material ---
     def create_material(self, data, user_id):
         armazem_id = data.pop('armazem_id', None)
+        if data.get('categoria_id'):
+            _, category_error = _categoria_compativel(data['categoria_id'], 'Material')
+            if category_error:
+                return None, category_error
         
         # Auto-generate unique code if not specified or empty
         codigo = data.get('codigo')
@@ -563,6 +592,10 @@ class ArmazemService:
             return None, "Material não encontrado."
 
         armazem_id = data.pop('armazem_id', None)
+        if 'categoria_id' in data and data['categoria_id'] != material.categoria_id:
+            _, category_error = _categoria_compativel(data['categoria_id'], 'Material')
+            if category_error:
+                return None, category_error
         if 'estado' in data:
             estado = str(data['estado']).strip().replace('ç', 'c').replace('Ç', 'C')
             estado_normalizado = next(

@@ -72,6 +72,9 @@ export interface CategoriaRef {
   id: number;
   nome: string;
   descricao?: string;
+  grupo_id?: number;
+  grupo_nome?: string;
+  contexto?: string;
 }
 
 export interface UnidadeMedidaRef {

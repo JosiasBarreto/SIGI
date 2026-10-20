@@ -120,10 +120,13 @@ export async function carregarDadosReferencia(): Promise<ReferenceData> {
     catRes.value.forEach((c: any) => {
       const nome = String(c.nome || c.name || '').trim();
       if (nome) {
-        categoriasMap.set(nome.toLowerCase(), {
+        categoriasMap.set(String(c.id), {
           id: Number(c.id),
           nome,
-          descricao: c.descricao || ''
+          descricao: c.descricao || '',
+          grupo_id: c.grupo_id,
+          grupo_nome: c.grupo_nome,
+          contexto: c.contexto,
         });
       }
     });
@@ -134,11 +137,14 @@ export async function carregarDadosReferencia(): Promise<ReferenceData> {
     const rawCats: any[] = rawAux.categorias || rawAux.categories || [];
     rawCats.forEach((c: any) => {
       const nome = String(c.nome || c.name || '').trim();
-      if (nome && !categoriasMap.has(nome.toLowerCase())) {
-        categoriasMap.set(nome.toLowerCase(), {
+      if (nome && !categoriasMap.has(String(c.id))) {
+        categoriasMap.set(String(c.id), {
           id: Number(c.id),
           nome,
-          descricao: c.descricao || ''
+          descricao: c.descricao || '',
+          grupo_id: c.grupo_id,
+          grupo_nome: c.grupo_nome,
+          contexto: c.contexto,
         });
       }
     });

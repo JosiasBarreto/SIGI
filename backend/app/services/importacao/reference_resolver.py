@@ -19,7 +19,7 @@ class ReferenceResolver:
     def __init__(self):
         self._carregado = False
         self.categorias_por_id: Dict[int, CategoriaProduto] = {}
-        self.categorias_por_nome: Dict[str, int] = {}
+        self.categorias_por_nome: Dict[str, list[int]] = {}
         self.unidades_por_id: Dict[int, UnidadeMedida] = {}
         self.unidades_por_sigla: Dict[str, int] = {}
         self.unidades_por_nome: Dict[str, int] = {}
@@ -45,9 +45,10 @@ class ReferenceResolver:
         # 1. Categorias
         categorias = CategoriaProduto.query.all()
         self.categorias_por_id: Dict[int, CategoriaProduto] = {c.id: c for c in categorias}
-        self.categorias_por_nome: Dict[str, int] = {
-            normalizar_chave_busca(c.nome): c.id for c in categorias if c.nome
-        }
+        self.categorias_por_nome = {}
+        for categoria in categorias:
+            if categoria.nome:
+                self.categorias_por_nome.setdefault(normalizar_chave_busca(categoria.nome), []).append(categoria.id)
 
         # 2. Unidades de Medida
         unidades = UnidadeMedida.query.all()
@@ -87,20 +88,24 @@ class ReferenceResolver:
         if not self.armazem_padrao_id and armazens:
             self.armazem_padrao_id = armazens[0].id
 
-    def resolver_categoria(self, valor_nome: Any, valor_id: Any = None) -> Optional[int]:
-        """Resolve o ID da categoria pelo ID direto ou pelo nome."""
+    def resolver_categoria(self, valor_nome: Any, valor_id: Any = None, contexto: Optional[str] = None) -> Optional[int]:
+        """Resolve por ID/nome no contexto; names repeated across groups stay unambiguous."""
         self._assegurar_carregado()
         if valor_id:
             try:
                 cid = int(valor_id)
-                if cid in self.categorias_por_id:
+                categoria = self.categorias_por_id.get(cid)
+                if categoria and (not contexto or (categoria.grupo and categoria.grupo.contexto == contexto)):
                     return cid
             except (ValueError, TypeError):
                 pass
         chave = normalizar_chave_busca(valor_nome)
         if not chave:
             return None
-        return self.categorias_por_nome.get(chave)
+        candidatos = self.categorias_por_nome.get(chave, [])
+        if contexto:
+            candidatos = [cid for cid in candidatos if self.categorias_por_id[cid].grupo and self.categorias_por_id[cid].grupo.contexto == contexto]
+        return candidatos[0] if len(candidatos) == 1 else None
 
     def resolver_unidade_medida(self, valor_sigla_ou_nome: Any, valor_id: Any = None) -> Optional[int]:
         """Resolve a unidade pelo ID direto, sigla (ex: KG) ou nome (ex: Quilograma)."""

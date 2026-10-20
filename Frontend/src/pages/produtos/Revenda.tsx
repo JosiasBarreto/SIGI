@@ -52,8 +52,8 @@ export default function Revenda() {
   });
 
   const { data: categoriasResponse } = useQuery({
-    queryKey: ["categorias"],
-    queryFn: () => allServices.productService.getCategorias(),
+    queryKey: ["categorias", "Revenda"],
+    queryFn: () => allServices.productService.getCategorias({ contexto: "Revenda" }),
   });
 
   const { data: unidadesResponse } = useQuery({
@@ -88,7 +88,7 @@ export default function Revenda() {
           return {
             ...f,
             options: categoriasResponse.map((r: any) => ({
-              label: r.nome,
+              label: r.grupo_nome ? `${r.nome} — ${r.grupo_nome}` : r.nome,
               value: r.id,
             })),
           };

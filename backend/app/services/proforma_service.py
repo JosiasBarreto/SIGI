@@ -60,6 +60,13 @@ class ProformaService:
         if pedido_id and not cliente_id:
             p = Pedido.query.get(pedido_id)
             if p: cliente_id = p.cliente_id
+
+        # Caixa POS may emit a quotation without a selected customer.  Keep
+        # the same fiscal identity used by direct sales and orders instead of
+        # persisting a document with a NULL customer.
+        if not cliente_id:
+            from app.services.cliente_service import get_or_create_consumidor_final
+            cliente_id = get_or_create_consumidor_final().id
             
         proforma = Proforma(
             numero_documento=self._generate_numero_documento(),

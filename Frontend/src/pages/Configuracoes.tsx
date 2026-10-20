@@ -466,10 +466,17 @@ function CategoriasSettings() {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [search, setSearch] = useState("");
+  const [contextFilter, setContextFilter] = useState("");
+  const [groupFilter, setGroupFilter] = useState("");
+
+  const { data: groups = [] } = useQuery({
+    queryKey: ["grupos_categoria"],
+    queryFn: () => productService.getGruposCategoria(),
+  });
 
   const { data: response, isLoading } = useQuery({
-    queryKey: ["categorias", page, perPage],
-    queryFn: () => productService.getCategorias({ page, per_page: perPage }),
+    queryKey: ["categorias", page, perPage, contextFilter, groupFilter],
+    queryFn: () => productService.getCategorias({ page, per_page: perPage, ...(contextFilter ? { contexto: contextFilter } : {}), ...(groupFilter ? { grupo_id: groupFilter } : {}) }),
   });
 
   const rawItems: any[] = useMemo(() => {
@@ -546,6 +553,7 @@ function CategoriasSettings() {
     const data = {
       nome: formData.get("nome"),
       descricao: formData.get("descricao"),
+      grupo_id: Number(formData.get("grupo_id")),
     };
 
     if (editingItem) {
@@ -578,6 +586,14 @@ function CategoriasSettings() {
           )}
         </h3>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 mb-1">Grupo de categorias</label>
+            <select name="grupo_id" defaultValue={editingItem?.grupo_id || ""} required className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 outline-none focus:ring-2 focus:ring-primary/20">
+              <option value="">Selecione o grupo...</option>
+              {groups.map((group: any) => <option key={group.id} value={group.id}>{group.nome} — {group.contexto}</option>)}
+            </select>
+            <p className="mt-1 text-[11px] text-gray-500">O grupo define automaticamente o tipo de artigo permitido.</p>
+          </div>
           <div>
             <label className="block text-xs font-semibold text-gray-500 mb-1">
               Nome da Categoria
@@ -627,7 +643,7 @@ function CategoriasSettings() {
       <div className="p-0 md:w-2/3 flex flex-col justify-between">
         <div>
           {/* Barra de Pesquisa */}
-          <div className="p-3 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between gap-3 bg-gray-50/40 dark:bg-gray-800/20">
+          <div className="p-3 border-b border-gray-200 dark:border-gray-800 flex flex-wrap items-center justify-between gap-3 bg-gray-50/40 dark:bg-gray-800/20">
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-2.5 text-gray-400" size={14} />
               <input
@@ -641,6 +657,14 @@ function CategoriasSettings() {
                 className="w-full pl-8 pr-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-xs outline-none text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:ring-2 focus:ring-primary/20"
               />
             </div>
+            <select value={contextFilter} onChange={(e) => { setContextFilter(e.target.value); setGroupFilter(""); setPage(1); }} className="px-2 py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-xs">
+              <option value="">Todos os contextos</option>
+              <option value="Consumivel">Consumíveis</option><option value="Acabado">Acabados</option><option value="Revenda">Revenda</option><option value="Material">Materiais</option>
+            </select>
+            <select value={groupFilter} onChange={(e) => { setGroupFilter(e.target.value); setPage(1); }} className="px-2 py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-xs">
+              <option value="">Todos os grupos</option>
+              {groups.filter((g: any) => !contextFilter || g.contexto === contextFilter).map((g: any) => <option key={g.id} value={g.id}>{g.nome}</option>)}
+            </select>
             <span className="text-xs text-gray-500 dark:text-gray-400 font-medium whitespace-nowrap">
               {total} {total === 1 ? "categoria" : "categorias"}
             </span>
@@ -652,6 +676,7 @@ function CategoriasSettings() {
                 <tr>
                   <th className="p-4">ID</th>
                   <th className="p-4">Nome</th>
+                  <th className="p-4">Grupo / Contexto</th>
                   <th className="p-4">Descrição Completa</th>
                   <th className="p-4 text-right">Ações</th>
                 </tr>
@@ -659,7 +684,7 @@ function CategoriasSettings() {
               <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
                 {isLoading ? (
                   <tr>
-                    <td colSpan={4} className="p-6 text-center text-gray-500">
+                    <td colSpan={5} className="p-6 text-center text-gray-500">
                       <RefreshCw className="animate-spin inline-block mr-2" size={16} />
                       A carregar categorias...
                     </td>
@@ -679,6 +704,7 @@ function CategoriasSettings() {
                         <td className="p-4 font-semibold text-gray-900 dark:text-white">
                           {nome}
                         </td>
+                        <td className="p-4 text-xs text-gray-600 dark:text-gray-300"><div className="font-semibold">{item.grupo_nome || "—"}</div><div className="text-gray-400">{item.contexto || "Sem contexto"}</div></td>
                         <td className="p-4 text-gray-600 dark:text-gray-300 max-w-md break-words whitespace-normal text-xs">
                           {desc ? (
                             <span>{desc}</span>
@@ -708,7 +734,7 @@ function CategoriasSettings() {
                   })
                 ) : (
                   <tr>
-                    <td colSpan={4} className="p-6 text-center text-gray-500">
+                    <td colSpan={5} className="p-6 text-center text-gray-500">
                       Nenhuma categoria encontrada
                     </td>
                   </tr>

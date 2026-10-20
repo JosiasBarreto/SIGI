@@ -56,8 +56,8 @@ export default function Acabado() {
   });
 
   const { data: categoriasResponse } = useQuery({
-    queryKey: ["categorias"],
-    queryFn: () => allServices.productService.getCategorias(),
+    queryKey: ["categorias", "Acabado"],
+    queryFn: () => allServices.productService.getCategorias({ contexto: "Acabado" }),
   });
 
   const { data: unidadesResponse } = useQuery({
@@ -92,7 +92,7 @@ export default function Acabado() {
           return {
             ...f,
             options: categoriasResponse.map((r: any) => ({
-              label: r.nome,
+              label: r.grupo_nome ? `${r.nome} — ${r.grupo_nome}` : r.nome,
               value: r.id,
             })),
           };

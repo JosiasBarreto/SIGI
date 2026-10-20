@@ -4,12 +4,13 @@ from app.services.armazem_service import ArmazemService
 from app.schemas.armazem_schema import (
     FornecedorSchema, IngredienteSchema, ProdutoSchema,
     MaterialSchema, MovimentoStockSchema,
-    CategoriaProdutoSchema, UnidadeMedidaSchema,
+    CategoriaProdutoSchema, GrupoCategoriaSchema, UnidadeMedidaSchema,
     ArmazemSchema, ProdutoStockArmazemSchema,
     IngredienteStockArmazemSchema, MaterialStockArmazemSchema
 )
 from app.middleware.auth_middleware import requires_roles
 from marshmallow import ValidationError
+from app.core.database import db
 
 armazem_bp = Blueprint('armazem', __name__)
 armazem_service = ArmazemService()
@@ -383,10 +384,80 @@ def _legacy_migration_code_disabled():
     return jsonify({"msg": "Migrations executed successfully."}), 200
 
 # --- CATEGORIAS ---
+@armazem_bp.route('/grupos-categoria', methods=['GET'])
+@jwt_required()
+def get_grupos_categoria():
+    from app.models.grupos_categoria import GrupoCategoria
+    query = GrupoCategoria.query.filter(GrupoCategoria.is_active.isnot(False))
+    contexto = request.args.get('contexto')
+    if contexto:
+        query = query.filter_by(contexto=contexto)
+    return jsonify(GrupoCategoriaSchema(many=True).dump(query.order_by(GrupoCategoria.nome).all())), 200
+
+@armazem_bp.route('/grupos-categoria', methods=['POST'])
+@jwt_required()
+@requires_roles('Administrador', 'Armazém')
+def create_grupo_categoria():
+    from app.models.grupos_categoria import GrupoCategoria
+    try:
+        data = GrupoCategoriaSchema().load(request.get_json())
+    except ValidationError as err:
+        return jsonify({'msg': 'Validation error', 'errors': err.messages}), 400
+    if GrupoCategoria.query.filter_by(nome=data['nome'], contexto=data['contexto'], is_active=True).first():
+        return jsonify({'msg': 'Já existe um grupo com este nome e contexto.'}), 409
+    grupo = GrupoCategoria(**data, created_by=get_jwt_identity())
+    db.session.add(grupo)
+    db.session.commit()
+    return jsonify(GrupoCategoriaSchema().dump(grupo)), 201
+
+@armazem_bp.route('/grupos-categoria/<int:id>', methods=['PUT'])
+@jwt_required()
+@requires_roles('Administrador', 'Armazém')
+def update_grupo_categoria(id):
+    from app.models.grupos_categoria import GrupoCategoria
+    grupo = db.session.get(GrupoCategoria, id)
+    if not grupo:
+        return jsonify({'msg': 'Grupo não encontrado'}), 404
+    try:
+        data = GrupoCategoriaSchema(partial=True).load(request.get_json())
+    except ValidationError as err:
+        return jsonify({'msg': 'Validation error', 'errors': err.messages}), 400
+    for key, value in data.items():
+        setattr(grupo, key, value)
+    grupo.updated_by = get_jwt_identity()
+    db.session.commit()
+    return jsonify(GrupoCategoriaSchema().dump(grupo)), 200
+
+@armazem_bp.route('/grupos-categoria/<int:id>/desativar', methods=['PUT'])
+@jwt_required()
+@requires_roles('Administrador', 'Armazém')
+def deactivate_grupo_categoria(id):
+    from app.models.grupos_categoria import GrupoCategoria
+    grupo = db.session.get(GrupoCategoria, id)
+    if not grupo:
+        return jsonify({'msg': 'Grupo não encontrado'}), 404
+    grupo.is_active = False
+    grupo.updated_by = get_jwt_identity()
+    db.session.commit()
+    return jsonify({'msg': 'Grupo desativado com sucesso.'}), 200
+
 @armazem_bp.route('/categorias', methods=['GET'])
 @jwt_required()
 def get_categorias():
-    return build_pagination(armazem_service.categoria_produto_repo, CategoriaProdutoSchema, request)
+    from app.models.categoria_produto import CategoriaProduto
+    from app.models.grupos_categoria import GrupoCategoria
+    query = CategoriaProduto.query.join(GrupoCategoria)
+    contexto = request.args.get('contexto')
+    grupo_id = request.args.get('grupo_id', type=int)
+    incluir_inativas = request.args.get('incluir_inativas', 'false').lower() == 'true'
+    if contexto:
+        query = query.filter(GrupoCategoria.contexto == contexto)
+    if grupo_id:
+        query = query.filter(CategoriaProduto.grupo_id == grupo_id)
+    if not incluir_inativas:
+        query = query.filter(CategoriaProduto.is_active.isnot(False), GrupoCategoria.is_active.isnot(False))
+    categorias = query.order_by(GrupoCategoria.nome, CategoriaProduto.nome).all()
+    return jsonify({'items': CategoriaProdutoSchema(many=True).dump(categorias), 'total': len(categorias), 'pages': 1, 'page': 1}), 200
 
 @armazem_bp.route('/categorias/<int:id>', methods=['GET'])
 @jwt_required()
@@ -407,6 +478,12 @@ def create_categoria():
         
     user_id = get_jwt_identity()
     from app.models.categoria_produto import CategoriaProduto
+    from app.models.grupos_categoria import GrupoCategoria
+    grupo = db.session.get(GrupoCategoria, data['grupo_id'])
+    if not grupo or not grupo.is_active:
+        return jsonify({'msg': 'Grupo de categorias inválido ou inativo.'}), 400
+    if armazem_service.categoria_produto_repo.model_class.query.filter_by(nome=data['nome'], grupo_id=data['grupo_id'], is_active=True).first():
+        return jsonify({'msg': 'Já existe uma categoria com este nome neste grupo.'}), 409
     categoria = CategoriaProduto(**data)
     categoria.created_by = user_id
     armazem_service.categoria_produto_repo.create(categoria)
@@ -429,6 +506,11 @@ def update_categoria(id):
     categoria = armazem_service.categoria_produto_repo.get_by_id(id)
     if not categoria:
         return jsonify({"msg": "Categoria não encontrada"}), 404
+    if 'grupo_id' in data:
+        from app.models.grupos_categoria import GrupoCategoria
+        grupo = db.session.get(GrupoCategoria, data['grupo_id'])
+        if not grupo or not grupo.is_active:
+            return jsonify({'msg': 'Grupo de categorias inválido ou inativo.'}), 400
         
     for key, value in data.items():
         setattr(categoria, key, value)
@@ -450,6 +532,10 @@ def delete_categoria(id):
     if not categoria:
         return jsonify({"msg": "Categoria não encontrada"}), 404
         
+    from app.models.produto import Produto
+    from app.models.material import Material
+    if Produto.query.filter_by(categoria_id=id, is_active=True).first() or Material.query.filter_by(categoria_id=id, is_active=True).first():
+        return jsonify({'msg': 'A categoria está associada a registos ativos; desative-a em vez de a eliminar.'}), 409
     categoria.soft_delete()
     categoria.updated_by = user_id
     armazem_service.categoria_produto_repo.update(categoria)
@@ -458,6 +544,18 @@ def delete_categoria(id):
     AuditService.log_action(user_id, "DELETE", "categorias_produto", categoria.id)
     
     return jsonify({"msg": "Categoria removida com sucesso"}), 200
+
+@armazem_bp.route('/categorias/<int:id>/desativar', methods=['PUT'])
+@jwt_required()
+@requires_roles('Administrador', 'Armazém')
+def deactivate_categoria(id):
+    categoria = armazem_service.categoria_produto_repo.get_by_id(id)
+    if not categoria:
+        return jsonify({'msg': 'Categoria não encontrada'}), 404
+    categoria.is_active = False
+    categoria.updated_by = get_jwt_identity()
+    armazem_service.categoria_produto_repo.update(categoria)
+    return jsonify({'msg': 'Categoria desativada com sucesso.'}), 200
 
 # --- UNIDADES MEDIDA ---
 @armazem_bp.route('/unidades-medida', methods=['GET'])

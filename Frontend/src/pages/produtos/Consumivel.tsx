@@ -55,8 +55,8 @@ export default function Consumivel() {
   });
 
   const { data: categoriasResponse } = useQuery({
-    queryKey: ["categorias"],
-    queryFn: () => allServices.productService.getCategorias(),
+    queryKey: ["categorias", "Consumivel"],
+    queryFn: () => allServices.productService.getCategorias({ contexto: "Consumivel" }),
   });
 
   const { data: unidadesResponse } = useQuery({
@@ -91,7 +91,7 @@ export default function Consumivel() {
           return {
             ...f,
             options: categoriasResponse.map((r: any) => ({
-              label: r.nome,
+              label: r.grupo_nome ? `${r.nome} — ${r.grupo_nome}` : r.nome,
               value: r.id,
             })),
           };

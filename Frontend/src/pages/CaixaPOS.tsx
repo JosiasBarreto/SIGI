@@ -485,7 +485,7 @@ export default function CaixaPOS() {
         id: res.id,
         numero: res.numero_documento || `PROFORMA/${res.id}`,
         total: res.total || total,
-        cliente: selectedClientObj,
+        cliente: selectedClientObj || res?.cliente || { nome: "Consumidor Final", nif: "999999999" },
         itens: cart,
         forma_pagamento: "Orçamento / Pró-Forma",
       };
@@ -720,7 +720,7 @@ export default function CaixaPOS() {
         const vendaRes = await createVenda.mutateAsync(vendaPayload);
         const vendaObj = {
           ...vendaRes,
-          cliente: selectedClientObj,
+          cliente: selectedClientObj || (vendaRes as any)?.cliente || { nome: "Consumidor Final", nif: "999999999" },
           total: (vendaRes as any)?.total || (vendaRes as any)?.valor_total || total,
           itens: cart,
           forma_pagamento: paymentMethod,
@@ -758,7 +758,7 @@ export default function CaixaPOS() {
           });
           const orderObj = {
             ...createdOrder,
-            cliente: selectedClientObj,
+            cliente: selectedClientObj || createdOrder?.cliente || { nome: "Consumidor Final", nif: "999999999" },
             total: createdOrder?.total || total,
             itens: cart,
             forma_pagamento: paymentMethod,
@@ -768,7 +768,7 @@ export default function CaixaPOS() {
         } else {
           const orderObj = {
             ...createdOrder,
-            cliente: selectedClientObj,
+            cliente: selectedClientObj || createdOrder?.cliente || { nome: "Consumidor Final", nif: "999999999" },
             total: createdOrder?.total || total,
             itens: cart,
             forma_pagamento: paymentMethod,
@@ -1056,7 +1056,7 @@ export default function CaixaPOS() {
           );
 
           const docNumber = createdVenda?.numero_documento || createdVenda?.numero || `#${createdVenda?.id || "NOVO"}`;
-          const clientName = selectedClientObj?.nome || (selectedClientObj as any)?.name || "Cliente Final";
+          const clientName = selectedClientObj?.nome || (selectedClientObj as any)?.name || createdVenda?.cliente?.nome || "Consumidor Final";
           const clientTel = sendContact || selectedClientObj?.telefone || "";
           const docTotal = createdVenda?.total || createdVenda?.valor_total || total;
           const defaultPosSmsText = `Olá ${clientName}, o seu atendimento ${docNumber} no valor de ${formatCurrency(docTotal)} foi registado com sucesso no Sabor Imbatível. Agradecemos a sua preferência!`;

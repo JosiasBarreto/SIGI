@@ -20,6 +20,7 @@ def import_all_models():
         from app.models.fornecedor import Fornecedor
         from app.models.empresa import Empresa
         from app.models.categoria_produto import CategoriaProduto
+        from app.models.grupos_categoria import GrupoCategoria
         from app.models.unidade_medida import UnidadeMedida
         from app.models.ingrediente import Ingrediente
         from app.models.produto import Produto, TipoProduto
@@ -170,8 +171,8 @@ def run_safe_migrations(db):
         "ALTER TABLE requisicoes_itens ADD COLUMN IF NOT EXISTS observacao TEXT NULL;",
         # ...existing code...
         "ALTER TABLE notificacoes ADD COLUMN IF NOT EXISTS ativa BOOLEAN DEFAULT TRUE;",
-        "UPDATE notificacoes SET ativa = 1 WHERE ativa IS NULL;",  # Garantir que registros antigos sejam atualizados
-# ...existing code...      
+        "UPDATE notificacoes SET ativa = 1 WHERE ativa IS NULL;",  #
+        
     ]
     for q in queries:
         try:
@@ -189,6 +190,70 @@ def run_safe_migrations(db):
                     logger.warning("Migração ignorada após falha (coluna/tabela já existente ou incompatível): %s", q)
             else:
                 logger.warning("Migração ignorada por incompatibilidade com o schema atual: %s", q, exc_info=True)
+
+    ensure_category_classification_schema(db)
+
+
+def ensure_category_classification_schema(db):
+    """Add the category context safely, without guessing legacy category ownership.
+
+    Existing rows remain untouched.  Only the unambiguous legacy groups
+    ``Produtos`` and ``Materiais`` receive a context; all other legacy
+    categories intentionally remain unassigned for manual review.
+    """
+    inspector = inspect(db.engine)
+    if not inspector.has_table('grupos_categoria') or not inspector.has_table('categorias_produto'):
+        return
+    def ensure_columns(table, definitions):
+        """Add only absent legacy columns; one statement per column."""
+        present = {c['name'] for c in inspect(db.engine).get_columns(table)}
+        for column, definition in definitions.items():
+            if column not in present:
+                db.session.execute(text(f"ALTER TABLE {table} ADD COLUMN {column} {definition}"))
+                db.session.commit()
+                present.add(column)
+        return present
+
+    # BaseModel was added after some production installations already had these
+    # tables.  All mapped columns must exist before ORM queries are allowed.
+    group_columns = ensure_columns('grupos_categoria', {
+        'contexto': 'VARCHAR(30) NULL',
+        'created_by': 'INTEGER NULL',
+        'updated_by': 'INTEGER NULL',
+        'is_active': 'BOOLEAN NOT NULL DEFAULT TRUE',
+        'deleted_at': 'DATETIME NULL',
+    })
+    ensure_columns('categorias_produto', {
+        'grupo_id': 'INTEGER NULL',
+        # ``ativo`` is a legacy mapped field retained for compatibility.
+        'ativo': 'BOOLEAN NOT NULL DEFAULT TRUE',
+        'created_by': 'INTEGER NULL',
+        'updated_by': 'INTEGER NULL',
+        'is_active': 'BOOLEAN NOT NULL DEFAULT TRUE',
+        'deleted_at': 'DATETIME NULL',
+    })
+    db.session.execute(text("UPDATE grupos_categoria SET contexto = 'Material' WHERE nome = 'Materiais' AND contexto IS NULL"))
+    # The former single Produtos group is ambiguous and must not be assigned to
+    # a product type automatically.  It is retained as a historical group.
+    db.session.commit()
+    # Additive reference groups: INSERT ... SELECT is idempotent and never
+    # modifies a user-created group/category.
+    references = [
+        ('Produtos Consumíveis', 'Consumivel'), ('Produtos Acabados', 'Acabado'),
+        ('Produtos de Revenda', 'Revenda'), ('Materiais', 'Material'),
+    ]
+    for nome, contexto in references:
+        existing = db.session.execute(text(
+            "SELECT id FROM grupos_categoria WHERE nome = :nome AND contexto = :contexto LIMIT 1"
+        ), {'nome': nome, 'contexto': contexto}).scalar()
+        if not existing:
+            legacy_ativo_column = ', ativo' if 'ativo' in group_columns else ''
+            legacy_ativo_value = ', TRUE' if 'ativo' in group_columns else ''
+            db.session.execute(text(
+                f"INSERT INTO grupos_categoria (nome, contexto, descricao, is_active{legacy_ativo_column}, created_at, updated_at) "
+                f"VALUES (:nome, :contexto, :descricao, TRUE{legacy_ativo_value}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)"
+            ), {'nome': nome, 'contexto': contexto, 'descricao': f'Categorias de {nome.lower()}.'})
+            db.session.commit()
 
 
 def ensure_client_nif_index(db):

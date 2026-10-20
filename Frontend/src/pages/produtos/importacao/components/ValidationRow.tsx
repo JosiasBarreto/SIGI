@@ -34,6 +34,7 @@ export const ValidationRow: React.FC<ValidationRowProps> = ({
   const hasErros = erros.length > 0;
   const hasAlertas = alertas.length > 0;
   const isMaterial = dados.tipo === 'Material';
+  const categoriasCompativeis = (refData?.categorias || []).filter(c => c.contexto === dados.tipo);
 
   const handleFieldChange = (
     field: keyof ImportRowNormalized,
@@ -104,14 +105,17 @@ export const ValidationRow: React.FC<ValidationRowProps> = ({
           {isMaterial ? (
             <div className="relative">
               <select
-                value={dados.tipo_material || ''}
-                onChange={e => handleFieldChange('tipo_material', e.target.value)}
+                value={String(dados.categoria_id || '')}
+                onChange={e => {
+                  const categoria = categoriasCompativeis.find(c => String(c.id) === e.target.value);
+                  handleFieldChange('categoria', categoria?.nome || '', { categoria_id: categoria?.id || null });
+                }}
                 className="w-full appearance-none bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-gray-400 focus:border-primary focus:ring-1 focus:ring-primary rounded-lg px-2.5 py-1.5 pr-6 text-xs font-medium text-gray-900 dark:text-gray-100 cursor-pointer transition-colors"
               >
-                <option value="">Tipo de Material...</option>
-                {MATERIAL_TYPES.map(m => (
-                  <option key={m} value={m}>
-                    {m}
+                <option value="">Categoria de material...</option>
+                {categoriasCompativeis.map(c => (
+                  <option key={c.id} value={c.id}>
+                    {c.nome}{c.grupo_nome ? ` — ${c.grupo_nome}` : ''}
                   </option>
                 ))}
               </select>
@@ -122,11 +126,10 @@ export const ValidationRow: React.FC<ValidationRowProps> = ({
           ) : (
             <div className="relative">
               <select
-                value={dados.categoria || ''}
+                value={String(dados.categoria_id || '')}
                 onChange={e => {
-                  const val = e.target.value;
-                  const selCat = refData?.categorias?.find(c => c.nome === val);
-                  handleFieldChange('categoria', val, {
+                  const selCat = categoriasCompativeis.find(c => String(c.id) === e.target.value);
+                  handleFieldChange('categoria', selCat?.nome || '', {
                     categoria_id: selCat ? selCat.id : null
                   });
                 }}
@@ -137,15 +140,15 @@ export const ValidationRow: React.FC<ValidationRowProps> = ({
                 }`}
               >
                 <option value="">Selecionar categoria...</option>
-                {refData?.categorias?.map(c => (
-                  <option key={c.id} value={c.nome}>
-                    {c.nome}
+                {categoriasCompativeis.map(c => (
+                  <option key={c.id} value={c.id}>
+                    {c.nome}{c.grupo_nome ? ` — ${c.grupo_nome}` : ''}
                   </option>
                 ))}
-                {dados.categoria &&
-                  !refData?.categorias?.some(c => c.nome.toLowerCase() === dados.categoria.toLowerCase()) && (
-                    <option value={dados.categoria}>
-                      {dados.categoria} (Nova)
+                {dados.categoria_id &&
+                  !categoriasCompativeis.some(c => c.id === dados.categoria_id) && (
+                    <option value={dados.categoria_id}>
+                      {dados.categoria} (Categoria incompatível)
                     </option>
                   )}
               </select>
